@@ -5,7 +5,7 @@ with open("README.md", "r") as f:
 
 setuptools.setup(
     name="pythagoras"
-    ,version="0.17.2"
+    ,version="0.18.0"
     ,author="Volodymyr (Vlad) Pavlov"
     ,author_email="vlpavlov@ieee.org"
     ,description= "Planet-scale distributed computing in Python."
@@ -14,19 +14,20 @@ setuptools.setup(
     ,url="https://github.com/pythagoras-dev/pythagoras"
     ,packages=["pythagoras"
         , "pythagoras._010_basic_portals"
-        , "pythagoras._040_logging_code_portals"
-        , "pythagoras._030_data_portals"
         , "pythagoras._020_ordinary_code_portals"
+        , "pythagoras._030_data_portals"
+        , "pythagoras._040_logging_code_portals"
         , "pythagoras._050_safe_code_portals"
         , "pythagoras._060_autonomous_code_portals"
         , "pythagoras._080_pure_code_portals"
-        , "pythagoras._080_compatibility_validators"
         , "pythagoras._090_swarming_portals"
         , "pythagoras._100_default_local_portals"
         , "pythagoras._110_top_level_API"
         , "pythagoras._800_persidict_extensions"
         , "pythagoras._810_output_manipulators"
         , "pythagoras._820_strings_signatures_converters"
+        , "pythagoras._830_project_stats_collector"
+        , "pythagoras._840_work_with_collections"
         ]
     ,classifiers=[
         "Development Status :: 3 - Alpha"

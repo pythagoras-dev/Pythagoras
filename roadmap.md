@@ -6,8 +6,6 @@
 * Polish work with multiple portals (+ no-Init)
 * Add multi-portal synchronization for FnOutput-s
 * Expand work with guards, add sequencers for recursive calls
-* Add support for closures
-* Change the guards to 1-argument (address) functions
 * Tutorials for key features
 * Improve logging (including replacing large values with their summaries)
 * Add shadow json logging for pickled data
