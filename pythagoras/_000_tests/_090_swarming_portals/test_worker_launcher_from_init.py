@@ -3,7 +3,7 @@ from pythagoras import BasicPortal
 from pythagoras._010_basic_portals.portal_tester import _PortalTester
 from pythagoras._090_swarming_portals.swarming_portals import (
     SwarmingPortal, _process_random_execution_request)
-from pythagoras._070_pure_functions.pure_decorator import pure
+from pythagoras._080_pure_code_portals.pure_decorator import pure
 import pythagoras as pth
 
 def test_launch_background_worker_from_init(tmpdir):

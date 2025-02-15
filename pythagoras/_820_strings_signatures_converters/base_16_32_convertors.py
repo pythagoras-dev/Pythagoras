@@ -7,7 +7,7 @@ def convert_base16_to_base32(hexdigest: str) -> str:
     """
     Convert a hexadecimal (base 16) string to a base 32 string.
 
-    :param hexdigest: A string representing a hexadecimal number.
+    :name hexdigest: A string representing a hexadecimal number.
     :return: A string representing the equivalent number in base 32.
     """
 
@@ -23,7 +23,7 @@ def convert_int_to_base32(n: int) -> str:
     """
     Convert an integer to a base 32 string.
 
-    :param n: An integer.
+    :name n: An integer.
     :return: A string representing the equivalent number in base 32.
     """
     base32_str = ''
@@ -37,7 +37,7 @@ def convert_base_32_to_int(digest: str) -> int:
     """
     Convert a base 32 string to an integer.
 
-    :param digest: A string representing a number in base 32.
+    :name digest: A string representing a number in base 32.
     :return: An integer representing the equivalent number.
     """
     digest = digest.lower()

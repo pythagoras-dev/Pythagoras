@@ -6,6 +6,10 @@ session. It's a connector that enables a link between a runtime-only
 ephemeral state and a persistent state that can be saved and loaded
 across multiple runs of the application, and across multiple computers.
 
+However, being a 'window' is not the only thing a portal does. It also
+provides various supporting services that help manage the application's
+state and behaviour.
+
 A Pythagoras-based application can have multiple portals.
 There is usually a current (default) portal, accessible via
 get_current_portal().
@@ -23,13 +27,13 @@ while allowing to work with non-ephemeral storage.
 PersiDict-s are heavily used in Pythagoras.
 
 PortalAwareClass is a base class for classes that use a portal object
-as a context that helps to manage the class's state and behaviour.
+as a context that helps to manage the class' state and behaviour.
 PortalAwareClass is also not intended to be used directly. It should
 be subclassed to provide additional functionality.
 """
 
-from .exceptions import NotAllowedError
-from .foundation import BasicPortal
-from .portal_aware_classes import PortalAwareClass
+from .exceptions import *
+from .basic_portal_core_classes import BasicPortal, PortalType
+from .portal_aware_classes import PortalAwareMetaclass, PortalAwareClass
 from .portal_tester import _PortalTester
-
+from .long_infoname import get_long_infoname

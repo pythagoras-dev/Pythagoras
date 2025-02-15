@@ -3,7 +3,6 @@ from pythagoras import BasicPortal
 from pythagoras._010_basic_portals.portal_tester import _PortalTester
 from pythagoras._090_swarming_portals.swarming_portals import (
     SwarmingPortal, _process_random_execution_request)
-from pythagoras._070_pure_functions.pure_decorator import pure
 import pythagoras as pth
 
 def test_random_request_execution(tmpdir):
@@ -27,7 +26,7 @@ def test_random_request_execution(tmpdir):
         address._portal = t_new.portal
         result = address.get()
         assert result == 50
-        assert address.function(n=-1) == -5
+        assert address.fn(n=-1) == -5
 
 
 

@@ -1,4 +1,6 @@
 from persidict import FileDirDict
+
+from pythagoras import InconsistentChangeOfImmutableItem
 from pythagoras._800_persidict_extensions.first_entry_dict import FirstEntryDict
 
 import pytest
@@ -39,29 +41,29 @@ def test_first_entry_dict_pchecks_one(tmpdir):
         value = i*i*i
         fed[key] = value
         assert fed[key] == value
-        with pytest.raises(AssertionError):
+        with pytest.raises(InconsistentChangeOfImmutableItem):
             fed[key] = 3
         assert fed[key] == value
         fed[key] = value
         assert fed[key] == value
-        with pytest.raises(AssertionError):
+        with pytest.raises(InconsistentChangeOfImmutableItem):
             fed[key] = -i
         assert len(fed) == i
 
 def test_firs_entry_dict_wrong_init_params(tmpdir):
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception):
         fed = FirstEntryDict({}, p_consistency_checks=None)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception):
         fed = FirstEntryDict(
             FileDirDict(tmpdir, immutable_items=True)
             , p_consistency_checks=1.2)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception):
         fed = FirstEntryDict(
             FileDirDict(tmpdir, immutable_items=True)
             , p_consistency_checks=-0.1)
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(Exception):
         fed = FirstEntryDict(
             FileDirDict(tmpdir, immutable_items=False))

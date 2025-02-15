@@ -1,5 +1,6 @@
 from persidict import PersiDict
-from pythagoras._010_basic_portals.exceptions import NotAllowedError
+from pythagoras._010_basic_portals.exceptions import NotPicklableObject, NotSupportedOperation
+
 
 # TODO: move this class to persidict package?
 
@@ -36,22 +37,22 @@ class OverlappingMultiDict:
                 ,"file_type":subdict_name})
 
         def __getstate__(self):
-            raise NotAllowedError("This object should never be pickled")
+            raise NotPicklableObject("This object should never be pickled")
 
         def __setstate__(self, state):
-            raise NotAllowedError("This object should never be pickled")
+            raise NotPicklableObject("This object should never be pickled")
 
         def __getitem__(self, key):
-            raise NotAllowedError(
+            raise NotSupportedOperation(
                 "Individual items should be accessed through nested dicts, "
                 + f"which are available via attributes {self.subdicts_names}")
 
         def __setitem__(self, key, value):
-            raise NotAllowedError(
+            raise NotSupportedOperation(
                 "Individual items should be accessed through nested dicts, "
                 + f"which are available via attributes {self.subdicts_names}")
 
         def __delitem__(self, key):
-            raise NotAllowedError(
+            raise NotSupportedOperation(
                 "Individual items should be accessed through nested dicts, "
                 + f"which are available via attributes {self.subdicts_names}")

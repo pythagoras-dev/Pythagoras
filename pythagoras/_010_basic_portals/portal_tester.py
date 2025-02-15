@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .foundation import BasicPortal
+from .basic_portal_core_classes import BasicPortal, PortalType
 
 class _PortalTester:
     """A context manager for testing portal objects.
@@ -11,7 +11,7 @@ class _PortalTester:
     """
     _current_instance:_PortalTester|None = None
     portal:BasicPortal|None = None
-    def __init__(self,portal_class:type|None = None,*args,**kwargs):
+    def __init__(self,portal_class:PortalType|None = None,*args,**kwargs):
 
         if _PortalTester._current_instance is not None:
             raise Exception("_PortalTester can't be nested")

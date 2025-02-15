@@ -11,11 +11,11 @@ import parameterizable
 from persidict import FileDirDict, PersiDict
 
 from pythagoras import BasicPortal, build_execution_environment_summary
-from pythagoras._010_basic_portals.foundation import _runtime
+from pythagoras._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from pythagoras._820_strings_signatures_converters.random_signatures import get_random_signature
 from pythagoras._800_persidict_extensions.overlapping_multi_dict import (
     OverlappingMultiDict)
-from pythagoras._070_pure_functions.pure_core_classes import (
+from pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr)
 # from pythagoras._090_swarming_portals.clean_runtime_id import clean_runtime_id
 from pythagoras._820_strings_signatures_converters.node_signatures import get_node_signature
@@ -25,27 +25,30 @@ from multiprocessing import get_context
 from pythagoras._810_output_manipulators.output_suppressor import (
     OutputSuppressor)
 
+BACKGROUND_WORKERS_TXT = "Background workers"
+
 
 class SwarmingPortal(PureCodePortal):
     compute_nodes: OverlappingMultiDict | None
 
     def __init__(self
                  , root_dict: PersiDict | str | None = None
-                 , default_island_name:str = "Samos"
                  , p_consistency_checks:float|None = None
+                 , excessive_logging: bool|None = None
                  , n_background_workers:int|None = 3
                  , runtime_id:str|None = None
                  ):
-        super().__init__(root_dict=root_dict
-                         , p_consistency_checks=p_consistency_checks
-                         , default_island_name=default_island_name)
+        PureCodePortal.__init__(self
+            , root_dict=root_dict
+            , p_consistency_checks=p_consistency_checks
+            , excessive_logging=excessive_logging)
         n_background_workers = int(n_background_workers)
         assert n_background_workers >= 0
         self.n_background_workers = n_background_workers
 
-        compute_nodes_prototype = self.root_dict.get_subdict("compute_nodes")
+        compute_nodes_prototype = self._root_dict.get_subdict("compute_nodes")
         compute_nodes_shared_params = compute_nodes_prototype.get_params()
-        dict_type = type(self.root_dict)
+        dict_type = type(self._root_dict)
         compute_nodes = OverlappingMultiDict(
             dict_type=dict_type
             , shared_subdicts_params=compute_nodes_shared_params
@@ -64,7 +67,7 @@ class SwarmingPortal(PureCodePortal):
             # for portal in self.get_noncurrent_portals():
             #     portal.compute_nodes.pkl[address] = runtime_id
 
-            if len(BasicPortal.all_portals) == 1:
+            if len(BasicPortal._all_portals) == 1:
                 atexit.register(_clean_runtime_id)
 
             summary = build_execution_environment_summary()
@@ -89,9 +92,8 @@ class SwarmingPortal(PureCodePortal):
     def describe(self) -> pd.DataFrame:
         """Get a DataFrame describing the portal's current state"""
         all_params = [super().describe()]
-        all_params.append(_runtime(
-            "Background workers"
-            , self.n_background_workers))
+        all_params.append(_describe_runtime_characteristic(
+            BACKGROUND_WORKERS_TXT, self.n_background_workers))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
@@ -108,7 +110,7 @@ class SwarmingPortal(PureCodePortal):
                     return True
             except:
                 pass
-        # for portal in BasicPortal.all_portals.values():
+        # for portal in BasicPortal._all_portals.values():
         #     try:
         #         with portal:
         #             if runtime_id == portal.compute_nodes.pkl[address]:
@@ -140,27 +142,27 @@ class SwarmingPortal(PureCodePortal):
         super()._clear_all()
 
 
-    @classmethod
-    def get_best_portal_to_use(cls, suggested_portal: PureCodePortal | None = None
-                               ) -> SwarmingPortal:
-        return BasicPortal.get_best_portal_to_use(suggested_portal)
-
-
-    @classmethod
-    def get_most_recently_entered_portal(cls) -> SwarmingPortal | None:
-        """Get the current portal object"""
-        return BasicPortal._most_recently_entered_portal(expected_class=cls)
-
-
-    @classmethod
-    def get_noncurrent_portals(cls) -> list[SwarmingPortal]:
-        """Get all portals except the most recently entered one"""
-        return BasicPortal._noncurrent_portals(expected_class=cls)
-
-
-    @classmethod
-    def get_entered_portals(cls) -> list[SwarmingPortal]:
-        return BasicPortal._entered_portals(expected_class=cls)
+    # @classmethod
+    # def get_best_portal_to_use(cls, suggested_portal: PureCodePortal | None = None
+    #                            ) -> SwarmingPortal:
+    #     return BasicPortal.get_best_portal_to_use(suggested_portal)
+    #
+    #
+    # @classmethod
+    # def get_most_recently_entered_portal(cls) -> SwarmingPortal | None:
+    #     """Get the current portal object"""
+    #     return BasicPortal._most_recently_entered_portal(expected_type=cls)
+    #
+    #
+    # @classmethod
+    # def get_noncurrent_portals(cls) -> list[SwarmingPortal]:
+    #     """Get all portals except the most recently entered one"""
+    #     return BasicPortal._noncurrent_portals(expected_type=cls)
+    #
+    #
+    # @classmethod
+    # def get_entered_portals(cls) -> list[SwarmingPortal]:
+    #     return BasicPortal._entered_portals(expected_type=cls)
 
     def _randomly_delay_execution(self
             , p:float = 0.5
@@ -212,7 +214,8 @@ def _process_random_execution_request(**portal_init_params):
                 for addr in portal.execution_requests:
                     new_address = PureFnExecutionResultAddr.from_strings(
                         prefix=addr[0], hash_signature=addr[1]
-                        , assert_readiness=False) # How does it handle portals?
+                        ,assert_readiness=False
+                        ,portal = portal) # How does it handle portals?
                     if not new_address.needs_execution:
                         continue
                     if not new_address.can_be_executed:
@@ -234,9 +237,9 @@ def _clean_runtime_id():
     """
     node_id = get_node_signature()
     address = [node_id, "runtime_id"]
-    for portal_id in BasicPortal.all_portals:
+    for portal_id in BasicPortal._all_portals:
         try:
-            portal = BasicPortal.all_portals[portal_id]
+            portal = BasicPortal._all_portals[portal_id]
             with portal:
                 portal.compute_nodes.pkl.delete_if_exists(address)
         except:

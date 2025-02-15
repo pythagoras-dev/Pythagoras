@@ -21,11 +21,10 @@ or as a shared bucket in a cloud storage. In this case, a ValueAddr becomes
 a part of file path or a URL (e.g. a hash serves as a filename,
 and a prefix is a folder name).
 
-DataPortal is a subclass of LoggingPortal, which means it can
+DataPortal is a subclass of LoggingCodePortal, which means it can
 persistently record exceptions and events.
 """
 
-from .value_addresses import ValueAddr
 
-from .data_portals import DataPortal
+from .data_portal_core_classes import DataPortal, HashAddr, ValueAddr, StorableFn
 

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import time
 
 from deepdiff import DeepDiff
@@ -5,6 +7,9 @@ from persidict import PersiDict
 import random
 
 from persidict.persi_dict import PersiDictKey
+
+from pythagoras._010_basic_portals import InconsistentChangeOfImmutableItem
+from pythagoras._820_strings_signatures_converters import get_hash_signature
 
 
 class FirstEntryDict(PersiDict):
@@ -56,17 +61,16 @@ class FirstEntryDict(PersiDict):
             and self._p_consistency_checks is not None
             and self._p_consistency_checks > 0):
             if random.random() < self._p_consistency_checks:
-                diff_dict = DeepDiff(self._wrapped_dict[key], value)
-                # We are using DeepDiff here to compare the values
-                # because the values can be complex objects,
-                # e.g. Pandas DataFrames
                 self._total_checks_count += 1
-                assert len(diff_dict) == 0, (
-                    f"FirstEntryDict: key {key} is already set "
-                    + f"to {self._wrapped_dict[key]} "
-                    + f"and the new value is {value} is different, "
-                    + f"which is not allowed. Details here: {diff_dict} "
-                    )
+                signature_old = get_hash_signature(self._wrapped_dict[key])
+                signature_new = get_hash_signature(value)
+                if signature_old != signature_new:
+                    diff_dict = DeepDiff(self._wrapped_dict[key], value)
+                    raise InconsistentChangeOfImmutableItem(
+                        f"FirstEntryDict: key {key} is already set "
+                        + f"to {self._wrapped_dict[key]} "
+                        + f"and the new value {value} is different, "
+                        + f"which is not allowed. Details here: {diff_dict} ")
                 self._successful_checks_count += 1
 
     def __contains__(self, item):
@@ -87,5 +91,10 @@ class FirstEntryDict(PersiDict):
     def __getattr__(self, name):
         # Forward attribute access to the wrapped object
         return getattr(self._wrapped_dict, name)
+
+    def get_subdict(self, prefix_key:PersiDictKey) -> FirstEntryDict:
+        subdict = self._wrapped_dict.get_subdict(prefix_key)
+        result = FirstEntryDict(subdict, self._p_consistency_checks)
+        return result
 
 

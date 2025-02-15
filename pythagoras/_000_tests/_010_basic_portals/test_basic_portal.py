@@ -1,5 +1,8 @@
 from pythagoras import BasicPortal
 from pythagoras import _PortalTester
+from pythagoras._010_basic_portals.portal_aware_classes import (
+    _noncurrent_portals, _most_recently_entered_portal, _entered_portals)
+
 
 def test_portal(tmpdir):
     the_dir = tmpdir
@@ -7,20 +10,18 @@ def test_portal(tmpdir):
 
         portal = BasicPortal(tmpdir.mkdir("awer"))
         assert portal is not None
-        assert portal._most_recently_entered_portal() is None
-        assert BasicPortal.get_most_recently_entered_portal() is None
-        assert len(portal._noncurrent_portals()) == 1
-        assert len(portal._noncurrent_portals(expected_class=BasicPortal)) == 1
-        assert portal._entered_portals() == []
+        assert _most_recently_entered_portal() is None
+        assert len(_noncurrent_portals()) == 1
+        assert len(_noncurrent_portals(expected_type=BasicPortal)) == 1
+        assert _entered_portals() == []
 
         portal2 = BasicPortal(tmpdir.mkdir("awasder"))
         portal3 = BasicPortal(tmpdir.mkdir("aadfgggr"))
         assert portal is not None
-        assert portal._most_recently_entered_portal() is None
-        assert BasicPortal.get_most_recently_entered_portal() is None
-        assert len(portal._noncurrent_portals()) == 3
-        assert len(portal._noncurrent_portals(expected_class=BasicPortal)) == 3
-        assert portal._entered_portals() == []
+        assert _most_recently_entered_portal() is None
+        assert len(_noncurrent_portals()) == 3
+        assert len(_noncurrent_portals(expected_type=BasicPortal)) == 3
+        assert _entered_portals() == []
 
 
 def test_clean_all(tmpdir):
@@ -29,9 +30,9 @@ def test_clean_all(tmpdir):
         portal2 = BasicPortal(tmpdir)
         portal3 = BasicPortal(tmpdir)
         BasicPortal._clear_all()
-        assert portal._most_recently_entered_portal() is None
-        assert len(portal._noncurrent_portals()) == 0
-        assert portal._entered_portals() == []
+        assert _most_recently_entered_portal() is None
+        assert len(_noncurrent_portals()) == 0
+        assert _entered_portals() == []
 
 
 # def test_portal_nested(tmpdir):

@@ -2,14 +2,32 @@ from pythagoras import DataPortal
 from pythagoras import _PortalTester
 import time
 
+from pythagoras._010_basic_portals.basic_portal_core_classes import get_description_value_by_key
+from pythagoras._030_data_portals.data_portal_core_classes import TOTAL_VALUES_TXT, \
+    PROBABILITY_OF_CHECKS_TXT
+
+
 def test_portal(tmpdir):
 
     with _PortalTester():
         portal = DataPortal(tmpdir)
         description = portal.describe()
-        assert description.shape == (6, 3)
-        assert description.iloc[4, 2] == 0
-        assert description.iloc[5, 2] == 0
+        assert description.shape == (5, 3)
+        assert get_description_value_by_key(description
+            , TOTAL_VALUES_TXT) == 0
+        assert get_description_value_by_key(description
+            , PROBABILITY_OF_CHECKS_TXT) == 0
+
+def test_portal_with_consistency_checks(tmpdir):
+
+    with _PortalTester():
+        portal = DataPortal(tmpdir, p_consistency_checks = 1)
+        description = portal.describe()
+        assert description.shape == (5, 3)
+        assert get_description_value_by_key(description
+            , TOTAL_VALUES_TXT) == 0
+        assert get_description_value_by_key(description
+            , PROBABILITY_OF_CHECKS_TXT) == 1
 
 
 def test_stored_values(tmpdir):
@@ -21,9 +39,11 @@ def test_stored_values(tmpdir):
         t.portal.value_store["a"] = 100
         t.portal.value_store["b"] = 200
         description = t.portal.describe()
-        assert description.shape == (6, 3)
-        assert description.iloc[4,2] == 2
-        assert description.iloc[5,2] == 0.5
+        assert description.shape == (5, 3)
+        assert get_description_value_by_key(description
+            , TOTAL_VALUES_TXT) == 2
+        assert get_description_value_by_key(description
+            , PROBABILITY_OF_CHECKS_TXT) == 0.5
 
 
 
