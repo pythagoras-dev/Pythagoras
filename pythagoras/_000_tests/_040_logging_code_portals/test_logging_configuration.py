@@ -9,7 +9,7 @@ from pythagoras._040_logging_code_portals import (
 
 
 def test_all_defaulta_config(tmpdir):
-    tmpdir = "TOTAL_ALL_DEFAULTS_CONFIG_" +str(int(time.time()))
+    # tmpdir = "TOTAL_ALL_DEFAULTS_CONFIG_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
             , p_consistency_checks=0) as t:
         assert len(t.portal.config_store) == 0

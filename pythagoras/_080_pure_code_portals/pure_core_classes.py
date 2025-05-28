@@ -308,11 +308,11 @@ class PureFnExecutionResultAddr(HashAddr):
 
     def __setstate__(self, state):
         self._invalidate_cache()
-        self.str_chain = state["str_chain"]
+        self.strings = state["strings"]
 
 
     def __getstate__(self):
-        state = dict(str_chain=self.str_chain)
+        state = dict(strings=self.strings)
         return state
 
 

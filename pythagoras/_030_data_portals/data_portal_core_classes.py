@@ -165,11 +165,11 @@ class HashAddr(SafeStrTuple, PortalAwareClass):
 
     @property
     def prefix(self) -> str:
-        return self.str_chain[0]
+        return self.strings[0]
 
     @property
     def hash_signature(self) -> str:
-        return self.str_chain[1]
+        return self.strings[1]
 
     @staticmethod
     def _build_prefix(x: Any) -> str:
@@ -241,7 +241,7 @@ class HashAddr(SafeStrTuple, PortalAwareClass):
 
     def __eq__(self, other) -> bool:
         """Return self==other. """
-        return type(self) == type(other) and self.str_chain == other.str_chain
+        return type(self) == type(other) and self.strings == other.strings
 
     def __ne__(self, other) -> bool:
         """Return self!=other. """
@@ -403,10 +403,10 @@ class ValueAddr(HashAddr):
 
 
     def __getstate__(self):
-        state = dict(str_chain=self.str_chain)
+        state = dict(strings=self.strings)
         return state
 
 
     def __setstate__(self, state):
-        self.str_chain = state["str_chain"]
+        self.strings = state["strings"]
         self._portal = None
