@@ -1,3 +1,55 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "pythagoras"
+version = "0.18.0"
+authors = [
+    {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
+]
+description = "Planet-scale distributed computing in Python."
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Information Analysis",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+keywords = ["cloud", "ML", "AI", "serverless", "distributed", "parallel", "machine-learning", "deep-learning", "pythagoras"]
+dependencies = [
+    "persidict",
+    "lz4",
+    "joblib",
+    "numpy",
+    "scipy",
+    "pandas",
+    "scikit-learn",
+    "jsonpickle",
+    "psutil",
+    "boto3",
+    "moto",
+    "pytest",
+    "autopep8",
+    "torch",
+    "keras",
+    "tensorflow",
+    "deepdiff",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/pythagoras-dev/pythagoras"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
