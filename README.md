@@ -28,7 +28,15 @@ The source code is hosted on GitHub at: https://github.com/pythagoras-dev/pythag
 Installers for the latest released version are available 
 at the Python package index at: https://pypi.org/project/pythagoras
 
-    pip install pythagoras
+Using uv :
+```
+uv add pythagoras
+```
+
+Using pip (legacy alternative to uv):
+```
+pip install pythagoras
+```
 
 ## Dependencies
 
