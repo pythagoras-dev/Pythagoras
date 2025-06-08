@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pythagoras"
-version = "0.18.2"
+version = "0.18.3"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
@@ -29,27 +29,32 @@ dependencies = [
     "persidict",
     "lz4",
     "joblib",
-    "numpy",
-    "scipy",
-    "pandas",
-    "scikit-learn",
     "jsonpickle",
     "psutil",
-    "boto3",
-    "moto",
-    "pytest",
     "autopep8",
-    "torch",
-    "keras",
-    "tensorflow",
-    "deepdiff",
+    "deepdiff"
 ]
 
 [project.urls]
 "Homepage" = "https://github.com/pythagoras-dev/pythagoras"
 
-[tool.setuptools]
-package-dir = {"" = "src"}
+[project.optional-dependencies]
+dev = [
+    "persidict[dev]",
+    "numpy",
+    "scipy",
+    "scikit-learn",
+    "pandas",
+    "torch",
+    "keras",
+    "tensorflow",
+    "boto3",
+    "moto",
+    "pytest"
+]
 
-[tool.setuptools.packages.find]
-where = ["src"]
+aws = [
+    "persidict[aws]"
+    ,"boto3"
+    ,"moto"
+]
