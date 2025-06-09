@@ -1,6 +1,6 @@
 from typing import Callable
 
-from src.pythagoras._020_ordinary_code_portals import ordinary
+from .._020_ordinary_code_portals import ordinary
 from .logging_portal_core_classes import LoggingCodePortal, LoggingFn
 
 class logging(ordinary):

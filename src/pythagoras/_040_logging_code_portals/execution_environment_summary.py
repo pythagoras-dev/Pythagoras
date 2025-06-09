@@ -7,7 +7,7 @@ from getpass import getuser
 from datetime import datetime
 import torch
 from .notebook_checker import is_executed_in_notebook
-from src.pythagoras._010_basic_portals import BasicPortal
+from .._010_basic_portals import BasicPortal
 
 
 def build_execution_environment_summary()-> Dict:

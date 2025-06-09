@@ -7,26 +7,26 @@ from typing import Callable, Any
 import pandas as pd
 from persidict import PersiDict
 
-from src.pythagoras._010_basic_portals.basic_portal_class import \
+from .._010_basic_portals.basic_portal_class import \
     _describe_persistent_characteristic, _describe_runtime_characteristic
-from src.pythagoras._010_basic_portals.portal_aware_class import find_portal_to_use
-from src.pythagoras._030_data_portals import ValueAddr
-from src.pythagoras._040_logging_code_portals.exception_processing_tracking import (
+from .._010_basic_portals.portal_aware_class import find_portal_to_use
+from .._030_data_portals import ValueAddr
+from .._040_logging_code_portals.exception_processing_tracking import (
     _exception_needs_to_be_processed, _mark_exception_as_processed)
-from src.pythagoras._040_logging_code_portals.uncaught_exceptions import \
+from .._040_logging_code_portals.uncaught_exceptions import \
     unregister_systemwide_uncaught_exception_handlers, \
     register_systemwide_uncaught_exception_handlers
-from src.pythagoras._800_persidict_extensions import OverlappingMultiDict
-from src.pythagoras._040_logging_code_portals.kw_args import KwArgs, PackedKwArgs
-from src.pythagoras._810_output_manipulators import OutputCapturer
-from src.pythagoras._010_basic_portals import PortalAwareClass
-from src.pythagoras._030_data_portals.data_portal_core_classes import (
+from .._800_persidict_extensions import OverlappingMultiDict
+from .._040_logging_code_portals.kw_args import KwArgs, PackedKwArgs
+from .._810_output_manipulators import OutputCapturer
+from .._010_basic_portals import PortalAwareClass
+from .._030_data_portals.data_portal_core_classes import (
     DataPortal, StorableFn)
-from src.pythagoras._820_strings_signatures_converters.current_date_gmt_str import (
+from .._820_strings_signatures_converters.current_date_gmt_str import (
     current_date_gmt_string)
-from src.pythagoras._040_logging_code_portals.execution_environment_summary import (
+from .._040_logging_code_portals.execution_environment_summary import (
     build_execution_environment_summary, add_execution_environment_summary)
-from src.pythagoras._820_strings_signatures_converters.random_signatures import (
+from .._820_strings_signatures_converters.random_signatures import (
     get_random_signature)
 
 

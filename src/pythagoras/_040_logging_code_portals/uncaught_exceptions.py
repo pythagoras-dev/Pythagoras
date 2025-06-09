@@ -3,15 +3,15 @@ from __future__ import annotations
 import sys
 import traceback
 
-from src.pythagoras._010_basic_portals.portal_aware_class import find_portal_to_use
-from src.pythagoras._040_logging_code_portals.exception_processing_tracking import (
+from .._010_basic_portals.portal_aware_class import find_portal_to_use
+from .._040_logging_code_portals.exception_processing_tracking import (
     _exception_needs_to_be_processed, _mark_exception_as_processed)
-from src.pythagoras._820_strings_signatures_converters.current_date_gmt_str import (
+from .._820_strings_signatures_converters.current_date_gmt_str import (
     current_date_gmt_string)
-from src.pythagoras._040_logging_code_portals.execution_environment_summary import (
+from .._040_logging_code_portals.execution_environment_summary import (
     add_execution_environment_summary)
-from src.pythagoras._040_logging_code_portals.notebook_checker import is_executed_in_notebook
-from src.pythagoras._820_strings_signatures_converters.random_signatures import (
+from .._040_logging_code_portals.notebook_checker import is_executed_in_notebook
+from .._820_strings_signatures_converters.random_signatures import (
     get_random_signature)
 
 
