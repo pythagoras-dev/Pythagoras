@@ -9,22 +9,22 @@ from sklearn.model_selection import ParameterGrid
 
 from persidict import PersiDict
 
-from src.pythagoras._010_basic_portals.portal_aware_class import _noncurrent_portals
-from src.pythagoras._010_basic_portals.portal_aware_dict import PortalAwareDict
-from src.pythagoras._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
-from src.pythagoras._010_basic_portals.basic_portal_class import _describe_persistent_characteristic
-from src.pythagoras._800_persidict_extensions.first_entry_dict import FirstEntryDict
-from src.pythagoras._040_logging_code_portals.logging_portal_core_classes import \
+from .._010_basic_portals.portal_aware_class import _noncurrent_portals
+from .._010_basic_portals.portal_aware_dict import PortalAwareDict
+from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
+from .._010_basic_portals.basic_portal_class import _describe_persistent_characteristic
+from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
+from .._040_logging_code_portals.logging_portal_core_classes import \
     LoggingFnCallSignature
 
-from src.pythagoras._030_data_portals import HashAddr
-from src.pythagoras._030_data_portals import ValueAddr
+from .._030_data_portals import HashAddr
+from .._030_data_portals import ValueAddr
 
-from src.pythagoras._060_autonomous_code_portals.autonomous_portal_core_classes import (
+from .._060_autonomous_code_portals.autonomous_portal_core_classes import (
     AutonomousFn)
 
 
-from src.pythagoras._040_logging_code_portals.kw_args import KwArgs
+from .._040_logging_code_portals.kw_args import KwArgs
 
 
 ASupportingFunc:TypeAlias = str | AutonomousFn

@@ -1,8 +1,8 @@
 from typing import Callable
 
-from src.pythagoras._070_protected_code_portals import protected
-from src.pythagoras._060_autonomous_code_portals import AutonomousFn
-from src.pythagoras._080_pure_code_portals.pure_core_classes import (
+from .._070_protected_code_portals import protected
+from .._060_autonomous_code_portals import AutonomousFn
+from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFn)
 
 
