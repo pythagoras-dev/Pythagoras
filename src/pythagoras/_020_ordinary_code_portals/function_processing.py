@@ -1,8 +1,8 @@
 import types, inspect
 from typing import Callable
 
-from src.pythagoras._010_basic_portals.exceptions import NonCompliantFunction
-from src.pythagoras._010_basic_portals.long_infoname import get_long_infoname
+from .._010_basic_portals.exceptions import NonCompliantFunction
+from .._010_basic_portals.long_infoname import get_long_infoname
 
 
 def get_function_name_from_source(function_source_code: str) -> str:
@@ -51,7 +51,7 @@ def assert_ordinarity(a_func:Callable) -> None:
     An ordinary function can only be called with keyword arguments,
     and its parameters can't have default values.
 
-    assert_ordinarity check a function, given as an input name,
+    assert_ordinarity checks a function, given as an input name,
     and throws an exception if the function is not ordinary.
     """
 

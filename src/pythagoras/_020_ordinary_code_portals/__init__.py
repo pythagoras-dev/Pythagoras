@@ -19,9 +19,9 @@ code of two functions to check if they are equivalent.
 
 Typically, a Pythagoras user does not need to directly work
 with ordinary functions. Pythagoras employs OrdinaryFn
-to implement autonomous and idempotent functions (which are
+to implement autonomous and pure functions (which are
 subclasses of OrdinaryFn). Most of the time, a Pythagoras user will
-work with idempotent functions.
+work with pure functions.
 """
 
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal, get_normalized_function_source

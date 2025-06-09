@@ -16,7 +16,7 @@ def _get_normalized_function_source_impl(
         ) -> str:
         """Return function's source code in a 'canonical' form.
 
-        Remove all comments, docstrings, type annotations and empty lines;
+        Remove all comments, docstrings, type annotations, and empty lines;
         standardize code formatting based on PEP 8.
         If drop_pth_decorators == True, remove Pythagoras decorators.
 
