@@ -8,7 +8,7 @@ across multiple runs of the application, and across multiple computers.
 
 However, being a 'window' is not the only thing a portal does. It also
 provides various supporting services that help manage the application's
-state and behaviour.
+state and behavior.
 
 A Pythagoras-based application can have multiple portals.
 There is usually a current (default) portal, accessible via

@@ -50,7 +50,9 @@ class PortalAwareClass(metaclass = PortalAwareMetaclass):
     def portal(self, value: BasicPortal|None) -> None:
         """Set the portal to the given one."""
         assert isinstance(value, BasicPortal)
-        if hasattr(self, "_portal") and self._portal is not None and self._portal != value:
+        if (hasattr(self, "_portal")
+                and self._portal is not None
+                and self._portal != value):
             raise ValueError("You can set the portal only once.")
         self._portal = value
         self.register_in_portal()
@@ -97,6 +99,7 @@ class PortalAwareClass(metaclass = PortalAwareMetaclass):
 
 
     def __copy__(self):
+        #TODO: check the logic of this method
         result = self.__new__(type(self))
         result.__setstate__(self.__getstate__())
         assert not hasattr(result, "_portal") or result._portal is None

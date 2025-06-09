@@ -10,19 +10,31 @@ from persidict import PersiDict, FileDirDict
 from .exceptions import NotPicklableObject
 
 def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
-  d = dict(
-      type="Disk"
-      ,name = [name]
-      ,value = [value])
-  return pd.DataFrame(d)
+    """Create a DataFrame describing a persistent characteristic.
+
+    A helper function used by the describe() method of BasicPortal
+    and its subclasses. It creates a DataFrame with a single row
+    containing the type, name, and value of the characteristic.
+    """
+    d = dict(
+        type="Disk"
+        ,name = [name]
+        ,value = [value])
+    return pd.DataFrame(d)
 
 
 def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
-  d = dict(
-      type = "Runtime"
-      ,name = [name]
-      ,value = [value])
-  return pd.DataFrame(d)
+    """Create a DataFrame describing a runtime characteristic.
+
+    A helper function used by the describe() method of BasicPortal
+    and its subclasses. It creates a DataFrame with a single row
+    containing the type, name, and value of the characteristic.
+    """
+    d = dict(
+        type = "Runtime"
+        ,name = [name]
+        ,value = [value])
+    return pd.DataFrame(d)
 
 BASE_DIRECTORY_TXT = "Base directory"
 BACKEND_TYPE_TXT = "Backend type"
@@ -75,8 +87,8 @@ class BasicPortal(ParameterizableClass):
     def __init__(self, root_dict:PersiDict|str|None = None):
         ParameterizableClass.__init__(self)
         if root_dict is None:
-            root_dict = self.default_root_dict
-        elif not isinstance(root_dict, PersiDict):
+            root_dict = self.default_base_dir
+        if not isinstance(root_dict, PersiDict):
             root_dict = FileDirDict(base_dir = str(root_dict))
         root_dict_params = root_dict.get_params()
         root_dict_params.update(digest_len=0)
@@ -128,14 +140,14 @@ class BasicPortal(ParameterizableClass):
         target_directory_str = str(target_directory.resolve())
         return target_directory_str
 
-    @property
-    def default_root_dict(self) -> PersiDict:
-        """Get the root dictionary for the default local portal.
-
-        The default root dictionary is a FileDirDict
-        with the default base directory.
-        """
-        return FileDirDict(base_dir = self.default_base_dir)
+    # @property
+    # def default_root_dict(self) -> PersiDict:
+    #     """Get the root dictionary for the default local portal.
+    #
+    #     The default root dictionary is a FileDirDict
+    #     with the default base directory.
+    #     """
+    #     return FileDirDict(base_dir = self.default_base_dir)
 
     @property
     def default_portal(self) -> BasicPortal:
