@@ -8,19 +8,20 @@ import pandas as pd
 import parameterizable
 from persidict import PersiDict
 
-from src.pythagoras import BasicPortal, build_execution_environment_summary
-from src.pythagoras._010_basic_portals.basic_portal_class import _describe_runtime_characteristic
-from src.pythagoras._820_strings_signatures_converters.random_signatures import get_random_signature
-from src.pythagoras._800_persidict_extensions.overlapping_multi_dict import (
+from .._010_basic_portals.basic_portal_class import BasicPortal
+from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
+from .._010_basic_portals.basic_portal_class import _describe_runtime_characteristic
+from .._820_strings_signatures_converters.random_signatures import get_random_signature
+from .._800_persidict_extensions.overlapping_multi_dict import (
     OverlappingMultiDict)
-from src.pythagoras._080_pure_code_portals.pure_core_classes import (
+from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr)
 # from pythagoras._090_swarming_portals.clean_runtime_id import clean_runtime_id
-from src.pythagoras._820_strings_signatures_converters.node_signatures import get_node_signature
+from .._820_strings_signatures_converters.node_signatures import get_node_signature
 
 from multiprocessing import get_context
 
-from src.pythagoras._810_output_manipulators.output_suppressor import (
+from .._810_output_manipulators.output_suppressor import (
     OutputSuppressor)
 
 BACKGROUND_WORKERS_TXT = "Background workers"
