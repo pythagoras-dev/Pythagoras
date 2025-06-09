@@ -31,7 +31,7 @@ and to enforce autonomicity requirements for the function.
 """
 from typing import Callable
 
-from src.pythagoras._050_safe_code_portals import safe
+from .._050_safe_code_portals import safe
 from .autonomous_portal_core_classes import AutonomousFn, AutonomousCodePortal
 
 

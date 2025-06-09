@@ -6,15 +6,15 @@ from typing import Callable, Any
 
 from persidict import PersiDict
 
-from src.pythagoras._040_logging_code_portals import KwArgs
+from .._040_logging_code_portals import KwArgs
 
-from src.pythagoras._060_autonomous_code_portals.names_usage_analyzer import (
+from .._060_autonomous_code_portals.names_usage_analyzer import (
     analyze_names_in_function)
 
-from src.pythagoras._050_safe_code_portals.safe_portal_core_classes import (
+from .._050_safe_code_portals.safe_portal_core_classes import (
     SafeFn, SafeCodePortal)
 
-from src import pythagoras as pth
+from ... import pythagoras as pth
 
 
 class AutonomousCodePortal(SafeCodePortal):
