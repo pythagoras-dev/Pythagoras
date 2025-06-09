@@ -4,7 +4,7 @@ from typing import Callable
 
 from persidict import PersiDict
 
-from src.pythagoras._040_logging_code_portals.logging_portal_core_classes import LoggingCodePortal, \
+from .._040_logging_code_portals.logging_portal_core_classes import LoggingCodePortal, \
     LoggingFn
 
 

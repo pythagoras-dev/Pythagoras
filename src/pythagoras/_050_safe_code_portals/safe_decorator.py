@@ -1,6 +1,6 @@
 from typing import Callable
 
-from src.pythagoras._040_logging_code_portals import logging
+from .._040_logging_code_portals import logging
 from .safe_portal_core_classes import SafeFn, SafeCodePortal
 
 
