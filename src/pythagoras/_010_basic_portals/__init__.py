@@ -14,10 +14,12 @@ A Pythagoras-based application can have multiple portals.
 There is usually a current (default) portal, accessible via
 get_current_portal().
 
-BasicPortal is the base class for all portal objects. It provides core
+BasicPortal is a base class for all portal objects. It provides foundational
 functionality for managing the portal stack and for accessing the current
-portal. The class is not intended to be used directly. Instead, it should
-be subclassed to provide additional functionality.
+portal. It keeps track of all portals created in the system and manages
+the stack of entered ('active') portals. It also provides a method to
+clear all portals and their state. The class is not intended to be used directly.
+Instead, it should be subclassed to provide additional functionality.
 
 BasicPortal's subclasses are expected to provide access to
 the portal's data and to manage the portal's state.
@@ -33,7 +35,7 @@ be subclassed to provide additional functionality.
 """
 
 from .exceptions import *
-from .basic_portal_core_classes import BasicPortal, PortalType
-from .portal_aware_classes import PortalAwareMetaclass, PortalAwareClass
+from .basic_portal_class import BasicPortal, PortalType
+from .portal_aware_class import PortalAwareMetaclass, PortalAwareClass
 from .portal_tester import _PortalTester
 from .long_infoname import get_long_infoname

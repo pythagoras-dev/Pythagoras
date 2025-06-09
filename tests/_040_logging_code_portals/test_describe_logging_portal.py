@@ -1,7 +1,7 @@
 from src.pythagoras import LoggingCodePortal, EXCESSIVE_LOGGING_TXT
 from src.pythagoras import _PortalTester
 from src import pythagoras as pth
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_class import get_description_value_by_key
 from src.pythagoras._040_logging_code_portals.logging_portal_core_classes import LoggingFnCallSignature, \
     EXCEPTIONS_TODAY_TXT, EXCEPTIONS_TOTAL_TXT
 

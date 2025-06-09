@@ -1,7 +1,7 @@
 import pytest
 
 from src.pythagoras import BasicPortal, _PortalTester
-from src.pythagoras._010_basic_portals.portal_aware_classes import (
+from src.pythagoras._010_basic_portals.portal_aware_class import (
     _noncurrent_portals, _most_recently_entered_portal, _entered_portals)
 
 

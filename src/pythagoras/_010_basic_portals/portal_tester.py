@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .basic_portal_core_classes import BasicPortal, PortalType
+from .basic_portal_class import BasicPortal, PortalType
 
 class _PortalTester:
     """A context manager for testing portal objects.

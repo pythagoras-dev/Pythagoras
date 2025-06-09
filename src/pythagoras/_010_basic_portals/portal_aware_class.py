@@ -4,7 +4,7 @@ import sys
 from abc import ABCMeta, abstractmethod
 from copy import copy
 
-from .basic_portal_core_classes import BasicPortal, PortalType
+from .basic_portal_class import BasicPortal, PortalType
 
 
 class PortalAwareMetaclass(ABCMeta):

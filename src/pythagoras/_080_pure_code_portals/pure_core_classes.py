@@ -9,10 +9,10 @@ from sklearn.model_selection import ParameterGrid
 
 from persidict import PersiDict
 
-from src.pythagoras._010_basic_portals.portal_aware_classes import _noncurrent_portals
+from src.pythagoras._010_basic_portals.portal_aware_class import _noncurrent_portals
 from src.pythagoras._010_basic_portals.portal_aware_dict import PortalAwareDict
 from src.pythagoras._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import _describe_persistent_characteristic
+from src.pythagoras._010_basic_portals.basic_portal_class import _describe_persistent_characteristic
 from src.pythagoras._800_persidict_extensions.first_entry_dict import FirstEntryDict
 from src.pythagoras._040_logging_code_portals.logging_portal_core_classes import \
     LoggingFnCallSignature

@@ -9,7 +9,7 @@ import parameterizable
 from persidict import PersiDict
 
 from src.pythagoras import BasicPortal, build_execution_environment_summary
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
+from src.pythagoras._010_basic_portals.basic_portal_class import _describe_runtime_characteristic
 from src.pythagoras._820_strings_signatures_converters.random_signatures import get_random_signature
 from src.pythagoras._800_persidict_extensions.overlapping_multi_dict import (
     OverlappingMultiDict)

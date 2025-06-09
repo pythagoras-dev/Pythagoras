@@ -1,7 +1,7 @@
 from src.pythagoras import PureCodePortal, pure
 from src.pythagoras import _PortalTester
 
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_class import get_description_value_by_key
 from src.pythagoras._080_pure_code_portals.pure_core_classes import CACHED_EXECUTION_RESULTS_TXT, \
     EXECUTION_QUEUE_SIZE_TXT
 

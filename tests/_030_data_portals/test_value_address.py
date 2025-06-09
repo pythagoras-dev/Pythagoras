@@ -3,7 +3,7 @@ from typing import Any
 
 import pytest
 
-from src.pythagoras._010_basic_portals.portal_aware_classes import (
+from src.pythagoras._010_basic_portals.portal_aware_class import (
     _most_recently_entered_portal)
 from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
 from src.pythagoras._030_data_portals import *

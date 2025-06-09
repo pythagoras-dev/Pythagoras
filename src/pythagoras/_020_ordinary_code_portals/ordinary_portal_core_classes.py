@@ -9,7 +9,7 @@ from src.pythagoras._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_function_source_impl
 from .function_processing import get_function_name_from_source
 from src.pythagoras._820_strings_signatures_converters import get_hash_signature
-from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
+from .._010_basic_portals.basic_portal_class import _describe_runtime_characteristic
 
 
 def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:

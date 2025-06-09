@@ -10,10 +10,10 @@ from src.pythagoras._010_basic_portals.portal_aware_dict import PortalAwareDict
 from src.pythagoras._020_ordinary_code_portals import get_normalized_function_source
 from src.pythagoras._820_strings_signatures_converters import get_hash_signature
 from src.pythagoras._010_basic_portals import PortalAwareClass
-from src.pythagoras._010_basic_portals.portal_aware_classes import (
+from src.pythagoras._010_basic_portals.portal_aware_class import (
     _noncurrent_portals, find_portal_to_use)
 
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import (
+from src.pythagoras._010_basic_portals.basic_portal_class import (
     _describe_persistent_characteristic
     , _describe_runtime_characteristic)
 from src.pythagoras._020_ordinary_code_portals import (

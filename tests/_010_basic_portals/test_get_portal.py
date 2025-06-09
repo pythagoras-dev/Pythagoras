@@ -1,5 +1,5 @@
 from src.pythagoras import BasicPortal, _PortalTester
-from src.pythagoras._010_basic_portals.portal_aware_classes import find_portal_to_use
+from src.pythagoras._010_basic_portals.portal_aware_class import find_portal_to_use
 
 
 def test_portal_nested(tmpdir):

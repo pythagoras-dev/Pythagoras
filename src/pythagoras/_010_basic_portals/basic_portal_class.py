@@ -73,7 +73,11 @@ class BasicPortal(ParameterizableClass):
 
     BasicPortal is a base class for all portal objects. It provides foundational
     functionality for managing the portal stack and for accessing the current
-    portal. The class is not intended to be used directly. Instead, it should
+    portal. It keeps track of all portals created in the system and manages
+    the stack of entered ('active') portals. It also provides a method to
+    clear all portals and their state.
+
+    The class is not intended to be used directly. Instead, it should
     be subclassed to provide additional functionality.
     """
     _default_portal: BasicPortal|None = None
@@ -140,14 +144,6 @@ class BasicPortal(ParameterizableClass):
         target_directory_str = str(target_directory.resolve())
         return target_directory_str
 
-    # @property
-    # def default_root_dict(self) -> PersiDict:
-    #     """Get the root dictionary for the default local portal.
-    #
-    #     The default root dictionary is a FileDirDict
-    #     with the default base directory.
-    #     """
-    #     return FileDirDict(base_dir = self.default_base_dir)
 
     @property
     def default_portal(self) -> BasicPortal:

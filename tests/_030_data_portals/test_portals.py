@@ -1,4 +1,4 @@
-from src.pythagoras._010_basic_portals.portal_aware_classes import find_portal_to_use
+from src.pythagoras._010_basic_portals.portal_aware_class import find_portal_to_use
 from src.pythagoras._030_data_portals import ValueAddr
 from src.pythagoras._030_data_portals.data_portal_core_classes import DataPortal
 

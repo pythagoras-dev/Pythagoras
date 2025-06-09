@@ -7,9 +7,9 @@ from typing import Callable, Any
 import pandas as pd
 from persidict import PersiDict
 
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import \
+from src.pythagoras._010_basic_portals.basic_portal_class import \
     _describe_persistent_characteristic, _describe_runtime_characteristic
-from src.pythagoras._010_basic_portals.portal_aware_classes import find_portal_to_use
+from src.pythagoras._010_basic_portals.portal_aware_class import find_portal_to_use
 from src.pythagoras._030_data_portals import ValueAddr
 from src.pythagoras._040_logging_code_portals.exception_processing_tracking import (
     _exception_needs_to_be_processed, _mark_exception_as_processed)
