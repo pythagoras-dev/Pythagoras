@@ -2,7 +2,7 @@
 
 from typing import Callable
 
-from src.pythagoras._060_autonomous_code_portals import autonomous, AutonomousFn
+from .._060_autonomous_code_portals import autonomous, AutonomousFn
 from .protected_portal_core_classes import ProtectedFn, ProtectedCodePortal
 
 class protected(autonomous):

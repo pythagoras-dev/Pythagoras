@@ -1,4 +1,4 @@
-from src.pythagoras._060_autonomous_code_portals import AutonomousFn, autonomous
+from .._060_autonomous_code_portals import AutonomousFn, autonomous
 from .OK_const import OK
 from .package_manager import install_package
 

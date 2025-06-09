@@ -1,5 +1,5 @@
-from src.pythagoras._060_autonomous_code_portals import AutonomousFn, autonomous
-from src import pythagoras as pth
+from .._060_autonomous_code_portals import AutonomousFn, autonomous
+from ... import pythagoras as pth
 
 
 def free_ram_bytes(packed_kwargs, fn_addr, required_memory):

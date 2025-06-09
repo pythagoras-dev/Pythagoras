@@ -5,14 +5,14 @@ from typing import Callable, Any, List
 
 from persidict import PersiDict
 
-from src.pythagoras import KwArgs
-from src.pythagoras._030_data_portals import ValueAddr
-from src.pythagoras._840_work_with_collections.dict_sort import sort_dict_by_keys
-from src.pythagoras._840_work_with_collections.list_flattener import flatten_list
+from .._040_logging_code_portals import KwArgs
+from .._030_data_portals import ValueAddr
+from .._840_work_with_collections.dict_sort import sort_dict_by_keys
+from .._840_work_with_collections.list_flattener import flatten_list
 from .OK_const import OK
 
 
-from src.pythagoras._060_autonomous_code_portals import (
+from .._060_autonomous_code_portals import (
     AutonomousCodePortal, AutonomousFn)
 from .fn_arg_names_checker import check_if_fn_accepts_args
 
