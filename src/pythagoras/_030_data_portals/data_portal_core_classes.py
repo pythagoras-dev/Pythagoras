@@ -6,19 +6,19 @@ from typing import Optional, Callable, Any, Type
 import pandas as pd
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars
 
-from src.pythagoras._010_basic_portals.portal_aware_dict import PortalAwareDict
-from src.pythagoras._020_ordinary_code_portals import get_normalized_function_source
-from src.pythagoras._820_strings_signatures_converters import get_hash_signature
-from src.pythagoras._010_basic_portals import PortalAwareClass
-from src.pythagoras._010_basic_portals.portal_aware_class import (
+from .._010_basic_portals.portal_aware_dict import PortalAwareDict
+from .._020_ordinary_code_portals import get_normalized_function_source
+from .._820_strings_signatures_converters import get_hash_signature
+from .._010_basic_portals import PortalAwareClass
+from .._010_basic_portals.portal_aware_class import (
     _noncurrent_portals, find_portal_to_use)
 
-from src.pythagoras._010_basic_portals.basic_portal_class import (
+from .._010_basic_portals.basic_portal_class import (
     _describe_persistent_characteristic
     , _describe_runtime_characteristic)
-from src.pythagoras._020_ordinary_code_portals import (
+from .._020_ordinary_code_portals import (
     OrdinaryCodePortal, OrdinaryFn)
-from src.pythagoras._800_persidict_extensions.first_entry_dict import FirstEntryDict
+from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
 
 TOTAL_VALUES_TXT = "Values, total"
 PROBABILITY_OF_CHECKS_TXT = "Probability of checks"
