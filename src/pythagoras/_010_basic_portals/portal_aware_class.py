@@ -19,13 +19,19 @@ class PortalAwareMetaclass(ABCMeta):
 class PortalAwareClass(metaclass = PortalAwareMetaclass):
     """A base class for objects that need to access a portal.
 
-    The class enables functionality for storing and restoring its objects.
-    When a portal-aware object is pickled, the portal data is not saved,
+    The class enables functionality for saving and loading its objects.
+    When a portal-aware object is saved (pickled), the portal data is not saved,
     and the object is pickled as if it were a regular object.
     After the object is unpickled, the portal is restored to the current portal.
+
     The "current" portal is the innermost portal
     in the stack of portal "with" statements. It means that
     a portal-aware object can only be unpickled from within a portal context.
+
+    A portal-aware object accepts a portal as an input parameter
+    for its constructor. It also supports late portal binding: it
+    can be created with `portal=None`, and its portal will be set later
+    to the current portal.
     """
 
     _portal: BasicPortal|None

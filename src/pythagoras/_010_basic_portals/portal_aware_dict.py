@@ -6,7 +6,7 @@ from persidict import PersiDict
 
 from persidict.persi_dict import PersiDictKey
 
-from src.pythagoras import BasicPortal, PortalAwareClass
+from .. import BasicPortal, PortalAwareClass
 
 
 class PortalAwareDict(PersiDict):
