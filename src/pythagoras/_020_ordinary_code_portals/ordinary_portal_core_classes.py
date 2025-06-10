@@ -94,6 +94,7 @@ class OrdinaryFn(PortalAwareClass):
                  ):
         PortalAwareClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
+            #TODO: check this logic
             self.__setstate__(fn.__getstate__())
         else:
             assert callable(fn) or isinstance(fn, str)

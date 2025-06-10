@@ -31,8 +31,8 @@ class DataPortal(OrdinaryCodePortal):
 
     If the current portal does not contain a specific value,
     referenced by a hash_address, but this value can be retrieved
-    from another portal, the value will be automatically copied
-    to the current portal.
+    from another portal known to the program,
+    the value will be automatically copied to the current portal.
 
     A portal can serve as a context manager, enabling the use of the
     'with' statement to support portal-aware code blocks. If some code is

@@ -16,13 +16,14 @@ A ValueAddr consists of 2 strings: a prefix, and a hash.
 A prefix contains human-readable information about an object's type.
 A hash string contains the object's hash signature.
 
-Typically, a DataPortal is implemented as a shared directory on a file system,
-or as a shared bucket in a cloud storage. In this case, a ValueAddr becomes
-a part of file path or a URL (e.g. a hash serves as a filename,
+Typically, a DataPortal is implemented as
+a shared directory on a file system (e.g. Amazon EFS),
+or as a shared bucket in a cloud storage (e.g. Amazon S3).
+In this case, a ValueAddr becomes a part of file path
+or a URL (e.g. a hash serves as a filename,
 and a prefix is a folder name).
 
-DataPortal is a subclass of LoggingCodePortal, which means it can
-persistently record exceptions and events.
+DataPortal is a subclass of OrdinaryCodePortal.
 """
 
 
