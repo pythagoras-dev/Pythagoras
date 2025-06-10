@@ -11,6 +11,11 @@ hash_type: str = "sha256"
 max_signature_length: int = 22
 
 def get_base16_hash_signature(x:Any) -> str:
+    """Return base16 hash signature of an object.
+
+    Uses joblib's Hasher (or NumpyHasher). It uses Pickle for serialization,
+    except for NumPy arrays, which use optimized custom routines.
+    """
     if 'numpy' in sys.modules:
         hasher = joblib.hashing.NumpyHasher(hash_name=hash_type)
     else:
