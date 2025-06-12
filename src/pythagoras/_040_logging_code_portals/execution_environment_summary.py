@@ -38,12 +38,12 @@ def build_execution_environment_summary()-> Dict:
 
     return execution_environment_summary
 
-def make_unique_name(desired_name:str, existing_names) -> str:
+def make_unique_name(suggested_name:str, existing_names) -> str:
     """Make a name unique by adding a random suffix to it."""
-    candidate = desired_name
+    candidate = suggested_name
     entropy_infuser = BasicPortal.entropy_infuser
     while candidate in existing_names:
-        candidate = desired_name + "_"
+        candidate = suggested_name + "_"
         random_number = entropy_infuser.randint(1,10_000_000_000)
         candidate += str(random_number)
     return candidate
@@ -52,11 +52,11 @@ def add_execution_environment_summary(*args, **kwargs):
     """Add execution environment summary to kwargs. """
     context_param_name = "execution_environment_summary"
     context_param_name = make_unique_name(
-        desired_name=context_param_name, existing_names=kwargs)
+        suggested_name=context_param_name, existing_names=kwargs)
     kwargs[context_param_name] = build_execution_environment_summary()
     if len(args):
         message_param_name = "message_list"
         message_param_name = make_unique_name(
-            desired_name=message_param_name, existing_names=kwargs)
+            suggested_name=message_param_name, existing_names=kwargs)
         kwargs[message_param_name] = args
     return kwargs

@@ -173,7 +173,7 @@ class SwarmingPortal(PureCodePortal):
             delay = self.entropy_infuser.uniform(min_delay, max_delay)
             sleep(delay)
 
-parameterizable.register_parameterizable_class(SwarmingPortal)
+parameterizable.register_parameterizable_class(SwarmingPortal) #TODO: is it needed?
 
 def _background_worker(**portal_init_params):
     """Background worker that keeps processing random execution requests."""

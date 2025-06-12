@@ -453,7 +453,7 @@ class PureFnExecutionResultAddr(HashAddr):
         Returns False if the result is already available, or if some other
         process is currently working on it. Otherwise, returns True.
         """
-        DEFAULT_EXECUTION_TIME = 10
+        DEFAULT_EXECUTION_TIME = 10 #TODO: move to portal config
         MAX_EXECUTION_ATTEMPTS = 5
         # TODO: these should not be constants
         if self.ready:
