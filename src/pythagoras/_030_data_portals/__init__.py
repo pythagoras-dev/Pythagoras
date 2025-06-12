@@ -6,7 +6,7 @@ DataPortal and ValueAddr.
 A DataPortal is a container for storing and retrieving immutable values.
 In distributed applications, multiple application sessions / processes
 can access the same DataPortal, which enables them to interact
-by passing values through the portal.
+via passing values through the portal.
 
 A ValueAddr is a unique identifier for an immutable value.
 Two objects with exactly the same type and value will always have
@@ -27,5 +27,7 @@ DataPortal is a subclass of OrdinaryCodePortal.
 """
 
 
-from .data_portal_core_classes import DataPortal, HashAddr, ValueAddr, StorableFn
+from .data_portal_core_classes import (
+    DataPortal, HashAddr, ValueAddr, StorableFn)
+from .storable_decorator import storable
 

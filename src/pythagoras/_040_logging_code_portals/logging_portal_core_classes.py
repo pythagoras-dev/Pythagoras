@@ -522,13 +522,13 @@ class LoggingFnExecutionFrame(PortalAwareClass):
         LoggingCodePortal.call_stack.pop()
 
 
-class NeedsRandomization(str):
-    """A string that needs to be randomized"""
-    pass
-
-class AlreadyRandomized(str):
-    """A string that has already been randomized"""
-    pass
+# class NeedsRandomization(str):
+#     """A string that needs to be randomized"""
+#     pass
+#
+# class AlreadyRandomized(str):
+#     """A string that has already been randomized"""
+#     pass
 
 
 

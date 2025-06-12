@@ -1,6 +1,7 @@
 from typing import Callable
 
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
+from .. import NotPicklableObject
 
 
 class ordinary:
@@ -17,6 +18,15 @@ class ordinary:
        assert portal is None or isinstance(portal, OrdinaryCodePortal)
        self._portal=portal
 
+
     def __call__(self,fn:Callable)->OrdinaryFn:
         wrapper = OrdinaryFn(fn, portal=self._portal)
         return wrapper
+
+
+    def __getstate__(self):
+        raise NotPicklableObject("Decorators cannot be pickled.")
+
+
+    def __setstate__(self, state):
+        raise NotPicklableObject("Decorators cannot be pickled.")
