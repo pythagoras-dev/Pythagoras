@@ -86,7 +86,7 @@ class BasicPortal(ParameterizableClass):
     _entered_portals_counters_stack: list = []
     entropy_infuser: random.Random = random.Random()
 
-    _root_dict: PersiDict | None
+    _root_dict: PersiDict
 
     def __init__(self, root_dict:PersiDict|str|None = None):
         ParameterizableClass.__init__(self)
@@ -192,10 +192,10 @@ class BasicPortal(ParameterizableClass):
 
 
     def __getstate__(self):
-        raise NotPicklableObject("PortalType objects cannot be pickled.")
+        raise NotPicklableObject("Portals cannot be pickled.")
 
 
     def __setstate__(self, state):
-        raise NotPicklableObject("PortalType objects cannot be pickled.")
+        raise NotPicklableObject("Portals cannot be pickled.")
 
 PortalType = TypeVar("PortalType")
