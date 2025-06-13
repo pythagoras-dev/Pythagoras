@@ -105,11 +105,14 @@ class LoggingFnCallSignature(PortalAwareClass):
     This is a supporting class for the LoggingFnExecutionResultAddr class, and
     Pythagoras' users should not need to interact with it directly.
     """
-    _fn: LoggingFn | None
-    _fn_name: str
+
+
     _fn_addr: ValueAddr
-    _packed_kwargs: PackedKwArgs | None
     _kwargs_addr: ValueAddr
+
+    _fn_name_cache: str | None
+    _fn_cache: LoggingFn | None
+    _packed_kwargs_cache: PackedKwArgs | None
 
     def __init__(self, fn:LoggingFn, arguments:dict):
         assert isinstance(fn, LoggingFn)
@@ -135,32 +138,39 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     def __getstate__(self):
         state = dict(
-            _fn_name=self._fn_name
-            , _fn_addr=self._fn_addr
+            _fn_addr=self._fn_addr
             , _kwargs_addr=self._kwargs_addr)
         return state
 
 
     def __setstate__(self, state):
-        self._fn_name = state["_fn_name"]
         self._fn_addr = state["_fn_addr"]
         self._kwargs_addr = state["_kwargs_addr"]
         self._packed_kwargs = self._kwargs_addr.get(expected_type=PackedKwArgs)
         self._fn = self.fn_addr.get(expected_type=LoggingFn)
 
 
+    def _invalidate_cache(self):
+        if hasattr(self, "_fn_cache"):
+            del self._fn_cache
+        if hasattr(self, "_fn_name_cache"):
+            del self._fn_name_cache
+        if hasattr(self, "_fn_name_cache"):
+            del self._packed_kwargs_cache
+
+
     @property
     def fn(self) -> LoggingFn:
-        if not hasattr(self, "_fn") or self._fn is None:
-            self._fn = self.fn_addr.get(expected_type=LoggingFn)
-        return self._fn
+        if not hasattr(self, "_fn_cache") or self._fn_cache is None:
+            self._fn_cache = self.fn_addr.get(expected_type=LoggingFn)
+        return self._fn_cache
 
 
     @property
     def fn_name(self) -> str:
-        if not hasattr(self, "_fn_name") or self._fn_name is None:
-            self._fn_name = self.fn.name
-        return self._fn_name
+        if not hasattr(self, "_fn_name_cache") or self._fn_name_cache is None:
+            self._fn_name_cache = self.fn.name
+        return self._fn_name_cache
 
 
     @property
@@ -175,11 +185,11 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     @property
     def packed_kwargs(self) -> PackedKwArgs:
-        if (not hasattr(self,"_packed_kwargs")
-                or self._packed_kwargs is None):
-            self._packed_kwargs = self._kwargs_addr.get(
+        if (not hasattr(self,"_packed_kwargs_cache")
+                or self._packed_kwargs_cache is None):
+            self._packed_kwargs_cache = self._kwargs_addr.get(
                 expected_type=PackedKwArgs)
-        return self._packed_kwargs
+        return self._packed_kwargs_cache
 
 
     @property
