@@ -61,7 +61,6 @@ class OrdinaryCodePortal(BasicPortal):
         return result
 
 
-
 class OrdinaryFn(PortalAwareClass):
     """A wrapper around an ordinary function that allows calling it.
 
@@ -80,13 +79,13 @@ class OrdinaryFn(PortalAwareClass):
     """
     _source_code:str
 
-    _name: str
-    _compiled_code:Any
-    _hash_signature:str
-    _file_name:str
-    _kwargs_var_name:str
-    _result_var_name:str
-    _tmp_fn_name:str
+    _name_cache: str
+    _compiled_code_cache:Any
+    _hash_signature_cache:str
+    _virtual_file_name_cache:str
+    _kwargs_var_name_cache:str
+    _result_var_name_cache:str
+    _tmp_fn_name_cache:str
 
     def __init__(self
                  , fn: Callable | str
@@ -108,77 +107,78 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def name(self) -> str:
-        if not hasattr(self, "_name") or self._name is None:
-            self._name = get_function_name_from_source(self.source_code)
-        return self._name
+        if not hasattr(self, "_name_cache") or self._name_cache is None:
+            self._name_cache = get_function_name_from_source(self.source_code)
+        return self._name_cache
 
 
     @property
     def hash_signature(self):
-        if not hasattr(self, "_hash_signature") or self._hash_signature is None:
-            self._hash_signature = get_hash_signature(self)
-        return self._hash_signature
+        if not hasattr(self, "_hash_signature_cache") or self._hash_signature_cache is None:
+            self._hash_signature_cache = get_hash_signature(self)
+        return self._hash_signature_cache
 
 
     @property
-    def file_name(self):
-        if not hasattr(self, "_file_name") or self._file_name is None:
-            self._file_name = self.name + "_" + self.hash_signature + ".py"
-        return self._file_name
+    def _virtual_file_name(self):
+        if not hasattr(self, "_virtual_file_name_cache") or self._virtual_file_name_cache is None:
+            self._virtual_file_name_cache = self.name + "_" + self.hash_signature + ".py"
+        return self._virtual_file_name_cache
 
 
     @property
-    def kwargs_var_name(self):
-        if not hasattr(self, "_kwargs_var_name") or self._kwargs_var_name is None:
-            self._kwargs_var_name = "kwargs_" + self.name
-            self._kwargs_var_name += "_" + self.hash_signature
-        return self._kwargs_var_name
+    def _kwargs_var_name(self):
+        if not hasattr(self, "_kwargs_var_name_cache") or self._kwargs_var_name_cache is None:
+            self._kwargs_var_name_cache = "kwargs_" + self.name
+            self._kwargs_var_name_cache += "_" + self.hash_signature
+        return self._kwargs_var_name_cache
 
 
     @property
-    def result_var_name(self):
-        if not hasattr(self, "_result_var_name") or self._result_var_name is None:
-            self._result_var_name = "result_" + self.name
-            self._result_var_name += "_" + self.hash_signature
-        return self._result_var_name
+    def _result_var_name(self):
+        if not hasattr(self, "_result_var_name_cache") or self._result_var_name_cache is None:
+            self._result_var_name_cache = "result_" + self.name
+            self._result_var_name_cache += "_" + self.hash_signature
+        return self._result_var_name_cache
 
 
     @property
-    def tmp_fn_name(self):
-        if not hasattr(self, "_tmp_fn_name") or self._tmp_fn_name is None:
-            self._tmp_fn_name = "func_" + self.name
-            self._tmp_fn_name += "_" + self.hash_signature
-        return self._tmp_fn_name
+    def _tmp_fn_name(self):
+        if not hasattr(self, "_tmp_fn_name_cache") or self._tmp_fn_name_cache is None:
+            self._tmp_fn_name_cache = "func_" + self.name
+            self._tmp_fn_name_cache += "_" + self.hash_signature
+        return self._tmp_fn_name_cache
 
 
     @property
-    def compiled_code(self):
-        if not hasattr(self, "_compiled_code") or self._compiled_code is None:
+    def _compiled_code(self):
+        if not hasattr(self, "_compiled_code_cache") or (
+                self._compiled_code_cache is None):
             source_to_execute = self.source_code
             source_to_execute = source_to_execute.replace(
-                " " + self.name + "(", " " + self.tmp_fn_name + "(", 1)
-            source_to_execute += f"\n\n{self.result_var_name} = "
-            source_to_execute += f"{self.tmp_fn_name}(**{self.kwargs_var_name})"
-            self._compiled_code = self._compile(
-                source_to_execute, self.file_name, "exec")
-        return self._compiled_code
+                " " + self.name + "(", " " + self._tmp_fn_name + "(", 1)
+            source_to_execute += f"\n\n{self._result_var_name} = "
+            source_to_execute += f"{self._tmp_fn_name}(**{self._kwargs_var_name})"
+            self._compiled_code_cache = self._compile(
+                source_to_execute, self._virtual_file_name, "exec")
+        return self._compiled_code_cache
 
 
     def _invalidate_cache(self):
-        if hasattr(self, "_compiled_code"):
-            del self._compiled_code
-        if hasattr(self, "_tmp_fn_name"):
-            del self._tmp_fn_name
-        if hasattr(self, "_result_var_name"):
-            del self._result_var_name
-        if hasattr(self, "_kwargs_var_name"):
-            del self._kwargs_var_name
-        if hasattr(self, "_file_name"):
-            del self._file_name
-        if hasattr(self, "_hash_signature"):
-            del self._hash_signature
-        if hasattr(self, "_name"):
-            del self._name
+        if hasattr(self, "_compiled_code_cache"):
+            del self._compiled_code_cache
+        if hasattr(self, "_tmp_fn_name_cache"):
+            del self._tmp_fn_name_cache
+        if hasattr(self, "_result_var_name_cache"):
+            del self._result_var_name_cache
+        if hasattr(self, "_kwargs_var_name_cache"):
+            del self._kwargs_var_name_cache
+        if hasattr(self, "_virtual_file_name_cache"):
+            del self._virtual_file_name_cache
+        if hasattr(self, "_hash_signature_cache"):
+            del self._hash_signature_cache
+        if hasattr(self, "_name_cache"):
+            del self._name_cache
         super()._invalidate_cache()
 
 
@@ -218,9 +218,9 @@ class OrdinaryFn(PortalAwareClass):
     def execute(self,**kwargs):
         with self.finally_bound_portal:
             names_dict = self._available_names()
-            names_dict[self.kwargs_var_name] = kwargs
-            exec(self.compiled_code, names_dict, names_dict)
-            result = names_dict[self.result_var_name]
+            names_dict[self._kwargs_var_name] = kwargs
+            exec(self._compiled_code, names_dict, names_dict)
+            result = names_dict[self._result_var_name]
             return result
 
 
