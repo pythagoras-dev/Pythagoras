@@ -11,3 +11,10 @@ PERF: Performance improvement
 TYP: Type annotations
 CLN: Code cleanup
 ```
+
+While creating or calling functions, we prefer to 
+use named (keyword) arguments / parameters over positional ones. 
+This improves code readability and reduces the risk of errors. 
+This also unifies function usage across the code, because 
+for some specific types of functions (e.g. autonomous and pure functions) 
+positional arguments are not allowed.
