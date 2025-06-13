@@ -12,13 +12,13 @@ from persidict import PersiDict
 from .._010_basic_portals.portal_aware_class import _noncurrent_portals
 from .._010_basic_portals.portal_aware_dict import PortalAwareDict
 from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
-from .._010_basic_portals.basic_portal_class import _describe_persistent_characteristic
+from .._010_basic_portals.basic_portal_class import (
+    _describe_persistent_characteristic)
 from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
-from .._040_logging_code_portals.logging_portal_core_classes import \
-    LoggingFnCallSignature
+from .._040_logging_code_portals.logging_portal_core_classes import (
+    LoggingFnCallSignature)
 
-from .._030_data_portals import HashAddr
-from .._030_data_portals import ValueAddr
+from .._030_data_portals import HashAddr, ValueAddr
 
 from .._060_autonomous_code_portals.autonomous_portal_core_classes import (
     AutonomousFn)
@@ -229,36 +229,38 @@ class PureFnExecutionResultAddr(HashAddr):
     function execution, such as environmental contexts of the execution attempts,
     outputs printed, exceptions thrown and events emitted.
     """
-    _fn: PureFn | None
-    _call_signature: LoggingFnCallSignature | None
-    _kwargs: KwArgs | None
-    _result: Any | None
-    _ready: bool | None
+    _fn_cache: PureFn | None
+    _call_signature_cache: LoggingFnCallSignature | None
+    _kwargs_cache: KwArgs | None
+
+    _result_cache: Any | None
+    _ready_cache: bool | None
 
     def __init__(self, fn: PureFn, arguments:dict[str, Any]):
         assert isinstance(fn, PureFn)
         with fn.finally_bound_portal as portal:
-            self._kwargs = KwArgs(**arguments)
-            signature = LoggingFnCallSignature(fn, self._kwargs)
-            self._call_signature = signature
+            self._kwargs_cache = KwArgs(**arguments)
+            signature = LoggingFnCallSignature(fn, self._kwargs_cache)
+            self._call_signature_cache = signature
             tmp = ValueAddr(signature, portal)
             new_prefix = fn.name +"_result_addr"
             new_hash_signature = tmp.hash_signature
             super().__init__(new_prefix, new_hash_signature, portal=fn.portal)
-            self._fn = fn
+            self._fn_cache = fn
 
 
     def _invalidate_cache(self):
-        if hasattr(self, "_ready"):
-            del self._ready
-        if hasattr(self, "_fn"):
-            del self._fn
-        if hasattr(self, "_result"):
-            del self._result
-        if hasattr(self, "_kwargs"):
-            del self._kwargs
-        if hasattr(self, "_call_signature"):
-            del self._call_signature
+        if hasattr(self, "_ready_cache"):
+            del self._ready_cache
+        if hasattr(self, "_result_cache"):
+            del self._result_cache
+
+        if hasattr(self, "_fn_cache"):
+            del self._fn_cache
+        if hasattr(self, "_kwargs_cache"):
+            del self._kwargs_cache
+        if hasattr(self, "_call_signature_cache"):
+            del self._call_signature_cache
 
 
 
@@ -276,28 +278,28 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def call_signature(self) -> LoggingFnCallSignature:
-        if not hasattr(self, "_call_signature") or self._call_signature is None:
+        if not hasattr(self, "_call_signature_cache") or self._call_signature_cache is None:
             with self.finally_bound_portal:
-                self._call_signature = self.get_ValueAddr().get()
-        return self._call_signature
+                self._call_signature_cache = self.get_ValueAddr().get()
+        return self._call_signature_cache
 
 
     @property
     def fn(self) -> PureFn:
         """Return the function object referenced by the address."""
-        if not hasattr(self, "_fn") or self._fn is None:
+        if not hasattr(self, "_fn_cache") or self._fn_cache is None:
             with self.finally_bound_portal:
-                self._fn = self.call_signature.fn
-        return self._fn
+                self._fn_cache = self.call_signature.fn
+        return self._fn_cache
 
 
     @property
     def kwargs(self) -> KwArgs:
         """Unpacked arguments of the function call, referenced by the address."""
-        if not hasattr(self, "_kwargs") or self._kwargs is None:
+        if not hasattr(self, "_kwargs_cache") or self._kwargs_cache is None:
             with self.finally_bound_portal:
-                self._kwargs = self.call_signature.kwargs_addr.get().unpack()
-        return self._kwargs
+                self._kwargs_cache = self.call_signature.kwargs_addr.get().unpack()
+        return self._kwargs_cache
 
 
     def __setstate__(self, state):
@@ -313,12 +315,12 @@ class PureFnExecutionResultAddr(HashAddr):
     @property
     def _ready_in_current_portal(self):
         """Indicates if the result of the function call is available."""
-        if hasattr(self, "_ready"):
+        if hasattr(self, "_ready_cache"):
             return True
         with self.finally_bound_portal as portal:
             result = (self in portal.execution_results)
             if result:
-                self._ready = True
+                self._ready_cache = True
             return result
 
     @property
@@ -336,30 +338,30 @@ class PureFnExecutionResultAddr(HashAddr):
                         # TODO: refactor ( implement self._function_ready ? )
                         # TODO: ( implement self._kwargs_ready ? )
 
-                    self._ready = True
+                    self._ready_cache = True
                     return True
         return False
 
     @property
     def ready(self) -> bool:
-        if hasattr(self, "_ready"):
-            assert self._ready
+        if hasattr(self, "_ready_cache"):
+            assert self._ready_cache
             return True
         if self._ready_in_current_portal:
-            self._ready = True
+            self._ready_cache = True
             return True
         if self._ready_in_noncurrent_portals:
-            self._ready = True
+            self._ready_cache = True
             return True
         return False
 
     def execute(self):
         """Execute the function and store the result in the portal."""
-        if hasattr(self, "_result"):
-            return self._result
+        if hasattr(self, "_result_cache"):
+            return self._result_cache
         with self.finally_bound_portal:
-            self._result = self.fn.execute(**self.kwargs)
-            return self._result
+            self._result_cache = self.fn.execute(**self.kwargs)
+            return self._result_cache
 
 
     def request_execution(self):
@@ -397,15 +399,15 @@ class PureFnExecutionResultAddr(HashAddr):
         available, or until the timeout is exceeded.
         """
         assert timeout is None or timeout >= 0
-        if hasattr(self, "_result"):
-            return self._result
+        if hasattr(self, "_result_cache"):
+            return self._result_cache
 
         with self.finally_bound_portal as portal:
 
             if self.ready:
                 result_addr = portal.execution_results[self]
-                self._result = portal.value_store[result_addr]
-                return self._result
+                self._result_cache = portal.value_store[result_addr]
+                return self._result_cache
 
             self.request_execution()
 
@@ -419,9 +421,9 @@ class PureFnExecutionResultAddr(HashAddr):
             while True:
                 if self.ready:
                     result_addr = portal.execution_results[self]
-                    self._result = portal.value_store[result_addr]
+                    self._result_cache = portal.value_store[result_addr]
                     self.drop_execution_request()
-                    return self._result
+                    return self._result_cache
                 else:
                     time.sleep(backoff_period)
                     backoff_period *= 2.0

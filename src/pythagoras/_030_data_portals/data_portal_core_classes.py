@@ -258,8 +258,8 @@ class ValueAddr(HashAddr):
     It makes it easier for humans to interpret an address,
     and further decreases collision risk.
     """
-    _ready: bool
-    _value: Any
+    _ready_cache: bool
+    _value_cache: Any
 
     def __init__(
             self
@@ -279,7 +279,7 @@ class ValueAddr(HashAddr):
                     not self in portal.value_store):
                 data = data_value_addr.get()
                 portal.value_store[self] = data
-                self._ready = True
+                self._ready_cache = True
             ##################### REWRITE !!!! #####################
             return
 
@@ -292,16 +292,16 @@ class ValueAddr(HashAddr):
         super().__init__(prefix, hash_signature, portal=portal)
 
         portal.value_store[self] = data
-        self._value = data
-        self._ready = True
+        self._value_cache = data
+        self._ready_cache = True
 
 
     def _invalidate_cache(self):
         super()._invalidate_cache()
-        if hasattr(self, "_value"):
-            del self._value
-        if hasattr(self, "_ready"):
-            del self._ready
+        if hasattr(self, "_value_cache"):
+            del self._value_cache
+        if hasattr(self, "_ready_cache"):
+            del self._ready_cache
 
 
     def get_ValueAddr(self):
@@ -316,12 +316,12 @@ class ValueAddr(HashAddr):
     @property
     def _ready_in_current_portal(self) -> bool:
         with self.finally_bound_portal:
-            if not hasattr(self, "_ready"):
+            if not hasattr(self, "_ready_cache"):
                 result = self in self.portal.value_store
                 if result:
-                    self._ready = True
+                    self._ready_cache = True
                 return result
-            assert self._ready
+            assert self._ready_cache is True
             return True
 
 
@@ -333,7 +333,7 @@ class ValueAddr(HashAddr):
                     data = portal.value_store[self]
                     with self.portal:
                         self.portal.value_store[self] = data
-                    self._ready = True
+                    self._ready_cache = True
                     return True
         return False
 
@@ -341,14 +341,14 @@ class ValueAddr(HashAddr):
     @property
     def ready(self) -> bool:
         """Check if address points to a value that is ready to be retrieved."""
-        if hasattr(self, "_ready"):
-            assert self._ready
+        if hasattr(self, "_ready_cache"):
+            assert self._ready_cache
             return True
         if self._ready_in_current_portal:
-            self._ready = True
+            self._ready_cache = True
             return True
         if self._ready_in_noncurrent_portals:
-            self._ready = True
+            self._ready_cache = True
             return True
         return False
 
@@ -356,12 +356,12 @@ class ValueAddr(HashAddr):
     def _get_from_current_portal(self, timeout:Optional[int] = None) -> Any:
         """Retrieve value, referenced by the address, from the current portal"""
 
-        if hasattr(self, "_value"):
-            return self._value
+        if hasattr(self, "_value_cache"):
+            return self._value_cache
 
         with self.finally_bound_portal:
             result = self.portal.value_store[self]
-            self._value = result
+            self._value_cache = result
             return result
 
 
@@ -373,7 +373,7 @@ class ValueAddr(HashAddr):
                     result = portal.value_store[self]
                 with self.portal:
                     self.portal.value_store[self] = result
-                self._value = result
+                self._value_cache = result
                 return result
             except:
                 continue
@@ -386,8 +386,8 @@ class ValueAddr(HashAddr):
             ) -> T:
         """Retrieve value, referenced by the address from any available portal"""
 
-        if hasattr(self, "_value"):
-            result = self._value
+        if hasattr(self, "_value_cache"):
+            result = self._value_cache
         else:
             try:
                 result = self._get_from_current_portal(timeout)
