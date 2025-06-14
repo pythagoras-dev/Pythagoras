@@ -44,7 +44,8 @@ class PureCodePortal(ProtectedCodePortal):
             , p_consistency_checks: float | None = None
             , excessive_logging: bool = False
             ):
-        super().__init__(root_dict=root_dict
+        ProtectedCodePortal.__init__(self
+            , root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 

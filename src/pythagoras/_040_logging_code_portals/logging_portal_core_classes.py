@@ -41,10 +41,10 @@ class LoggingFn(StorableFn):
             ):
         if isinstance(fn,LoggingFn):
             assert excessive_logging is None
-            super().__init__(fn=fn, portal=portal)
+            StorableFn.__init__(self, fn=fn, portal=portal)
             assert hasattr(self,"_excessive_logging")
         else:
-            super().__init__(fn=fn, portal=portal)
+            StorableFn.__init__(self, fn=fn, portal=portal)
             self._excessive_logging = excessive_logging
 
 
