@@ -156,9 +156,11 @@ class HashAddr(SafeStrTuple, PortalAwareClass):
     information about the object's structure / value.
     """
 
-    def __init__(self, *args, portal:Optional[DataPortal]=None,**kwargs):
+    def __init__(self, prefix:str
+                 , hash_signature:str
+                 , portal:Optional[DataPortal]=None):
         PortalAwareClass.__init__(self, portal=portal)
-        SafeStrTuple.__init__(self,*args, **kwargs)
+        SafeStrTuple.__init__(self,prefix,hash_signature)
 
 
     @property
@@ -272,7 +274,10 @@ class ValueAddr(HashAddr):
             data_value_addr = data.get_ValueAddr()
             prefix = data_value_addr.prefix
             hash_signature = data_value_addr.hash_signature
-            super().__init__(prefix, hash_signature, portal=portal)
+            HashAddr.__init__(self
+                , prefix=prefix
+                , hash_signature=hash_signature
+                , portal=portal)
             ##################### REWRITE !!!! #####################
             if portal != data_value_addr.portal and (
                     data_value_addr.portal is not None) and (
@@ -289,7 +294,10 @@ class ValueAddr(HashAddr):
 
         prefix = self._build_prefix(data)
         hash_signature = self._build_hash_signature(data)
-        super().__init__(prefix, hash_signature, portal=portal)
+        HashAddr.__init__(self
+            , prefix=prefix
+            , hash_signature=hash_signature
+            , portal=portal)
 
         portal.value_store[self] = data
         self._value_cache = data
