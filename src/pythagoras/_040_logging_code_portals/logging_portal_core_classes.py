@@ -119,15 +119,18 @@ class LoggingFnCallSignature(PortalAwareClass):
         isinstance(arguments, dict)
         arguments = KwArgs(**arguments)
         with fn.finally_bound_portal as portal:
-            self._fn = fn
+            self._fn_cache = fn
             self._fn_addr = fn.addr
-            self._packed_kwargs = arguments.pack(portal)
-            self._kwargs_addr = ValueAddr(self._packed_kwargs, portal=portal)
+            self._packed_kwargs_cache = arguments.pack(portal)
+            self._kwargs_addr = ValueAddr(
+                self._packed_kwargs_cache, portal=portal)
             # PortalAwareClass.__init__(self, portal=portal)
 
 
     @property
     def _portal(self):
+        # NB: _portal is a regular attribute in a base class, not a property
+        # this might lead to surprising bugs while refactoring
         return self.fn.portal
 
 
@@ -144,10 +147,9 @@ class LoggingFnCallSignature(PortalAwareClass):
 
 
     def __setstate__(self, state):
+        self._invalidate_cache()
         self._fn_addr = state["_fn_addr"]
         self._kwargs_addr = state["_kwargs_addr"]
-        self._packed_kwargs = self._kwargs_addr.get(expected_type=PackedKwArgs)
-        self._fn = self.fn_addr.get(expected_type=LoggingFn)
 
 
     def _invalidate_cache(self):
@@ -155,7 +157,7 @@ class LoggingFnCallSignature(PortalAwareClass):
             del self._fn_cache
         if hasattr(self, "_fn_name_cache"):
             del self._fn_name_cache
-        if hasattr(self, "_fn_name_cache"):
+        if hasattr(self, "_packed_kwargs_cache"):
             del self._packed_kwargs_cache
 
 
