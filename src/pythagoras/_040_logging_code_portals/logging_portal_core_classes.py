@@ -343,14 +343,21 @@ class LoggingFnExecutionRecord(PortalAwareClass):
         self.session_id = session_id
 
 
-    def __getstate__(self):
-        assert False
-
     def __setstate__(self, state):
-        assert False
+        def __getstate__(self):
+            raise NotImplementedError(
+                "LoggingFnExecutionRecord objects can't be pickled/unpickled.")
+
+
+    def __getstate__(self):
+        raise NotImplementedError(
+            "LoggingFnExecutionRecord objects can't be pickled/unpickled.")
+
 
     @property
     def _portal(self):
+        # NB: _portal is a regular attribute in a base class, not a property
+        # this might lead to surprising bugs while refactoring
         return self.call_signature.portal
 
 
@@ -440,7 +447,10 @@ class LoggingFnExecutionFrame(PortalAwareClass):
 
     @property
     def _portal(self) -> LoggingCodePortal:
+        # NB: _portal is a regular attribute in a base class, not a property
+        # this might lead to surprising bugs while refactoring
         return self.fn.portal
+
 
     @_portal.setter
     def _portal(self,value):
