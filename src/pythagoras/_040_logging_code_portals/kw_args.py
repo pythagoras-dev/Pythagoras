@@ -19,7 +19,7 @@ class KwArgs(dict):
 
 
     def __init__(self, *args, **kargs):
-        super().__init__()
+        dict.__init__(self)
         tmp_dict = dict(*args, **kargs)
         tmp_dict = sort_dict_by_keys(tmp_dict)
         self.update(tmp_dict)

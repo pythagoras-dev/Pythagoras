@@ -30,10 +30,10 @@ class PortalAwareDict(PersiDict):
         assert isinstance(portal, BasicPortal)
         self._portal = portal
 
-        super().__init__(
-            base_class_for_values=wrapped_dict.base_class_for_values
-            ,immutable_items=wrapped_dict.immutable_items
-            ,digest_len=wrapped_dict.digest_len)
+        PersiDict.__init__(self
+            , base_class_for_values=wrapped_dict.base_class_for_values
+            , immutable_items=wrapped_dict.immutable_items
+            , digest_len=wrapped_dict.digest_len)
 
 
     def __getitem__(self, key: PersiDictKey) -> Any:

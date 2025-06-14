@@ -48,7 +48,7 @@ class DataPortal(OrdinaryCodePortal):
             , root_dict:PersiDict|str|None = None
             , p_consistency_checks: float | None = None
             ):
-        super().__init__(root_dict = root_dict)
+        OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
 
         assert p_consistency_checks is None or 0 <= p_consistency_checks <= 1

@@ -26,10 +26,10 @@ class FirstEntryDict(PersiDict):
         assert isinstance(wrapped_dict, PersiDict)
         assert wrapped_dict.immutable_items == True
         assert p_consistency_checks is None or (0 <= p_consistency_checks <= 1)
-        super().__init__(
-            base_class_for_values=wrapped_dict.base_class_for_values
-            ,immutable_items=True
-            ,digest_len=wrapped_dict.digest_len)
+        PersiDict.__init__(self
+            , base_class_for_values=wrapped_dict.base_class_for_values
+            , immutable_items=True
+            , digest_len=wrapped_dict.digest_len)
         self._wrapped_dict = wrapped_dict
         self._p_consistency_checks = p_consistency_checks
         self._successful_checks_count = 0
