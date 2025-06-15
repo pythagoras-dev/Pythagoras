@@ -101,6 +101,11 @@ class BasicPortal(ParameterizableClass):
         BasicPortal._all_portals[id(self)] = self
 
     @property
+    def base_url(self) -> str:
+        """Get the base URL of the portal"""
+        return self._root_dict.base_url
+
+    @property
     def is_current(self) -> bool:
         """Check if the portal is the current one"""
         return (len(BasicPortal._entered_portals_stack) > 0
