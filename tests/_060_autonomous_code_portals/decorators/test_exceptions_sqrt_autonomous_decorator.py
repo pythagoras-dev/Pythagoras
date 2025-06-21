@@ -25,4 +25,4 @@ def test_sqrt(tmpdir):
             with pytest.raises(ValueError):
                 my_sqrt(x=-i)
 
-        assert len(t.portal.crash_history) == n-1
+        assert len(t.portal._crash_history) == n-1

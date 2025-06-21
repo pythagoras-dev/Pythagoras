@@ -12,7 +12,7 @@ def test_aut_factorial(tmpdir):
     # tmpdir = 20*"Q"+str(int(time.time()))
     try:
         with _PortalTester(AutonomousCodePortal, root_dict=tmpdir) as t:
-            crash_history = t.portal.crash_history
+            crash_history = t.portal._crash_history
             global factorial
             factorial = autonomous()(factorial)
             assert factorial(n=5) == 120

@@ -12,13 +12,13 @@ def test_load_save_two_versions_autonomous(tmpdir,p):
             , root_dict=tmpdir
             , p_consistency_checks=p
             ) as t:
-        assert len(t.portal.value_store) == 0
+        assert len(t.portal._value_store) == 0
         def f(a, b):
             return a + b
 
         f_1 = AutonomousFn(f)
-        f_1_address = ValueAddr(f_1, portal = t.portal)
-        assert len(t.portal.value_store) == 1
+        f_1_address = ValueAddr(f_1)
+        assert len(t.portal._value_store) == 1
         f_1_address._invalidate_cache()
 
     with _PortalTester(
@@ -31,8 +31,8 @@ def test_load_save_two_versions_autonomous(tmpdir,p):
             return a * b * 2
 
         f_2 = AutonomousFn(f)
-        f_2_address = ValueAddr(f_2, portal = t.portal)
-        assert len(t.portal.value_store) == 2
+        f_2_address = ValueAddr(f_2)
+        assert len(t.portal._value_store) == 2
         f_2_address._invalidate_cache()
         f_2_address._invalidate_cache()
 
@@ -42,10 +42,8 @@ def test_load_save_two_versions_autonomous(tmpdir,p):
             , p_consistency_checks=p
             ) as t:
 
-        f_1_address._portal = t.portal
-        f_2_address._portal = t.portal
 
-        assert len(t.portal.value_store) == 2
+        assert len(t.portal._value_store) == 2
 
         f_a = f_1_address.get()
         assert f_a(a=1, b=2) == 3

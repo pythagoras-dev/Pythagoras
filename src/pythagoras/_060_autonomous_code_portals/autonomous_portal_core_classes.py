@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import builtins
-# from sys import Exception
 from typing import Callable, Any
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
@@ -86,7 +85,7 @@ class AutonomousFn(SafeFn):
 
 
     def execute(self, **kwargs) -> Any:
-        with self.finally_bound_portal:
+        with self.portal:
             overlapping_keys = set(kwargs.keys()) & set(self._fixed_kwargs.keys())
             assert len(overlapping_keys) == 0
             kwargs.update(self._fixed_kwargs)
