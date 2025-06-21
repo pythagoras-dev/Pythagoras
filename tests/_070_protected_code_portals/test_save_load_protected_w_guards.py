@@ -1,7 +1,7 @@
 import pytest
 
 from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._010_basic_portals.portal_aware_class import _most_recently_entered_portal
+from src.pythagoras._010_basic_portals.portal_aware_class_OLD import _most_recently_entered_portal
 from src.pythagoras._070_protected_code_portals import *
 
 def dummy_good_guard(packed_kwargs, fn_addr):

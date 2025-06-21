@@ -1,12 +1,8 @@
 from __future__ import annotations
 
-from .._010_basic_portals.portal_aware_class import find_portal_to_use
-from .._010_basic_portals.exceptions import NestedKwArgsError
-from .._030_data_portals.data_portal_core_classes import DataPortal, ValueAddr
+from .._010_basic_portals import active_portal
+from .._030_data_portals import DataPortal, ValueAddr
 from .._840_work_with_collections.dict_sort import sort_dict_by_keys
-
-
-
 
 class KwArgs(dict):
     """ A class that encapsulates keyword arguments for a function call.
@@ -39,9 +35,9 @@ class KwArgs(dict):
     def __setitem__(self, key, value):
         """Overridden to ensure only string keys are allowed."""
         if not isinstance(key, str):
-            raise TypeError("Keys must be strings.")
+            raise KeyError("Keys must be strings in KwArgs.")
         if isinstance(value, KwArgs):
-            raise NestedKwArgsError("Nested KwArgs are not allowed.")
+            raise ValueError("Nested KwArgs are not allowed.")
         super().__setitem__(key, value)
 
 
@@ -63,14 +59,13 @@ class KwArgs(dict):
         return unpacked_copy
 
 
-    def pack(self, portal:DataPortal|None) -> PackedKwArgs:
+    def pack(self) -> PackedKwArgs:
         """ Replace values with their hash addresses."""
-        portal = find_portal_to_use(suggested_portal=portal
-            , expected_type=DataPortal)
+        portal = active_portal()
         packed_copy = dict()
         with portal:
             for k,v in self.items():
-                packed_copy[k] = ValueAddr(v, portal=portal)
+                packed_copy[k] = ValueAddr(v)
         packed_copy = PackedKwArgs(**packed_copy)
         return packed_copy
 

@@ -101,7 +101,7 @@ def test_basics_many_kwargs(tmpdir):
             assert "kwargs" in last_record.output
             assert "result" in last_record.output
 
-            assert len(t.portal.crash_history) == 0
+            assert len(t.portal._crash_history) == 0
 
 
 

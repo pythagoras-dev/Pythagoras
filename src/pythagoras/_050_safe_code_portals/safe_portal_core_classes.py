@@ -2,17 +2,18 @@ from __future__ import annotations
 
 from typing import Callable
 
-from persidict import PersiDict
+from parameterizable import register_parameterizable_class
+from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._040_logging_code_portals.logging_portal_core_classes import LoggingCodePortal, \
-    LoggingFn
+from .._040_logging_code_portals.logging_portal_core_classes import (
+    LoggingCodePortal, LoggingFn)
 
 
 class SafeCodePortal(LoggingCodePortal):
     def __init__(self
                  , root_dict: PersiDict|str|None = None
-                 , p_consistency_checks: float|None = None
-                 , excessive_logging: bool|None = None
+                 , p_consistency_checks: float|Joker = KEEP_CURRENT
+                 , excessive_logging: bool|Joker = KEEP_CURRENT
                  ):
         LoggingCodePortal.__init__(self
             , root_dict=root_dict
@@ -24,7 +25,7 @@ class SafeFn(LoggingFn):
     def __init__(self
                  , fn: Callable|str
                  , portal: LoggingCodePortal|None = None
-                 , excessive_logging: bool|None = None
+                 , excessive_logging: bool|Joker = KEEP_CURRENT
                  ):
         LoggingFn.__init__(self
             , fn = fn
@@ -43,6 +44,4 @@ class SafeFn(LoggingFn):
         super().__setstate__(state)
 
 
-    # @property
-    # def portal(self) -> SafeCodePortal:
-    #     return self._portal_typed(expected_type=SafeCodePortal)
+register_parameterizable_class(SafeCodePortal)

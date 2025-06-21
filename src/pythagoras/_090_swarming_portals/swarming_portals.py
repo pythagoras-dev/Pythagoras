@@ -6,11 +6,11 @@ import random
 
 import pandas as pd
 import parameterizable
-from persidict import PersiDict
+from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._010_basic_portals.basic_portal_class import BasicPortal
+from .._010_basic_portals.basic_portal_class_OLD import BasicPortal
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
-from .._010_basic_portals.basic_portal_class import _describe_runtime_characteristic
+from .._010_basic_portals.basic_portal_class_OLD import _describe_runtime_characteristic
 from .._820_strings_signatures_converters.random_signatures import get_random_signature
 from .._800_persidict_extensions.overlapping_multi_dict import (
     OverlappingMultiDict)
@@ -32,8 +32,8 @@ class SwarmingPortal(PureCodePortal):
 
     def __init__(self
                  , root_dict: PersiDict | str | None = None
-                 , p_consistency_checks:float|None = None
-                 , excessive_logging: bool|None = None
+                 , p_consistency_checks:float|Joker = KEEP_CURRENT
+                 , excessive_logging: bool|Joker = KEEP_CURRENT
                  , n_background_workers:int|None = 3
                  , runtime_id:str|None = None
                  ):
@@ -109,7 +109,7 @@ class SwarmingPortal(PureCodePortal):
                     return True
             except:
                 pass
-        # for portal in BasicPortal._all_portals.values():
+        # for portal in BasicPortal._all_known_portals.values():
         #     try:
         #         with portal:
         #             if runtime_id == portal.compute_nodes.pkl[address]:
@@ -121,7 +121,7 @@ class SwarmingPortal(PureCodePortal):
 
     def _launch_background_worker(self):
         """Launch one background worker process."""
-        init_params = self.__get_portable_params__()
+        init_params = self.get_portable_params()
         init_params["n_background_workers"] = 0
         ctx = get_context("spawn")
         p = ctx.Process(target=_background_worker, kwargs=init_params)

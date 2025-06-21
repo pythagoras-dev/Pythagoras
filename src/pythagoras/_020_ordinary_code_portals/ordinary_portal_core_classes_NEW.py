@@ -9,7 +9,8 @@ from .._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_function_source_impl
 from .function_processing import get_function_name_from_source
 from .._820_strings_signatures_converters import get_hash_signature
-from .._010_basic_portals.basic_portal_class import _describe_runtime_characteristic
+from .._010_basic_portals.basic_portal_core_classes_NEW import (
+    _describe_runtime_characteristic)
 
 
 def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
@@ -33,28 +34,45 @@ REGISTERED_FUNCTIONS_TXT = "Registered functions"
 
 class OrdinaryCodePortal(BasicPortal):
 
-    known_functions_ids: set[Any]
-    known_functions: dict[str, OrdinaryFn]
-
     def __init__(self
             , root_dict: PersiDict | str | None = None
             ):
         super().__init__(root_dict = root_dict)
-        self.known_functions_ids = set()
-        self.known_functions = dict()
+
 
     def _clear(self) -> None:
         """Clear the portal's state"""
-        self.known_functions_ids = set()
-        self.known_functions = dict()
         super()._clear()
+
+
+    def linked_functions_ids(self, target_class:type|None=None) -> set[str]:
+        """Get the set of known functions' IDs"""
+        if target_class is None:
+            target_class = OrdinaryFn
+        if not issubclass(target_class, OrdinaryFn):
+            raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
+        return self.linked_objects_ids(target_class=target_class)
+
+
+    def linked_functions(self, target_class:type|None=None) -> list[OrdinaryFn]:
+        """Get the list of known functions"""
+        if target_class is None:
+            target_class = OrdinaryFn
+        if not issubclass(target_class, OrdinaryFn):
+            raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
+        return self.linked_objects(target_class=target_class)
+
+
+    def number_of_linked_functions(self, target_class:type|None=None) -> int:
+        return len(self.linked_functions_ids(target_class=target_class))
+
 
     def describe(self) -> pd.DataFrame:
         """Get a DataFrame describing the portal's current state"""
         all_params = [super().describe()]
 
         all_params.append(_describe_runtime_characteristic(
-            REGISTERED_FUNCTIONS_TXT, len(self.known_functions)))
+            REGISTERED_FUNCTIONS_TXT, self.number_of_linked_functions()))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
@@ -93,10 +111,13 @@ class OrdinaryFn(PortalAwareClass):
                  ):
         PortalAwareClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
-            #TODO: check this logic
             self.__setstate__(fn.__getstate__())
+            self._linked_portal = fn._linked_portal
+            #TODO: check this logic
         else:
-            assert callable(fn) or isinstance(fn, str)
+            if not (callable(fn) or isinstance(fn, str)):
+                raise TypeError("fn must be a callable or a string "
+                                "with the function's source code.")
             self._source_code = get_normalized_function_source(fn)
 
 
@@ -183,14 +204,10 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def register_in_portal(self):
-        if self._portal is None:
-            return
-        portal = self._portal
-        assert isinstance(portal, OrdinaryCodePortal)
-        if id(self) in portal.known_functions_ids:
-            return
-        portal.known_functions_ids.add(id(self))
-        portal.known_functions[self.hash_signature] = self
+        PortalAwareClass.register_in_portal(self)
+        if not isinstance(self._linked_portal, OrdinaryCodePortal):
+            raise TypeError("To register an OrdinaryFn in a portal, "
+                "the portal must be an OrdinaryCodePortal.")
 
 
     @classmethod
@@ -216,7 +233,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def execute(self,**kwargs):
-        with self.finally_bound_portal:
+        with self.portal:
             names_dict = self._available_names()
             names_dict[self._kwargs_var_name] = kwargs
             exec(self._compiled_code, names_dict, names_dict)
@@ -230,7 +247,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def __setstate__(self, state):
-        self._invalidate_cache()
+        PortalAwareClass.__setstate__(self, state)
         self._source_code = state["_source_code"]
 
 

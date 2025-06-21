@@ -1,8 +1,7 @@
 
 import pytest
 
-from src.pythagoras import KwArgs
-from src.pythagoras import NestedKwArgsError
+from src.pythagoras._040_logging_code_portals import KwArgs
 
 
 @pytest.fixture
@@ -35,7 +34,7 @@ def test_setitem_raises_typeerror_for_non_string_key(sample_sorted_kwargs):
     """
     Test that setitem raises a TypeError if the key is not a string.
     """
-    with pytest.raises(TypeError):
+    with pytest.raises(KeyError):
         sample_sorted_kwargs[123] = "invalid key"
 
 def test_setitem_raises_nested_kwargs_error():
@@ -44,7 +43,7 @@ def test_setitem_raises_nested_kwargs_error():
     """
     parent = KwArgs()
     child = KwArgs(x=10)
-    with pytest.raises(NestedKwArgsError):
+    with pytest.raises(ValueError):
         parent["child"] = child
 
 def test_reduce_triggers_resort(sample_sorted_kwargs):

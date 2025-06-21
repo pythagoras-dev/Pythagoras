@@ -3,7 +3,8 @@ from __future__ import annotations
 import time
 
 from deepdiff import DeepDiff
-from persidict import PersiDict
+from parameterizable import register_parameterizable_class
+from persidict import PersiDict, FileDirDict
 import random
 
 from persidict.persi_dict import PersiDictKey
@@ -21,8 +22,10 @@ class FirstEntryDict(PersiDict):
     _successful_checks_count: int
 
     def __init__(self
-                 , wrapped_dict:PersiDict
+                 , wrapped_dict:PersiDict | None = None
                  , p_consistency_checks: float | None=None):
+        if wrapped_dict is None:
+            wrapped_dict = FileDirDict(immutable_items = True)
         assert isinstance(wrapped_dict, PersiDict)
         assert wrapped_dict.immutable_items == True
         assert p_consistency_checks is None or (0 <= p_consistency_checks <= 1)
@@ -34,6 +37,14 @@ class FirstEntryDict(PersiDict):
         self._p_consistency_checks = p_consistency_checks
         self._successful_checks_count = 0
         self._total_checks_count = 0
+
+
+    def get_params(self):
+        params = dict(
+            wrapped_dict = self._wrapped_dict,
+            p_consistency_checks = self._p_consistency_checks)
+        sorted_params = dict(sorted(params.items()))
+        return sorted_params
 
     def __setitem__(self, key, value):
         """ Set the value of a key if it is not already set.
@@ -92,9 +103,17 @@ class FirstEntryDict(PersiDict):
         # Forward attribute access to the wrapped object
         return getattr(self._wrapped_dict, name)
 
+    @property
+    def base_dir(self):
+        return self._wrapped_dict.base_dir
+
+    @property
+    def base_url(self):
+        return self._wrapped_dict.base_url
+
     def get_subdict(self, prefix_key:PersiDictKey) -> FirstEntryDict:
         subdict = self._wrapped_dict.get_subdict(prefix_key)
         result = FirstEntryDict(subdict, self._p_consistency_checks)
         return result
 
-
+register_parameterizable_class(FirstEntryDict)

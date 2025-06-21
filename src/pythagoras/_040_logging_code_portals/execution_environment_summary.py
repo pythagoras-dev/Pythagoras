@@ -41,7 +41,7 @@ def build_execution_environment_summary()-> Dict:
 def make_unique_name(suggested_name:str, existing_names) -> str:
     """Make a name unique by adding a random suffix to it."""
     candidate = suggested_name
-    entropy_infuser = BasicPortal.entropy_infuser
+    entropy_infuser = BasicPortal._entropy_infuser
     while candidate in existing_names:
         candidate = suggested_name + "_"
         random_number = entropy_infuser.randint(1,10_000_000_000)

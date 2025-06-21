@@ -1,5 +1,5 @@
 from persidict import PersiDict
-from src.pythagoras._010_basic_portals.exceptions import NotPicklableObject, NotSupportedOperation
+from src.pythagoras._010_basic_portals.exceptions import NotSupportedOperation
 
 
 # TODO: move this class to persidict package?
@@ -37,10 +37,10 @@ class OverlappingMultiDict:
                 ,"file_type":subdict_name})
 
         def __getstate__(self):
-            raise NotPicklableObject("This object should never be pickled")
+            raise TypeError("OverlappingMultiDict cannot be pickled.")
 
         def __setstate__(self, state):
-            raise NotPicklableObject("This object should never be pickled")
+            raise TypeError("OverlappingMultiDict cannot be pickled.")
 
         def __getitem__(self, key):
             raise NotSupportedOperation(

@@ -1,7 +1,7 @@
 from src.pythagoras import DataPortal
 from src.pythagoras import _PortalTester
 
-from src.pythagoras._010_basic_portals.basic_portal_class import get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_class_OLD import get_description_value_by_key
 from src.pythagoras._030_data_portals.data_portal_core_classes import TOTAL_VALUES_TXT, \
     PROBABILITY_OF_CHECKS_TXT
 
@@ -35,8 +35,8 @@ def test_stored_values(tmpdir):
     with _PortalTester(DataPortal
             , tmpdir
             , p_consistency_checks = 0.5) as t:
-        t.portal.value_store["a"] = 100
-        t.portal.value_store["b"] = 200
+        t.portal._value_store["a"] = 100
+        t.portal._value_store["b"] = 200
         description = t.portal.describe()
         assert description.shape == (5, 3)
         assert get_description_value_by_key(description

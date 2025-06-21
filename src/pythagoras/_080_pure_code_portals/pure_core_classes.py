@@ -7,12 +7,12 @@ from typing import Callable, Any, List, TypeAlias
 import pandas as pd
 from sklearn.model_selection import ParameterGrid
 
-from persidict import PersiDict
+from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._010_basic_portals.portal_aware_class import _noncurrent_portals
+from .._010_basic_portals.portal_aware_class_OLD import _noncurrent_portals
 from .._010_basic_portals.portal_aware_dict import PortalAwareDict
 from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
-from .._010_basic_portals.basic_portal_class import (
+from .._010_basic_portals.basic_portal_class_OLD import (
     _describe_persistent_characteristic)
 from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
 from .._040_logging_code_portals.logging_portal_core_classes import (
@@ -41,8 +41,8 @@ class PureCodePortal(ProtectedCodePortal):
 
     def __init__(self
             , root_dict: PersiDict | str | None = None
-            , p_consistency_checks: float | None = None
-            , excessive_logging: bool = False
+            , p_consistency_checks: float | Joker = KEEP_CURRENT
+            , excessive_logging: bool | Joker = KEEP_CURRENT
             ):
         ProtectedCodePortal.__init__(self
             , root_dict=root_dict
@@ -91,7 +91,7 @@ class PureFn(ProtectedFn):
     def __init__(self, fn: Callable | str
                  , guards: list[AutonomousFn] | List[Callable] | None = None
                  , validators: list[AutonomousFn] | List[Callable] | None = None
-                 , excessive_logging: bool = False
+                 , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None = None):
         ProtectedFn.__init__(self
@@ -328,7 +328,7 @@ class PureFnExecutionResultAddr(HashAddr):
             with portal:
                 if self in portal.execution_results:
                     addr = portal.execution_results[self]
-                    data = portal.value_store[addr]
+                    data = portal._value_store[addr]
                     with self.portal:
                         self.portal.execution_results[self] = ValueAddr(
                             data, portal=portal)
@@ -405,7 +405,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
             if self.ready:
                 result_addr = portal.execution_results[self]
-                self._result_cache = portal.value_store[result_addr]
+                self._result_cache = portal._value_store[result_addr]
                 return self._result_cache
 
             self.request_execution()
@@ -420,7 +420,7 @@ class PureFnExecutionResultAddr(HashAddr):
             while True:
                 if self.ready:
                     result_addr = portal.execution_results[self]
-                    self._result_cache = portal.value_store[result_addr]
+                    self._result_cache = portal._value_store[result_addr]
                     self.drop_execution_request()
                     return self._result_cache
                 else:

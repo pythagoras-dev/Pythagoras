@@ -19,10 +19,10 @@ def test_fn_call_signature_attributes(tmpdir,pr):
             ,p_consistency_checks=pr) as p:
         new_plus = logging(excessive_logging=True)(plus)
         for i in range(1):
-            ValueAddr(new_plus, portal = p.portal)
+            ValueAddr(new_plus)
             signature = LoggingFnCallSignature(new_plus, KwArgs(x=10, y=-200))
             # assert signature.addr == ValueAddr(signature, portal = p.portal)
-            assert ValueAddr(signature, portal = p.portal) == ValueAddr(signature, portal = p.portal)
+            assert ValueAddr(signature) == ValueAddr(signature)
             # assert signature.fn_name == new_plus.name == "plus"
             # assert signature.fn_addr == ValueAddr(new_plus, portal = p.portal)
             # assert signature.packed_kwargs == KwArgs(x=10, y=-200).pack(p.portal)
@@ -39,7 +39,7 @@ def test_fn_call_signature_run_history(tmpdir):
         for i in range(N_EXECUTIONS):
             assert signature.execute() == 450
 
-        assert len(p.portal.run_history.py) == 1
+        assert len(p.portal._run_history.py) == 1
 
         assert len(signature.execution_attempts) == N_EXECUTIONS
         assert len(signature.execution_results) == N_EXECUTIONS
@@ -109,4 +109,4 @@ def test_fn_call_signature_events_history(tmpdir):
             signature.execute()
 
         assert len(signature.events) == N_EXECUTIONS*2
-        assert len(p.portal.event_history) == N_EXECUTIONS*2
+        assert len(p.portal._event_history) == N_EXECUTIONS*2

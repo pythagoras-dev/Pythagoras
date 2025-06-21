@@ -12,7 +12,7 @@ def test_simple_function_value_addr(tmpdir):
         global wonderful_function
         wonderful_function = logging(excessive_logging=True)(wonderful_function)
 
-        addr = ValueAddr(wonderful_function, portal=p.portal)
+        addr = ValueAddr(wonderful_function)
         assert len(addr) == 2
         assert "wonderful_function" in addr[0]
         assert "loggingfn" in addr[0]
@@ -26,7 +26,7 @@ def test_complex_function_value_addr(tmpdir):
         global plus
         plus = logging(excessive_logging=True)(plus)
 
-        addr = ValueAddr(plus, portal=p.portal)
+        addr = ValueAddr(plus)
         assert len(addr) == 2
         assert "plus" in addr[0]
         assert "loggingfn" in addr[0]

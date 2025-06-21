@@ -4,7 +4,7 @@ import sys
 from abc import ABCMeta, abstractmethod
 from copy import copy
 
-from .basic_portal_class import BasicPortal, PortalType
+from .basic_portal_class_OLD import BasicPortal, PortalType
 
 
 class PortalAwareMetaclass(ABCMeta):
@@ -47,7 +47,7 @@ class PortalAwareClass(metaclass = PortalAwareMetaclass):
 
     @property
     def portal(self) -> BasicPortal:
-        if not hasattr(self, "_portal"):
+        if not hasattr(self, "_linked_portal"):
             self._portal = None
         return self._portal
 
@@ -56,7 +56,7 @@ class PortalAwareClass(metaclass = PortalAwareMetaclass):
     def portal(self, value: BasicPortal|None) -> None:
         """Set the portal to the given one."""
         assert isinstance(value, BasicPortal)
-        if (hasattr(self, "_portal")
+        if (hasattr(self, "_linked_portal")
                 and self._portal is not None
                 and self._portal != value):
             raise ValueError("You can set the portal only once.")
@@ -108,7 +108,7 @@ class PortalAwareClass(metaclass = PortalAwareMetaclass):
         #TODO: check the logic of this method
         result = self.__new__(type(self))
         result.__setstate__(self.__getstate__())
-        assert not hasattr(result, "_portal") or result._portal is None
+        assert not hasattr(result, "_linked_portal") or result._portal is None
         result._portal = None
         return result
 

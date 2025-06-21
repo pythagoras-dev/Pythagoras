@@ -22,11 +22,11 @@
 #     return portal.describe()
 #
 # def describe() -> pd.DataFrame:
-#     if len(BasicPortal._all_portals) == 1:
-#         return list(BasicPortal._all_portals.values())[0].describe()
+#     if len(BasicPortal._all_known_portals) == 1:
+#         return list(BasicPortal._all_known_portals.values())[0].describe()
 #
 #     all_descriptions = []
-#     for i,portal in enumerate(BasicPortal._all_portals.values()):
+#     for i,portal in enumerate(BasicPortal._all_known_portals.values()):
 #         description = portal.describe()
 #         description.insert(0, "portal", i)
 #         all_descriptions.append(description)

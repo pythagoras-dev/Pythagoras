@@ -1,5 +1,6 @@
 from src.pythagoras import BasicPortal, _PortalTester
-from src.pythagoras._010_basic_portals.portal_aware_class import find_portal_to_use
+from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import (
+    active_portal)
 
 
 def test_portal_nested(tmpdir):
@@ -11,20 +12,14 @@ def test_portal_nested(tmpdir):
         portal3 = BasicPortal(tmpdir)
 
         with portal:
-            assert find_portal_to_use() == portal
-            assert find_portal_to_use(suggested_portal=portal3) == portal3
+            assert active_portal() == portal
             with portal2:
-                assert find_portal_to_use() == portal2
-                assert find_portal_to_use(suggested_portal=portal3) == portal3
+                assert active_portal() == portal2
                 portal4 = BasicPortal(tmpdir)
                 with portal3:
-                    assert find_portal_to_use() == portal3
-                    assert find_portal_to_use(suggested_portal=portal2) == portal2
+                    assert active_portal() == portal3
                     with portal2:
-                        assert find_portal_to_use() == portal2
-                        assert find_portal_to_use(suggested_portal=portal) == portal
-                    assert find_portal_to_use() == portal3
-                assert find_portal_to_use(suggested_portal=portal2) == portal2
-                assert find_portal_to_use() == portal2
-                assert find_portal_to_use(suggested_portal=portal3) == portal3
-            assert find_portal_to_use() == portal
+                        assert active_portal() == portal2
+                    assert active_portal() == portal3
+                assert active_portal() == portal2
+            assert active_portal() == portal

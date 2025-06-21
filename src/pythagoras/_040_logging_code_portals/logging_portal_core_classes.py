@@ -5,11 +5,13 @@ import traceback
 from typing import Callable, Any
 
 import pandas as pd
-from persidict import PersiDict
+from parameterizable import register_parameterizable_class
+from persidict import PersiDict, KEEP_CURRENT, Joker
 
-from .._010_basic_portals.basic_portal_class import \
-    _describe_persistent_characteristic, _describe_runtime_characteristic
-from .._010_basic_portals.portal_aware_class import find_portal_to_use
+from .. import NotPicklable, active_portal
+from .._010_basic_portals.basic_portal_core_classes_NEW import (
+    _describe_persistent_characteristic, _describe_runtime_characteristic)
+
 from .._030_data_portals import ValueAddr
 from .._040_logging_code_portals.exception_processing_tracking import (
     _exception_needs_to_be_processed, _mark_exception_as_processed)
@@ -19,7 +21,6 @@ from .._040_logging_code_portals.uncaught_exceptions import \
 from .._800_persidict_extensions import OverlappingMultiDict
 from .._040_logging_code_portals.kw_args import KwArgs, PackedKwArgs
 from .._810_output_manipulators import OutputCapturer
-from .._010_basic_portals import PortalAwareClass
 from .._030_data_portals.data_portal_core_classes import (
     DataPortal, StorableFn)
 from .._820_strings_signatures_converters.current_date_gmt_str import (
@@ -32,33 +33,30 @@ from .._820_strings_signatures_converters.random_signatures import (
 
 class LoggingFn(StorableFn):
 
-    _excessive_logging:bool|None
+    _excessive_logging_at_init: bool | Joker
 
     def __init__(self
             , fn: Callable | str
-            , excessive_logging: bool|None = None
+            , excessive_logging: bool|Joker = KEEP_CURRENT
             , portal: LoggingCodePortal | None = None
             ):
-        if isinstance(fn,LoggingFn):
-            assert excessive_logging is None
-            StorableFn.__init__(self, fn=fn, portal=portal)
-            assert hasattr(self,"_excessive_logging")
-        else:
-            StorableFn.__init__(self, fn=fn, portal=portal)
-            self._excessive_logging = excessive_logging
+        if not isinstance(excessive_logging, (bool, Joker)):
+            raise TypeError(
+                "excessive_logging must be a boolean or Joker, "
+                f"got {type(excessive_logging)}")
+        self._excessive_logging_at_init = excessive_logging
+        StorableFn.__init__(self, fn=fn, portal=portal)
 
 
     @property
     def excessive_logging(self) -> bool:
-        with self.finally_bound_portal as portal:
-            result = self._excessive_logging
-            result = (result or portal.excessive_logging)
-            return result
+        value = self._get_config_setting("excessive_logging")
+        return bool(value)
 
 
     def execute(self,**kwargs):
-        with self.finally_bound_portal as portal:
-            packed_kwargs = KwArgs(**kwargs).pack(portal)
+        with self.portal:
+            packed_kwargs = KwArgs(**kwargs).pack()
             fn_call_signature = LoggingFnCallSignature(self, packed_kwargs)
             with LoggingFnExecutionFrame(fn_call_signature) as frame:
                 result = super().execute(**kwargs)
@@ -68,35 +66,21 @@ class LoggingFn(StorableFn):
 
     def __getstate__(self):
         state = super().__getstate__()
-        # state["_excessive_logging"] = self._excessive_logging
         return state
 
 
     def __setstate__(self, state):
-        self._invalidate_cache()
-        self._excessive_logging = None
-        # self._excessive_logging = state["_excessive_logging"]
         super().__setstate__(state)
+        self._excessive_logging_at_init = KEEP_CURRENT
+
 
     def register_in_portal(self):
-        if self._portal is None:
-            return
-
         super().register_in_portal()
-
-        excessive_logging = self._excessive_logging
-        address = ("excessive_logging", self.hash_signature)
-        if excessive_logging is not None:
-            self.portal.config_store[address] = excessive_logging
-        else:
-            if not address in self.portal.config_store:
-                excessive_logging = False
-            else:
-                excessive_logging = self.portal.config_store[address]
-        self._excessive_logging = excessive_logging
+        self._set_config_setting("excessive_logging"
+            , self._excessive_logging_at_init)
 
 
-class LoggingFnCallSignature(PortalAwareClass):
+class LoggingFnCallSignature:
     """A signature of a call to a (logging) function.
 
     This class is used to create a unique identifier for a call to
@@ -105,38 +89,28 @@ class LoggingFnCallSignature(PortalAwareClass):
     This is a supporting class for the LoggingFnExecutionResultAddr class, and
     Pythagoras' users should not need to interact with it directly.
     """
-
-
     _fn_addr: ValueAddr
     _kwargs_addr: ValueAddr
 
     _fn_name_cache: str | None
     _fn_cache: LoggingFn | None
     _packed_kwargs_cache: PackedKwArgs | None
+    _addr_cache: ValueAddr | None
 
     def __init__(self, fn:LoggingFn, arguments:dict):
         assert isinstance(fn, LoggingFn)
         isinstance(arguments, dict)
         arguments = KwArgs(**arguments)
-        with fn.finally_bound_portal as portal:
+        with fn.portal:
             self._fn_cache = fn
             self._fn_addr = fn.addr
-            self._packed_kwargs_cache = arguments.pack(portal)
-            self._kwargs_addr = ValueAddr(
-                self._packed_kwargs_cache, portal=portal)
-            # PortalAwareClass.__init__(self, portal=portal)
+            self._packed_kwargs_cache = arguments.pack()
+            self._kwargs_addr = ValueAddr(self._packed_kwargs_cache)
 
 
     @property
-    def _portal(self):
-        # NB: _portal is a regular attribute in a base class, not a property
-        # this might lead to surprising bugs while refactoring
+    def portal(self):
         return self.fn.portal
-
-
-    @_portal.setter
-    def _portal(self,value):
-        self.fn.portal = value
 
 
     def __getstate__(self):
@@ -159,6 +133,8 @@ class LoggingFnCallSignature(PortalAwareClass):
             del self._fn_name_cache
         if hasattr(self, "_packed_kwargs_cache"):
             del self._packed_kwargs_cache
+        if hasattr(self, "_addr_cache"):
+            del self._addr_cache
 
 
     @property
@@ -189,8 +165,9 @@ class LoggingFnCallSignature(PortalAwareClass):
     def packed_kwargs(self) -> PackedKwArgs:
         if (not hasattr(self,"_packed_kwargs_cache")
                 or self._packed_kwargs_cache is None):
-            self._packed_kwargs_cache = self._kwargs_addr.get(
-                expected_type=PackedKwArgs)
+            with self.portal:
+                self._packed_kwargs_cache = self._kwargs_addr.get(
+                    expected_type=PackedKwArgs)
         return self._packed_kwargs_cache
 
 
@@ -212,22 +189,26 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     @property
     def addr(self) -> ValueAddr:
-        return ValueAddr(self, portal=self.finally_bound_portal)
+        if hasattr(self, "_addr_cache") and self._addr_cache is not None:
+            return self._addr_cache
+        with self.portal:
+            self._addr_cache = ValueAddr(self)
+            return self._addr_cache
 
 
     @property
     def execution_attempts(self) -> PersiDict:
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             attempts_path = self.addr + ["attempts"]
-            attempts = portal.run_history.json.get_subdict(attempts_path)
+            attempts = portal._run_history.json.get_subdict(attempts_path)
             return attempts
 
 
     @property
     def last_execution_attempt(self) -> Any:
-        with self.finally_bound_portal:
+        with self.portal:
             attempts = self.execution_attempts
-            timeline = attempts.newest_values()
+            timeline = attempts.newest_values(1)
             if not len(timeline):
                 result = None
             else:
@@ -237,17 +218,17 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     @property
     def execution_results(self) -> PersiDict:
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             results_path = self.addr + ["results"]
-            results = portal.run_history.pkl.get_subdict(results_path)
+            results = portal._run_history.pkl.get_subdict(results_path)
             return results
 
 
     @property
     def last_execution_result(self) -> Any:
-        with self.finally_bound_portal:
+        with self.portal:
             results = self.execution_results
-            timeline = results.newest_values()
+            timeline = results.newest_values(1)
             if not len(timeline):
                 result = None
             else:
@@ -257,16 +238,17 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     @property
     def execution_outputs(self) -> PersiDict:
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             outputs_path = self.addr + ["outputs"]
-            outputs = portal.run_history.txt.get_subdict(outputs_path)
+            outputs = portal._run_history.txt.get_subdict(outputs_path)
             return outputs
+
 
     @property
     def last_execution_output(self) -> Any:
-        with self.finally_bound_portal:
+        with self.portal:
             outputs = self.execution_outputs
-            timeline = outputs.newest_values()
+            timeline = outputs.newest_values(1)
             if not len(timeline):
                 result = None
             else:
@@ -276,17 +258,17 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     @property
     def crashes(self) -> PersiDict:
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             crashes_path = self.addr + ["crashes"]
-            crashes = portal.run_history.json.get_subdict(crashes_path)
+            crashes = portal._run_history.json.get_subdict(crashes_path)
             return crashes
 
 
     @property
     def last_crash(self) -> Any:
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             crashes = self.crashes
-            timeline = crashes.newest_values()
+            timeline = crashes.newest_values(1)
             if not len(timeline):
                 result = None
             else:
@@ -296,26 +278,27 @@ class LoggingFnCallSignature(PortalAwareClass):
 
     @property
     def events(self) -> PersiDict:
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             events_path = self.addr + ["events"]
-            events = portal.run_history.json.get_subdict(events_path)
+            events = portal._run_history.json.get_subdict(events_path)
             return events
 
 
     @property
     def last_event(self) -> Any:
-        with self.finally_bound_portal as portal:
+        with self.portal:
             events = self.events
-            timeline = events.newest_values()
+            timeline = events.newest_values(1)
             if not len(timeline):
                 result = None
             else:
                 result = timeline[0]
             return result
 
+
     @property
     def execution_records(self) -> list[LoggingFnExecutionRecord]:
-        with self.finally_bound_portal:
+        with self.portal:
             result = []
             for k in self.execution_attempts:
                 run_id = k[-1][:-9]
@@ -323,15 +306,15 @@ class LoggingFnCallSignature(PortalAwareClass):
             return result
 
 
-class LoggingFnExecutionRecord(PortalAwareClass):
-    """ A record of a full function execution session.
+class LoggingFnExecutionRecord(NotPicklable):
+    """ A record of one full function execution session.
 
-    It provides access to all information, logged during the
+    It provides access to all information logged during the
     execution session, which includes information about the execution context
     (environment), function arguments, its output (everything that was
     printed to stdout/stderr during the execution attempt), any crashes
     (exceptions) and events fired, and an actual result of the execution
-    (created by a 'return' statement within the function code).
+    created by a 'return' statement within the function code.
     """
     call_signature: LoggingFnCallSignature
     session_id: str
@@ -343,83 +326,69 @@ class LoggingFnExecutionRecord(PortalAwareClass):
         self.session_id = session_id
 
 
-    def __setstate__(self, state):
-        def __getstate__(self):
-            raise NotImplementedError(
-                "LoggingFnExecutionRecord objects can't be pickled/unpickled.")
-
-
-    def __getstate__(self):
-        raise NotImplementedError(
-            "LoggingFnExecutionRecord objects can't be pickled/unpickled.")
-
-
     @property
-    def _portal(self):
-        # NB: _portal is a regular attribute in a base class, not a property
-        # this might lead to surprising bugs while refactoring
+    def portal(self):
         return self.call_signature.portal
-
-
-    @_portal.setter
-    def _portal(self,value):
-        self.call_signature.portal = value
 
 
     @property
     def output(self) -> str|None:
-        with self.finally_bound_portal:
+        with self.portal:
             execution_outputs = self.call_signature.execution_outputs
             for k in execution_outputs:
                 if self.session_id in k[-1]:
                     return execution_outputs[k]
             return None
 
+
     @property
     def attempt_context(self)-> dict|None:
-        with self.finally_bound_portal:
+        with self.portal:
             execution_attempts = self.call_signature.execution_attempts
             for k in execution_attempts:
                 if self.session_id in k[-1]:
                     return execution_attempts[k]
             return None
 
+
     @property
     def crashes(self) -> list[dict]:
         result = []
-        with self.finally_bound_portal:
+        with self.portal:
             crashes = self.call_signature.crashes
             for k in crashes:
                 if self.session_id in k[-1]:
                     result.append(crashes[k])
         return result
 
+
     @property
     def events(self) -> list[dict]:
         result = []
-        with self.finally_bound_portal:
+        with self.portal:
             events = self.call_signature.events
             for k in events:
                 if self.session_id in k[-1]:
                     result.append(events[k])
         return result
 
+
     @property
     def result(self)->Any:
-        with self.finally_bound_portal:
+        with self.portal:
             execution_results = self.call_signature.execution_results
             for k in execution_results:
                 if self.session_id in k[-1]:
                     return execution_results[k].get()
-            assert False, "Result not found"
-
-    @property
-    def packed_kwargs(self)-> PackedKwArgs:
-        with self.finally_bound_portal:
-            return self.call_signature.packed_kwargs
+            raise ValueError(
+                f"Result for session {self.session_id} not found in "
+                f"{self.call_signature.fn_name} execution results.")
 
 
-class LoggingFnExecutionFrame(PortalAwareClass):
+
+class LoggingFnExecutionFrame(NotPicklable):
+    call_stack: list[LoggingFnExecutionFrame] = []
+
     session_id: str
     fn_call_addr: ValueAddr
     fn_call_signature: LoggingFnCallSignature
@@ -429,43 +398,24 @@ class LoggingFnExecutionFrame(PortalAwareClass):
     context_used: bool
 
     def __init__(self, fn_call_signature: LoggingFnCallSignature):
-        portal = fn_call_signature.finally_bound_portal
-        self.session_id = "run_"+get_random_signature()
-        self.fn_call_signature = fn_call_signature
-        self.fn_call_addr = ValueAddr(fn_call_signature, portal=portal)
-        # super().__init__(portal=portal)
+        with fn_call_signature.portal:
+            self.session_id = "run_"+get_random_signature()
+            self.fn_call_signature = fn_call_signature
+            self.fn_call_addr = fn_call_signature.addr
 
-        if self.excessive_logging:
-            self.output_capturer = OutputCapturer()
-        else:
-            self.output_capturer = None
+            if self.excessive_logging:
+                self.output_capturer = OutputCapturer()
+            else:
+                self.output_capturer = None
 
-        self.exception_counter = 0
-        self.event_counter = 0
-        self.context_used = False
+            self.exception_counter = 0
+            self.event_counter = 0
+            self.context_used = False
 
 
     @property
-    def _portal(self) -> LoggingCodePortal:
-        # NB: _portal is a regular attribute in a base class, not a property
-        # this might lead to surprising bugs while refactoring
+    def portal(self) -> LoggingCodePortal:
         return self.fn.portal
-
-
-    @_portal.setter
-    def _portal(self,value):
-        self.fn.portal = value
-
-
-    def __setstate__(self, state):
-        def __getstate__(self):
-            raise NotImplementedError(
-                "LoggingFnExecutionFrame objects can't be pickled/unpickled.")
-
-
-    def __getstate__(self):
-        raise NotImplementedError(
-            "LoggingFnExecutionFrame objects can't be pickled/unpickled.")
 
 
     @property
@@ -506,10 +456,10 @@ class LoggingFnExecutionFrame(PortalAwareClass):
             "An instance of PureFnExecutionFrame can be used only once.")
         assert self.event_counter == 0, (
             "An instance of PureFnExecutionFrame can be used only once.")
-        self.finally_bound_portal.__enter__()
+        self.portal.__enter__()
         if isinstance(self.output_capturer, OutputCapturer):
             self.output_capturer.__enter__()
-        LoggingCodePortal.call_stack.append(self)
+        LoggingFnExecutionFrame.call_stack.append(self)
         self._register_execution_attempt()
         return self
 
@@ -520,7 +470,7 @@ class LoggingFnExecutionFrame(PortalAwareClass):
         execution_attempts = self.fn_call_signature.execution_attempts
         attempt_id = self.session_id+"_attempt"
         execution_attempts[attempt_id] = build_execution_environment_summary()
-        self.portal.run_history.py[self.fn_call_addr + ["source"]] = (
+        self.portal._run_history.py[self.fn_call_signature.addr + ["source"]] = (
             self.fn.source_code)
 
 
@@ -529,7 +479,7 @@ class LoggingFnExecutionFrame(PortalAwareClass):
             return
         execution_results = self.fn_call_signature.execution_results
         result_id = self.session_id+"_result"
-        execution_results[result_id] = ValueAddr(result, portal=self.portal)
+        execution_results[result_id] = ValueAddr(result)
 
 
     def __exit__(self, exc_type, exc_value, trace_back):
@@ -541,16 +491,7 @@ class LoggingFnExecutionFrame(PortalAwareClass):
             execution_outputs[output_id] = self.output_capturer.get_output()
 
         self.portal.__exit__(exc_type, exc_value, traceback)
-        LoggingCodePortal.call_stack.pop()
-
-
-# class NeedsRandomization(str):
-#     """A string that needs to be randomized"""
-#     pass
-#
-# class AlreadyRandomized(str):
-#     """A string that has already been randomized"""
-#     pass
+        LoggingFnExecutionFrame.call_stack.pop()
 
 
 
@@ -567,7 +508,7 @@ class LoggingCodePortal(DataPortal):
     across the entire application, and does not depend on the specific function
     from which the event or exception is raised.
 
-    The class provides two dictionaries, `crash_history` and `event_log`,
+    The class provides two dictionaries, `_crash_history` and `event_log`,
     to store the exceptions history and event log respectively.
 
     Static methods `log_exception` and `log_event` are provided to log
@@ -580,46 +521,38 @@ class LoggingCodePortal(DataPortal):
     The class also supports logging uncaught exceptions globally.
     """
 
-    exception_handlers_registered: bool = False
+    _run_history: OverlappingMultiDict | None
+    _crash_history: PersiDict | None
+    _event_history: PersiDict | None
 
-    call_stack: list[LoggingFnExecutionFrame] = []
-
-    run_history: OverlappingMultiDict | None
-    crash_history: PersiDict | None
-    event_history: PersiDict | None
-
-    _excessive_logging: bool | None
+    _excessive_logging_at_init: bool | Joker
 
     def __init__(self, root_dict:PersiDict|str|None = None
-            , p_consistency_checks: float|None = None
-            , excessive_logging: bool|None = None
+            , p_consistency_checks: float|Joker = KEEP_CURRENT
+            , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
         super().__init__(root_dict=root_dict
             , p_consistency_checks=p_consistency_checks)
         del root_dict
 
-        excessive_logging_addr = ("excessive_logging", "everything")
-        if excessive_logging is not None:
-            excessive_logging = bool(excessive_logging)
-            self.config_store[excessive_logging_addr] = excessive_logging
-        else:
-            if not excessive_logging_addr in self.config_store:
-                excessive_logging = False
-            else:
-                excessive_logging = self.config_store[excessive_logging_addr]
-        self._excessive_logging = excessive_logging
+        if not isinstance(excessive_logging,(Joker,bool)):
+            raise TypeError(
+                "excessive_logging must be a boolean or Joker, "
+                f"got {type(excessive_logging)}")
+        self._set_config_setting("excessive_logging", excessive_logging)
+        self._excessive_logging_at_init = excessive_logging
 
         crash_history_prototype = self._root_dict.get_subdict("crash_history")
         crash_history_params = crash_history_prototype.get_params()
         crash_history_params.update(
             dict(file_type="json", immutable_items=True , digest_len=0))
-        self.crash_history = type(self._root_dict)(**crash_history_params)
+        self._crash_history = type(self._root_dict)(**crash_history_params)
 
         event_history_prototype = self._root_dict.get_subdict("event_history")
         event_history_params = event_history_prototype.get_params()
         event_history_params.update(
             dict(file_type="json", immutable_items=True, digest_len=0))
-        self.event_history = type(self._root_dict)(**event_history_params)
+        self._event_history = type(self._root_dict)(**event_history_params)
 
         run_history_prototype = self._root_dict.get_subdict("run_history")
         run_history_shared_params = run_history_prototype.get_params()
@@ -632,11 +565,9 @@ class LoggingCodePortal(DataPortal):
             , txt=dict(base_class_for_values=str, immutable_items=True)
             , pkl=dict(immutable_items=True)
         )
-        self.run_history = run_history
+        self._run_history = run_history
 
-        if not LoggingCodePortal.exception_handlers_registered:
-            register_systemwide_uncaught_exception_handlers()
-        LoggingCodePortal.exception_handlers_registered = True
+        register_systemwide_uncaught_exception_handlers()
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -646,19 +577,17 @@ class LoggingCodePortal(DataPortal):
 
     @property
     def excessive_logging(self) -> bool:
-        return self._excessive_logging
-        # excessive_logging_addr = ("excessive_logging", "everything")
-        # return self.config_store[excessive_logging_addr]
+        return self._get_config_setting("excessive_logging")
 
 
     def describe(self) -> pd.DataFrame:
         """Get a DataFrame describing the portal's current state"""
         all_params = [super().describe()]
         all_params.append(_describe_persistent_characteristic(
-            EXCEPTIONS_TOTAL_TXT, len(self.crash_history)))
+            EXCEPTIONS_TOTAL_TXT, len(self._crash_history)))
         all_params.append(_describe_persistent_characteristic(
             EXCEPTIONS_TODAY_TXT
-            , len(self.crash_history.get_subdict(current_date_gmt_string()))))
+            , len(self._crash_history.get_subdict(current_date_gmt_string()))))
         all_params.append(_describe_runtime_characteristic(
             EXCESSIVE_LOGGING_TXT, self.excessive_logging))
 
@@ -667,23 +596,30 @@ class LoggingCodePortal(DataPortal):
         return result
 
 
+    def get_params(self) -> dict:
+        params = super().get_params()
+        params["excessive_logging"] = self._excessive_logging_at_init
+        sorted_params = dict(sorted(params.items()))
+        return sorted_params
+
+
+    @property
+    def ephemeral_param_names(self) -> set[str]:
+        result = super().ephemeral_param_names
+        result.add("excessive_logging")
+        return result
+
+
     def _clear(self) -> None:
         """Clear the portal's state"""
-        self.crash_history = None
-        self.event_log = None
-        self.run_history = None
+        self._crash_history = None
+        self._event_log = None
+        self._run_history = None
+        unregister_systemwide_uncaught_exception_handlers()
         super()._clear()
 
 
-    @classmethod
-    def _clear_all(cls) -> None:
-        """Remove all information about all the portals from the system."""
-        if LoggingCodePortal.exception_handlers_registered:
-            unregister_systemwide_uncaught_exception_handlers()
-        LoggingCodePortal.exception_handlers_registered = False
-        LoggingCodePortal.call_stack = []
-        super()._clear_all()
-
+register_parameterizable_class(LoggingCodePortal)
 
 
 def log_exception() -> None:
@@ -692,8 +628,8 @@ def log_exception() -> None:
             exc_type, exc_value, trace_back):
         return
 
-    if len(LoggingCodePortal.call_stack):
-        frame = LoggingCodePortal.call_stack[-1]
+    if len(LoggingFnExecutionFrame.call_stack):
+        frame = LoggingFnExecutionFrame.call_stack[-1]
         exception_id = frame.session_id + "_crash_"
         exception_id += str(frame.exception_counter)
         frame.exception_counter += 1
@@ -708,14 +644,14 @@ def log_exception() -> None:
     if frame is not None and frame.excessive_logging:
         frame.fn_call_signature.crashes[exception_id] = event_body
 
-    portal = find_portal_to_use(expected_type=LoggingCodePortal)
+    portal = active_portal()
     address = (current_date_gmt_string(),exception_id)
-    portal.crash_history[address] = event_body
+    portal._crash_history[address] = event_body
 
 
 def log_event(*args, **kwargs):
-    if len(LoggingCodePortal.call_stack):
-        frame = LoggingCodePortal.call_stack[-1]
+    if len(LoggingFnExecutionFrame.call_stack):
+        frame = LoggingFnExecutionFrame.call_stack[-1]
         event_id = frame.session_id + "_event_" + str(frame.event_counter)
         frame.event_counter += 1
     else:
@@ -727,7 +663,7 @@ def log_event(*args, **kwargs):
     if frame is not None:
         frame.fn_call_signature.events[event_id] = event_body
 
-    portal = find_portal_to_use(expected_type=LoggingCodePortal)
+    portal = active_portal()
     address = (current_date_gmt_string(),event_id)
-    portal.event_history[address] = event_body
+    portal._event_history[address] = event_body
     print(f"Event logged: {event_id} ", *args)

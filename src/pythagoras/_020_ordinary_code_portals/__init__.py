@@ -24,8 +24,8 @@ subclasses of OrdinaryFn). Most of the time, a Pythagoras user will
 work with pure functions.
 """
 
-from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal, get_normalized_function_source
+from .ordinary_portal_core_classes_NEW import *
 from .function_processing import *
-from .ordinary_decorator import ordinary
+from .ordinary_decorator import *
 from .code_normalizer import *
 

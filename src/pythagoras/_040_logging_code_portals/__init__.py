@@ -7,7 +7,7 @@ location(s) that is(are) the same across the entire application,
 and does(do) not depend on the specific function from which
 the even or exception is originated.
 
-BasicPortal provides two attributes, `crash_history` and `event_log`,
+BasicPortal provides two attributes, `_crash_history` and `event_log`,
 which are persistent dictionaries (PersiDict-s) that store
 the exceptions history and event log respectively.
 

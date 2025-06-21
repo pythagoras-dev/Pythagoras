@@ -17,24 +17,24 @@ def test_simple_function_single_call_very_basic(tmpdir):
             global simple_function
             simple_function = logging(excessive_logging=True)(simple_function_original)
 
-            addr = ValueAddr(simple_function, portal=p.portal)
+            addr = ValueAddr(simple_function)
 
             signature = LoggingFnCallSignature(simple_function,dict())
 
 
             simple_function()
 
-            assert len(p.portal.known_functions) == 1
+            assert p.portal.number_of_linked_functions() == 1
 
-            assert len(p.portal.value_store) == 4
+            assert len(p.portal._value_store) == 4
 
-            assert len(p.portal.crash_history) == 0
-            assert len(p.portal.event_history) == 0
+            assert len(p.portal._crash_history) == 0
+            assert len(p.portal._event_history) == 0
 
-            assert  len(p.portal.run_history.py) == 1
-            assert len(p.portal.run_history.pkl) == i+1
-            assert len(p.portal.run_history.txt) == i+1
-            assert len(p.portal.run_history.json) == i+1
+            assert  len(p.portal._run_history.py) == 1
+            assert len(p.portal._run_history.pkl) == i+1
+            assert len(p.portal._run_history.txt) == i+1
+            assert len(p.portal._run_history.json) == i+1
 
 
 @pytest.mark.parametrize("pr",[0,0.5,1])
@@ -48,17 +48,17 @@ def test_simple_function_single_call(tmpdir,pr):
 
             simple_function()
 
-            assert len(p.portal.known_functions) == 1
+            assert p.portal.number_of_linked_functions() == 1
 
-            assert len(p.portal.value_store) == 4
+            assert len(p.portal._value_store) == 4
 
-            assert len(p.portal.crash_history) == 0
-            assert len(p.portal.event_history) == 0
+            assert len(p.portal._crash_history) == 0
+            assert len(p.portal._event_history) == 0
 
-            assert  len(p.portal.run_history.py) == 1
-            assert len(p.portal.run_history.pkl) == i+1
-            assert len(p.portal.run_history.txt) == i+1
-            assert len(p.portal.run_history.json) == i+1
+            assert  len(p.portal._run_history.py) == 1
+            assert len(p.portal._run_history.pkl) == i+1
+            assert len(p.portal._run_history.txt) == i+1
+            assert len(p.portal._run_history.json) == i+1
 
 @pytest.mark.parametrize("pr",[0,0.5,1])
 def test_simple_function_single_call_no_logs(tmpdir,pr):
@@ -70,17 +70,17 @@ def test_simple_function_single_call_no_logs(tmpdir,pr):
 
         simple_function()
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 3
+        assert len(p.portal._value_store) == 3
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 0
-        assert len(p.portal.run_history.pkl) == 0
-        assert len(p.portal.run_history.txt) == 0
-        assert len(p.portal.run_history.json) == 0
+        assert  len(p.portal._run_history.py) == 0
+        assert len(p.portal._run_history.pkl) == 0
+        assert len(p.portal._run_history.txt) == 0
+        assert len(p.portal._run_history.json) == 0
 
 
 @pytest.mark.parametrize("pr",[0,0.5,1])
@@ -95,17 +95,17 @@ def test_simple_function_double_call(tmpdir,pr):
             simple_function()
             simple_function()
 
-            assert len(p.portal.known_functions) == 1
+            assert p.portal.number_of_linked_functions() == 1
 
-            assert len(p.portal.value_store) == 4
+            assert len(p.portal._value_store) == 4
 
-            assert len(p.portal.crash_history) == 0
-            assert len(p.portal.event_history) == 0
+            assert len(p.portal._crash_history) == 0
+            assert len(p.portal._event_history) == 0
 
-            assert  len(p.portal.run_history.py) == 1
-            assert len(p.portal.run_history.pkl) == 2*i
-            assert len(p.portal.run_history.txt) == 2*i
-            assert len(p.portal.run_history.json) == 2*i
+            assert  len(p.portal._run_history.py) == 1
+            assert len(p.portal._run_history.pkl) == 2*i
+            assert len(p.portal._run_history.txt) == 2*i
+            assert len(p.portal._run_history.json) == 2*i
 
 
 def test_simple_function_double_call_no_logs(tmpdir):
@@ -117,14 +117,14 @@ def test_simple_function_double_call_no_logs(tmpdir):
         simple_function()
         simple_function()
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 3
+        assert len(p.portal._value_store) == 3
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 0
-        assert len(p.portal.run_history.pkl) == 0
-        assert len(p.portal.run_history.txt) == 0
-        assert len(p.portal.run_history.json) == 0
+        assert  len(p.portal._run_history.py) == 0
+        assert len(p.portal._run_history.pkl) == 0
+        assert len(p.portal._run_history.txt) == 0
+        assert len(p.portal._run_history.json) == 0

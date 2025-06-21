@@ -72,3 +72,10 @@ class PortalAwareDict(PersiDict):
         result = PortalAwareDict(subdict, portal = self._portal)
         return result
 
+    @property
+    def base_dir(self):
+        return self._wrapped_dict.base_dir
+
+    @property
+    def base_url(self):
+        return self._wrapped_dict.base_url

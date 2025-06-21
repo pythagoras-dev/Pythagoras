@@ -1,5 +1,7 @@
 from __future__ import annotations
-from .basic_portal_class import BasicPortal, PortalType
+from .basic_portal_core_classes_NEW import (
+    BasicPortal, PortalType, _clear_all_portals)
+
 
 class _PortalTester:
     """A context manager for testing portal objects.
@@ -30,10 +32,7 @@ class _PortalTester:
             raise Exception("_PortalTester can't be nested")
         _PortalTester._current_instance = self
 
-        if self.portal_class is not None:
-            self.portal_class._clear_all()
-        else:
-            BasicPortal._clear_all()
+        _clear_all_portals()
 
         if self.portal_class is not None:
             self.portal = self.portal_class(*self.args,**self.kwargs)
@@ -46,9 +45,6 @@ class _PortalTester:
             self.portal.__exit__(exc_type, exc_val, exc_tb)
             self._portal = None
 
-        if self.portal_class is not None:
-            self.portal_class._clear_all()
-        else:
-            BasicPortal._clear_all()
+        _clear_all_portals()
 
         _PortalTester._current_instance = None

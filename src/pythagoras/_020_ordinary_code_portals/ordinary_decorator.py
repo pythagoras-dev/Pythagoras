@@ -1,7 +1,6 @@
 from typing import Callable
 
-from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
-from .. import NotPicklableObject
+from .ordinary_portal_core_classes_NEW import OrdinaryFn, OrdinaryCodePortal
 
 
 class ordinary:
@@ -25,8 +24,8 @@ class ordinary:
 
 
     def __getstate__(self):
-        raise NotPicklableObject("Decorators cannot be pickled.")
+        raise TypeError("Decorators cannot be pickled.")
 
 
     def __setstate__(self, state):
-        raise NotPicklableObject("Decorators cannot be pickled.")
+        raise TypeError("Decorators cannot be pickled.")

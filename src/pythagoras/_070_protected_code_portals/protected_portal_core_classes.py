@@ -3,7 +3,7 @@ from __future__ import annotations
 from copy import copy
 from typing import Callable, Any, List
 
-from persidict import PersiDict
+from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .._040_logging_code_portals import KwArgs
 from .._030_data_portals import ValueAddr
@@ -20,9 +20,9 @@ from .fn_arg_names_checker import check_if_fn_accepts_args
 class ProtectedCodePortal(AutonomousCodePortal):
     
     def __init__(self
-            , root_dict: PersiDict | str | None = None
-            , p_consistency_checks: float | None = None
-            , excessive_logging: bool|None = None
+            , root_dict: PersiDict|str|None = None
+            , p_consistency_checks: float|Joker = KEEP_CURRENT
+            , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
         super().__init__(root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
@@ -42,7 +42,7 @@ class ProtectedFn(AutonomousFn):
     def __init__(self, fn: Callable | str
                  , guards: list[AutonomousFn] | List[Callable] | None = None
                  , validators: list[AutonomousFn] | List[Callable] | None = None
-                 , excessive_logging: bool|None = None
+                 , excessive_logging: bool|None = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: AutonomousCodePortal | None = None):
         AutonomousFn.__init__(self

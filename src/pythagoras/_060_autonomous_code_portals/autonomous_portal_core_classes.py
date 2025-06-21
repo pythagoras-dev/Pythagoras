@@ -4,7 +4,7 @@ import builtins
 # from sys import Exception
 from typing import Callable, Any
 
-from persidict import PersiDict
+from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .._040_logging_code_portals import KwArgs
 
@@ -21,8 +21,8 @@ class AutonomousCodePortal(SafeCodePortal):
     
     def __init__(self
             , root_dict: PersiDict | str | None = None
-            , p_consistency_checks: float | None = None
-            , excessive_logging: bool|None = None
+            , p_consistency_checks: float | Joker = KEEP_CURRENT
+            , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
         SafeCodePortal.__init__(self
             , root_dict=root_dict
@@ -36,7 +36,7 @@ class AutonomousFn(SafeFn):
 
     def __init__(self, fn: Callable|str|SafeFn
                  , fixed_kwargs: dict|None = None
-                 , excessive_logging: bool|None = False
+                 , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: AutonomousCodePortal|None = None):
         SafeFn.__init__(self
             ,fn=fn

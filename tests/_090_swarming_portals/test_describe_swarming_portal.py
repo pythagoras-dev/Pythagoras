@@ -1,6 +1,6 @@
 from src.pythagoras import SwarmingPortal
 from src.pythagoras import _PortalTester
-from src.pythagoras._010_basic_portals.basic_portal_class import get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_class_OLD import get_description_value_by_key
 from src.pythagoras._090_swarming_portals.swarming_portals import BACKGROUND_WORKERS_TXT
 
 

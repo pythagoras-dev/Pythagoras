@@ -31,6 +31,7 @@ primary_decorators = {d.__name__:d for d in [
 
 all_decorators = {d.__name__:d for d in [
     ordinary
+    , storable
     , logging
     , safe
     , autonomous

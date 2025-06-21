@@ -1,6 +1,6 @@
 """Support for work with autonomous functions.
 
-In an essence, an autonomous function contains self-sufficient code
+In essence, an autonomous function contains self-sufficient code
 that does not depend on external imports or definitions.
 
 Autonomous functions are always allowed to use the built-in objects
@@ -33,6 +33,7 @@ from typing import Callable
 
 from .._050_safe_code_portals import safe
 from .autonomous_portal_core_classes import AutonomousFn, AutonomousCodePortal
+from persidict import Joker, KEEP_CURRENT
 
 
 class autonomous(safe):
@@ -46,7 +47,7 @@ class autonomous(safe):
 
     def __init__(self
                  , fixed_kwargs: dict | None = None
-                 , excessive_logging: bool|None = None
+                 , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: AutonomousCodePortal | None = None
                  ):
         assert isinstance(portal, AutonomousCodePortal) or portal is None

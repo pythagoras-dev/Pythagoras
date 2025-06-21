@@ -14,17 +14,17 @@ def test_2args_function_single_call(tmpdir):
 
         two_arg_function(a=1, b=2)
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 6
+        assert len(p.portal._value_store) == 6
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 1
-        assert len(p.portal.run_history.pkl) == 1
-        assert len(p.portal.run_history.txt) == 1
-        assert len(p.portal.run_history.json) == 1
+        assert  len(p.portal._run_history.py) == 1
+        assert len(p.portal._run_history.pkl) == 1
+        assert len(p.portal._run_history.txt) == 1
+        assert len(p.portal._run_history.json) == 1
 
 def test_2args_function_2similar_calls(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_2SIMILAR_CALLS_"*2 +str(int(time.time()))
@@ -35,17 +35,17 @@ def test_2args_function_2similar_calls(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(b=2, a=1)
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 6
+        assert len(p.portal._value_store) == 6
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 1
-        assert len(p.portal.run_history.pkl) == 2
-        assert len(p.portal.run_history.txt) == 2
-        assert len(p.portal.run_history.json) == 2
+        assert  len(p.portal._run_history.py) == 1
+        assert len(p.portal._run_history.pkl) == 2
+        assert len(p.portal._run_history.txt) == 2
+        assert len(p.portal._run_history.json) == 2
 
 def test_2args_function_2different_calls(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_2DIFFERENT_CALLS_"*2 +str(int(time.time()))
@@ -56,17 +56,17 @@ def test_2args_function_2different_calls(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(a=1, b=10)
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 10
+        assert len(p.portal._value_store) == 10
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 2
-        assert len(p.portal.run_history.pkl) == 2
-        assert len(p.portal.run_history.txt) == 2
-        assert len(p.portal.run_history.json) == 2
+        assert  len(p.portal._run_history.py) == 2
+        assert len(p.portal._run_history.pkl) == 2
+        assert len(p.portal._run_history.txt) == 2
+        assert len(p.portal._run_history.json) == 2
 
 def test_2args_function_single_call_no_logs(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_SINGLE_CALL_NO_LOGS_"*2 +str(int(time.time()))
@@ -76,17 +76,17 @@ def test_2args_function_single_call_no_logs(tmpdir):
 
         two_arg_function(a=1, b=2)
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 5
+        assert len(p.portal._value_store) == 5
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 0
-        assert len(p.portal.run_history.pkl) == 0
-        assert len(p.portal.run_history.txt) == 0
-        assert len(p.portal.run_history.json) == 0
+        assert  len(p.portal._run_history.py) == 0
+        assert len(p.portal._run_history.pkl) == 0
+        assert len(p.portal._run_history.txt) == 0
+        assert len(p.portal._run_history.json) == 0
 
 def test_2args_function_2similar_calls_no_logs(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_2SIMILAR_CALLS_NO_LOGS_"*2 +str(int(time.time()))
@@ -97,17 +97,17 @@ def test_2args_function_2similar_calls_no_logs(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(b=2, a=1)
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 5
+        assert len(p.portal._value_store) == 5
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 0
-        assert len(p.portal.run_history.pkl) == 0
-        assert len(p.portal.run_history.txt) == 0
-        assert len(p.portal.run_history.json) == 0
+        assert  len(p.portal._run_history.py) == 0
+        assert len(p.portal._run_history.pkl) == 0
+        assert len(p.portal._run_history.txt) == 0
+        assert len(p.portal._run_history.json) == 0
 
 def test_2args_function_2different_calls_no_logs(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_2DIFFERENT_CALLS_NO_LOGS_"*2 +str(int(time.time()))
@@ -118,15 +118,15 @@ def test_2args_function_2different_calls_no_logs(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(a=1, b=10)
 
-        assert len(p.portal.known_functions) == 1
+        assert p.portal.number_of_linked_functions() == 1
 
-        assert len(p.portal.value_store) == 8
+        assert len(p.portal._value_store) == 8
 
-        assert len(p.portal.crash_history) == 0
-        assert len(p.portal.event_history) == 0
+        assert len(p.portal._crash_history) == 0
+        assert len(p.portal._event_history) == 0
 
-        assert  len(p.portal.run_history.py) == 0
-        assert len(p.portal.run_history.pkl) == 0
-        assert len(p.portal.run_history.txt) == 0
-        assert len(p.portal.run_history.json) == 0
+        assert  len(p.portal._run_history.py) == 0
+        assert len(p.portal._run_history.pkl) == 0
+        assert len(p.portal._run_history.txt) == 0
+        assert len(p.portal._run_history.json) == 0
 

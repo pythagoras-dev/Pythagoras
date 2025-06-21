@@ -4,6 +4,7 @@ from typing import Callable
 
 from .._060_autonomous_code_portals import autonomous, AutonomousFn
 from .protected_portal_core_classes import ProtectedFn, ProtectedCodePortal
+from persidict import Joker, KEEP_CURRENT
 
 class protected(autonomous):
 
@@ -14,7 +15,7 @@ class protected(autonomous):
                  , guards: list[AutonomousFn] | None = None
                  , validators: list[AutonomousFn] | None = None
                  , fixed_kwargs: dict | None = None
-                 , excessive_logging: bool|None = None
+                 , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: ProtectedCodePortal | None = None
                  ):
         assert isinstance(portal, ProtectedCodePortal) or portal is None

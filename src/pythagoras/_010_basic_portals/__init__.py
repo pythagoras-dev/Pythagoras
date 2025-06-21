@@ -34,8 +34,9 @@ PortalAwareClass is also not intended to be used directly. It should
 be subclassed to provide additional functionality.
 """
 
+from .post_init_metaclass import *
+from .not_picklable import *
 from .exceptions import *
-from .basic_portal_class import BasicPortal, PortalType
-from .portal_aware_class import PortalAwareMetaclass, PortalAwareClass
+from .basic_portal_core_classes_NEW import *
 from .portal_tester import _PortalTester
-from .long_infoname import get_long_infoname
+from .long_infoname import *

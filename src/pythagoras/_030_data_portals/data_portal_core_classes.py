@@ -4,24 +4,24 @@ from abc import abstractmethod
 from typing import Optional, Callable, Any, Type
 
 import pandas as pd
-from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars
+from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
+from persidict import KEEP_CURRENT, Joker
 
-from .._010_basic_portals.portal_aware_dict import PortalAwareDict
-from .._020_ordinary_code_portals import get_normalized_function_source
+from .._010_basic_portals import active_portal, nonactive_portals
 from .._820_strings_signatures_converters import get_hash_signature
-from .._010_basic_portals import PortalAwareClass
-from .._010_basic_portals.portal_aware_class import (
-    _noncurrent_portals, find_portal_to_use)
 
-from .._010_basic_portals.basic_portal_class import (
+from .._010_basic_portals.basic_portal_class_OLD import (
     _describe_persistent_characteristic
     , _describe_runtime_characteristic)
 from .._020_ordinary_code_portals import (
-    OrdinaryCodePortal, OrdinaryFn)
+    get_normalized_function_source
+    ,OrdinaryCodePortal
+    ,OrdinaryFn)
 from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
 
 TOTAL_VALUES_TXT = "Values, total"
 PROBABILITY_OF_CHECKS_TXT = "Probability of checks"
+
 
 class DataPortal(OrdinaryCodePortal):
     """A portal that persistently stores values.
@@ -40,45 +40,103 @@ class DataPortal(OrdinaryCodePortal):
     in a 'with' statement that marks the portal as the current.
     """
 
-    value_store: PortalAwareDict|None
-    config_store: PortalAwareDict|None
-    _p_consistency_checks: float|None
+    _value_store: FirstEntryDict | None
+    _config_settings: PersiDict | None
+    _config_settings_cache: dict
+
+    _p_consistency_checks_at_init: float | Joker
 
     def __init__(self
-            , root_dict:PersiDict|str|None = None
-            , p_consistency_checks: float | None = None
+            , root_dict: PersiDict|str|None = None
+            , p_consistency_checks: float|Joker = KEEP_CURRENT
             ):
         OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
 
-        assert p_consistency_checks is None or 0 <= p_consistency_checks <= 1
-        if p_consistency_checks is None:
-            p_consistency_checks = 0
-        self._p_consistency_checks = p_consistency_checks
+        self._config_settings_cache = dict()
+
+        config_settings_prototype = self._root_dict.get_subdict("config_settings")
+        config_settings_params = config_settings_prototype.get_params()
+        config_settings_params.update(
+            digest_len=0, immutable_items=False, file_type="pkl")
+        config_settings = type(self._root_dict)(**config_settings_params)
+        self._config_settings = config_settings
+
+        if not (isinstance(p_consistency_checks, Joker)
+                or 0 <= p_consistency_checks <= 1):
+            raise ValueError("p_consistency_checks must be a float in [0,1] "
+                +f"or a Joker, but got {p_consistency_checks}")
+
+        self._set_config_setting("p_consistency_checks"
+            , p_consistency_checks)
+        self._p_consistency_checks_at_init = p_consistency_checks
 
         value_store_prototype = self._root_dict.get_subdict("value_store")
         value_store_params = value_store_prototype.get_params()
         value_store_params.update(
             digest_len=0, immutable_items=True, file_type = "pkl")
         value_store = type(self._root_dict)(**value_store_params)
-        value_store = FirstEntryDict(value_store, p_consistency_checks)
-        value_store = PortalAwareDict(value_store, portal=self)
-        self.value_store = value_store
-
-        config_store_prototype = self._root_dict.get_subdict("config_store")
-        config_store_params = config_store_prototype.get_params()
-        config_store_params.update(
-            digest_len=0, immutable_items=False, file_type = "pkl")
-        config_store = type(self._root_dict)(**config_store_params)
-        config_store = PortalAwareDict(config_store, portal=self)
-        self.config_store = config_store
+        value_store = FirstEntryDict(value_store, self.p_consistency_checks)
+        self._value_store = value_store
 
 
     def get_params(self) -> dict:
         """Get the portal's configuration parameters"""
         params = super().get_params()
-        params["p_consistency_checks"] = self.p_consistency_checks
-        return params
+        params["p_consistency_checks"] = self._p_consistency_checks_at_init
+        sorted_params = dict(sorted(params.items()))
+        return sorted_params
+
+
+    @property
+    def ephemeral_param_names(self) -> set[str]:
+        names = super().ephemeral_param_names
+        names.add("p_consistency_checks")
+        return names
+
+
+    def update_from_twin(self, other: DataPortal) -> None:
+        super().update_from_twin(other)
+        self._value_store = other._value_store
+        self._config_settings = other._config_settings
+        self._config_settings_cache = other._config_settings_cache
+
+
+    def _get_config_setting(self, key: SafeStrTuple) -> Any:
+        """Get a configuration setting from the portal's config store"""
+        if not isinstance(key, (str,SafeStrTuple)):
+            raise TypeError("key must be a SafeStrTuple or a string")
+
+        if key in self._config_settings_cache:
+            value = self._config_settings_cache[key]
+        elif key in self._config_settings:
+            value = self._config_settings[key]
+            self._config_settings_cache[key] = value
+        else:
+            value = None
+            self._config_settings_cache[key] = None
+        return value
+
+
+    def _set_config_setting(self, key: SafeStrTuple, value: Any) -> None:
+        """Set a configuration setting in the portal's config store"""
+        if not isinstance(key, (str,SafeStrTuple)):
+            raise TypeError("key must be a SafeStrTuple or a string")
+
+        if value is KEEP_CURRENT:
+            return
+
+        self._config_settings[key] = value
+        self._config_settings_cache[key] = value
+
+        if value is DELETE_CURRENT:
+            del self._config_settings_cache[key]
+
+
+    def _invalidate_cache(self):
+        """Invalidate the portal's cache"""
+        super()._invalidate_cache()
+        self._config_settings_cache = dict()
 
 
     def describe(self) -> pd.DataFrame:
@@ -86,9 +144,9 @@ class DataPortal(OrdinaryCodePortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
-            TOTAL_VALUES_TXT, len(self.value_store)))
+            TOTAL_VALUES_TXT, len(self._value_store)))
         all_params.append(_describe_runtime_characteristic(
-            PROBABILITY_OF_CHECKS_TXT, self._p_consistency_checks))
+            PROBABILITY_OF_CHECKS_TXT, self.p_consistency_checks))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
@@ -97,20 +155,23 @@ class DataPortal(OrdinaryCodePortal):
 
     @property
     def p_consistency_checks(self) -> float|None:
-        return self._p_consistency_checks
+        p = self._get_config_setting("p_consistency_checks")
+        if p is None:
+            p = 0.0
+        return p
 
 
     def _clear(self) -> None:
         """Clear the portal's state"""
-        self.value_store = None
-        self.config_store = None
-        self._p_consistency_checks = 0
+        self._value_store = None
+        self._config_settings = None
+        self._invalidate_cache()
         super()._clear()
 
 
 class StorableFn(OrdinaryFn):
 
-    _addr: ValueAddr
+    _addr_cache: ValueAddr
 
     def __init__(self
         , fn: Callable | str
@@ -120,36 +181,62 @@ class StorableFn(OrdinaryFn):
 
 
     @property
+    def portal(self) -> DataPortal:
+        return super().portal
+
+
+    def _get_config_setting(self, key: SafeStrTuple) -> Any:
+        if not isinstance(key, (str,SafeStrTuple)):
+            raise TypeError("key must be a SafeStrTuple or a string")
+
+        portal_wide_value = self.portal._get_config_setting(key)
+        if portal_wide_value is not None:
+            return portal_wide_value
+
+        function_specific_value = self.portal._get_config_setting(
+            self.addr + key)
+
+        return function_specific_value
+
+
+    def _set_config_setting(self, key: SafeStrTuple, value: Any) -> None:
+        if not isinstance(key, (SafeStrTuple, str)):
+            raise TypeError("key must be a SafeStrTuple or a string")
+        self.portal._set_config_setting(self.addr + key, value)
+
+
+    @property
     def addr(self) -> ValueAddr:
-        if not hasattr(self, "_addr") or self._addr is None:
-            self._addr = ValueAddr(self, portal=self.portal)
-        return self._addr
+        with self.portal:
+            if not hasattr(self, "_addr_cache") or self._addr_cache is None:
+                self._addr_cache = ValueAddr(self)
+            return self._addr_cache
 
 
     def _invalidate_cache(self):
-        if hasattr(self, "_addr"):
-            del self._addr
+        if hasattr(self, "_addr_cache"):
+            del self._addr_cache
         super()._invalidate_cache()
 
 
     def __setstate__(self, state):
-        self._invalidate_cache()
         super().__setstate__(state)
-        assert state["_source_code"] == get_normalized_function_source(
-            state["_source_code"])
+        if not state["_source_code"] == get_normalized_function_source(
+            state["_source_code"]):
+            raise ValueError("Source code is not normalized. ")
+
 
     def __getstate__(self):
         return super().__getstate__()
 
 
-
-class HashAddr(SafeStrTuple, PortalAwareClass):
+class HashAddr(SafeStrTuple):
     """A globally unique hash-based address of an object.
 
     Two objects with exactly the same type and value will always have
     exactly the same HashAddr-es.
 
-    A HashAddr consists of 2 strings: a prefix, and a hash.
+    A HashAddr consists of 2 components: a prefix, and a hash.
     A prefix contains human-readable information about an object's type.
     A hash string contains the object's hash signature. It may begin with
     an optional descriptor, which provides additional human-readable
@@ -157,9 +244,11 @@ class HashAddr(SafeStrTuple, PortalAwareClass):
     """
 
     def __init__(self, prefix:str
-                 , hash_signature:str
-                 , portal:Optional[DataPortal]=None):
-        PortalAwareClass.__init__(self, portal=portal)
+                 , hash_signature:str):
+        if not isinstance(prefix, str) or not isinstance(hash_signature, str):
+            raise TypeError("prefix and hash_signature must be strings")
+        if len(prefix) == 0 or len(hash_signature) == 0:
+            raise ValueError("prefix and hash_signature must not be empty")
         SafeStrTuple.__init__(self,prefix,hash_signature)
 
 
@@ -211,17 +300,20 @@ class HashAddr(SafeStrTuple, PortalAwareClass):
                      , prefix:str
                      , hash_signature:str
                      , assert_readiness:bool=True
-                     , portal:Optional[DataPortal] = None
                      ) -> HashAddr:
         """(Re)construct address from text representations of prefix and hash"""
 
-        assert prefix, "prefix must be a non-empty string"
-        assert hash_signature, "hash_signature must be a non-empty string"
+        if not isinstance(prefix, str) or not isinstance(hash_signature, str):
+            raise TypeError("prefix and hash_signature must be strings")
+
+        if len(prefix) == 0 or len(hash_signature) == 0:
+            raise ValueError("prefix and hash_signature must not be empty")
 
         address = cls.__new__(cls)
-        super(cls, address).__init__(prefix, hash_signature, portal=portal)
+        super(cls, address).__init__(prefix, hash_signature)
         if assert_readiness:
-            assert address.ready
+            if not address.ready:
+                raise ValueError("Address is not ready for retrieving data")
         return address
 
 
@@ -243,9 +335,14 @@ class HashAddr(SafeStrTuple, PortalAwareClass):
         """Return self==other. """
         return type(self) == type(other) and self.strings == other.strings
 
+
     def __ne__(self, other) -> bool:
         """Return self!=other. """
         return not (self == other)
+
+
+    def _invalidate_cache(self):
+        pass
 
 
 class ValueAddr(HashAddr):
@@ -260,15 +357,10 @@ class ValueAddr(HashAddr):
     It makes it easier for humans to interpret an address,
     and further decreases collision risk.
     """
-    _ready_cache: bool
+    _containing_portals_cache: set[str]
     _value_cache: Any
 
-    def __init__(
-            self
-            , data: Any
-            , portal:DataPortal|None):
-
-        portal = find_portal_to_use(suggested_portal=portal)
+    def __init__(self, data: Any):
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
@@ -276,16 +368,7 @@ class ValueAddr(HashAddr):
             hash_signature = data_value_addr.hash_signature
             HashAddr.__init__(self
                 , prefix=prefix
-                , hash_signature=hash_signature
-                , portal=portal)
-            ##################### REWRITE !!!! #####################
-            if portal != data_value_addr.portal and (
-                    data_value_addr.portal is not None) and (
-                    not self in portal.value_store):
-                data = data_value_addr.get()
-                portal.value_store[self] = data
-                self._ready_cache = True
-            ##################### REWRITE !!!! #####################
+                , hash_signature=hash_signature)
             return
 
         assert not isinstance(data, HashAddr), (
@@ -296,111 +379,113 @@ class ValueAddr(HashAddr):
         hash_signature = self._build_hash_signature(data)
         HashAddr.__init__(self
             , prefix=prefix
-            , hash_signature=hash_signature
-            , portal=portal)
+            , hash_signature=hash_signature)
 
-        portal.value_store[self] = data
+        portal = active_portal()
+        portal._value_store[self] = data
         self._value_cache = data
-        self._ready_cache = True
+        self._containing_portals_cache = set()
+        self._containing_portals_cache.add(portal.str_id)
 
 
     def _invalidate_cache(self):
         super()._invalidate_cache()
         if hasattr(self, "_value_cache"):
             del self._value_cache
-        if hasattr(self, "_ready_cache"):
-            del self._ready_cache
+        if hasattr(self, "_containing_portals_cache"):
+            del self._containing_portals_cache
 
 
     def get_ValueAddr(self):
         return self
 
 
-    # @property
-    # def portal(self) -> DataPortal:
-    #     return self._portal_typed(expected_type=DataPortal)
-
-
     @property
-    def _ready_in_current_portal(self) -> bool:
-        with self.finally_bound_portal:
-            if not hasattr(self, "_ready_cache"):
-                result = self in self.portal.value_store
-                if result:
-                    self._ready_cache = True
-                return result
-            assert self._ready_cache is True
+    def _ready_in_active_portal(self) -> bool:
+        portal = active_portal()
+        portal_id = portal.str_id
+        if portal_id in self._containing_portals_cache:
             return True
+        result = self in portal._value_store
+        if result:
+            self._containing_portals_cache.add(portal_id)
+        return result
 
 
     @property
-    def _ready_in_noncurrent_portals(self) -> bool:
-        for portal in _noncurrent_portals(expected_type=DataPortal):
-            with portal:
-                if self in portal.value_store:
-                    data = portal.value_store[self]
-                    with self.portal:
-                        self.portal.value_store[self] = data
-                    self._ready_cache = True
-                    return True
+    def _ready_in_nonactive_portals(self) -> bool:
+        for portal in nonactive_portals():
+            if self in portal._value_store:
+                value = portal._value_store[self]
+                active_portal()._value_store[self] = value
+                new_ids = {portal.str_id, active_portal().str_id}
+                self._containing_portals_cache |= new_ids
+                self._value_cache = value
+                return True
         return False
 
 
     @property
     def ready(self) -> bool:
         """Check if address points to a value that is ready to be retrieved."""
-        if hasattr(self, "_ready_cache"):
-            assert self._ready_cache
+        if not hasattr(self, "_containing_portals_cache"):
+            self._containing_portals_cache = set()
+
+        if self._ready_in_active_portal:
             return True
-        if self._ready_in_current_portal:
-            self._ready_cache = True
-            return True
-        if self._ready_in_noncurrent_portals:
-            self._ready_cache = True
+        if self._ready_in_nonactive_portals:
             return True
         return False
 
 
-    def _get_from_current_portal(self, timeout:Optional[int] = None) -> Any:
+    def _get_from_active_portal(self) -> Any:
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            return self._value_cache
+            if active_portal().str_id in self._containing_portals_cache:
+                return self._value_cache
+            else:
+                active_portal()._value_store[self] = self._value_cache
+                self._containing_portals_cache |= {active_portal().str_id}
+                return self._value_cache
 
-        with self.finally_bound_portal:
-            result = self.portal.value_store[self]
-            self._value_cache = result
-            return result
+        value = active_portal()._value_store[self]
+        self._value_cache = value
+        self._containing_portals_cache |= {active_portal().str_id}
+        return value
 
 
-    def _get_from_noncurrent_portals(self, timeout:Optional[int] = None) -> Any:
+    def _get_from_nonactive_portals(self) -> Any:
         """Retrieve value, referenced by the address, from noncurrent portals"""
-        for portal in _noncurrent_portals(expected_type=DataPortal):
+
+        for portal in nonactive_portals():
             try:
-                with portal:
-                    result = portal.value_store[self]
-                with self.portal:
-                    self.portal.value_store[self] = result
-                self._value_cache = result
-                return result
+                value = portal._value_store[self]
+                active_portal()._value_store[self] = value
+                self._value_cache = value
+                new_ids = {portal.str_id, active_portal().str_id}
+                self._containing_portals_cache |= new_ids
+                return value
             except:
                 continue
 
         raise KeyError(f"ValueAddr {self} not found in any portal")
 
+
     def get(self
-            , timeout:Optional[int] = None
+            , timeout:int|None = None
             , expected_type:Type[T]= Any
             ) -> T:
         """Retrieve value, referenced by the address from any available portal"""
 
-        if hasattr(self, "_value_cache"):
-            result = self._value_cache
-        else:
-            try:
-                result = self._get_from_current_portal(timeout)
-            except:
-                result = self._get_from_noncurrent_portals(timeout)
+        if not hasattr(self, "_containing_portals_cache"):
+            self._containing_portals_cache = set()
+
+        try:
+            result = self._get_from_active_portal()
+        except:
+            result = self._get_from_nonactive_portals()
+
         if not (expected_type is Any or expected_type is object):
             if not isinstance(result, expected_type):
                 raise TypeError(f"Expected type {expected_type}, "
@@ -414,5 +499,5 @@ class ValueAddr(HashAddr):
 
 
     def __setstate__(self, state):
+        self._invalidate_cache()
         self.strings = state["strings"]
-        self._portal = None

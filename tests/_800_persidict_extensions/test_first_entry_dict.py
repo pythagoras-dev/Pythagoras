@@ -1,3 +1,4 @@
+from parameterizable import smoketest_parameterizable_class, is_parameterizable
 from persidict import FileDirDict
 
 from src.pythagoras import InconsistentChangeOfImmutableItem
@@ -50,6 +51,7 @@ def test_first_entry_dict_pchecks_one(tmpdir):
             fed[key] = -i
         assert len(fed) == i
 
+
 def test_firs_entry_dict_wrong_init_params(tmpdir):
     with pytest.raises(Exception):
         fed = FirstEntryDict({}, p_consistency_checks=None)
@@ -67,3 +69,7 @@ def test_firs_entry_dict_wrong_init_params(tmpdir):
     with pytest.raises(Exception):
         fed = FirstEntryDict(
             FileDirDict(tmpdir, immutable_items=False))
+
+def test_first_entry_dict_parameterizable():
+    assert is_parameterizable(FirstEntryDict)
+    smoketest_parameterizable_class(FirstEntryDict)

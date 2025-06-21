@@ -1,5 +1,7 @@
 from typing import Callable
 
+from persidict import Joker, KEEP_CURRENT
+
 from .._040_logging_code_portals import logging
 from .safe_portal_core_classes import SafeFn, SafeCodePortal
 
@@ -9,7 +11,7 @@ class safe(logging):
     """
 
     def __init__(self
-                 , excessive_logging: bool|None = None
+                 , excessive_logging: bool|None|Joker = KEEP_CURRENT
                  , portal: SafeCodePortal | None = None):
         assert isinstance(portal, SafeCodePortal) or portal is None
         logging.__init__(self=self

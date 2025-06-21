@@ -15,7 +15,7 @@ def test_random_request_execution(tmpdir):
 
         address = f.swarm(n=10)
 
-        init_params = deepcopy(t.portal.__get_portable_params__())
+        init_params = deepcopy(t.portal.get_portable_params())
         init_params["runtime_id"] = None
 
     _process_random_execution_request(**init_params)

@@ -1,6 +1,6 @@
 from src.pythagoras import BasicPortal
 from src.pythagoras import _PortalTester
-from src.pythagoras._010_basic_portals.basic_portal_class import (
+from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import (
     get_description_value_by_key, BASE_DIRECTORY_TXT, BACKEND_TYPE_TXT)
 
 
