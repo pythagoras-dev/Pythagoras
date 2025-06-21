@@ -12,7 +12,7 @@ class SampleClass(PortalAwareClass):
     def __setstate__(self, state):
         self.n = state["n"]
 
-    def register_in_portal(self):
+    def _register_in_portal(self):
         pass
 
 

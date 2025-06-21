@@ -44,13 +44,14 @@ class LoggingFn(StorableFn):
             raise TypeError(
                 "excessive_logging must be a boolean or Joker, "
                 f"got {type(excessive_logging)}")
-        self._excessive_logging_at_init = excessive_logging
         StorableFn.__init__(self, fn=fn, portal=portal)
+        self._ephemeral_config_params_at_init[
+            "excessive_logging"] = excessive_logging
 
 
     @property
     def excessive_logging(self) -> bool:
-        value = self._get_config_setting("excessive_logging")
+        value = self._get_config_setting("excessive_logging", self.portal)
         return bool(value)
 
 
@@ -74,10 +75,22 @@ class LoggingFn(StorableFn):
         self._excessive_logging_at_init = KEEP_CURRENT
 
 
-    def register_in_portal(self):
-        super().register_in_portal()
-        self._set_config_setting("excessive_logging"
-            , self._excessive_logging_at_init)
+    # def _register_in_portal(self):
+    #     super()._register_in_portal()
+    #     self._set_config_setting("excessive_logging"
+    #         , self._excessive_logging_at_init)
+
+
+    @property
+    def portal(self) -> LoggingCodePortal:
+        return StorableFn.portal.__get__(self)
+
+
+    @portal.setter
+    def portal(self, new_portal: LoggingCodePortal) -> None:
+        if not isinstance(new_portal, LoggingCodePortal):
+            raise TypeError("portal must be a LoggingCodePortal instance")
+        StorableFn.portal.__set__(self, new_portal)
 
 
 class LoggingFnCallSignature:
@@ -539,8 +552,9 @@ class LoggingCodePortal(DataPortal):
             raise TypeError(
                 "excessive_logging must be a boolean or Joker, "
                 f"got {type(excessive_logging)}")
-        self._set_config_setting("excessive_logging", excessive_logging)
-        self._excessive_logging_at_init = excessive_logging
+
+        self._ephemeral_config_params_at_init["excessive_logging"
+            ] = excessive_logging
 
         crash_history_prototype = self._root_dict.get_subdict("crash_history")
         crash_history_params = crash_history_prototype.get_params()
@@ -596,20 +610,6 @@ class LoggingCodePortal(DataPortal):
         return result
 
 
-    def get_params(self) -> dict:
-        params = super().get_params()
-        params["excessive_logging"] = self._excessive_logging_at_init
-        sorted_params = dict(sorted(params.items()))
-        return sorted_params
-
-
-    @property
-    def ephemeral_param_names(self) -> set[str]:
-        result = super().ephemeral_param_names
-        result.add("excessive_logging")
-        return result
-
-
     def _clear(self) -> None:
         """Clear the portal's state"""
         self._crash_history = None
@@ -617,6 +617,8 @@ class LoggingCodePortal(DataPortal):
         self._run_history = None
         unregister_systemwide_uncaught_exception_handlers()
         super()._clear()
+
+
 
 
 register_parameterizable_class(LoggingCodePortal)

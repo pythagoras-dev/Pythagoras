@@ -5,7 +5,7 @@ from .._060_autonomous_code_portals import AutonomousFn
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFn)
 
-
+from persidict import KEEP_CURRENT, Joker
 
 class pure(protected):
 
@@ -13,7 +13,7 @@ class pure(protected):
                  , guards: list[AutonomousFn] | None = None
                  , validators: list[AutonomousFn] | None = None
                  , fixed_kwargs: dict | None = None
-                 , excessive_logging: bool | None = None
+                 , excessive_logging: bool | Joker = KEEP_CURRENT
                  , portal: PureCodePortal | None = None
                  ):
         protected.__init__(self=self

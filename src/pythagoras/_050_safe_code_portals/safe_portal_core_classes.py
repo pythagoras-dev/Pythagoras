@@ -44,4 +44,16 @@ class SafeFn(LoggingFn):
         super().__setstate__(state)
 
 
+    @property
+    def portal(self) -> SafeCodePortal:
+        return LoggingFn.portal.__get__(self)
+
+
+    @portal.setter
+    def portal(self, new_portal: SafeCodePortal) -> None:
+        if not isinstance(new_portal, SafeCodePortal):
+            raise TypeError("portal must be a LoggingCodePortal instance")
+        LoggingFn.portal.__set__(self, new_portal)
+
+
 register_parameterizable_class(SafeCodePortal)

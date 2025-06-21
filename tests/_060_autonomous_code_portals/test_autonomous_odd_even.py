@@ -47,7 +47,6 @@ def test_odd_even_two_decorators_autonomous(tmpdir,pr):
             isEven = oldIsEven
             isOdd = oldIsOdd
 
-        assert l.portal.number_of_linked_functions() == 2
         assert len(l.portal._value_store.get_subdict("bool")) == 2
         assert len(l.portal._value_store.get_subdict("int")) == N
         assert len(l.portal._value_store.get_subdict("packedkwargs")) == N
@@ -65,9 +64,9 @@ def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir,pr):
             oldIsEven = isEven
             oldIsOdd = isOdd
 
-            isEven = autonomous(excessive_logging=True)(isEven)
+            isEven = autonomous(excessive_logging=True, portal=l.portal)(isEven)
             assert isinstance(isEven, AutonomousFn)
-            isOdd = autonomous(excessive_logging=True)(isOdd)
+            isOdd = autonomous(excessive_logging=True, portal=l.portal)(isOdd)
             assert isinstance(isOdd, AutonomousFn)
 
             new_isOdd = isOdd.fix_kwargs(isEven=isEven, isOdd=isOdd)

@@ -41,8 +41,8 @@
 #         assert f_result == 42
 #         assert len(BasicPortal._all_known_portals) == 1
 #         portal = DefaultLocalPortal()
-#         assert len(portal.execution_requests) == 0
-#         assert len(portal.execution_results) == 1
+#         assert len(portal._execution_requests) == 0
+#         assert len(portal._execution_results) == 1
 #         assert len(portal.known_functions) == 1
 #         assert len(BasicPortal._active_portals_stack) == 0
 #         DefaultLocalPortal._clear_all()
@@ -59,8 +59,8 @@
 #         portal = DefaultLocalPortal()
 #         assert len(BasicPortal._active_portals_stack) == 1
 #         assert len(BasicPortal._all_known_portals) == 2
-#         assert len(portal.execution_requests) == 0
-#         assert len(portal.execution_results) == 0
+#         assert len(portal._execution_requests) == 0
+#         assert len(portal._execution_results) == 0
 #         assert len(portal.known_functions) == 0
 #     DefaultLocalPortal._clear_all()
 #
@@ -88,8 +88,8 @@
 #         #     d_portal = DefaultLocalPortal()
 #         #     assert len(BasicPortal._all_known_portals) == 3
 #         #
-#         # assert len(d_portal.execution_requests) == 0
-#         # assert len(d_portal.execution_results) == 0
+#         # assert len(d_portal._execution_requests) == 0
+#         # assert len(d_portal._execution_results) == 0
 #         # assert len(d_portal.known_functions) == 0
 #         # assert len(BasicPortal._active_portals_stack) == 1
 #     DefaultLocalPortal._clear_all()

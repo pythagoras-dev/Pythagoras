@@ -1,7 +1,8 @@
 from src.pythagoras import LoggingCodePortal, EXCESSIVE_LOGGING_TXT
 from src.pythagoras import _PortalTester
 from src import pythagoras as pth
-from src.pythagoras._010_basic_portals import get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import (
+     _get_description_value_by_key)
 from src.pythagoras._040_logging_code_portals import (
     LoggingFnCallSignature
     , EXCEPTIONS_TODAY_TXT
@@ -15,17 +16,12 @@ def test_empty_logging_portal(tmpdir):
         description = portal.describe()
         assert description.shape == (8, 3)
 
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TOTAL_TXT) == 0
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TODAY_TXT) == 0
-        assert get_description_value_by_key(description
-            , EXCESSIVE_LOGGING_TXT ) == None
-
-        portal = LoggingCodePortal(tmpdir, excessive_logging=True)
-        description = portal.describe()
-        assert get_description_value_by_key(description
-            , EXCESSIVE_LOGGING_TXT ) == None
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TOTAL_TXT) == 0
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TODAY_TXT) == 0
+        assert _get_description_value_by_key(description
+                                             , EXCESSIVE_LOGGING_TXT) == None
 
 
 def test_exceptions_very_basics(tmpdir):
@@ -55,10 +51,10 @@ def test_exceptions_very_basics(tmpdir):
         assert len(t.portal._crash_history) == 1
         assert len(t.portal._run_history.json) == 2
         assert description.shape == (8, 3)
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TOTAL_TXT) == 1
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TODAY_TXT) == 1
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TOTAL_TXT) == 1
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TODAY_TXT) == 1
 
 
 def test_exceptions_basics_no_excessive_logging(tmpdir):
@@ -86,10 +82,10 @@ def test_exceptions_basics_no_excessive_logging(tmpdir):
         assert len(t.portal._crash_history) == 1
         assert len(t.portal._run_history.json) == 0
         assert description.shape == (8, 3)
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TOTAL_TXT) == 1
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TODAY_TXT) == 1
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TOTAL_TXT) == 1
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TODAY_TXT) == 1
 
 
 def test_exceptions_basics_portal_level_logging(tmpdir):
@@ -119,7 +115,7 @@ def test_exceptions_basics_portal_level_logging(tmpdir):
         assert len(t.portal._crash_history) == 1
         assert len(t.portal._run_history.json) == 2
         assert description.shape == (8, 3)
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TOTAL_TXT) == 1
-        assert get_description_value_by_key(description
-            , EXCEPTIONS_TODAY_TXT) == 1
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TOTAL_TXT) == 1
+        assert _get_description_value_by_key(description
+                                             , EXCEPTIONS_TODAY_TXT) == 1

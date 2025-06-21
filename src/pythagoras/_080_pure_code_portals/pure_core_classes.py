@@ -36,8 +36,8 @@ EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
 
 class PureCodePortal(ProtectedCodePortal):
 
-    execution_results: PortalAwareDict | None
-    execution_requests: PersiDict | None
+    _execution_results: PortalAwareDict | None
+    _execution_requests: PersiDict | None
 
     def __init__(self
             , root_dict: PersiDict | str | None = None
@@ -57,14 +57,14 @@ class PureCodePortal(ProtectedCodePortal):
         execution_results = FirstEntryDict(
             execution_results, p_consistency_checks)
         execution_results = PortalAwareDict(execution_results, portal = self)
-        self.execution_results = execution_results
+        self._execution_results = execution_results
 
         requests_dict_prototype = self._root_dict.get_subdict(
             "execution_requests")
         requests_dict_params = requests_dict_prototype.get_params()
         requests_dict_params.update(immutable_items=False, file_type="pkl")
         execution_requests = type(self._root_dict)(**requests_dict_params)
-        self.execution_requests = execution_requests
+        self._execution_requests = execution_requests
 
 
     def describe(self) -> pd.DataFrame:
@@ -72,17 +72,17 @@ class PureCodePortal(ProtectedCodePortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
-            CACHED_EXECUTION_RESULTS_TXT, len(self.execution_results)))
+            CACHED_EXECUTION_RESULTS_TXT, len(self._execution_results)))
         all_params.append(_describe_persistent_characteristic(
-            EXECUTION_QUEUE_SIZE_TXT, len(self.execution_requests)))
+            EXECUTION_QUEUE_SIZE_TXT, len(self._execution_requests)))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
         return result
 
     def _clear(self):
-        self.execution_results = None
-        self.execution_requests = None
+        self._execution_results = None
+        self._execution_requests = None
         super()._clear()
 
 
@@ -105,8 +105,8 @@ class PureFn(ProtectedFn):
 
     def get_address(self, **kwargs) -> PureFnExecutionResultAddr:
         """Get the address of the result of the function with the given arguments."""
-        with self.finally_bound_portal as portal:
-            packed_kwargs = KwArgs(**kwargs).pack(portal)
+        with self.portal:
+            packed_kwargs = KwArgs(**kwargs).pack()
             return PureFnExecutionResultAddr(self, packed_kwargs)
 
 
@@ -116,7 +116,7 @@ class PureFn(ProtectedFn):
         The function is executed in the background. The result can be
         retrieved later using the returned address.
         """
-        with self.finally_bound_portal:
+        with self.portal:
             result_address = self.get_address(**kwargs)
             result_address.request_execution()
             return result_address
@@ -127,7 +127,7 @@ class PureFn(ProtectedFn):
         The function is executed immediately. The result can be
         retrieved later using the returned address.
         """
-        with self.finally_bound_portal:
+        with self.portal:
             result_address = self.get_address(**kwargs)
             result_address.execute()
             return result_address
@@ -136,14 +136,14 @@ class PureFn(ProtectedFn):
     def execute(self, **kwargs) -> Any:
         """ Execute the function with the given arguments.
 
-        The function is executed immediately and the result is returned.
+        The function is executed immediately, and the result is returned.
         The result is memoized, so the function is actually executed
         only the first time it's called; subsequent calls return the
         cached result.
         """
 
-        with self.finally_bound_portal as portal:
-            packed_kwargs = KwArgs(**kwargs).pack(portal)
+        with self.portal as portal:
+            packed_kwargs = KwArgs(**kwargs).pack()
             output_address = PureFnExecutionResultAddr(self, packed_kwargs)
             random_x = portal.entropy_infuser.random()
             p_consistency_checks = portal.p_consistency_checks
@@ -158,7 +158,7 @@ class PureFn(ProtectedFn):
                 output_address.request_execution()
             unpacked_kwargs = KwArgs(**packed_kwargs).unpack()
             result = super().execute(**unpacked_kwargs)
-            result_addr = ValueAddr(result, portal=portal)
+            result_addr = ValueAddr(result)
             try:
                 if conduct_consistency_checks:
                     portal.execution_results._p_consistency_checks = 1
@@ -169,6 +169,7 @@ class PureFn(ProtectedFn):
             output_address.drop_execution_request()
             return result
 
+
     def swarm_list(
             self
             , list_of_kwargs:list[dict]
@@ -176,7 +177,7 @@ class PureFn(ProtectedFn):
         assert isinstance(list_of_kwargs, (list, tuple))
         for kwargs in list_of_kwargs:
             assert isinstance(kwargs, dict)
-        with self.finally_bound_portal:
+        with self.portal:
             list_to_return = []
             list_to_swarm = []
             for kwargs in list_of_kwargs:
@@ -188,17 +189,19 @@ class PureFn(ProtectedFn):
                 an_addr.request_execution()
         return list_to_return
 
+
     def run_list(
             self
             , list_of_kwargs:list[dict]
             ) -> list[PureFnExecutionResultAddr]:
-        with self.finally_bound_portal:
+        with self.portal:
             addrs = self.swarm_list(list_of_kwargs)
             addrs_workspace = copy(addrs)
             self.portal.entropy_infuser.shuffle(addrs_workspace)
             for an_addr in addrs_workspace:
                 an_addr.execute()
         return addrs
+
 
     def swarm_grid(
             self
@@ -209,14 +212,27 @@ class PureFn(ProtectedFn):
             addrs = self.swarm_list(param_list)
             return addrs
 
+
     def run_grid(
             self
             , grid_of_kwargs:dict[str, list] # refactor
             ) -> list[PureFnExecutionResultAddr]:
-        with self.finally_bound_portal:
+        with self.portal:
             param_list = list(ParameterGrid(grid_of_kwargs))
             addrs = self.run_list(param_list)
             return addrs
+
+
+    @property
+    def portal(self) -> PureCodePortal:
+        return ProtectedFn.portal.__get__(self)
+
+
+    @portal.setter
+    def portal(self, new_portal: PureCodePortal) -> None:
+        if not isinstance(new_portal, PureCodePortal):
+            raise TypeError("portal must be a ProtectedCodePortal instance")
+        ProtectedFn.portal.__set__(self, new_portal)
 
 
 class PureFnExecutionResultAddr(HashAddr):
@@ -239,11 +255,11 @@ class PureFnExecutionResultAddr(HashAddr):
 
     def __init__(self, fn: PureFn, arguments:dict[str, Any]):
         assert isinstance(fn, PureFn)
-        with fn.finally_bound_portal as portal:
+        with fn.portal as portal:
             self._kwargs_cache = KwArgs(**arguments)
             signature = LoggingFnCallSignature(fn, self._kwargs_cache)
             self._call_signature_cache = signature
-            tmp = ValueAddr(signature, portal)
+            tmp = ValueAddr(signature)
             new_prefix = fn.name +"_result_addr"
             new_hash_signature = tmp.hash_signature
             super().__init__(new_prefix, new_hash_signature, portal=fn.portal)
@@ -278,7 +294,7 @@ class PureFnExecutionResultAddr(HashAddr):
     @property
     def call_signature(self) -> LoggingFnCallSignature:
         if not hasattr(self, "_call_signature_cache") or self._call_signature_cache is None:
-            with self.finally_bound_portal:
+            with self.portal:
                 self._call_signature_cache = self.get_ValueAddr().get()
         return self._call_signature_cache
 
@@ -287,7 +303,7 @@ class PureFnExecutionResultAddr(HashAddr):
     def fn(self) -> PureFn:
         """Return the function object referenced by the address."""
         if not hasattr(self, "_fn_cache") or self._fn_cache is None:
-            with self.finally_bound_portal:
+            with self.portal:
                 self._fn_cache = self.call_signature.fn
         return self._fn_cache
 
@@ -296,7 +312,7 @@ class PureFnExecutionResultAddr(HashAddr):
     def kwargs(self) -> KwArgs:
         """Unpacked arguments of the function call, referenced by the address."""
         if not hasattr(self, "_kwargs_cache") or self._kwargs_cache is None:
-            with self.finally_bound_portal:
+            with self.portal:
                 self._kwargs_cache = self.call_signature.kwargs_addr.get().unpack()
         return self._kwargs_cache
 
@@ -316,8 +332,8 @@ class PureFnExecutionResultAddr(HashAddr):
         """Indicates if the result of the function call is available."""
         if hasattr(self, "_ready_cache"):
             return True
-        with self.finally_bound_portal as portal:
-            result = (self in portal.execution_results)
+        with self.portal as portal:
+            result = (self in portal._execution_results)
             if result:
                 self._ready_cache = True
             return result
@@ -326,12 +342,11 @@ class PureFnExecutionResultAddr(HashAddr):
     def _ready_in_noncurrent_portals(self) -> bool:
         for portal in _noncurrent_portals():
             with portal:
-                if self in portal.execution_results:
-                    addr = portal.execution_results[self]
+                if self in portal._execution_results:
+                    addr = portal._execution_results[self]
                     data = portal._value_store[addr]
                     with self.portal:
-                        self.portal.execution_results[self] = ValueAddr(
-                            data, portal=portal)
+                        self.portal._execution_results[self] = ValueAddr(data)
                         _ = self.fn # needed for cross-portal sync
                         _ = self.kwargs # needed for cross-portal sync
                         # TODO: refactor ( implement self._function_ready ? )
@@ -358,32 +373,32 @@ class PureFnExecutionResultAddr(HashAddr):
         """Execute the function and store the result in the portal."""
         if hasattr(self, "_result_cache"):
             return self._result_cache
-        with self.finally_bound_portal:
+        with self.portal:
             self._result_cache = self.fn.execute(**self.kwargs)
             return self._result_cache
 
 
     def request_execution(self):
         """Request execution of the function, without actually executing it."""
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
             if self.ready:
                 self.drop_execution_request()
             else:
-                if self not in portal.execution_requests:
-                    portal.execution_requests[self] = True
+                if self not in portal._execution_requests:
+                    portal._execution_requests[self] = True
 
 
     def drop_execution_request(self):
         """Remove the request for execution of the function."""
-        with self.finally_bound_portal as portal:
-            portal.execution_requests.delete_if_exists(self)
+        with self.portal as portal:
+            portal._execution_requests.delete_if_exists(self)
 
 
     @property
     def execution_requested(self):
         """Indicates if the function execution has been requested."""
-        with self.finally_bound_portal as portal:
-            return self in portal.execution_requests
+        with self.portal as portal:
+            return self in portal._execution_requests
 
 
     def get(self, timeout: int = None):
@@ -401,10 +416,10 @@ class PureFnExecutionResultAddr(HashAddr):
         if hasattr(self, "_result_cache"):
             return self._result_cache
 
-        with self.finally_bound_portal as portal:
+        with self.portal as portal:
 
             if self.ready:
-                result_addr = portal.execution_results[self]
+                result_addr = portal._execution_results[self]
                 self._result_cache = portal._value_store[result_addr]
                 return self._result_cache
 
@@ -419,7 +434,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
             while True:
                 if self.ready:
-                    result_addr = portal.execution_results[self]
+                    result_addr = portal._execution_results[self]
                     self._result_cache = portal._value_store[result_addr]
                     self.drop_execution_request()
                     return self._result_cache
@@ -443,7 +458,7 @@ class PureFnExecutionResultAddr(HashAddr):
         The function should fe refactored once we start fully supporting
         guards
         """
-        with self.finally_bound_portal:
+        with self.portal:
             return self.fn.can_be_executed(self.kwargs)
 
 
@@ -459,7 +474,7 @@ class PureFnExecutionResultAddr(HashAddr):
         # TODO: these should not be constants
         if self.ready:
             return False
-        with self.finally_bound_portal:
+        with self.portal:
             past_attempts = self.call_signature.execution_attempts
             n_past_attempts = len(past_attempts)
             if n_past_attempts == 0:

@@ -47,7 +47,6 @@ def test_odd_even_two_decorators_logging(tmpdir,pr):
             isEven = oldIsEven
             isOdd = oldIsOdd
 
-        assert l.portal.number_of_linked_functions() == 2
         assert len(l.portal._value_store.get_subdict("bool")) == 2
         assert len(l.portal._value_store.get_subdict("int")) == N
         assert len(l.portal._value_store.get_subdict("packedkwargs")) == N

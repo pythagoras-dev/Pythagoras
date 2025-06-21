@@ -7,6 +7,7 @@ import pandas as pd
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
+from .. import BasicPortal
 from .._010_basic_portals import active_portal, nonactive_portals
 from .._820_strings_signatures_converters import get_hash_signature
 
@@ -44,7 +45,7 @@ class DataPortal(OrdinaryCodePortal):
     _config_settings: PersiDict | None
     _config_settings_cache: dict
 
-    _p_consistency_checks_at_init: float | Joker
+    _ephemeral_config_params_at_init: dict[str, Any] | None
 
     def __init__(self
             , root_dict: PersiDict|str|None = None
@@ -52,7 +53,7 @@ class DataPortal(OrdinaryCodePortal):
             ):
         OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
-
+        self._ephemeral_config_params_at_init = dict()
         self._config_settings_cache = dict()
 
         config_settings_prototype = self._root_dict.get_subdict("config_settings")
@@ -67,9 +68,8 @@ class DataPortal(OrdinaryCodePortal):
             raise ValueError("p_consistency_checks must be a float in [0,1] "
                 +f"or a Joker, but got {p_consistency_checks}")
 
-        self._set_config_setting("p_consistency_checks"
-            , p_consistency_checks)
-        self._p_consistency_checks_at_init = p_consistency_checks
+        self._ephemeral_config_params_at_init["p_consistency_checks"
+            ] = p_consistency_checks
 
         value_store_prototype = self._root_dict.get_subdict("value_store")
         value_store_params = value_store_prototype.get_params()
@@ -80,29 +80,40 @@ class DataPortal(OrdinaryCodePortal):
         self._value_store = value_store
 
 
+    def _persist_initial_config_params(self) -> None:
+        for key, value in self._ephemeral_config_params_at_init.items():
+            self._set_config_setting(key, value)
+
+
+    def _post_init_hook(self) -> None:
+        """Hook to be called after the portal is initialized"""
+        super()._post_init_hook()
+        self._persist_initial_config_params()
+
+
     def get_params(self) -> dict:
         """Get the portal's configuration parameters"""
         params = super().get_params()
-        params["p_consistency_checks"] = self._p_consistency_checks_at_init
+        params.update(self._ephemeral_config_params_at_init)
         sorted_params = dict(sorted(params.items()))
         return sorted_params
 
 
     @property
-    def ephemeral_param_names(self) -> set[str]:
-        names = super().ephemeral_param_names
-        names.add("p_consistency_checks")
+    def _ephemeral_param_names(self) -> set[str]:
+        names = super()._ephemeral_param_names
+        names.update(self._ephemeral_config_params_at_init)
         return names
 
 
-    def update_from_twin(self, other: DataPortal) -> None:
-        super().update_from_twin(other)
+    def _update_from_twin(self, other: DataPortal) -> None:
+        super()._update_from_twin(other)
         self._value_store = other._value_store
         self._config_settings = other._config_settings
         self._config_settings_cache = other._config_settings_cache
 
 
-    def _get_config_setting(self, key: SafeStrTuple) -> Any:
+    def _get_config_setting(self, key: SafeStrTuple|str) -> Any:
         """Get a configuration setting from the portal's config store"""
         if not isinstance(key, (str,SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
@@ -118,7 +129,7 @@ class DataPortal(OrdinaryCodePortal):
         return value
 
 
-    def _set_config_setting(self, key: SafeStrTuple, value: Any) -> None:
+    def _set_config_setting(self, key: SafeStrTuple|str, value: Any) -> None:
         """Set a configuration setting in the portal's config store"""
         if not isinstance(key, (str,SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
@@ -165,6 +176,7 @@ class DataPortal(OrdinaryCodePortal):
         """Clear the portal's state"""
         self._value_store = None
         self._config_settings = None
+        self._ephemeral_config_params_at_init = None
         self._invalidate_cache()
         super()._clear()
 
@@ -172,37 +184,67 @@ class DataPortal(OrdinaryCodePortal):
 class StorableFn(OrdinaryFn):
 
     _addr_cache: ValueAddr
+    _ephemeral_config_params_at_init: dict[str, Any] | None
 
     def __init__(self
         , fn: Callable | str
         , portal: DataPortal | None = None
         ):
         OrdinaryFn.__init__(self, fn=fn, portal=portal)
+        self._ephemeral_config_params_at_init = dict()
+
+
+    def _post_init_hook(self):
+        super()._post_init_hook()
+        portal_to_use = self._linked_portal
+        if portal_to_use is None:
+            portal_to_use = active_portal()
+        self._persist_initial_config_params(portal_to_use)
+        self._visited_portals.add(portal_to_use._str_id)
+
+
+    def _persist_initial_config_params(self, portal:DataPortal) -> None:
+        for key, value in self._ephemeral_config_params_at_init.items():
+            self._set_config_setting(key, value, portal)
+
+
+    def _first_visit_to_portal(self, portal: BasicPortal) -> None:
+        self._persist_initial_config_params(portal)
 
 
     @property
     def portal(self) -> DataPortal:
-        return super().portal
+        return OrdinaryFn.portal.__get__(self)
 
 
-    def _get_config_setting(self, key: SafeStrTuple) -> Any:
+    @portal.setter
+    def portal(self, new_portal: DataPortal) -> None:
+        if not isinstance(new_portal, DataPortal):
+            raise TypeError("portal must be a DataPortal instance")
+        OrdinaryFn.portal.__set__(self, new_portal)
+
+
+    def _get_config_setting(self, key: SafeStrTuple, portal:DataPortal) -> Any:
         if not isinstance(key, (str,SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
 
-        portal_wide_value = self.portal._get_config_setting(key)
+        portal_wide_value = portal._get_config_setting(key)
         if portal_wide_value is not None:
             return portal_wide_value
 
-        function_specific_value = self.portal._get_config_setting(
+        function_specific_value = portal._get_config_setting(
             self.addr + key)
 
         return function_specific_value
 
 
-    def _set_config_setting(self, key: SafeStrTuple, value: Any) -> None:
+    def _set_config_setting(self
+            , key: SafeStrTuple|str
+            , value: Any
+            , portal:DataPortal) -> None:
         if not isinstance(key, (SafeStrTuple, str)):
             raise TypeError("key must be a SafeStrTuple or a string")
-        self.portal._set_config_setting(self.addr + key, value)
+        portal._set_config_setting(ValueAddr(self) + key, value)
 
 
     @property
@@ -224,6 +266,7 @@ class StorableFn(OrdinaryFn):
         if not state["_source_code"] == get_normalized_function_source(
             state["_source_code"]):
             raise ValueError("Source code is not normalized. ")
+        self._ephemeral_config_params_at_init = dict()
 
 
     def __getstate__(self):
@@ -385,7 +428,7 @@ class ValueAddr(HashAddr):
         portal._value_store[self] = data
         self._value_cache = data
         self._containing_portals_cache = set()
-        self._containing_portals_cache.add(portal.str_id)
+        self._containing_portals_cache.add(portal._str_id)
 
 
     def _invalidate_cache(self):
@@ -403,7 +446,7 @@ class ValueAddr(HashAddr):
     @property
     def _ready_in_active_portal(self) -> bool:
         portal = active_portal()
-        portal_id = portal.str_id
+        portal_id = portal._str_id
         if portal_id in self._containing_portals_cache:
             return True
         result = self in portal._value_store
@@ -418,7 +461,7 @@ class ValueAddr(HashAddr):
             if self in portal._value_store:
                 value = portal._value_store[self]
                 active_portal()._value_store[self] = value
-                new_ids = {portal.str_id, active_portal().str_id}
+                new_ids = {portal._str_id, active_portal()._str_id}
                 self._containing_portals_cache |= new_ids
                 self._value_cache = value
                 return True
@@ -442,16 +485,16 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if active_portal().str_id in self._containing_portals_cache:
+            if active_portal()._str_id in self._containing_portals_cache:
                 return self._value_cache
             else:
                 active_portal()._value_store[self] = self._value_cache
-                self._containing_portals_cache |= {active_portal().str_id}
+                self._containing_portals_cache |= {active_portal()._str_id}
                 return self._value_cache
 
         value = active_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals_cache |= {active_portal().str_id}
+        self._containing_portals_cache |= {active_portal()._str_id}
         return value
 
 
@@ -463,7 +506,7 @@ class ValueAddr(HashAddr):
                 value = portal._value_store[self]
                 active_portal()._value_store[self] = value
                 self._value_cache = value
-                new_ids = {portal.str_id, active_portal().str_id}
+                new_ids = {portal._str_id, active_portal()._str_id}
                 self._containing_portals_cache |= new_ids
                 return value
             except:

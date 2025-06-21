@@ -210,7 +210,7 @@ def _process_random_execution_request(**portal_init_params):
             while len(candidate_addresses) == 0:
                 if not portal.parent_runtime_is_live():
                     return
-                for addr in portal.execution_requests:
+                for addr in portal._execution_requests:
                     new_address = PureFnExecutionResultAddr.from_strings(
                         prefix=addr[0], hash_signature=addr[1]
                         ,assert_readiness=False

@@ -36,18 +36,18 @@ def test_execution_attempts_simple(tmpdir):
 #             weird_func()
 #         assert len(weird_func.get_address().execution_attempts) == 1
 #         assert len(pth.default_portal._crash_history) == 1
-#         assert len(pth.default_portal.execution_requests) == 1
-#         assert len(pth.default_portal.execution_results) == 0
+#         assert len(pth.default_portal._execution_requests) == 1
+#         assert len(pth.default_portal._execution_results) == 0
 #
 #         with pytest.raises(ZeroDivisionError):
 #             weird_func()
 #         assert len(weird_func.get_address().execution_attempts) == 2
 #         assert len(pth.default_portal._crash_history) == 2
-#         assert len(pth.default_portal.execution_requests) == 1
-#         assert len(pth.default_portal.execution_results) == 0
+#         assert len(pth.default_portal._execution_requests) == 1
+#         assert len(pth.default_portal._execution_results) == 0
 #
 #         assert weird_func() == 10
 #         assert len(weird_func.get_address().execution_attempts) == 3
 #         assert len(pth.default_portal._crash_history) == 2
-#         assert len(pth.default_portal.execution_requests) == 0
-#         assert len(pth.default_portal.execution_results) == 1
+#         assert len(pth.default_portal._execution_requests) == 0
+#         assert len(pth.default_portal._execution_results) == 1

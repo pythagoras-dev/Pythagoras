@@ -122,6 +122,17 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @property
+    def portal(self) -> OrdinaryCodePortal:
+        return PortalAwareClass.portal.__get__(self)
+
+
+    @portal.setter
+    def portal(self, new_portal: OrdinaryCodePortal) -> None:
+        if not isinstance(new_portal, OrdinaryCodePortal):
+            raise TypeError("portal must be a OrdinaryCodePortal instance")
+        PortalAwareClass.portal.__set__(self, new_portal)
+
+    @property
     def source_code(self) -> str:
         return self._source_code
 
@@ -203,8 +214,8 @@ class OrdinaryFn(PortalAwareClass):
         super()._invalidate_cache()
 
 
-    def register_in_portal(self):
-        PortalAwareClass.register_in_portal(self)
+    def _register_in_portal(self):
+        PortalAwareClass._register_in_portal(self)
         if not isinstance(self._linked_portal, OrdinaryCodePortal):
             raise TypeError("To register an OrdinaryFn in a portal, "
                 "the portal must be an OrdinaryCodePortal.")

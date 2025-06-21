@@ -5,5 +5,5 @@ class PostInitMeta(ABCMeta):
     """
     def __call__(self, *args, **kwargs):
         instance = super().__call__(*args, **kwargs)
-        instance.post_init_hook()
+        instance._post_init_hook()
         return instance

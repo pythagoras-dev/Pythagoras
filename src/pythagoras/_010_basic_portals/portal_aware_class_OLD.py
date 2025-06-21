@@ -12,7 +12,7 @@ class PortalAwareMetaclass(ABCMeta):
     """
     def __call__(self, *args, **kwargs):
         instance = super().__call__(*args, **kwargs)
-        instance.register_in_portal()
+        instance._register_in_portal()
         return instance
 
 

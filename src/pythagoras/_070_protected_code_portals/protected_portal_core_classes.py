@@ -60,24 +60,22 @@ class ProtectedFn(AutonomousFn):
             guards, ProtectedFn.guards_arg_names)
         self._validators = self._normalize_protectors(
             validators, ProtectedFn.validators_arg_names)
-        self._guards_addrs = [ValueAddr(g, portal = portal)
-                              for g in self._guards]
-        self._validators_addrs = [ValueAddr(v, portal = portal)
-                                  for v in self._validators]
+        self._guards_addrs = [ValueAddr(g) for g in self._guards]
+        self._validators_addrs = [ValueAddr(v) for v in self._validators]
 
 
     def __getstate__(self):
         state = super().__getstate__()
-        state["_guards_addrs"] = self._guards_addrs
-        state["_validators_addrs"] = self._validators_addrs
+        state["guards_addrs"] = self._guards_addrs
+        state["validators_addrs"] = self._validators_addrs
         return state
 
 
     def __setstate__(self, state):
         self._invalidate_cache()
         super().__setstate__(state)
-        self._guards_addrs = state["_guards_addrs"]
-        self._validators_addrs = state["_validators_addrs"]
+        self._guards_addrs = state["guards_addrs"]
+        self._validators_addrs = state["validators_addrs"]
 
 
     @property
@@ -95,8 +93,8 @@ class ProtectedFn(AutonomousFn):
 
 
     def can_be_executed(self, kw_args: KwArgs) -> bool:
-        with self.finally_bound_portal as portal:
-            kw_args = kw_args.pack(portal)
+        with self.portal as portal:
+            kw_args = kw_args.pack()
             guards = copy(self.guards)
             portal.entropy_infuser.shuffle(guards)
             for guard in guards:
@@ -106,8 +104,8 @@ class ProtectedFn(AutonomousFn):
 
 
     def validate_result(self, kw_args: KwArgs,  result: Any) -> bool:
-        with self.finally_bound_portal as portal:
-            kw_args = kw_args.pack(portal)
+        with self.portal as portal:
+            kw_args = kw_args.pack()
             validators = copy(self.validators)
             portal.entropy_infuser.shuffle(validators)
             for validator in validators:
@@ -118,7 +116,7 @@ class ProtectedFn(AutonomousFn):
 
 
     def execute(self, **kwargs) -> Any:
-        with self.finally_bound_portal:
+        with self.portal:
             kw_args = KwArgs(**kwargs)
             assert self.can_be_executed(kw_args)
             result = super().execute(**kwargs)
@@ -144,7 +142,7 @@ class ProtectedFn(AutonomousFn):
         protectors = flatten_list(protectors)
         new_protectors = []
         for protector in protectors:
-            protector = AutonomousFn(fn=protector, excessive_logging= None
+            protector = AutonomousFn(fn=protector, excessive_logging= KEEP_CURRENT
                 , portal=self.portal, fixed_kwargs=None)
             assert isinstance(protector, AutonomousFn)
             assert check_if_fn_accepts_args(
@@ -154,3 +152,15 @@ class ProtectedFn(AutonomousFn):
         protectors = sort_dict_by_keys(protectors)
         protectors = list(protectors.values())
         return protectors
+
+
+    @property
+    def portal(self) -> ProtectedCodePortal:
+        return AutonomousFn.portal.__get__(self)
+
+
+    @portal.setter
+    def portal(self, new_portal: ProtectedCodePortal) -> None:
+        if not isinstance(new_portal, ProtectedCodePortal):
+            raise TypeError("portal must be a ProtectedCodePortal instance")
+        AutonomousFn.portal.__set__(self, new_portal)
