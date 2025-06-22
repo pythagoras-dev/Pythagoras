@@ -34,20 +34,20 @@ def test_pure_portals_smoke_test(tmpdir):
         factorial_p = pure(portal=portal)(factorial)
         do_nothing_p = pure(portal=portal)(do_nothing)
 
-        assert portal.number_of_linked_functions() == 3
+        assert portal.get_number_of_linked_functions() == 3
         assert fibonacci_p(n=4) == 3
         assert factorial_p(n=4) == 24
         assert do_nothing_p(x=4) == 4
-        assert portal.number_of_linked_functions() == 3
+        assert portal.get_number_of_linked_functions() == 3
 
 
         def func_increment(x: int) -> int:
             return x + 1
 
         func_increment_p = pure()(func_increment)
-        assert portal.number_of_linked_functions() == 3
+        assert portal.get_number_of_linked_functions() == 3
         assert func_increment_p(x=4) == 5
-        assert portal.number_of_linked_functions() == 3
+        assert portal.get_number_of_linked_functions() == 3
 
 
 def test_pure_portals_execution_results(tmpdir):

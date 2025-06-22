@@ -98,8 +98,8 @@ class AutonomousFn(SafeFn):
         new_fixed_kwargs = self._fixed_kwargs.copy()
         new_fixed_kwargs.update(kwargs)
         new_fn = AutonomousFn(self.source_code
-            , fixed_kwargs=new_fixed_kwargs
-            , portal=self._linked_portal_NEW)
+                              , fixed_kwargs=new_fixed_kwargs
+                              , portal=self._linked_portal)
         return new_fn
 
 

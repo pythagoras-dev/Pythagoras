@@ -159,8 +159,8 @@ class ProtectedFn(AutonomousFn):
         return AutonomousFn.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: ProtectedCodePortal) -> None:
-        if not isinstance(new_portal, ProtectedCodePortal):
-            raise TypeError("portal must be a ProtectedCodePortal instance")
-        AutonomousFn.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: ProtectedCodePortal) -> None:
+    #     if not isinstance(new_portal, ProtectedCodePortal):
+    #         raise TypeError("portal must be a ProtectedCodePortal instance")
+    #     AutonomousFn.portal.__set__(self, new_portal)

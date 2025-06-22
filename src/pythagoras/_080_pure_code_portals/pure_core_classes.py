@@ -232,11 +232,11 @@ class PureFn(ProtectedFn):
         return ProtectedFn.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: PureCodePortal) -> None: #*#*#
-        if not isinstance(new_portal, PureCodePortal):
-            raise TypeError("portal must be a PureCodePortal instance")
-        ProtectedFn.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: PureCodePortal) -> None: #*#*#
+    #     if not isinstance(new_portal, PureCodePortal):
+    #         raise TypeError("portal must be a PureCodePortal instance")
+    #     ProtectedFn.portal.__set__(self, new_portal)
 
 
 class PureFnExecutionResultAddr(HashAddr):

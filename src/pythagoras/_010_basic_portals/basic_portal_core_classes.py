@@ -382,7 +382,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
 
     @property
-    def _linked_portal_NEW(self) -> BasicPortal | None:
+    def _linked_portal(self) -> BasicPortal | None:
         global _all_links_from_objects_to_portals, _all_known_portals
         portal = None
         if self._str_id in _all_links_from_objects_to_portals:
@@ -397,7 +397,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
         # if self._linked_portal is None:
         #     self._try_to_find_linked_portal_and_register_there()
         global _all_links_from_objects_to_portals, _all_known_portals
-        portal_to_use = self._linked_portal_NEW
+        portal_to_use = self._linked_portal
         if portal_to_use is None:
             portal_to_use = get_active_portal()
         assert isinstance(portal_to_use, BasicPortal)

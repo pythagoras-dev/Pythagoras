@@ -13,12 +13,12 @@ def test_safe_code_portal_lazy_binding(tmpdir):
         portal = t.portal
         obj = safe()(demo_fn)
         assert obj() == 42
-        assert obj._linked_portal_NEW is None
+        assert obj._linked_portal is None
         assert obj.portal is portal
 
         obj = safe()(simple_fn)
         assert obj(n=100) == 100
-        assert obj._linked_portal_NEW is None
+        assert obj._linked_portal is None
         assert obj.portal is portal
 
 
@@ -29,12 +29,12 @@ def test_safe_code_portal_explicit_binding(tmpdir):
         obj = safe(portal=portal)(demo_fn)
         assert obj.portal is portal
         assert obj() == 42
-        assert obj._linked_portal_NEW is portal
+        assert obj._linked_portal is portal
         assert obj.portal is portal
 
         obj = safe(portal=portal)(simple_fn)
         assert obj.portal is portal
         assert obj(n=100) == 100
-        assert obj._linked_portal_NEW is portal
+        assert obj._linked_portal is portal
         assert obj.portal is portal
 

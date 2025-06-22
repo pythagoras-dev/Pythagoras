@@ -19,7 +19,7 @@ def test_two_different_pure_functions_with_two_portal_links(tmpdir):
 
         assert my_function(x=2) == 22
 
-        assert t.portal.number_of_linked_functions() == 2
+        assert t.portal.get_number_of_linked_functions() == 2
 
 
 def test_two_different_pure_functions_with_one_portal_link(tmpdir):
@@ -38,4 +38,4 @@ def test_two_different_pure_functions_with_one_portal_link(tmpdir):
 
         assert my_function(x=2) == 22
 
-        assert t.portal.number_of_linked_functions() == 1
+        assert t.portal.get_number_of_linked_functions() == 1
