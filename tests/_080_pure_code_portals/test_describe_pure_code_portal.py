@@ -1,7 +1,7 @@
 from src.pythagoras import PureCodePortal, pure
 from src.pythagoras import _PortalTester
 
-from src.pythagoras._010_basic_portals.basic_portal_class_OLD import get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import _get_description_value_by_key
 from src.pythagoras._080_pure_code_portals.pure_core_classes import CACHED_EXECUTION_RESULTS_TXT, \
     EXECUTION_QUEUE_SIZE_TXT
 
@@ -13,9 +13,9 @@ def test_portal(tmpdir):
         description = portal.describe()
         assert description.shape == (10, 3)
 
-        assert get_description_value_by_key(description
+        assert _get_description_value_by_key(description
             , CACHED_EXECUTION_RESULTS_TXT) == 0
-        assert get_description_value_by_key(description
+        assert _get_description_value_by_key(description
             , EXECUTION_QUEUE_SIZE_TXT) == 0
 
 
@@ -41,9 +41,9 @@ def test_stored_values(tmpdir):
 
         description = t.portal.describe()
 
-        assert get_description_value_by_key(description
+        assert _get_description_value_by_key(description
             , CACHED_EXECUTION_RESULTS_TXT) == 1
-        assert get_description_value_by_key(description
+        assert _get_description_value_by_key(description
             , EXECUTION_QUEUE_SIZE_TXT) == 1
 
 

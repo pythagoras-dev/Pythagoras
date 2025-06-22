@@ -8,9 +8,9 @@ import pandas as pd
 import parameterizable
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._010_basic_portals.basic_portal_class_OLD import BasicPortal
+from .._010_basic_portals import BasicPortal
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
-from .._010_basic_portals.basic_portal_class_OLD import _describe_runtime_characteristic
+from .._010_basic_portals.basic_portal_core_classes_NEW import _describe_runtime_characteristic
 from .._820_strings_signatures_and_converters.random_signatures import get_random_signature
 from persidict import OverlappingMultiDict
 from .._080_pure_code_portals.pure_core_classes import (

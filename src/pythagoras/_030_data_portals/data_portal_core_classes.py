@@ -11,7 +11,7 @@ from .. import BasicPortal
 from .._010_basic_portals import get_active_portal, get_nonactive_portals
 from .._820_strings_signatures_and_converters import get_hash_signature
 
-from .._010_basic_portals.basic_portal_class_OLD import (
+from .._010_basic_portals.basic_portal_core_classes_NEW import (
     _describe_persistent_characteristic
     , _describe_runtime_characteristic)
 from .._020_ordinary_code_portals import (

@@ -9,7 +9,7 @@ def two_arg_function_original(a: int, b: int) -> int:
     return a + b
 
 def test_2args_function_single_call(tmpdir):
-    tmpdir = "TWO_ARGS_FUNCTION_SINGLE_CALL_"*2 +str(int(time.time()))
+    # tmpdir = "TWO_ARGS_FUNCTION_SINGLE_CALL_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
 
         two_arg_function = logging(excessive_logging=True)(two_arg_function_original)
