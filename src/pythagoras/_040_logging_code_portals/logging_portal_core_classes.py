@@ -18,7 +18,7 @@ from .._040_logging_code_portals.exception_processing_tracking import (
 from .._040_logging_code_portals.uncaught_exceptions import \
     unregister_systemwide_uncaught_exception_handlers, \
     register_systemwide_uncaught_exception_handlers
-from .._800_persidict_extensions import OverlappingMultiDict
+from persidict import OverlappingMultiDict
 from .._040_logging_code_portals.kw_args import KwArgs, PackedKwArgs
 from .._810_output_manipulators import OutputCapturer
 from .._030_data_portals.data_portal_core_classes import (

@@ -12,8 +12,7 @@ from .._010_basic_portals.basic_portal_class_OLD import BasicPortal
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
 from .._010_basic_portals.basic_portal_class_OLD import _describe_runtime_characteristic
 from .._820_strings_signatures_and_converters.random_signatures import get_random_signature
-from .._800_persidict_extensions.overlapping_multi_dict import (
-    OverlappingMultiDict)
+from persidict import OverlappingMultiDict
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr)
 # from pythagoras._090_swarming_portals.clean_runtime_id import clean_runtime_id

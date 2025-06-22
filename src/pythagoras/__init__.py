@@ -6,7 +6,6 @@ Pythagoras makes data scientists' lives easier, while allowing them to
 solve more complex problems in a shorter time with smaller budgets.
 """
 
-from src.pythagoras._800_persidict_extensions import *
 from src.pythagoras._810_output_manipulators import *
 from src.pythagoras._820_strings_signatures_and_converters import *
 
