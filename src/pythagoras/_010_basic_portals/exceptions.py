@@ -13,7 +13,3 @@ class NotSupportedOperation(PythagorasException):
 class NonCompliantFunction(PythagorasException):
     def __init__(self, message):
         PythagorasException.__init__(self, message)
-
-class InconsistentChangeOfImmutableItem(PythagorasException):
-    def __init__(self, message):
-        PythagorasException.__init__(self, message)

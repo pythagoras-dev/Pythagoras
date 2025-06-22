@@ -9,12 +9,16 @@ import random
 
 from persidict.persi_dict import PersiDictKey
 
-from src.pythagoras._010_basic_portals import InconsistentChangeOfImmutableItem
 from src.pythagoras._820_strings_signatures_converters import get_hash_signature
 
 
-class FirstEntryDict(PersiDict):
+class WriteOnceDict(PersiDict):
     """ A dictionary that always keeps the first value assigned to a key.
+
+    If a key is already set, it randomly checks the value against the value
+    that was first set. If the new value is different, it raises an
+    InconsistentChangeOfImmutableItem exception.
+
     """
     _wrapped_dict: PersiDict
     _p_consistency_checks: float | None
@@ -66,7 +70,10 @@ class FirstEntryDict(PersiDict):
             else:
                 self._wrapped_dict[key] = value
 
-        assert key in self._wrapped_dict
+        if not key in self._wrapped_dict:
+            raise KeyError(
+                f"FirstEntryDict: key {key} was not set in the wrapped dict "
+                + f"{self._wrapped_dict}. This should not happen.")
 
         if (check_needed
             and self._p_consistency_checks is not None
@@ -77,7 +84,7 @@ class FirstEntryDict(PersiDict):
                 signature_new = get_hash_signature(value)
                 if signature_old != signature_new:
                     diff_dict = DeepDiff(self._wrapped_dict[key], value)
-                    raise InconsistentChangeOfImmutableItem(
+                    raise ValueError(
                         f"FirstEntryDict: key {key} is already set "
                         + f"to {self._wrapped_dict[key]} "
                         + f"and the new value {value} is different, "
@@ -111,9 +118,9 @@ class FirstEntryDict(PersiDict):
     def base_url(self):
         return self._wrapped_dict.base_url
 
-    def get_subdict(self, prefix_key:PersiDictKey) -> FirstEntryDict:
+    def get_subdict(self, prefix_key:PersiDictKey) -> WriteOnceDict:
         subdict = self._wrapped_dict.get_subdict(prefix_key)
-        result = FirstEntryDict(subdict, self._p_consistency_checks)
+        result = WriteOnceDict(subdict, self._p_consistency_checks)
         return result
 
-register_parameterizable_class(FirstEntryDict)
+register_parameterizable_class(WriteOnceDict)
