@@ -9,7 +9,7 @@ from persidict import KEEP_CURRENT, Joker
 
 from .. import BasicPortal
 from .._010_basic_portals import get_active_portal, get_nonactive_portals
-from .._820_strings_signatures_converters import get_hash_signature
+from .._820_strings_signatures_and_converters import get_hash_signature
 
 from .._010_basic_portals.basic_portal_class_OLD import (
     _describe_persistent_characteristic
@@ -18,7 +18,7 @@ from .._020_ordinary_code_portals import (
     get_normalized_function_source
     ,OrdinaryCodePortal
     ,OrdinaryFn)
-from .._800_persidict_extensions.first_write_once_dict import WriteOnceDict
+from persidict import WriteOnceDict
 
 TOTAL_VALUES_TXT = "Values, total"
 PROBABILITY_OF_CHECKS_TXT = "Probability of checks"

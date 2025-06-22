@@ -8,7 +8,7 @@ from persidict import PersiDict
 from .._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_function_source_impl
 from .function_processing import get_function_name_from_source
-from .._820_strings_signatures_converters import get_hash_signature
+from .._820_strings_signatures_and_converters import get_hash_signature
 from .._010_basic_portals.basic_portal_core_classes_NEW import (
     _describe_runtime_characteristic)
 

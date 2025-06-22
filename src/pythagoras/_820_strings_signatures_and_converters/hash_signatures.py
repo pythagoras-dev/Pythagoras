@@ -3,7 +3,7 @@ from typing import Any
 
 import joblib.hashing
 
-from src.pythagoras._820_strings_signatures_converters.base_16_32_convertors import (
+from src.pythagoras._820_strings_signatures_and_converters.base_16_32_convertors import (
     convert_base16_to_base32)
 
 

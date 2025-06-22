@@ -53,17 +53,17 @@ def test_pure_factorial_decorator(tmpdir,p):
         assert len(t.portal._execution_requests) == 0
 
         value_store = t.portal._value_store
-        assert value_store._total_checks_count == value_store._successful_checks_count
+        assert value_store.consistency_checks_failed == 0
         if p>0:
-            assert value_store._total_checks_count > 0
+            assert value_store.consistency_checks_attempted > 0
         else:
-            assert value_store._total_checks_count == 0
+            assert value_store.consistency_checks_attempted == 0
 
         execution_results = t.portal._execution_results
-        assert execution_results._total_checks_count == execution_results._successful_checks_count
+        assert execution_results.consistency_checks_failed == 0
         if p>0:
-            assert execution_results._total_checks_count > 0
+            assert execution_results.consistency_checks_attempted > 0
         else:
-            assert execution_results._total_checks_count == 0
+            assert execution_results.consistency_checks_attempted == 0
 
 

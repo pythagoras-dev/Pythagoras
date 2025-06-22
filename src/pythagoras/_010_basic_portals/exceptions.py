@@ -6,9 +6,6 @@ class NotPicklableObject(PythagorasException):
     def __init__(self, message):
         PythagorasException.__init__(self, message)
 
-class NotSupportedOperation(PythagorasException):
-    def __init__(self, message):
-        PythagorasException.__init__(self, message)
 
 class NonCompliantFunction(PythagorasException):
     def __init__(self, message):

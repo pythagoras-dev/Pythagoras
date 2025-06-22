@@ -11,7 +11,7 @@ from parameterizable import ParameterizableClass
 from persidict import PersiDict, FileDirDict
 from .post_init_metaclass import PostInitMeta
 from .not_picklable import NotPicklable
-from .._820_strings_signatures_converters import get_hash_signature
+from .._820_strings_signatures_and_converters import get_hash_signature
 
 def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
     """Create a DataFrame describing a persistent characteristic.

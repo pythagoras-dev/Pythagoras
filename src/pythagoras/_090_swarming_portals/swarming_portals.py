@@ -11,13 +11,13 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 from .._010_basic_portals.basic_portal_class_OLD import BasicPortal
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
 from .._010_basic_portals.basic_portal_class_OLD import _describe_runtime_characteristic
-from .._820_strings_signatures_converters.random_signatures import get_random_signature
+from .._820_strings_signatures_and_converters.random_signatures import get_random_signature
 from .._800_persidict_extensions.overlapping_multi_dict import (
     OverlappingMultiDict)
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr)
 # from pythagoras._090_swarming_portals.clean_runtime_id import clean_runtime_id
-from .._820_strings_signatures_converters.node_signatures import get_node_signature
+from .._820_strings_signatures_and_converters.node_signatures import get_node_signature
 
 from multiprocessing import get_context
 
@@ -213,8 +213,7 @@ def _process_random_execution_request(**portal_init_params):
                 for addr in portal._execution_requests:
                     new_address = PureFnExecutionResultAddr.from_strings(
                         prefix=addr[0], hash_signature=addr[1]
-                        ,assert_readiness=False
-                        ,portal = portal) # How does it handle portals?
+                        ,assert_readiness=False) # How does it handle portals?
                     if not new_address.needs_execution:
                         continue
                     if not new_address.can_be_executed:

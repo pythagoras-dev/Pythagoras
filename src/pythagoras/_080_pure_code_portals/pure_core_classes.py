@@ -13,7 +13,7 @@ from .. import get_all_known_portals, get_nonactive_portals, get_active_portal
 from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
 from .._010_basic_portals.basic_portal_class_OLD import (
     _describe_persistent_characteristic)
-from .._800_persidict_extensions.first_write_once_dict import WriteOnceDict
+from persidict import WriteOnceDict
 from .._040_logging_code_portals.logging_portal_core_classes import (
     LoggingFnCallSignature)
 

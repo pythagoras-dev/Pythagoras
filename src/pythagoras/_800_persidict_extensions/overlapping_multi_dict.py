@@ -1,5 +1,4 @@
 from persidict import PersiDict
-from src.pythagoras._010_basic_portals.exceptions import NotSupportedOperation
 
 
 # TODO: move this class to persidict package?
@@ -43,16 +42,19 @@ class OverlappingMultiDict:
             raise TypeError("OverlappingMultiDict cannot be pickled.")
 
         def __getitem__(self, key):
-            raise NotSupportedOperation(
+            raise TypeError(
+                "OverlappingMultiDict does not support item access by key. "
                 "Individual items should be accessed through nested dicts, "
-                + f"which are available via attributes {self.subdicts_names}")
+                f"which are available via attributes {self.subdicts_names}")
 
         def __setitem__(self, key, value):
-            raise NotSupportedOperation(
+            raise TypeError(
+                "OverlappingMultiDict does not support item assignment by key. "
                 "Individual items should be accessed through nested dicts, "
-                + f"which are available via attributes {self.subdicts_names}")
+                 f"which are available via attributes {self.subdicts_names}")
 
         def __delitem__(self, key):
-            raise NotSupportedOperation(
-                "Individual items should be accessed through nested dicts, "
-                + f"which are available via attributes {self.subdicts_names}")
+            raise TypeError(
+                "OverlappingMultiDict does not support item deletion by key. "
+                "Individual items can be deletedthrough nested dicts, "
+                f"which are available via attributes {self.subdicts_names}")
