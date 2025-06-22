@@ -4,14 +4,14 @@ import random
 import sys
 from abc import abstractmethod
 from pathlib import Path
-from typing import TypeVar, Type, Any
+from typing import TypeVar, Type, Any, NewType
 import pandas as pd
-from parameterizable import ParameterizableClass
+from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict
 from .post_init_metaclass import PostInitMeta
 from .not_picklable_class import NotPicklable
-from .._820_strings_signatures_and_converters import get_hash_signature
+from .._800_signatures_and_converters import get_hash_signature
 
 def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
     """Create a DataFrame describing a persistent characteristic.
@@ -63,10 +63,12 @@ def _get_description_value_by_key(dataframe:pd.DataFrame, key:str) -> Any:
         return result.iloc[0, 2]  # Return the value from the 4th column
     return None  # Return None if the key does not exist
 
+PortalStrID = NewType("PortalStrID", str)
+PObjectStrID = NewType("PObjectStrID", str)
 
-_all_known_portals: dict[str, BasicPortal] = {}
+_all_known_portals: dict[PortalStrID, BasicPortal] = {}
 _active_portals_stack: list = []
-_active_portals_counters_stack: list = []
+_active_portals_counters_stack: list = [int]
 _most_recently_created_portal: BasicPortal | None = None
 
 def get_number_of_known_portals() -> int:
@@ -81,7 +83,7 @@ def get_all_known_portals() -> list[BasicPortal]:
     return list(_all_known_portals.values())
 
 
-def get_number_of_active_portals() -> int:
+def get_number_of_portals_in_active_stack() -> int:
     """Get the number of currently active portals."""
     global _active_portals_stack
     return len(set(_active_portals_stack))
@@ -171,9 +173,9 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
     """
 
     _entropy_infuser = random.Random()
+
     _root_dict: PersiDict | None
-    _str_id_cache: str | None
-    _linked_objects: dict | None
+    _str_id_cache: PortalStrID | None
 
 
     def __init__(self, root_dict:PersiDict|str|None = None):
@@ -188,57 +190,44 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         root_dict_params.update(digest_len=0)
         root_dict = type(root_dict)(**root_dict_params)
         self._root_dict = root_dict
-        self._linked_objects = dict()
 
 
     def _post_init_hook(self) -> None:
-        global _most_recently_created_portal
-        if self._str_id in _all_known_portals:
-            self._update_from_twin(_all_known_portals[self._str_id])
-        else:
-            _all_known_portals[self._str_id] = self
-            _most_recently_created_portal = self
+        global _most_recently_created_portal, _all_known_portals
+        _all_known_portals[self._str_id] = self
+        _most_recently_created_portal = self
 
 
-    def _update_from_twin(self, other: BasicPortal) -> None:
-        """Update the portal's state from another portal."""
-        if not type(self) is type(other):
-            raise TypeError("Can only update from exactly the same type.")
-        self._invalidate_cache()
-        assert self._str_id == other._str_id
-        self._linked_objects = other._linked_objects
+    def _get_linked_objects_ids(self
+            , target_class: type | None = None) -> set[PObjectStrID]:
+        """Get the set str_ids of objects, linked to the portal."""
+        global _all_links_from_objects_to_portals
+        result = set()
+        for obj_str_id, portal_str_id in _all_links_from_objects_to_portals.items():
+            assert isinstance(obj_str_id, str)
+            assert isinstance(portal_str_id, str)
+            if portal_str_id == self._str_id:
+                if target_class is None:
+                    result.add(obj_str_id)
+                elif isinstance(target_class, type):
+                    result.add(obj_str_id)
+        return result
 
 
-    def linked_objects_ids(self, target_class:type|None = None) -> set[str]:
-        """Get the set of known functions' IDs"""
-        found_linked_objects = set()
-        for object_class, set_of_object_str_ids in self._linked_objects.items():
-            if target_class is None:
-                found_linked_objects |= set_of_object_str_ids
-            elif issubclass(object_class, target_class):
-                found_linked_objects |= set_of_object_str_ids
-        return found_linked_objects
+    def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
+        """Get the list of objects, linked to the portal"""
 
-
-    def linked_objects(self, target_class:type|None = None) -> list[PortalAwareClass]:
-        """Get the list of linked objects of the given class and subclasses."""
-        found_linked_objects_ids = self.linked_objects_ids(target_class)
+        found_linked_objects_ids = self._get_linked_objects_ids(target_class)
         found_linked_objects = []
         for obj_str_id in found_linked_objects_ids:
-            new_object = _all_linked_portal_aware_objects[obj_str_id]
+            new_object = _all_known_portal_aware_objects[obj_str_id]
             found_linked_objects.append(new_object)
         return found_linked_objects
 
 
-    def number_of_linked_objects(self, target_class:type|None = None) -> int:
+    def get_number_of_linked_objects(self, target_class: type | None = None) -> int:
         """Get the number of linked portal-aware objects of the given class name."""
-        linked_objects_counter = 0
-        for object_class, set_of_object_str_ids in self._linked_objects.items():
-            if target_class is None:
-                linked_objects_counter += len(set_of_object_str_ids)
-            elif issubclass(object_class,target_class):
-                linked_objects_counter += len(set_of_object_str_ids)
-        return linked_objects_counter
+        return len(self._get_linked_objects_ids())
 
 
     @property
@@ -262,7 +251,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
     def get_params(self) -> dict:
         """Get the portal's configuration parameters"""
         params = dict(root_dict=self._root_dict)
-        sorted_params = dict(sorted(params.items()))
+        sorted_params = sort_dict_by_keys(params)
         return sorted_params
 
 
@@ -273,7 +262,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     @property
-    def _str_id(self) -> str:
+    def _str_id(self) -> PortalStrID:
         """Get the portal's persistent hash"""
         if hasattr(self,"_str_id_cache") and self._str_id_cache is not None:
             return self._str_id_cache
@@ -282,7 +271,8 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
             ephemeral_names = self._ephemeral_param_names
             nonephemeral_params = {k:params[k] for k in params
                 if k not in ephemeral_names}
-            self._str_id_cache = get_hash_signature(nonephemeral_params)
+            self._str_id_cache = PortalStrID(
+                get_hash_signature(nonephemeral_params))
             return self._str_id_cache
 
 
@@ -337,17 +327,16 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         self._root_dict = None
         self._str_id_cache = None
         self._entropy_infuser = None
-        self._linked_objects = None
+        # self._linked_objects = None
 
 
-# A global dictionary to keep track of all portal-aware objects
-# that are linked to a portal.
-_all_linked_portal_aware_objects: dict[str, PortalAwareClass] = {}
+_all_known_portal_aware_objects: dict[PObjectStrID, PortalAwareClass] = dict()
+_all_links_from_objects_to_portals: dict[PObjectStrID, PortalStrID] = dict()
 
-def number_of_linked_portal_aware_objects() -> int:
+def get_number_of_linked_portal_aware_objects() -> int:
     """Get the number of portal-aware objects currently linked to portals."""
-    global _all_linked_portal_aware_objects
-    return len(_all_linked_portal_aware_objects)
+    global _all_links_from_objects_to_portals
+    return len(_all_links_from_objects_to_portals)
 
 
 class PortalAwareClass(metaclass = PostInitMeta):
@@ -368,103 +357,78 @@ class PortalAwareClass(metaclass = PostInitMeta):
     to the current portal.
     """
 
-    _linked_portal: BasicPortal | None
-    _portal_at_init: BasicPortal|None
-    _hash_id_cache: str | None
+    # _linked_portal: BasicPortal | None
+    _linked_portal_at_init: BasicPortal|None
+    _hash_id_cache: PObjectStrID | None
     _visited_portals: set[str] | None
 
     def __init__(self, portal:BasicPortal|None=None):
         assert portal is None or isinstance(portal, BasicPortal)
-        self._linked_portal = portal
-        self._portal_at_init = portal
+        # self._linked_portal = portal
+        self._linked_portal_at_init = portal
         self._hash_id_cache = None
         self._visited_portals = set()
 
 
     def _post_init_hook(self):
         """ This method is called after the object is fully initialized."""
-        self._try_to_find_linked_portal_and_register_there()
+        global _all_links_from_objects_to_portals
+        global _all_known_portal_aware_objects
+
+        _all_known_portal_aware_objects[self._str_id] = self
+        if self._linked_portal_at_init is not None:
+            _all_links_from_objects_to_portals[self._str_id
+                ] = self._linked_portal_at_init._str_id
 
 
-    def _try_to_find_linked_portal_and_register_there(self):
-        if self._str_id in _all_linked_portal_aware_objects:
-            self._update_from_twin(_all_linked_portal_aware_objects[self._str_id])
-        elif hasattr(self, "_linked_portal") and self._linked_portal is not None:
-            self._register_in_portal()
-
-
-    def _register_in_portal(self):
-        """Register the object in the linked portal.
-        """
-        global _all_linked_portal_aware_objects
-        assert hasattr(self, '_linked_portal')
-        assert self._linked_portal is not None
-        assert isinstance(self._linked_portal, BasicPortal)
-        if self._str_id in _all_linked_portal_aware_objects:
-            raise ValueError(f"A object with {self._str_id=}"
-                "is already registered. It can only be registered once.")
-        _all_linked_portal_aware_objects[self._str_id] = self
-        portal = self._linked_portal
-        if type(self) not in portal._linked_objects:
-            portal._linked_objects[type(self)] = set()
-        portal._linked_objects[type(self)].add(self._str_id)
-
-
-    def _update_from_twin(self, other: PortalAwareClass) -> None:
-        """Update the object from another one with the same str_id"""
-        if self is other:
-            return
-        if not type(self) is type(other):
-            raise TypeError("Can only update from exactly the same type.")
-        if not self._str_id == other._str_id:
-            raise ValueError("Can only update from a twin.")
-        self._invalidate_cache()
-        self._linked_portal = other._linked_portal
-        self._visited_portals.add(self._linked_portal._str_id)
+    @property
+    def _linked_portal_NEW(self) -> BasicPortal | None:
+        global _all_links_from_objects_to_portals, _all_known_portals
+        portal = None
+        if self._str_id in _all_links_from_objects_to_portals:
+            portal_str_id = _all_links_from_objects_to_portals[self._str_id]
+            assert isinstance(portal_str_id, str)
+            portal = _all_known_portals[portal_str_id]
+        return portal
 
 
     @property
     def portal(self) -> BasicPortal:
-        if self._linked_portal is None:
-            self._try_to_find_linked_portal_and_register_there()
-        portal_to_use = self._linked_portal
+        # if self._linked_portal is None:
+        #     self._try_to_find_linked_portal_and_register_there()
+        global _all_links_from_objects_to_portals, _all_known_portals
+        portal_to_use = self._linked_portal_NEW
         if portal_to_use is None:
             portal_to_use = get_active_portal()
+        assert isinstance(portal_to_use, BasicPortal)
         if portal_to_use._str_id not in self._visited_portals:
             self._first_visit_to_portal(portal_to_use)
         return portal_to_use
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
+        global _all_known_portal_aware_objects
+        _all_known_portal_aware_objects[self._str_id] = self
         self._visited_portals.add(portal._str_id)
 
 
-    @portal.setter
-    def portal(self, new_portal: BasicPortal|None) -> None:
-        """Set the portal to the given one."""
-        assert new_portal is not None
-        assert not hasattr(self, "_linked_portal") or self._linked_portal is None
-        self._linked_portal = new_portal
-        self._try_to_find_linked_portal_and_register_there()
-        if new_portal._str_id not in self._visited_portals:
-            self._first_visit_to_portal(new_portal)
-
-    #
-    # def _portal_typed(self
-    #         , expected_type: PortalType = BasicPortal
-    #         ) -> PortalType:
-    #     assert issubclass(expected_type, BasicPortal)
-    #     portal = self.portal
-    #     assert isinstance(portal, expected_type)
-    #     return portal
+    # @portal.setter
+    # def portal(self, new_portal: BasicPortal|None) -> None:
+    #     """Set the portal to the given one."""
+    #     assert new_portal is not None
+    #     assert not hasattr(self, "_linked_portal") or self._linked_portal is None
+    #     self._linked_portal = new_portal
+    #     self._try_to_find_linked_portal_and_register_there()
+    #     if new_portal._str_id not in self._visited_portals:
+    #         self._first_visit_to_portal(new_portal)
 
 
     @property
-    def _str_id(self) -> str:
+    def _str_id(self) -> PObjectStrID:
         """Return the hash ID of the portal-aware object."""
         if hasattr(self, "_str_id_cache") and self._hash_id_cache is not None:
             return self._hash_id_cache
         else:
-            self._hash_id_cache = get_hash_signature(self)
+            self._hash_id_cache = PObjectStrID(get_hash_signature(self))
             return self._hash_id_cache
 
 
@@ -485,7 +449,6 @@ class PortalAwareClass(metaclass = PostInitMeta):
         """This method is called when the object is unpickled.
 
         """
-        self._linked_portal = None
         self._invalidate_cache()
         self._visited_portals = set()
 
@@ -499,7 +462,7 @@ def _clear_all_portals() -> None:
     global _all_known_portals, _active_portals_stack
     global _active_portals_counters_stack
     global _most_recently_created_portal
-    global _all_linked_portal_aware_objects
+    global _all_links_from_objects_to_portals
 
     for portal in _all_known_portals.values():
         portal._clear()
@@ -507,7 +470,7 @@ def _clear_all_portals() -> None:
     _active_portals_stack = list()
     _active_portals_counters_stack = list()
     _most_recently_created_portal = None
-    _all_linked_portal_aware_objects = dict()
+    _all_links_from_objects_to_portals = dict()
 
 
 PortalType = TypeVar("PortalType")

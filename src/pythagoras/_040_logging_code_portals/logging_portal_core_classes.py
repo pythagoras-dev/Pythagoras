@@ -20,20 +20,20 @@ from .._040_logging_code_portals.uncaught_exceptions import \
     register_systemwide_uncaught_exception_handlers
 from persidict import OverlappingMultiDict
 from .._040_logging_code_portals.kw_args import KwArgs, PackedKwArgs
-from .._810_output_manipulators import OutputCapturer
+from .output_capturer import OutputCapturer
 from .._030_data_portals.data_portal_core_classes import (
     DataPortal, StorableFn)
-from .._820_strings_signatures_and_converters.current_date_gmt_str import (
+from .._800_signatures_and_converters.current_date_gmt_str import (
     current_date_gmt_string)
 from .._040_logging_code_portals.execution_environment_summary import (
     build_execution_environment_summary, add_execution_environment_summary)
-from .._820_strings_signatures_and_converters.random_signatures import (
+from .._800_signatures_and_converters.random_signatures import (
     get_random_signature)
 
 
 class LoggingFn(StorableFn):
 
-    _excessive_logging_at_init: bool | Joker
+    # _excessive_logging_at_init: bool | Joker
 
     def __init__(self
             , fn: Callable | str
@@ -65,32 +65,16 @@ class LoggingFn(StorableFn):
                 return result
 
 
-    def __getstate__(self):
-        state = super().__getstate__()
-        return state
-
-
-    def __setstate__(self, state):
-        super().__setstate__(state)
-        self._excessive_logging_at_init = KEEP_CURRENT
-
-
-    # def _register_in_portal(self):
-    #     super()._register_in_portal()
-    #     self._set_config_setting("excessive_logging"
-    #         , self._excessive_logging_at_init)
-
-
     @property
     def portal(self) -> LoggingCodePortal:
         return StorableFn.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: LoggingCodePortal) -> None:
-        if not isinstance(new_portal, LoggingCodePortal):
-            raise TypeError("portal must be a LoggingCodePortal instance")
-        StorableFn.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: LoggingCodePortal) -> None:
+    #     if not isinstance(new_portal, LoggingCodePortal):
+    #         raise TypeError("portal must be a LoggingCodePortal instance")
+    #     StorableFn.portal.__set__(self, new_portal)
 
 
 class LoggingFnCallSignature:
@@ -507,7 +491,6 @@ class LoggingFnExecutionFrame(NotPicklable):
         LoggingFnExecutionFrame.call_stack.pop()
 
 
-
 EXCEPTIONS_TOTAL_TXT = "Exceptions, total"
 EXCEPTIONS_TODAY_TXT = "Exceptions, today"
 EXCESSIVE_LOGGING_TXT = "Excessive logging"
@@ -617,8 +600,6 @@ class LoggingCodePortal(DataPortal):
         self._run_history = None
         unregister_systemwide_uncaught_exception_handlers()
         super()._clear()
-
-
 
 
 register_parameterizable_class(LoggingCodePortal)

@@ -31,8 +31,7 @@ class SafeFn(LoggingFn):
             , fn = fn
             , portal=portal
             , excessive_logging=excessive_logging)
-        if isinstance(fn, SafeFn):
-            return
+
 
     def __getstate__(self):
         state = super().__getstate__()
@@ -40,7 +39,6 @@ class SafeFn(LoggingFn):
 
 
     def __setstate__(self, state):
-        self._invalidate_cache()
         super().__setstate__(state)
 
 
@@ -49,11 +47,11 @@ class SafeFn(LoggingFn):
         return LoggingFn.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: SafeCodePortal) -> None:
-        if not isinstance(new_portal, SafeCodePortal):
-            raise TypeError("portal must be a LoggingCodePortal instance")
-        LoggingFn.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: SafeCodePortal) -> None:
+    #     if not isinstance(new_portal, SafeCodePortal):
+    #         raise TypeError("portal must be a LoggingCodePortal instance")
+    #     LoggingFn.portal.__set__(self, new_portal)
 
 
 register_parameterizable_class(SafeCodePortal)

@@ -1,5 +1,5 @@
 import sys
-from src.pythagoras._810_output_manipulators.output_suppressor import OutputSuppressor
+from src.pythagoras._090_swarming_portals.output_suppressor import OutputSuppressor
 
 def test_output_is_suppressed(capsys):
     """Verify that output to stdout and stderr is suppressed within the context."""

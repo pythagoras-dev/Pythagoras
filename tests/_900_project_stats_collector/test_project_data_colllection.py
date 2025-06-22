@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from src.pythagoras._830_project_stats_collector.project_analyzer import analyze_project
+from src.pythagoras._900_project_stats_collector.project_analyzer import analyze_project
 
 
 def test_project_data_collection():

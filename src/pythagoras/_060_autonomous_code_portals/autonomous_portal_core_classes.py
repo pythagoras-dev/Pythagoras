@@ -99,7 +99,7 @@ class AutonomousFn(SafeFn):
         new_fixed_kwargs.update(kwargs)
         new_fn = AutonomousFn(self.source_code
             , fixed_kwargs=new_fixed_kwargs
-            , portal=self._linked_portal)
+            , portal=self._linked_portal_NEW)
         return new_fn
 
 
@@ -109,7 +109,6 @@ class AutonomousFn(SafeFn):
         return state
 
     def __setstate__(self, state):
-        self._invalidate_cache()
         super().__setstate__(state)
         self._fixed_kwargs = state["_fixed_kwargs"]
 
@@ -119,8 +118,8 @@ class AutonomousFn(SafeFn):
         return SafeFn.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: AutonomousCodePortal) -> None:
-        if not isinstance(new_portal, AutonomousCodePortal):
-            raise TypeError("portal must be a AutonomousCodePortal instance")
-        SafeFn.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: AutonomousCodePortal) -> None:
+    #     if not isinstance(new_portal, AutonomousCodePortal):
+    #         raise TypeError("portal must be a AutonomousCodePortal instance")
+    #     SafeFn.portal.__set__(self, new_portal)

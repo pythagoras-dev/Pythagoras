@@ -4,12 +4,14 @@ from abc import abstractmethod
 from typing import Optional, Callable, Any, Type
 
 import pandas as pd
+from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
+from torch.distributed.pipeline.sync.skip import portal
 
 from .. import BasicPortal
 from .._010_basic_portals import get_active_portal, get_nonactive_portals
-from .._820_strings_signatures_and_converters import get_hash_signature
+from .._800_signatures_and_converters import get_hash_signature
 
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic
@@ -22,6 +24,19 @@ from persidict import WriteOnceDict
 
 TOTAL_VALUES_TXT = "Values, total"
 PROBABILITY_OF_CHECKS_TXT = "Probability of checks"
+
+
+def get_active_data_portal() -> DataPortal:
+    portal = get_active_portal()
+    assert isinstance(portal, DataPortal)
+    return portal
+
+
+def get_nonactive_data_portals() -> list[DataPortal]:
+    """Get a list of all nonactive DataPortals"""
+    portals = get_nonactive_portals()
+    assert all(isinstance(p, DataPortal) for p in portals)
+    return portals
 
 
 class DataPortal(OrdinaryCodePortal):
@@ -92,12 +107,11 @@ class DataPortal(OrdinaryCodePortal):
         self._value_store.p_consistency_checks = self.p_consistency_checks
 
 
-
     def get_params(self) -> dict:
         """Get the portal's configuration parameters"""
         params = super().get_params()
         params.update(self._ephemeral_config_params_at_init)
-        sorted_params = dict(sorted(params.items()))
+        sorted_params = sort_dict_by_keys(params)
         return sorted_params
 
 
@@ -106,13 +120,6 @@ class DataPortal(OrdinaryCodePortal):
         names = super()._ephemeral_param_names
         names.update(self._ephemeral_config_params_at_init)
         return names
-
-
-    def _update_from_twin(self, other: DataPortal) -> None:
-        super()._update_from_twin(other)
-        self._value_store = other._value_store
-        self._config_settings = other._config_settings
-        self._config_settings_cache = other._config_settings_cache
 
 
     def _get_config_setting(self, key: SafeStrTuple|str) -> Any:
@@ -198,20 +205,17 @@ class StorableFn(OrdinaryFn):
 
     def _post_init_hook(self):
         super()._post_init_hook()
-        portal_to_use = self._linked_portal
-        if portal_to_use is None:
-            portal_to_use = get_active_portal()
-        self._persist_initial_config_params(portal_to_use)
-        self._visited_portals.add(portal_to_use._str_id)
+        assert len(self._visited_portals) == 0
+        _ = self.portal # To persist initial config params
+
+
+    def _first_visit_to_portal(self, portal: DataPortal) -> None:
+        self._persist_initial_config_params(portal)
 
 
     def _persist_initial_config_params(self, portal:DataPortal) -> None:
         for key, value in self._ephemeral_config_params_at_init.items():
             self._set_config_setting(key, value, portal)
-
-
-    def _first_visit_to_portal(self, portal: BasicPortal) -> None:
-        self._persist_initial_config_params(portal)
 
 
     @property
@@ -265,9 +269,6 @@ class StorableFn(OrdinaryFn):
 
     def __setstate__(self, state):
         super().__setstate__(state)
-        if not state["_source_code"] == get_normalized_function_source(
-            state["_source_code"]):
-            raise ValueError("Source code is not normalized. ")
         self._ephemeral_config_params_at_init = dict()
 
 
@@ -426,7 +427,7 @@ class ValueAddr(HashAddr):
             , prefix=prefix
             , hash_signature=hash_signature)
 
-        portal = get_active_portal()
+        portal = get_active_data_portal()
         portal._value_store[self] = data
         self._value_cache = data
         self._containing_portals_cache = set()
@@ -447,7 +448,7 @@ class ValueAddr(HashAddr):
 
     @property
     def _ready_in_active_portal(self) -> bool:
-        portal = get_active_portal()
+        portal = get_active_data_portal()
         portal_id = portal._str_id
         if portal_id in self._containing_portals_cache:
             return True
@@ -459,10 +460,10 @@ class ValueAddr(HashAddr):
 
     @property
     def _ready_in_nonactive_portals(self) -> bool:
-        for portal in get_nonactive_portals():
+        for portal in get_nonactive_data_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
-                get_active_portal()._value_store[self] = value
+                get_active_data_portal()._value_store[self] = value
                 new_ids = {portal._str_id, get_active_portal()._str_id}
                 self._containing_portals_cache |= new_ids
                 self._value_cache = value
@@ -490,11 +491,11 @@ class ValueAddr(HashAddr):
             if get_active_portal()._str_id in self._containing_portals_cache:
                 return self._value_cache
             else:
-                get_active_portal()._value_store[self] = self._value_cache
+                get_active_data_portal()._value_store[self] = self._value_cache
                 self._containing_portals_cache |= {get_active_portal()._str_id}
                 return self._value_cache
 
-        value = get_active_portal()._value_store[self]
+        value = get_active_data_portal()._value_store[self]
         self._value_cache = value
         self._containing_portals_cache |= {get_active_portal()._str_id}
         return value
@@ -503,10 +504,10 @@ class ValueAddr(HashAddr):
     def _get_from_nonactive_portals(self) -> Any:
         """Retrieve value, referenced by the address, from noncurrent portals"""
 
-        for portal in get_nonactive_portals():
+        for portal in get_nonactive_data_portals():
             try:
                 value = portal._value_store[self]
-                get_active_portal()._value_store[self] = value
+                get_active_data_portal()._value_store[self] = value
                 self._value_cache = value
                 new_ids = {portal._str_id, get_active_portal()._str_id}
                 self._containing_portals_cache |= new_ids

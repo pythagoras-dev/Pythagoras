@@ -1,4 +1,4 @@
-from src.pythagoras._820_strings_signatures_and_converters.current_date_gmt_str import (
+from src.pythagoras._800_signatures_and_converters.current_date_gmt_str import (
     current_date_gmt_string)
 
 from datetime import datetime, timezone

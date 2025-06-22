@@ -24,7 +24,7 @@ def test_simple_function_single_call_very_basic(tmpdir):
 
             simple_function()
 
-            assert p.portal.number_of_linked_functions() == 1
+            assert p.portal.get_number_of_linked_functions() == 1
 
             assert len(p.portal._value_store) == 4
 
@@ -48,7 +48,7 @@ def test_simple_function_single_call(tmpdir,pr):
 
             simple_function()
 
-            assert p.portal.number_of_linked_functions() == 1
+            assert p.portal.get_number_of_linked_functions() == 1
 
             assert len(p.portal._value_store) == 4
 
@@ -70,7 +70,7 @@ def test_simple_function_single_call_no_logs(tmpdir,pr):
 
         simple_function()
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 3
 
@@ -95,7 +95,7 @@ def test_simple_function_double_call(tmpdir,pr):
             simple_function()
             simple_function()
 
-            assert p.portal.number_of_linked_functions() == 1
+            assert p.portal.get_number_of_linked_functions() == 1
 
             assert len(p.portal._value_store) == 4
 
@@ -117,7 +117,7 @@ def test_simple_function_double_call_no_logs(tmpdir):
         simple_function()
         simple_function()
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 3
 

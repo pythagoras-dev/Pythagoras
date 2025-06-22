@@ -8,7 +8,7 @@ from persidict import PersiDict
 from .._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_function_source_impl
 from .function_processing import get_function_name_from_source
-from .._820_strings_signatures_and_converters import get_hash_signature
+from .._800_signatures_and_converters import get_hash_signature
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_runtime_characteristic)
 
@@ -45,26 +45,26 @@ class OrdinaryCodePortal(BasicPortal):
         super()._clear()
 
 
-    def linked_functions_ids(self, target_class:type|None=None) -> set[str]:
+    def _get_linked_functions_ids(self, target_class: type | None=None) -> set[str]:
         """Get the set of known functions' IDs"""
         if target_class is None:
             target_class = OrdinaryFn
         if not issubclass(target_class, OrdinaryFn):
             raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
-        return self.linked_objects_ids(target_class=target_class)
+        return self._get_linked_objects_ids(target_class=target_class)
 
 
-    def linked_functions(self, target_class:type|None=None) -> list[OrdinaryFn]:
+    def get_linked_functions(self, target_class: type | None=None) -> list[OrdinaryFn]:
         """Get the list of known functions"""
         if target_class is None:
             target_class = OrdinaryFn
         if not issubclass(target_class, OrdinaryFn):
             raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
-        return self.linked_objects(target_class=target_class)
+        return self.get_linked_objects(target_class=target_class)
 
 
-    def number_of_linked_functions(self, target_class:type|None=None) -> int:
-        return len(self.linked_functions_ids(target_class=target_class))
+    def get_number_of_linked_functions(self, target_class: type | None=None) -> int:
+        return len(self._get_linked_functions_ids(target_class=target_class))
 
 
     def describe(self) -> pd.DataFrame:
@@ -72,7 +72,7 @@ class OrdinaryCodePortal(BasicPortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_runtime_characteristic(
-            REGISTERED_FUNCTIONS_TXT, self.number_of_linked_functions()))
+            REGISTERED_FUNCTIONS_TXT, self.get_number_of_linked_functions()))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
@@ -112,7 +112,6 @@ class OrdinaryFn(PortalAwareClass):
         PortalAwareClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
             self.__setstate__(fn.__getstate__())
-            self._linked_portal = fn._linked_portal
             #TODO: check this logic
         else:
             if not (callable(fn) or isinstance(fn, str)):
@@ -126,11 +125,11 @@ class OrdinaryFn(PortalAwareClass):
         return PortalAwareClass.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: OrdinaryCodePortal) -> None:
-        if not isinstance(new_portal, OrdinaryCodePortal):
-            raise TypeError("portal must be a OrdinaryCodePortal instance")
-        PortalAwareClass.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: OrdinaryCodePortal) -> None:
+    #     if not isinstance(new_portal, OrdinaryCodePortal):
+    #         raise TypeError("portal must be a OrdinaryCodePortal instance")
+    #     PortalAwareClass.portal.__set__(self, new_portal)
 
     @property
     def source_code(self) -> str:
@@ -214,13 +213,6 @@ class OrdinaryFn(PortalAwareClass):
         super()._invalidate_cache()
 
 
-    def _register_in_portal(self):
-        PortalAwareClass._register_in_portal(self)
-        if not isinstance(self._linked_portal, OrdinaryCodePortal):
-            raise TypeError("To register an OrdinaryFn in a portal, "
-                "the portal must be an OrdinaryCodePortal.")
-
-
     @classmethod
     def _compile(cls,*args, **kwargs) -> Any:
         return compile(*args, **kwargs)
@@ -253,13 +245,13 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def __getstate__(self):
-        state = dict(_source_code=self._source_code)
+        state = dict(source_code=self._source_code)
         return state
 
 
     def __setstate__(self, state):
         PortalAwareClass.__setstate__(self, state)
-        self._source_code = state["_source_code"]
+        self._source_code = state["source_code"]
 
 
     def __hash_signature_prefix__(self) -> str:

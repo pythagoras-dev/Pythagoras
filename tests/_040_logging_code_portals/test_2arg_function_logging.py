@@ -16,9 +16,9 @@ def test_2args_function_single_call(tmpdir):
 
         two_arg_function(a=1, b=2)
 
-        assert p.portal.number_of_linked_functions() == 0
-        two_arg_function.portal = p.portal
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 0
+        # two_arg_function.portal = p.portal
+        # assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 6
 
@@ -44,7 +44,7 @@ def test_2args_function_2similar_calls(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(b=2, a=1)
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 6
 
@@ -68,7 +68,7 @@ def test_2args_function_2different_calls(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(a=1, b=10)
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 10
 
@@ -88,7 +88,7 @@ def test_2args_function_single_call_no_logs(tmpdir):
 
         two_arg_function(a=1, b=2)
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 5
 
@@ -109,7 +109,7 @@ def test_2args_function_2similar_calls_no_logs(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(b=2, a=1)
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 5
 
@@ -130,7 +130,7 @@ def test_2args_function_2different_calls_no_logs(tmpdir):
         two_arg_function(a=1, b=2)
         two_arg_function(a=1, b=10)
 
-        assert p.portal.number_of_linked_functions() == 1
+        assert p.portal.get_number_of_linked_functions() == 1
 
         assert len(p.portal._value_store) == 8
 

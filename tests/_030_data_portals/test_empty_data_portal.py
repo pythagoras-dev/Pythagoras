@@ -10,7 +10,7 @@ def test_empty_data_portal(tmpdir):
         # assert len(p.portal._entered_portals_stack) == 1
         # assert len(p.portal._entered_portals_counters_stack) == 1
 
-        assert p.portal.number_of_linked_functions() == 0
+        assert p.portal.get_number_of_linked_functions() == 0
 
         assert len(p.portal._value_store) == 0
         pcc = p.portal.p_consistency_checks

@@ -11,16 +11,16 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 from .._010_basic_portals import BasicPortal
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
-from .._820_strings_signatures_and_converters.random_signatures import get_random_signature
+from .._800_signatures_and_converters.random_signatures import get_random_signature
 from persidict import OverlappingMultiDict
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr)
 # from pythagoras._090_swarming_portals.clean_runtime_id import clean_runtime_id
-from .._820_strings_signatures_and_converters.node_signatures import get_node_signature
+from .._800_signatures_and_converters.node_signatures import get_node_signature
 
 from multiprocessing import get_context
 
-from .._810_output_manipulators.output_suppressor import (
+from .._090_swarming_portals.output_suppressor import (
     OutputSuppressor)
 
 BACKGROUND_WORKERS_TXT = "Background workers"

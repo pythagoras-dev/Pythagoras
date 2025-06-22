@@ -1,7 +1,7 @@
 import pytest
 
 from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._820_strings_signatures_and_converters.current_date_gmt_str import current_date_gmt_string
+from src.pythagoras._800_signatures_and_converters.current_date_gmt_str import current_date_gmt_string
 from src.pythagoras._060_autonomous_code_portals import *
 
 

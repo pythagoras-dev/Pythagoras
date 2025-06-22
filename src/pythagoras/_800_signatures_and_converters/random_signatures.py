@@ -1,6 +1,6 @@
 import uuid
 
-from src.pythagoras._820_strings_signatures_and_converters.base_16_32_convertors import (
+from src.pythagoras._800_signatures_and_converters.base_16_32_convertors import (
     convert_int_to_base32)
 
 max_signature_length: int = 22
