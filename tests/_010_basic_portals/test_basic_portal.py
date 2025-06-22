@@ -1,6 +1,6 @@
 from src.pythagoras._010_basic_portals import *
 from src.pythagoras._010_basic_portals import _PortalTester
-from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import (
+from src.pythagoras._010_basic_portals.basic_portal_core_classes import (
     _clear_all_portals )
 
 

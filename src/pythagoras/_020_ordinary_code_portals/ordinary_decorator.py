@@ -1,6 +1,6 @@
 from typing import Callable
 
-from .ordinary_portal_core_classes_NEW import OrdinaryFn, OrdinaryCodePortal
+from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
 
 
 class ordinary:

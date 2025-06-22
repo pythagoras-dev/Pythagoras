@@ -1,5 +1,5 @@
 from src.pythagoras import BasicPortal, _PortalTester
-from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import (
+from src.pythagoras._010_basic_portals.basic_portal_core_classes import (
     get_active_portal)
 
 

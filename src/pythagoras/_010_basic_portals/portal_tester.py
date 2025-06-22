@@ -1,5 +1,5 @@
 from __future__ import annotations
-from .basic_portal_core_classes_NEW import (
+from .basic_portal_core_classes import (
     BasicPortal, PortalType, _clear_all_portals)
 
 

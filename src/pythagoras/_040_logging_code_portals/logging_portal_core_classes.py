@@ -9,7 +9,7 @@ from parameterizable import register_parameterizable_class
 from persidict import PersiDict, KEEP_CURRENT, Joker
 
 from .. import NotPicklable, get_active_portal
-from .._010_basic_portals.basic_portal_core_classes_NEW import (
+from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic, _describe_runtime_characteristic)
 
 from .._030_data_portals import ValueAddr

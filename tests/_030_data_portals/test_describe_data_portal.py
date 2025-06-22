@@ -1,7 +1,7 @@
 from src.pythagoras import DataPortal
 from src.pythagoras import _PortalTester
 
-from src.pythagoras._010_basic_portals.basic_portal_core_classes_NEW import _get_description_value_by_key
+from src.pythagoras._010_basic_portals.basic_portal_core_classes import _get_description_value_by_key
 from src.pythagoras._030_data_portals.data_portal_core_classes import TOTAL_VALUES_TXT, \
     PROBABILITY_OF_CHECKS_TXT
 
