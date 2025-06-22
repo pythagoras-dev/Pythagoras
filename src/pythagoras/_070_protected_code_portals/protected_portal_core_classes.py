@@ -7,7 +7,7 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .._040_logging_code_portals import KwArgs
 from .._030_data_portals import ValueAddr
-from .._840_work_with_collections.dict_sort import sort_dict_by_keys
+from parameterizable import sort_dict_by_keys
 from .._840_work_with_collections.list_flattener import flatten_list
 from .OK_const import OK
 

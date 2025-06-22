@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from .._010_basic_portals import get_active_portal
 from .._030_data_portals import DataPortal, ValueAddr
-from .._840_work_with_collections.dict_sort import sort_dict_by_keys
+from parameterizable import sort_dict_by_keys
 
 class KwArgs(dict):
     """ A class that encapsulates keyword arguments for a function call.
