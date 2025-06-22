@@ -69,31 +69,37 @@ _active_portals_stack: list = []
 _active_portals_counters_stack: list = []
 _most_recently_created_portal: BasicPortal | None = None
 
-def number_of_known_portals() -> int:
+def get_number_of_known_portals() -> int:
     """Get the number of portals currently in the system."""
     global _all_known_portals
     return len(_all_known_portals)
 
 
-def number_of_active_portals() -> int:
+def get_all_known_portals() -> list[BasicPortal]:
+    """Get a list of all known portals."""
+    global _all_known_portals
+    return list(_all_known_portals.values())
+
+
+def get_number_of_active_portals() -> int:
     """Get the number of currently active portals."""
     global _active_portals_stack
     return len(set(_active_portals_stack))
 
 
-def depth_of_active_portal_stack() -> int:
+def get_depth_of_active_portal_stack() -> int:
     """Get the depth of the active portal stack."""
     global _active_portals_counters_stack
     return sum(_active_portals_counters_stack)
 
 
-def most_recently_created_portal() -> BasicPortal|None:
+def get_most_recently_created_portal() -> BasicPortal | None:
     """Get the most recently created portal, or None if no portals exist."""
     global _most_recently_created_portal
     return _most_recently_created_portal
 
 
-def active_portal() -> BasicPortal:
+def get_active_portal() -> BasicPortal:
     """Get the currently active portal object.
 
     The active portal is the one that was most recently entered
@@ -115,8 +121,8 @@ def active_portal() -> BasicPortal:
     return _most_recently_created_portal
 
 
-def nonactive_portals() -> list[BasicPortal]:
-    active_portal_str_id = active_portal()._str_id
+def get_nonactive_portals() -> list[BasicPortal]:
+    active_portal_str_id = get_active_portal()._str_id
     found_portals = []
     for portal_str_id, portal in _all_known_portals.items():
         if portal_str_id != active_portal_str_id:
@@ -423,7 +429,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
             self._try_to_find_linked_portal_and_register_there()
         portal_to_use = self._linked_portal
         if portal_to_use is None:
-            portal_to_use = active_portal()
+            portal_to_use = get_active_portal()
         if portal_to_use._str_id not in self._visited_portals:
             self._first_visit_to_portal(portal_to_use)
         return portal_to_use

@@ -8,7 +8,7 @@ from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURR
 from persidict import KEEP_CURRENT, Joker
 
 from .. import BasicPortal
-from .._010_basic_portals import active_portal, nonactive_portals
+from .._010_basic_portals import get_active_portal, get_nonactive_portals
 from .._820_strings_signatures_converters import get_hash_signature
 
 from .._010_basic_portals.basic_portal_class_OLD import (
@@ -18,7 +18,7 @@ from .._020_ordinary_code_portals import (
     get_normalized_function_source
     ,OrdinaryCodePortal
     ,OrdinaryFn)
-from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
+from .._800_persidict_extensions.first_write_once_dict import WriteOnceDict
 
 TOTAL_VALUES_TXT = "Values, total"
 PROBABILITY_OF_CHECKS_TXT = "Probability of checks"
@@ -41,7 +41,7 @@ class DataPortal(OrdinaryCodePortal):
     in a 'with' statement that marks the portal as the current.
     """
 
-    _value_store: FirstEntryDict | None
+    _value_store: WriteOnceDict | None
     _config_settings: PersiDict | None
     _config_settings_cache: dict
 
@@ -76,7 +76,7 @@ class DataPortal(OrdinaryCodePortal):
         value_store_params.update(
             digest_len=0, immutable_items=True, file_type = "pkl")
         value_store = type(self._root_dict)(**value_store_params)
-        value_store = FirstEntryDict(value_store, self.p_consistency_checks)
+        value_store = WriteOnceDict(value_store, 0)
         self._value_store = value_store
 
 
@@ -86,9 +86,11 @@ class DataPortal(OrdinaryCodePortal):
 
 
     def _post_init_hook(self) -> None:
-        """Hook to be called after the portal is initialized"""
+        """Hook to be called after all __init__ methods are done"""
         super()._post_init_hook()
         self._persist_initial_config_params()
+        self._value_store.p_consistency_checks = self.p_consistency_checks
+
 
 
     def get_params(self) -> dict:
@@ -198,7 +200,7 @@ class StorableFn(OrdinaryFn):
         super()._post_init_hook()
         portal_to_use = self._linked_portal
         if portal_to_use is None:
-            portal_to_use = active_portal()
+            portal_to_use = get_active_portal()
         self._persist_initial_config_params(portal_to_use)
         self._visited_portals.add(portal_to_use._str_id)
 
@@ -424,7 +426,7 @@ class ValueAddr(HashAddr):
             , prefix=prefix
             , hash_signature=hash_signature)
 
-        portal = active_portal()
+        portal = get_active_portal()
         portal._value_store[self] = data
         self._value_cache = data
         self._containing_portals_cache = set()
@@ -445,7 +447,7 @@ class ValueAddr(HashAddr):
 
     @property
     def _ready_in_active_portal(self) -> bool:
-        portal = active_portal()
+        portal = get_active_portal()
         portal_id = portal._str_id
         if portal_id in self._containing_portals_cache:
             return True
@@ -457,11 +459,11 @@ class ValueAddr(HashAddr):
 
     @property
     def _ready_in_nonactive_portals(self) -> bool:
-        for portal in nonactive_portals():
+        for portal in get_nonactive_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
-                active_portal()._value_store[self] = value
-                new_ids = {portal._str_id, active_portal()._str_id}
+                get_active_portal()._value_store[self] = value
+                new_ids = {portal._str_id, get_active_portal()._str_id}
                 self._containing_portals_cache |= new_ids
                 self._value_cache = value
                 return True
@@ -485,28 +487,28 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if active_portal()._str_id in self._containing_portals_cache:
+            if get_active_portal()._str_id in self._containing_portals_cache:
                 return self._value_cache
             else:
-                active_portal()._value_store[self] = self._value_cache
-                self._containing_portals_cache |= {active_portal()._str_id}
+                get_active_portal()._value_store[self] = self._value_cache
+                self._containing_portals_cache |= {get_active_portal()._str_id}
                 return self._value_cache
 
-        value = active_portal()._value_store[self]
+        value = get_active_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals_cache |= {active_portal()._str_id}
+        self._containing_portals_cache |= {get_active_portal()._str_id}
         return value
 
 
     def _get_from_nonactive_portals(self) -> Any:
         """Retrieve value, referenced by the address, from noncurrent portals"""
 
-        for portal in nonactive_portals():
+        for portal in get_nonactive_portals():
             try:
                 value = portal._value_store[self]
-                active_portal()._value_store[self] = value
+                get_active_portal()._value_store[self] = value
                 self._value_cache = value
-                new_ids = {portal._str_id, active_portal()._str_id}
+                new_ids = {portal._str_id, get_active_portal()._str_id}
                 self._containing_portals_cache |= new_ids
                 return value
             except:

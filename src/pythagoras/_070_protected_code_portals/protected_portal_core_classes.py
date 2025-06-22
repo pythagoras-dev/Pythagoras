@@ -143,7 +143,7 @@ class ProtectedFn(AutonomousFn):
         new_protectors = []
         for protector in protectors:
             protector = AutonomousFn(fn=protector, excessive_logging= KEEP_CURRENT
-                , portal=self.portal, fixed_kwargs=None)
+                , portal=None, fixed_kwargs=None)
             assert isinstance(protector, AutonomousFn)
             assert check_if_fn_accepts_args(
                 required_arg_names, protector.source_code)

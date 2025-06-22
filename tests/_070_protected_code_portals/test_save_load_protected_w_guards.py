@@ -50,10 +50,11 @@ def test_load_save_protected_dummy_good_guard(tmpdir):
 
 def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
 
-    dummy_good_guard_autonomous = autonomous()(dummy_good_guard)
-    guards = [dummy_good_guard_autonomous, dummy_good_guard_autonomous]
-
     with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+
+        dummy_good_guard_autonomous = autonomous()(dummy_good_guard)
+        guards = [dummy_good_guard_autonomous, dummy_good_guard_autonomous]
+
         f_1 = ProtectedFn(f, guards = guards)
         assert len(f_1.guards) == 1
         f_address = ValueAddr(f_1)
@@ -97,17 +98,17 @@ def test_load_save_protected_dummy_bad_guard_autonomous(tmpdir):
         guards = [dummy_bad_guard_autonomous, dummy_bad_guard_autonomous]
 
         f_1 = ProtectedFn(f, guards = guards)
-    #     f_address = ValueAddr(f_1)
-    #     f_2 = f_address.get()
-    #     with pytest.raises(Exception):
-    #         f_1(a=1, b=2)
-    #     with pytest.raises(Exception):
-    #         f_2(a=1, b=2)
-    #     assert f_2.name == f_1.name
-    #     assert f_2.source_code == f_1.source_code
-    #     f_address._invalidate_cache()
-    #
-    # with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-    #     f_3 = f_address.get()
-    #     with pytest.raises(Exception):
-    #         f_3(a=1, b=2)
+        f_address = ValueAddr(f_1)
+        f_2 = f_address.get()
+        with pytest.raises(Exception):
+            f_1(a=1, b=2)
+        with pytest.raises(Exception):
+            f_2(a=1, b=2)
+        assert f_2.name == f_1.name
+        assert f_2.source_code == f_1.source_code
+        f_address._invalidate_cache()
+
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+        f_3 = f_address.get()
+        with pytest.raises(Exception):
+            f_3(a=1, b=2)

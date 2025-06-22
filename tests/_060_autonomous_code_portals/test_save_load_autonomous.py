@@ -1,5 +1,5 @@
 from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._010_basic_portals import active_portal
+from src.pythagoras._010_basic_portals import get_active_portal
 from src.pythagoras._030_data_portals import ValueAddr
 from src.pythagoras._060_autonomous_code_portals import *
 

@@ -9,12 +9,11 @@ from sklearn.model_selection import ParameterGrid
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._010_basic_portals.portal_aware_class_OLD import _noncurrent_portals
-from .._010_basic_portals.portal_aware_dict import PortalAwareDict
+from .. import get_all_known_portals, get_nonactive_portals, get_active_portal
 from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
 from .._010_basic_portals.basic_portal_class_OLD import (
     _describe_persistent_characteristic)
-from .._800_persidict_extensions.first_entry_dict import FirstEntryDict
+from .._800_persidict_extensions.first_write_once_dict import WriteOnceDict
 from .._040_logging_code_portals.logging_portal_core_classes import (
     LoggingFnCallSignature)
 
@@ -36,7 +35,7 @@ EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
 
 class PureCodePortal(ProtectedCodePortal):
 
-    _execution_results: PortalAwareDict | None
+    _execution_results: PersiDict | None
     _execution_requests: PersiDict | None
 
     def __init__(self
@@ -54,9 +53,7 @@ class PureCodePortal(ProtectedCodePortal):
         results_dict_params = results_dict_prototype.get_params()
         results_dict_params.update(immutable_items=True,  file_type = "pkl")
         execution_results = type(self._root_dict)(**results_dict_params)
-        execution_results = FirstEntryDict(
-            execution_results, p_consistency_checks)
-        execution_results = PortalAwareDict(execution_results, portal = self)
+        execution_results = WriteOnceDict(execution_results, 0)
         self._execution_results = execution_results
 
         requests_dict_prototype = self._root_dict.get_subdict(
@@ -65,6 +62,13 @@ class PureCodePortal(ProtectedCodePortal):
         requests_dict_params.update(immutable_items=False, file_type="pkl")
         execution_requests = type(self._root_dict)(**requests_dict_params)
         self._execution_requests = execution_requests
+
+
+    def _post_init_hook(self) -> None:
+        """Hook to be called after all __init__ methods are done"""
+        super()._post_init_hook()
+        p = self.p_consistency_checks
+        self._execution_results._p_consistency_checks = p
 
 
     def describe(self) -> pd.DataFrame:
@@ -161,10 +165,10 @@ class PureFn(ProtectedFn):
             result_addr = ValueAddr(result)
             try:
                 if conduct_consistency_checks:
-                    portal.execution_results._p_consistency_checks = 1
-                portal.execution_results[output_address] = result_addr
+                    portal._execution_results._p_consistency_checks = 1
+                portal._execution_results[output_address] = result_addr
             finally:
-                portal.execution_results._p_consistency_checks = (
+                portal._execution_results._p_consistency_checks = (
                     p_consistency_checks)
             output_address.drop_execution_request()
             return result
@@ -224,14 +228,14 @@ class PureFn(ProtectedFn):
 
 
     @property
-    def portal(self) -> PureCodePortal:
+    def portal(self) -> PureCodePortal: #*#*#
         return ProtectedFn.portal.__get__(self)
 
 
     @portal.setter
-    def portal(self, new_portal: PureCodePortal) -> None:
+    def portal(self, new_portal: PureCodePortal) -> None: #*#*#
         if not isinstance(new_portal, PureCodePortal):
-            raise TypeError("portal must be a ProtectedCodePortal instance")
+            raise TypeError("portal must be a PureCodePortal instance")
         ProtectedFn.portal.__set__(self, new_portal)
 
 
@@ -262,7 +266,7 @@ class PureFnExecutionResultAddr(HashAddr):
             tmp = ValueAddr(signature)
             new_prefix = fn.name +"_result_addr"
             new_hash_signature = tmp.hash_signature
-            super().__init__(new_prefix, new_hash_signature, portal=fn.portal)
+            super().__init__(new_prefix, new_hash_signature)
             self._fn_cache = fn
 
 
@@ -279,23 +283,20 @@ class PureFnExecutionResultAddr(HashAddr):
             del self._call_signature_cache
 
 
-    def get_ValueAddr(self):
-        with self.portal as portal:
-            # prefix = self.fn.name.lower() + "_"
-            # prefix += LoggingFnCallSignature.__name__.lower()
-            prefix = self.prefix.removesuffix("_result_addr")
-            prefix += "_" + LoggingFnCallSignature.__name__.lower()
-            return ValueAddr.from_strings(  # TODO: refactor this
-                prefix = prefix
-                , hash_signature=self.hash_signature
-                , portal= portal)
+    def get_ValueAddr(self): #?????????????
+        # prefix = self.fn.name.lower() + "_"
+        # prefix += LoggingFnCallSignature.__name__.lower()
+        prefix = self.prefix.removesuffix("_result_addr")
+        prefix += "_" + LoggingFnCallSignature.__name__.lower()
+        return ValueAddr.from_strings(  # TODO: refactor this
+            prefix = prefix
+            , hash_signature=self.hash_signature)
 
 
     @property
     def call_signature(self) -> LoggingFnCallSignature:
         if not hasattr(self, "_call_signature_cache") or self._call_signature_cache is None:
-            with self.portal:
-                self._call_signature_cache = self.get_ValueAddr().get()
+            self._call_signature_cache = self.get_ValueAddr().get()
         return self._call_signature_cache
 
 
@@ -303,102 +304,103 @@ class PureFnExecutionResultAddr(HashAddr):
     def fn(self) -> PureFn:
         """Return the function object referenced by the address."""
         if not hasattr(self, "_fn_cache") or self._fn_cache is None:
-            with self.portal:
-                self._fn_cache = self.call_signature.fn
+            self._fn_cache = self.call_signature.fn
         return self._fn_cache
 
 
     @property
-    def kwargs(self) -> KwArgs:
+    def kwargs(self) -> KwArgs: #*#*#*
         """Unpacked arguments of the function call, referenced by the address."""
         if not hasattr(self, "_kwargs_cache") or self._kwargs_cache is None:
-            with self.portal:
+            with self.fn.portal:
                 self._kwargs_cache = self.call_signature.kwargs_addr.get().unpack()
         return self._kwargs_cache
 
 
-    def __setstate__(self, state):
+    def __setstate__(self, state): #*#*#
         self._invalidate_cache()
         self.strings = state["strings"]
 
 
-    def __getstate__(self):
+    def __getstate__(self): #*#*#
         state = dict(strings=self.strings)
         return state
 
 
     @property
-    def _ready_in_current_portal(self):
+    def _ready_in_active_portal(self): #*#*#
         """Indicates if the result of the function call is available."""
-        if hasattr(self, "_ready_cache"):
-            return True
-        with self.portal as portal:
-            result = (self in portal._execution_results)
-            if result:
-                self._ready_cache = True
-            return result
+        result = (self in get_active_portal()._execution_results)
+        if result:
+            self._ready_cache = True
+        return result
 
     @property
-    def _ready_in_noncurrent_portals(self) -> bool:
-        for portal in _noncurrent_portals():
-            with portal:
-                if self in portal._execution_results:
-                    addr = portal._execution_results[self]
-                    data = portal._value_store[addr]
-                    with self.portal:
-                        self.portal._execution_results[self] = ValueAddr(data)
-                        _ = self.fn # needed for cross-portal sync
-                        _ = self.kwargs # needed for cross-portal sync
-                        # TODO: refactor ( implement self._function_ready ? )
-                        # TODO: ( implement self._kwargs_ready ? )
-
-                    self._ready_cache = True
+    def _ready_in_nonactive_portals(self) -> bool: #*#*#
+        for another_portal in get_nonactive_portals():
+            with another_portal:
+                if self in another_portal._execution_results:
+                    addr = another_portal._execution_results[self]
+                    with self.fn.portal as active_portal:
+                        active_portal._execution_results[self] = addr
+                        if not addr in active_portal._value_store:
+                            data = another_portal._value_store[addr]
+                            self._result_cache = data
+                            active_portal._value_store[addr] = data
                     return True
         return False
 
     @property
-    def ready(self) -> bool:
+    def ready(self) -> bool: #*#*#
         if hasattr(self, "_ready_cache"):
             assert self._ready_cache
             return True
-        if self._ready_in_current_portal:
-            self._ready_cache = True
-            return True
-        if self._ready_in_noncurrent_portals:
-            self._ready_cache = True
-            return True
+        with self.fn.portal:
+            if self._ready_in_active_portal:
+                self._ready_cache = True
+                return True
+            if self._ready_in_nonactive_portals:
+                self._ready_cache = True
+                return True
         return False
 
-    def execute(self):
+
+    def execute(self): #*#*#
         """Execute the function and store the result in the portal."""
         if hasattr(self, "_result_cache"):
             return self._result_cache
-        with self.portal:
+        with self.fn.portal:
             self._result_cache = self.fn.execute(**self.kwargs)
             return self._result_cache
 
 
-    def request_execution(self):
+    def request_execution(self): #*#*#
         """Request execution of the function, without actually executing it."""
-        with self.portal as portal:
+        with self.fn.portal as portal:
             if self.ready:
                 self.drop_execution_request()
             else:
-                if self not in portal._execution_requests:
-                    portal._execution_requests[self] = True
+                portal._execution_requests[self] = True
 
 
-    def drop_execution_request(self):
-        """Remove the request for execution of the function."""
-        with self.portal as portal:
-            portal._execution_requests.delete_if_exists(self)
+    def drop_execution_request(self): #*#*#
+        """Remove the request for execution from all known portals"""
+        for portal in get_all_known_portals():
+            with portal:
+                portal._execution_requests.delete_if_exists(self)
 
 
     @property
-    def execution_requested(self):
+    def execution_requested(self): #*#*#
         """Indicates if the function execution has been requested."""
-        with self.portal as portal:
-            return self in portal._execution_requests
+        with self.fn.portal as active_portal:
+            if self in active_portal._execution_requests:
+                return True
+            for another_portal in get_nonactive_portals():
+                if self in another_portal._execution_requests:
+                    active_portal._execution_requests[self] = True
+                    return True
+        return False
 
 
     def get(self, timeout: int = None):
@@ -416,7 +418,7 @@ class PureFnExecutionResultAddr(HashAddr):
         if hasattr(self, "_result_cache"):
             return self._result_cache
 
-        with self.portal as portal:
+        with self.fn.portal as portal:
 
             if self.ready:
                 result_addr = portal._execution_results[self]
@@ -452,29 +454,30 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def can_be_executed(self) -> bool:
+    def can_be_executed(self) -> bool: #*#*#
         """Indicates if the function can be executed in the current session.
 
-        The function should fe refactored once we start fully supporting
+        The function should be refactored once we start fully supporting
         guards
         """
-        with self.portal:
+        with self.fn.portal:
             return self.fn.can_be_executed(self.kwargs)
 
 
     @property
-    def needs_execution(self) -> bool:
+    def needs_execution(self) -> bool: #*#*#
         """Indicates if the function is a good candidate for execution.
 
         Returns False if the result is already available, or if some other
-        process is currently working on it. Otherwise, returns True.
+        process is currently working on it, or if there were too many
+        past attempts to execute it. Otherwise, returns True.
         """
         DEFAULT_EXECUTION_TIME = 10 #TODO: move to portal config
         MAX_EXECUTION_ATTEMPTS = 5
         # TODO: these should not be constants
         if self.ready:
             return False
-        with self.portal:
+        with self.fn.portal:
             past_attempts = self.call_signature.execution_attempts
             n_past_attempts = len(past_attempts)
             if n_past_attempts == 0:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from .._010_basic_portals import active_portal
+from .._010_basic_portals import get_active_portal
 from .._030_data_portals import DataPortal, ValueAddr
 from .._840_work_with_collections.dict_sort import sort_dict_by_keys
 
@@ -61,7 +61,7 @@ class KwArgs(dict):
 
     def pack(self) -> PackedKwArgs:
         """ Replace values with their hash addresses."""
-        portal = active_portal()
+        portal = get_active_portal()
         packed_copy = dict()
         with portal:
             for k,v in self.items():

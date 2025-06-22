@@ -8,7 +8,7 @@ import pandas as pd
 from parameterizable import register_parameterizable_class
 from persidict import PersiDict, KEEP_CURRENT, Joker
 
-from .. import NotPicklable, active_portal
+from .. import NotPicklable, get_active_portal
 from .._010_basic_portals.basic_portal_core_classes_NEW import (
     _describe_persistent_characteristic, _describe_runtime_characteristic)
 
@@ -646,7 +646,7 @@ def log_exception() -> None:
     if frame is not None and frame.excessive_logging:
         frame.fn_call_signature.crashes[exception_id] = event_body
 
-    portal = active_portal()
+    portal = get_active_portal()
     address = (current_date_gmt_string(),exception_id)
     portal._crash_history[address] = event_body
 
@@ -665,7 +665,7 @@ def log_event(*args, **kwargs):
     if frame is not None:
         frame.fn_call_signature.events[event_id] = event_body
 
-    portal = active_portal()
+    portal = get_active_portal()
     address = (current_date_gmt_string(),event_id)
     portal._event_history[address] = event_body
     print(f"Event logged: {event_id} ", *args)
