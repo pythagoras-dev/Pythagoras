@@ -4,7 +4,7 @@ import time
 
 from deepdiff import DeepDiff
 from parameterizable import register_parameterizable_class
-from persidict import PersiDict, FileDirDict
+from persidict import PersiDict, FileDirDict, KEEP_CURRENT, Joker
 import random
 
 from persidict.persi_dict import PersiDictKey
@@ -32,21 +32,43 @@ class WriteOnceDict(PersiDict):
             wrapped_dict = FileDirDict(immutable_items = True)
         assert isinstance(wrapped_dict, PersiDict)
         assert wrapped_dict.immutable_items == True
-        assert p_consistency_checks is None or (0 <= p_consistency_checks <= 1)
+        self.p_consistency_checks = p_consistency_checks
         PersiDict.__init__(self
             , base_class_for_values=wrapped_dict.base_class_for_values
             , immutable_items=True
             , digest_len=wrapped_dict.digest_len)
         self._wrapped_dict = wrapped_dict
-        self._p_consistency_checks = p_consistency_checks
         self._successful_checks_count = 0
         self._total_checks_count = 0
+
+
+    @property
+    def p_consistency_checks(self) -> float:
+        """ Probability of checking the value against the first value set. """
+        return self._p_consistency_checks
+
+
+    @p_consistency_checks.setter
+    def p_consistency_checks(self, value: float|None|Joker) -> None:
+        if value is KEEP_CURRENT:
+            if hasattr(self, '_p_consistency_checks'):
+                return
+            else:
+                raise ValueError(
+                    f"KEEP_CURRENT can't be use to initialize p_consistency_checks.")
+        if value is None:
+            value = 0.0
+        if not (0 <= value <= 1):
+            raise ValueError(
+                f"p_consistency_checks must be in [0, 1], "
+                f"got {value}.")
+        self._p_consistency_checks = value
 
 
     def get_params(self):
         params = dict(
             wrapped_dict = self._wrapped_dict,
-            p_consistency_checks = self._p_consistency_checks)
+            p_consistency_checks = self.p_consistency_checks)
         sorted_params = dict(sorted(params.items()))
         return sorted_params
 
@@ -75,10 +97,8 @@ class WriteOnceDict(PersiDict):
                 f"FirstEntryDict: key {key} was not set in the wrapped dict "
                 + f"{self._wrapped_dict}. This should not happen.")
 
-        if (check_needed
-            and self._p_consistency_checks is not None
-            and self._p_consistency_checks > 0):
-            if random.random() < self._p_consistency_checks:
+        if check_needed and self.p_consistency_checks > 0:
+            if random.random() < self.p_consistency_checks:
                 self._total_checks_count += 1
                 signature_old = get_hash_signature(self._wrapped_dict[key])
                 signature_new = get_hash_signature(value)
@@ -120,7 +140,7 @@ class WriteOnceDict(PersiDict):
 
     def get_subdict(self, prefix_key:PersiDictKey) -> WriteOnceDict:
         subdict = self._wrapped_dict.get_subdict(prefix_key)
-        result = WriteOnceDict(subdict, self._p_consistency_checks)
+        result = WriteOnceDict(subdict, self.p_consistency_checks)
         return result
 
 register_parameterizable_class(WriteOnceDict)

@@ -29,23 +29,24 @@ def test_chained_save_load(tmpdir):
         assert f3(f2=f2,f1=f1) == 0
         assert f4(f3=f3,f2=f2,f1=f1) == 0
 
-        address_1 = ValueAddr(f1, t.portal)
+        address_1 = ValueAddr(f1)
         assert address_1.get()() == 0
-        address_2 = ValueAddr(f2, t.portal)
+        address_2 = ValueAddr(f2)
         assert address_2.get()(f1=address_1.get()) == 0
-        address_3 = ValueAddr(f3, t.portal)
+        address_3 = ValueAddr(f3)
         assert address_3.get()(f1=address_1.get(), f2=address_2.get()) == 0
 
     address_3._invalidate_cache()
     address_2._invalidate_cache()
     address_1._invalidate_cache()
 
+    address_3 = address_3.get_ValueAddr()
+    address_2 = address_2.get_ValueAddr()
+    address_1 = address_1.get_ValueAddr()
+
     with _PortalTester(PureCodePortal, tmpdir) as t:
         del f1, f2, f3, f4
 
-        address_3._portal = t.portal
-        address_2._portal = t.portal
-        address_1._portal = t.portal
         new_f3 = address_3.get()
         new_f2 = address_2.get()
         new_f1 = address_1.get()

@@ -78,14 +78,14 @@ def test_two_decorators(tmpdir,p):
         isEven = old_isEven
         isOdd = old_isOdd
 
-        value_store = t.portal.value_store
+        value_store = t.portal._value_store
         assert value_store._total_checks_count == value_store._successful_checks_count
         if p > 0:
             assert value_store._total_checks_count > 0
         else:
             assert value_store._total_checks_count == 0
 
-        execution_results = t.portal.execution_results
+        execution_results = t.portal._execution_results
         assert execution_results._total_checks_count == execution_results._successful_checks_count
         if p > 0:
             assert execution_results._total_checks_count > 0

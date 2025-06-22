@@ -14,7 +14,7 @@ def test_print_excessive_logging(tmpdir):
         for i in range(1,7):
             f(n=i)
             f(n=i)
-            assert (len(t.portal.run_history.txt) == i)
+            assert (len(t.portal._run_history.txt) == i)
 
 def test_print_no_logging(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
@@ -26,4 +26,4 @@ def test_print_no_logging(tmpdir):
         for i in range(1,7):
             f(n=i)
             f(n=i)
-            assert (len(t.portal.run_history.txt) == 0)
+            assert (len(t.portal._run_history.txt) == 0)

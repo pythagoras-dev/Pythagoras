@@ -3,10 +3,29 @@ from src.pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal)
 from src.pythagoras._080_pure_code_portals.pure_decorator import pure
 
-def test_two_different_pure_functions(tmpdir):
+def test_two_different_pure_functions_with_two_portal_links(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
 
-        @pure()
+        @pure(portal=t.portal)
+        def my_function(x:int)->int:
+            return x*10
+
+        assert my_function(x=1) == 10
+
+        @pure(portal=t.portal)
+        def my_function(x:int)->int: # comment
+            """docstring"""
+            return     x+20
+
+        assert my_function(x=2) == 22
+
+        assert t.portal.number_of_linked_functions() == 2
+
+
+def test_two_different_pure_functions_with_one_portal_link(tmpdir):
+    with _PortalTester(PureCodePortal, tmpdir) as t:
+
+        @pure(portal=t.portal)
         def my_function(x:int)->int:
             return x*10
 
@@ -19,4 +38,4 @@ def test_two_different_pure_functions(tmpdir):
 
         assert my_function(x=2) == 22
 
-        assert len(t.portal.known_functions) == 2
+        assert t.portal.number_of_linked_functions() == 1

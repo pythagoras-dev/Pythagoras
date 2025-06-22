@@ -17,7 +17,7 @@ def test_basics_pure_decorator(tmpdir):
         for i in range(3):
             assert f_1(a=1,b=2) == result
 
-        assert len(t.portal.run_history.txt) == 0
+        assert len(t.portal._run_history.txt) == 0
 
 
 def test_basics_pure_decorator_log_everything(tmpdir):
@@ -33,4 +33,4 @@ def test_basics_pure_decorator_log_everything(tmpdir):
         for i in range(3):
             assert f_1(a=1,b=2) == result
 
-        assert len(t.portal.run_history.txt) == 1
+        assert len(t.portal._run_history.txt) == 1

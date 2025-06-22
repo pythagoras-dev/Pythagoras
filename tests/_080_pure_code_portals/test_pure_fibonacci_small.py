@@ -22,14 +22,14 @@ def test_pure_fibonacci(tmpdir,p):
         for i in range(5):
             assert fibonacci_decorated(n=10) == 55
 
-        value_store = t.portal.value_store
+        value_store = t.portal._value_store
         assert value_store._total_checks_count == value_store._successful_checks_count
         if p>0:
             assert value_store._total_checks_count > 0
         else:
             assert value_store._total_checks_count == 0
 
-        execution_results = t.portal.execution_results
+        execution_results = t.portal._execution_results
         assert execution_results._total_checks_count == execution_results._successful_checks_count
         if p>0:
             assert execution_results._total_checks_count > 0

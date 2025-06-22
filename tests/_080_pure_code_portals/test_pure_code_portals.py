@@ -30,24 +30,24 @@ def test_pure_portals_smoke_test(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
         portal = t.portal
         global fibonacci,factorial,do_nothing
-        fibonacci_p = pure()(fibonacci)
-        factorial_p = pure()(factorial)
-        do_nothing_p = pure()(do_nothing)
+        fibonacci_p = pure(portal=portal)(fibonacci)
+        factorial_p = pure(portal=portal)(factorial)
+        do_nothing_p = pure(portal=portal)(do_nothing)
 
-        assert len(portal.known_functions) == 0
+        assert portal.number_of_linked_functions() == 3
         assert fibonacci_p(n=4) == 3
         assert factorial_p(n=4) == 24
         assert do_nothing_p(x=4) == 4
-        assert len(portal.known_functions) == 3
+        assert portal.number_of_linked_functions() == 3
 
 
         def func_increment(x: int) -> int:
             return x + 1
 
         func_increment_p = pure()(func_increment)
-        assert len(portal.known_functions) == 3
+        assert portal.number_of_linked_functions() == 3
         assert func_increment_p(x=4) == 5
-        assert len(portal.known_functions) == 4
+        assert portal.number_of_linked_functions() == 3
 
 
 def test_pure_portals_execution_results(tmpdir):
@@ -59,12 +59,12 @@ def test_pure_portals_execution_results(tmpdir):
         factorial_p = pure()(factorial)
         do_nothing_p = pure()(do_nothing)
 
-        assert len(portal.execution_results) == 0
+        assert len(portal._execution_results) == 0
         assert do_nothing_p(x=4) == 4
-        assert len(portal.execution_results) == 1
+        assert len(portal._execution_results) == 1
 
         assert fibonacci_p(n=4) == 3
-        assert len(portal.execution_results) == 6
+        assert len(portal._execution_results) == 6
 
 
 def test_pure_portals_execution_requests(tmpdir):
@@ -76,11 +76,11 @@ def test_pure_portals_execution_requests(tmpdir):
         factorial_p = pure()(factorial)
         do_nothing_p = pure()(do_nothing)
 
-        assert len(portal.execution_requests) == 0
+        assert len(portal._execution_requests) == 0
         assert do_nothing_p(x=4) == 4
-        assert len(portal.execution_requests) == 0
+        assert len(portal._execution_requests) == 0
         assert fibonacci_p(n=4) == 3
-        assert len(portal.execution_requests) == 0
+        assert len(portal._execution_requests) == 0
 
 
 
@@ -91,6 +91,4 @@ def test_pure_portals_always_OK(tmpdir):
         global fibonacci,factorial,do_nothing
         fibonacci_p = pure(guards=[always_OK])(fibonacci)
 
-        assert len(portal.known_functions) == 0
         assert fibonacci_p(n=4) == 3
-        assert len(portal.known_functions) == 2

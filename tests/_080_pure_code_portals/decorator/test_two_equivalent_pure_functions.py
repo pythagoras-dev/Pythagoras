@@ -3,10 +3,30 @@ from src.pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal)
 from src.pythagoras._080_pure_code_portals.pure_decorator import pure
 
-def test_two_equivalent_pure_functions(tmpdir):
+def test_two_equivalent_pure_functions_both_with_portal(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
 
-        @pure()
+        @pure(portal=t.portal)
+        def my_function(x:int)->int:
+            return x*10
+
+        assert my_function(x=1) == 10
+
+        @pure(portal=t.portal)
+        def my_function(x:int)->int: # comment
+            """docstring"""
+            return     x*10
+
+        assert my_function(x=2) == 20
+
+        assert t.portal.number_of_linked_functions() == 1
+
+
+
+def test_two_equivalent_pure_functions_only_one_with_portal(tmpdir):
+    with _PortalTester(PureCodePortal, tmpdir) as t:
+
+        @pure(portal=t.portal)
         def my_function(x:int)->int:
             return x*10
 
@@ -18,5 +38,6 @@ def test_two_equivalent_pure_functions(tmpdir):
             return     x*10
 
         assert my_function(x=2) == 20
+        assert my_function._linked_portal is t.portal
 
-        assert len(t.portal.known_functions) == 1
+        assert t.portal.number_of_linked_functions() == 1

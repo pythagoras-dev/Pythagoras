@@ -10,7 +10,7 @@ import pytest
 def test_zero_div(tmpdir):
     # tmpdir=5*"ZERO_DIV_"+str(int(time.time()))
     with _PortalTester(PureCodePortal, tmpdir) as t:
-        assert len(t.portal.crash_history) == 0
+        assert len(t.portal._crash_history) == 0
         date_str_1 = current_date_gmt_string()
 
         @pure()
@@ -22,8 +22,8 @@ def test_zero_div(tmpdir):
 
         date_str_2 = current_date_gmt_string()
 
-        assert len(t.portal.crash_history) >= 1
-        for event_id  in list(t.portal.crash_history):
+        assert len(t.portal._crash_history) >= 1
+        for event_id  in list(t.portal._crash_history):
             assert event_id[0] in [date_str_1, date_str_2]
 
 def test_sqrt(tmpdir):
@@ -47,6 +47,6 @@ def test_sqrt(tmpdir):
 
         date_str_2 = current_date_gmt_string()
 
-        assert len(t.portal.crash_history) == n-1
-        for event_id in list(t.portal.crash_history):
+        assert len(t.portal._crash_history) == n-1
+        for event_id in list(t.portal._crash_history):
             assert event_id[0] in [date_str_1, date_str_2]

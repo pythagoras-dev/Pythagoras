@@ -1,7 +1,7 @@
 from parameterizable import smoketest_parameterizable_class, is_parameterizable
 from persidict import FileDirDict
 
-from src.pythagoras._800_persidict_extensions.first_entry_dict import WriteOnceDict
+from src.pythagoras._800_persidict_extensions.first_write_once_dict import WriteOnceDict
 
 import pytest
 

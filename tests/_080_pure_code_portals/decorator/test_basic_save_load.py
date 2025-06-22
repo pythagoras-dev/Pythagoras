@@ -16,16 +16,16 @@ def test_basic_save_load_pure_decorator_fn(tmpdir):
 
         my_function = pure()(my_function)
 
-        assert len(t.portal.execution_results) == 0
+        assert len(t.portal._execution_results) == 0
         assert my_function() == 2024
-        assert len(t.portal.execution_results) == 1
+        assert len(t.portal._execution_results) == 1
 
         address = None
 
-        assert len(t.portal.value_store) == 4
+        assert len(t.portal._value_store) == 4
 
-        for i in range(3): address = ValueAddr(my_function, t.portal)
+        for i in range(3): address = ValueAddr(my_function)
         for i in range(3): assert address.get()() == 2024
 
-        assert len(t.portal.value_store) == 4
-        assert len(t.portal.execution_results) == 1
+        assert len(t.portal._value_store) == 4
+        assert len(t.portal._execution_results) == 1
