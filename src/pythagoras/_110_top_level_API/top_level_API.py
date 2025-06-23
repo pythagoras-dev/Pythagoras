@@ -7,14 +7,14 @@
 #
 # def initialize(root_dict) -> pd.DataFrame: #TODO: refactor
 #     BasicPortal._clear_all()
-#     portal = SwarmingPortal(root_dict=root_dict, n_background_workers=3)
+#     portal = SwarmingPortal(root_dict=root_dict, max_n_workers=3)
 #     portal.__enter__()
 #     return portal.describe()
 #
-# def connect_to_local_portal(root_dict=None, n_background_workers=3) -> pd.DataFrame:
+# def connect_to_local_portal(root_dict=None, max_n_workers=3) -> pd.DataFrame:
 #     portal = SwarmingPortal(
 #         root_dict=root_dict
-#         , n_background_workers=n_background_workers)
+#         , max_n_workers=max_n_workers)
 #     return portal.describe()
 #
 # def connect_to_default_portal() -> pd.DataFrame:

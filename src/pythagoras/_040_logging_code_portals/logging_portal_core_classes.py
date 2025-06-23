@@ -574,7 +574,7 @@ class LoggingCodePortal(DataPortal):
 
     @property
     def excessive_logging(self) -> bool:
-        return self._get_config_setting("excessive_logging")
+        return bool(self._get_config_setting("excessive_logging"))
 
 
     def describe(self) -> pd.DataFrame:

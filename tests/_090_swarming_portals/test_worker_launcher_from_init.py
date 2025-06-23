@@ -7,7 +7,7 @@ from src import pythagoras as pth
 def test_launch_background_worker_from_init(tmpdir):
 
     with _PortalTester(SwarmingPortal
-            , tmpdir, n_background_workers=1) as t:
+            , tmpdir, max_n_workers=1) as t:
 
         @pth.pure()
         def sample_f(s:str) -> str:

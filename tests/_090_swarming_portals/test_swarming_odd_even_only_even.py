@@ -23,7 +23,7 @@ def test_one_decorator_odd(tmpdir):
     global isEven, isOdd
     address = None
     with _PortalTester(SwarmingPortal
-            , tmpdir, n_background_workers=0) as t:
+            , tmpdir, max_n_workers=0) as t:
         with pytest.raises(Exception):
             isEven = pure()(isEven)
             address = isOdd.swarm(n=400)

@@ -13,7 +13,7 @@ def factorial(n: int) -> int:
 
 def get_factorial_address(n:int, dir):
     with _PortalTester(SwarmingPortal
-            , dir, n_background_workers=0) as t:
+            , dir, max_n_workers=0) as t:
         new_factorial = pth.pure()(factorial)
         address = new_factorial.swarm(n=n)
         address._invalidate_cache()
@@ -24,7 +24,7 @@ def test_swarming_factorial(tmpdir,p):
     address = get_factorial_address(n=5, dir=tmpdir)
     with _PortalTester(SwarmingPortal
             , tmpdir
-            , n_background_workers=2
+            , max_n_workers=2
             , p_consistency_checks=p) as t:
         address._portal = t.portal
         assert address.get() == 120
