@@ -37,8 +37,6 @@ class SwarmingPortal(PureCodePortal):
 
     _parent_process_id: int | None
     _parent_process_start_time: float | None
-    _parent_process_id_at_init: int | None
-    _parent_process_start_time_at_init: float | None
     _is_parent: bool | None
 
     _atexit_is_registered: bool = False
