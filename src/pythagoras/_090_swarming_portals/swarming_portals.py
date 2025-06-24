@@ -12,6 +12,9 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .. import get_number_of_known_portals, get_all_known_portals
 from .._010_basic_portals import BasicPortal
+from .system_utils import (
+    get_current_process_id, process_is_active,
+    get_process_start_time, get_current_process_start_time)
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from .._800_signatures_and_converters.random_signatures import get_random_signature
@@ -31,19 +34,22 @@ BACKGROUND_WORKERS_TXT = "Background workers"
 class SwarmingPortal(PureCodePortal):
     _compute_nodes: OverlappingMultiDict | None
     _node_id: str | None
-    _principal_runtime_id: str | None
-    _principal_process_id: int | None
-    _principal_runtime_id_at_init: str | None
-    _principal_process_id_at_init: int | None
-    _is_principal: bool
+
+    _parent_process_id: int | None
+    _parent_process_start_time: float | None
+    _parent_process_id_at_init: int | None
+    _parent_process_start_time_at_init: float | None
+    _is_parent: bool | None
+
+    _atexit_is_registered: bool = False
 
     def __init__(self
                  , root_dict: PersiDict | str | None = None
                  , p_consistency_checks:float|Joker = KEEP_CURRENT
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , max_n_workers: int|Joker = KEEP_CURRENT
-                 , principal_runtime_id: str | None = None
-                 , principal_process_id: int | None = None
+                 , parent_process_id: int | None = None
+                 , parent_process_start_time: float | None = None
                  ):
         PureCodePortal.__init__(self
             , root_dict=root_dict
@@ -52,8 +58,13 @@ class SwarmingPortal(PureCodePortal):
 
         assert isinstance(max_n_workers, (int, Joker))
 
-        self._ephemeral_config_params_at_init["max_n_workers"
-            ] = max_n_workers
+        if parent_process_id is None or parent_process_start_time is None:
+            assert parent_process_id is None
+            assert parent_process_start_time is None
+            self._ephemeral_config_params_at_init["max_n_workers"
+                ] = max_n_workers
+        else:
+            assert max_n_workers == 0
 
         compute_nodes_prototype = self._root_dict.get_subdict("compute_nodes")
         compute_nodes_shared_params = compute_nodes_prototype.get_params()
@@ -67,56 +78,62 @@ class SwarmingPortal(PureCodePortal):
         self._compute_nodes = compute_nodes
 
         self._node_id = get_node_signature()
+        self._parent_process_id = parent_process_id
+        self._parent_process_start_time = parent_process_start_time
+        self._child_process = None
 
-        self._principal_runtime_id_at_init = principal_runtime_id
-        self._principal_process_id_at_init = principal_process_id
 
-        if principal_runtime_id is None or principal_process_id is None:
-            assert principal_runtime_id is None
-            assert principal_process_id is None
-            principal_runtime_id = get_random_signature()
-            principal_process_id = os.getpid()
-            self._principal_runtime_id = principal_runtime_id
-            self._principal_process_id = principal_process_id
-            self._compute_nodes.pkl[self._runtime_id_address
-                ] = principal_runtime_id
-            self._is_principal = True
-            summary = build_execution_environment_summary()
-            self._compute_nodes.json[self._execution_environment_address
-                ] = summary
-        else:
-            self._principal_runtime_id = principal_runtime_id
-            self._principal_process_id = principal_process_id
-            self._is_principal = False
+    @property
+    def is_parent(self) -> bool:
+        """Check if this portal is the parent process."""
+        if self._parent_process_id is None:
+            return True
+        return False
 
 
     def _post_init_hook(self) -> None:
         super()._post_init_hook()
 
-        if get_number_of_known_portals() == 1:
-            atexit.register(_clean_runtime_id)
+        if not SwarmingPortal._atexit_is_registered:
+            atexit.register(_terminate_all_portals_child_processes)
+            SwarmingPortal._atexit_is_registered = True
 
-        if self._is_principal:
-            for n in range(self.max_n_workers):
-                self._launch_background_worker()
+        if self.is_parent:
+            if self.max_n_workers > 0:
+
+                portal_init_params = self.get_portable_params()
+                portal_init_params["max_n_workers"] = self.max_n_workers
+                portal_init_params = sort_dict_by_keys(portal_init_params)
+
+                ctx = get_context("spawn")
+                self._child_process = ctx.Process(
+                    target=_launch_many_background_workers
+                    , kwargs=portal_init_params)
+                self._child_process.start()
+
+
+    def _terminate_child_process(self):
+        """Terminate the child process if it is running."""
+        if self._child_process is not None:
+            if self._child_process.is_alive():
+                self._child_process.terminate()
+                self._child_process.join(3)
+                if self._child_process.is_alive():
+                    self._child_process.kill()
+                    self._child_process.join()
+        self._child_process = None
 
 
     @property
-    def _runtime_id_address(self) -> list[str]:
-        """Get the address of the runtime id in the compute nodes."""
-        return [self._node_id, str(self._principal_process_id), "principal_runtime_id"]
-
-
-    @property
-    def _execution_environment_address(self) -> list[str]:
+    def _execution_environment_address(self) -> list[str]: #TODO: move to Logs
         """Get the address of the execution environment in the compute nodes."""
-        return [self._node_id, str(self._principal_process_id), "execution_environment"]
-
+        s = str(self._parent_process_id) + "_" + str(self._parent_process_start_time)
+        return [self._node_id, s, "execution_environment"]
 
     @property
     def max_n_workers(self) -> int:
         """Get the maximum number of background workers"""
-        n = self._ephemeral_config_params_at_init.get("max_n_workers")
+        n = self._get_config_setting("max_n_workers")
         if n in (None, KEEP_CURRENT):
             n = 3
         return n
@@ -134,31 +151,16 @@ class SwarmingPortal(PureCodePortal):
 
 
     def parent_runtime_is_live(self):
-        runtime_id = self._principal_runtime_id
-        with self:
-            try:
-                if runtime_id == self._compute_nodes.pkl[self._runtime_id_address]:
-                    return True
-            except:
-                return False
-
-
-    def _launch_background_worker(self):
-        """Launch one background worker process."""
-        init_params = self.get_portable_params()
-        init_params["max_n_workers"] = 0
-        init_params["principal_runtime_id"] = self._principal_runtime_id
-        init_params["principal_process_id"] = self._principal_process_id
-        init_params = sort_dict_by_keys(init_params)
-        ctx = get_context("spawn")
-        p = ctx.Process(target=_background_worker, kwargs=init_params)
-        p.start()
-        return p
+        if not process_is_active(self._parent_process_id):
+            return False
+        if get_process_start_time(self._parent_process_id) != self._parent_process_start_time:
+            return False
+        return True
 
 
     def _clear(self):
-        self._compute_nodes.pkl.delete_if_exists(self._runtime_id_address)
         self._compute_nodes = None
+        self._terminate_child_process()
         super()._clear()
 
 
@@ -174,13 +176,46 @@ class SwarmingPortal(PureCodePortal):
 
 parameterizable.register_parameterizable_class(SwarmingPortal)
 
-def _background_worker(**portal_init_params):
+
+def _launch_many_background_workers(**portal_init_params) -> None:
+    """Launch many background worker processes."""
+    n_workers_to_launch = portal_init_params["max_n_workers"]
+    portal_init_params["max_n_workers"] = 0
+    current_process_id = get_current_process_id()
+    portal_init_params["parent_process_id"] = current_process_id
+    portal_init_params["parent_process_start_time"
+        ] = get_current_process_start_time()
+    portal_init_params = sort_dict_by_keys(portal_init_params)
+    portal = parameterizable.get_object_from_portable_params(
+        portal_init_params)
+    assert isinstance(portal, SwarmingPortal)
+
+    summary = build_execution_environment_summary()
+    portal._compute_nodes.json[portal._execution_environment_address] = summary
+
+    all_workers = []
+
+    with portal:
+        for i in range(n_workers_to_launch):
+            portal._randomly_delay_execution(p=1)
+            ctx = get_context("spawn")
+            try:
+                p = ctx.Process(target=_background_worker, kwargs=portal_init_params)
+                p.start()
+                all_workers.append(p)
+            except Exception as e:
+                break
+        for worker in all_workers:
+            if worker.is_alive():
+                worker.join()
+
+
+def _background_worker(**portal_init_params) -> None:
     """Background worker that keeps processing random execution requests."""
     portal = parameterizable.get_object_from_portable_params(
         portal_init_params)
     assert isinstance(portal, SwarmingPortal)
     with portal:
-        portal._randomly_delay_execution(p=1)
         ctx = get_context("spawn")
         with OutputSuppressor():
             while True:
@@ -196,7 +231,6 @@ def _background_worker(**portal_init_params):
 
 def _process_random_execution_request(**portal_init_params):
     """Process one random execution request."""
-    portal_init_params["max_n_workers"] = 0
     portal = parameterizable.get_object_from_portable_params(
         portal_init_params)
     assert isinstance(portal, SwarmingPortal)
@@ -225,7 +259,7 @@ def _process_random_execution_request(**portal_init_params):
             random_address.execute()
 
 
-def _clean_runtime_id():
+def _terminate_all_portals_child_processes():
     """ Clean runtime id.
 
     This function is called at the end of the program execution.
@@ -233,8 +267,6 @@ def _clean_runtime_id():
     """
     for portal in get_all_known_portals():
         try:
-            if portal._is_principal:
-                portal._compute_nodes.pkl.delete_if_exists(
-                    portal._runtime_id_address)
+            portal._terminate_child_process()
         except:
             pass

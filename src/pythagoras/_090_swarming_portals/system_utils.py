@@ -1,13 +1,13 @@
 import os
 import psutil
 
-def available_ram_mb() -> int:
+def get_available_ram_mb() -> int:
     """Returns the amount of available RAM in MB. """
     free_ram = psutil.virtual_memory().available / (1024 * 1024)
     return int(free_ram)
 
 
-def available_cpu_cores() -> float:
+def get_available_cpu_cores() -> float:
     """Returns the free (logical) CPU capacity"""
 
     cnt = psutil.cpu_count(logical=True) or 1
@@ -31,7 +31,7 @@ def process_is_active(pid: int) -> bool:
         return False
 
 
-def process_start_time(pid: int) -> int:
+def get_process_start_time(pid: int) -> int:
     """Returns the start time of the process with the given PID."""
     try:
         process = psutil.Process(pid)
@@ -40,13 +40,13 @@ def process_start_time(pid: int) -> int:
         return 0
 
 
-def current_process_id() -> int:
+def get_current_process_id() -> int:
     """Returns the current process ID."""
     return psutil.Process().pid
 
 
-def current_process_start_time() -> int:
+def get_current_process_start_time() -> int:
     """Returns the start time of the current process."""
-    return process_start_time(current_process_id())
+    return get_process_start_time(get_current_process_id())
 
 

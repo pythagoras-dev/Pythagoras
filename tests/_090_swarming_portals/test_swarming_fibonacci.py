@@ -18,6 +18,7 @@ def test_swarming_fibonacci(tmpdir):
             , tmpdir, max_n_workers=0) as t:
         fibonacci = pure()(fibonacci)
         address = fibonacci.swarm(n=50)
+        address._invalidate_cache()
 
     with _PortalTester(SwarmingPortal
             , tmpdir, max_n_workers=5) as t:
