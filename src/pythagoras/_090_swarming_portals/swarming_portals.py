@@ -191,7 +191,7 @@ def _launch_many_background_workers(**portal_init_params) -> None:
     summary = build_execution_environment_summary()
     portal._compute_nodes.json[portal._execution_environment_address] = summary
 
-    all_workers = []
+    list_of_all_workers = []
 
     with portal:
         for i in range(n_workers_to_launch):
@@ -200,12 +200,27 @@ def _launch_many_background_workers(**portal_init_params) -> None:
             try:
                 p = ctx.Process(target=_background_worker, kwargs=portal_init_params)
                 p.start()
-                all_workers.append(p)
+                list_of_all_workers.append(p)
             except Exception as e:
                 break
-        for worker in all_workers:
-            if worker.is_alive():
-                worker.join()
+
+    with portal:
+        while True:
+            portal._randomly_delay_execution(p=1)
+            new_list_of_all_workers = []
+            for worker in list_of_all_workers:
+                if  worker.is_alive():
+                    new_list_of_all_workers.append(worker)
+                else:
+                    portal._randomly_delay_execution(p=1)
+                    ctx = get_context("spawn")
+                    try:
+                        p = ctx.Process(target=_background_worker, kwargs=portal_init_params)
+                        p.start()
+                        new_list_of_all_workers.append(p)
+                    except Exception as e:
+                        break
+            list_of_all_workers = new_list_of_all_workers
 
 
 def _background_worker(**portal_init_params) -> None:
