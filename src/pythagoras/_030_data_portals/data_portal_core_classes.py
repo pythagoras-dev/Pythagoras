@@ -203,14 +203,8 @@ class StorableFn(OrdinaryFn):
         self._ephemeral_config_params_at_init = dict()
 
 
-    def _post_init_hook(self):
-        super()._post_init_hook()
-        assert len(self._visited_portals) == 0
-        #TODO: do we need it here?
-        # _ = self.portal # To persist initial config params
-
-
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
+        super()._first_visit_to_portal(portal)
         self._persist_initial_config_params(portal)
 
 

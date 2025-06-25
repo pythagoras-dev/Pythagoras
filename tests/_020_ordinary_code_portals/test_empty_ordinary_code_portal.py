@@ -1,6 +1,6 @@
 from persidict import PersiDict
 
-from src.pythagoras import OrdinaryCodePortal
+from src.pythagoras._020_ordinary_code_portals import OrdinaryCodePortal
 from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
 
 def test_empty_ordinary_code_portal(tmpdir):

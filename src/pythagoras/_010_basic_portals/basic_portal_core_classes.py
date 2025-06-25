@@ -220,7 +220,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         found_linked_objects_ids = self._get_linked_objects_ids(target_class)
         found_linked_objects = []
         for obj_str_id in found_linked_objects_ids:
-            new_object = _all_known_portal_aware_objects[obj_str_id]
+            new_object = _all_activated_portal_aware_objects[obj_str_id]
             found_linked_objects.append(new_object)
         return found_linked_objects
 
@@ -330,7 +330,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         # self._linked_objects = None
 
 
-_all_known_portal_aware_objects: dict[PObjectStrID, PortalAwareClass] = dict()
+_all_activated_portal_aware_objects: dict[PObjectStrID, PortalAwareClass] = dict()
 _all_links_from_objects_to_portals: dict[PObjectStrID, PortalStrID] = dict()
 
 def get_number_of_linked_portal_aware_objects() -> int:
@@ -373,12 +373,11 @@ class PortalAwareClass(metaclass = PostInitMeta):
     def _post_init_hook(self):
         """ This method is called after the object is fully initialized."""
         global _all_links_from_objects_to_portals
-        global _all_known_portal_aware_objects
-
-        _all_known_portal_aware_objects[self._str_id] = self
+        global _all_activated_portal_aware_objects
         if self._linked_portal_at_init is not None:
             _all_links_from_objects_to_portals[self._str_id
                 ] = self._linked_portal_at_init._str_id
+            self._first_visit_to_portal(self._linked_portal_at_init)
 
 
     @property
@@ -406,8 +405,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
         return portal_to_use
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
-        global _all_known_portal_aware_objects
-        _all_known_portal_aware_objects[self._str_id] = self
+        global _all_activated_portal_aware_objects
+        _all_activated_portal_aware_objects[self._str_id] = self
         self._visited_portals.add(portal._str_id)
 
 
@@ -455,7 +454,24 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     def _invalidate_cache(self):
         self._hash_id_cache = None
+
+
+    @property
+    def is_activated(self) -> bool:
+        global _all_activated_portal_aware_objects
+        if len(self._visited_portals) >=1:
+            assert self._str_id in _all_activated_portal_aware_objects
+            return True
+        return False
+
+
+    def _deactivate(self):
+        global _all_activated_portal_aware_objects
+        assert self.is_activated
+        del _all_activated_portal_aware_objects[self._str_id]
+        self._invalidate_cache()
         self._visited_portals = set()
+
 
 
 
@@ -465,19 +481,20 @@ def _clear_all_portals() -> None:
     global _active_portals_counters_stack
     global _most_recently_created_portal
     global _all_links_from_objects_to_portals
-    global _all_known_portal_aware_objects
+    global _all_activated_portal_aware_objects
 
-    for obj_str_id in _all_known_portal_aware_objects:
-        obj = _all_known_portal_aware_objects[obj_str_id]
-        obj._invalidate_cache()
+    for obj in list(_all_activated_portal_aware_objects.values()):
+        obj._deactivate()
 
     for portal in _all_known_portals.values():
         portal._clear()
-    _all_known_portals = dict()
-    _active_portals_stack = list()
-    _active_portals_counters_stack = list()
+
+    _all_known_portals.clear()
+    _active_portals_stack.clear()
+    _active_portals_counters_stack.clear()
     _most_recently_created_portal = None
-    _all_links_from_objects_to_portals = dict()
+    _all_links_from_objects_to_portals.clear()
+    _all_activated_portal_aware_objects.clear()
 
 
 PortalType = TypeVar("PortalType")

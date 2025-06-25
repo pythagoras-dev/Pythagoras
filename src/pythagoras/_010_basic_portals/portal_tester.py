@@ -12,7 +12,8 @@ class _PortalTester:
     it only exists for unit tests.
     """
     _current_instance:_PortalTester|None = None
-    portal:BasicPortal|None = None
+    _portal:BasicPortal|None = None
+
     def __init__(self,portal_class:PortalType|None = None,*args,**kwargs):
 
         if _PortalTester._current_instance is not None:
@@ -26,6 +27,12 @@ class _PortalTester:
         self.kwargs = kwargs
 
 
+    @property
+    def portal(self) -> BasicPortal|None:
+        """The portal object being tested."""
+        return self._portal
+
+
     def __enter__(self):
         if (_PortalTester._current_instance is not None
                 and _PortalTester._current_instance is not self):
@@ -35,7 +42,7 @@ class _PortalTester:
         _clear_all_portals()
 
         if self.portal_class is not None:
-            self.portal = self.portal_class(*self.args,**self.kwargs)
+            self._portal = self.portal_class(*self.args,**self.kwargs)
             self.portal.__enter__()
         return self
 
