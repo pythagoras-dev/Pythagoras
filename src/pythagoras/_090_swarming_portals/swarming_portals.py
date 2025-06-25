@@ -10,7 +10,7 @@ import parameterizable
 from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .. import get_number_of_known_portals, get_all_known_portals
+from .._010_basic_portals import get_number_of_known_portals, get_all_known_portals
 from .._010_basic_portals import BasicPortal
 from .system_utils import (
     get_current_process_id, process_is_active,
@@ -128,12 +128,13 @@ class SwarmingPortal(PureCodePortal):
         s = str(self._parent_process_id) + "_" + str(self._parent_process_start_time)
         return [self._node_id, s, "execution_environment"]
 
+
     @property
     def max_n_workers(self) -> int:
         """Get the maximum number of background workers"""
         n = self._get_config_setting("max_n_workers")
         if n in (None, KEEP_CURRENT):
-            n = 3
+            n = 5
         return n
 
 

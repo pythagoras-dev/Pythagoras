@@ -30,4 +30,5 @@ DataPortal is a subclass of OrdinaryCodePortal.
 from .data_portal_core_classes import (
     DataPortal, HashAddr, ValueAddr, StorableFn)
 from .storable_decorator import storable
+from .ready_and_get import ready, get
 

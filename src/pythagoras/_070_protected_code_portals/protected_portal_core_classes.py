@@ -5,7 +5,7 @@ from typing import Callable, Any, List
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .. import DataPortal
+from .._030_data_portals import DataPortal
 from .._040_logging_code_portals import KwArgs
 from .._030_data_portals import ValueAddr
 from parameterizable import sort_dict_by_keys

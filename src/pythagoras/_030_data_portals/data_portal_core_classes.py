@@ -9,7 +9,7 @@ from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURR
 from persidict import KEEP_CURRENT, Joker
 from torch.distributed.pipeline.sync.skip import portal
 
-from .. import BasicPortal
+from .._010_basic_portals import BasicPortal
 from .._010_basic_portals import get_active_portal, get_nonactive_portals
 from .._800_signatures_and_converters import get_hash_signature
 

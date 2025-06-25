@@ -9,7 +9,7 @@ from sklearn.model_selection import ParameterGrid
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .. import get_all_known_portals, get_nonactive_portals, get_active_portal
+from .._010_basic_portals import get_all_known_portals, get_nonactive_portals, get_active_portal
 from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
