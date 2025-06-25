@@ -5,6 +5,7 @@ from typing import Callable, Any, List
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
+from .. import DataPortal
 from .._040_logging_code_portals import KwArgs
 from .._030_data_portals import ValueAddr
 from parameterizable import sort_dict_by_keys
@@ -60,8 +61,8 @@ class ProtectedFn(AutonomousFn):
             guards, ProtectedFn.guards_arg_names)
         self._validators = self._normalize_protectors(
             validators, ProtectedFn.validators_arg_names)
-        self._guards_addrs = [ValueAddr(g) for g in self._guards]
-        self._validators_addrs = [ValueAddr(v) for v in self._validators]
+        self._guards_addrs = [ValueAddr(g, store=False) for g in self._guards]
+        self._validators_addrs = [ValueAddr(v, store=False) for v in self._validators]
 
 
     def __getstate__(self):
@@ -76,6 +77,17 @@ class ProtectedFn(AutonomousFn):
         super().__setstate__(state)
         self._guards_addrs = state["guards_addrs"]
         self._validators_addrs = state["validators_addrs"]
+
+
+    def _first_visit_to_portal(self, portal: DataPortal) -> None:
+        super()._first_visit_to_portal(portal)
+        with portal:
+            if hasattr(self, "_guards") and self._guards is not None:
+                new_guards_addrs = [ValueAddr(g) for g in self._guards]
+                assert self._guards_addrs == new_guards_addrs
+            if hasattr(self, "_validators") and self._validators is not None:
+                new_validators_addrs = [ValueAddr(v) for v in self._validators]
+                assert self._validators_addrs == new_validators_addrs
 
 
     @property

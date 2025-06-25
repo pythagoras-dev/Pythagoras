@@ -206,7 +206,8 @@ class StorableFn(OrdinaryFn):
     def _post_init_hook(self):
         super()._post_init_hook()
         assert len(self._visited_portals) == 0
-        _ = self.portal # To persist initial config params
+        #TODO: do we need it here?
+        # _ = self.portal # To persist initial config params
 
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
@@ -406,7 +407,7 @@ class ValueAddr(HashAddr):
     _containing_portals_cache: set[str]
     _value_cache: Any
 
-    def __init__(self, data: Any):
+    def __init__(self, data: Any, store: bool = True):
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
@@ -427,11 +428,13 @@ class ValueAddr(HashAddr):
             , prefix=prefix
             , hash_signature=hash_signature)
 
-        portal = get_active_data_portal()
-        portal._value_store[self] = data
         self._value_cache = data
         self._containing_portals_cache = set()
-        self._containing_portals_cache.add(portal._str_id)
+
+        if store:
+            portal = get_active_data_portal()
+            portal._value_store[self] = data
+            self._containing_portals_cache.add(portal._str_id)
 
 
     def _invalidate_cache(self):

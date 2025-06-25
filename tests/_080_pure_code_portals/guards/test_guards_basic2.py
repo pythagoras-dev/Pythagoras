@@ -23,7 +23,6 @@ def test_basic_addr(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
         del do_nothing_pure
         del do_nothing
-        addr._portal = t.portal
         result = addr.execute()
         assert result == 10
 
