@@ -164,8 +164,8 @@ class SwarmingPortal(PureCodePortal):
 
     def _randomly_delay_execution(self
             , p:float = 0.5
-            , min_delay:float = 0.2 
-            , max_delay:float = 1.2
+            , min_delay:float = 0.05
+            , max_delay:float = 0.33
             ) -> None:
         """Randomly delay execution by a given probability."""
         if self.entropy_infuser.uniform(0, 1) < p:
