@@ -455,6 +455,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     def _invalidate_cache(self):
         self._hash_id_cache = None
+        self._visited_portals = set()
+
 
 
 def _clear_all_portals() -> None:
@@ -463,6 +465,11 @@ def _clear_all_portals() -> None:
     global _active_portals_counters_stack
     global _most_recently_created_portal
     global _all_links_from_objects_to_portals
+    global _all_known_portal_aware_objects
+
+    for obj_str_id in _all_known_portal_aware_objects:
+        obj = _all_known_portal_aware_objects[obj_str_id]
+        obj._invalidate_cache()
 
     for portal in _all_known_portals.values():
         portal._clear()
