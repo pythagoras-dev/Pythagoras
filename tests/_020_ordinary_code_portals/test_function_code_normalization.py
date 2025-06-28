@@ -1,8 +1,8 @@
 import inspect, autopep8
 
-from src.pythagoras import _PortalTester
-from src.pythagoras._020_ordinary_code_portals import get_normalized_function_source
-from src.pythagoras._020_ordinary_code_portals import OrdinaryFn, OrdinaryCodePortal
+from pythagoras import _PortalTester
+from pythagoras._020_ordinary_code_portals import get_normalized_function_source
+from pythagoras._020_ordinary_code_portals import OrdinaryFn, OrdinaryCodePortal
 
 
 def f_docstring():

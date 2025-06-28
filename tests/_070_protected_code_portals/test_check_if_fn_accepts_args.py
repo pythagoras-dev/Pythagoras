@@ -1,6 +1,6 @@
 import pytest
 
-from src.pythagoras._070_protected_code_portals.fn_arg_names_checker import (
+from pythagoras._070_protected_code_portals.fn_arg_names_checker import (
     check_if_fn_accepts_args)
 
 

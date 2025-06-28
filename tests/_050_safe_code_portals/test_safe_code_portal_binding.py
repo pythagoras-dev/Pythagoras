@@ -1,6 +1,6 @@
-from src.pythagoras import SafeCodePortal
-from src.pythagoras import _PortalTester
-from src.pythagoras import safe
+from pythagoras import SafeCodePortal
+from pythagoras import _PortalTester
+from pythagoras import safe
 
 def demo_fn():
     return 42

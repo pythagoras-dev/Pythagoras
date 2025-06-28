@@ -1,5 +1,5 @@
-from src import pythagoras as pth
-from src.pythagoras import ordinary, OrdinaryCodePortal, _PortalTester
+import pythagoras as pth
+from pythagoras import ordinary, OrdinaryCodePortal, _PortalTester
 
 
 def simple_function_1(a:int,b:int)->int:

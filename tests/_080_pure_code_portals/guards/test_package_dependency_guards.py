@@ -1,10 +1,10 @@
 import pytest
-from src import pythagoras as pth
-from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._080_pure_code_portals.pure_core_classes import (
+import pythagoras as pth
+from pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal)
 
-from src.pythagoras._070_protected_code_portals.package_manager import *
+from pythagoras._070_protected_code_portals.package_manager import *
 
 
 def test_real_package_installation_via_guard(tmpdir):

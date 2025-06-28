@@ -1,5 +1,5 @@
-from src.pythagoras._040_logging_code_portals import LoggingCodePortal
-from src.pythagoras._010_basic_portals import _PortalTester
+from pythagoras._040_logging_code_portals import LoggingCodePortal
+from pythagoras._010_basic_portals import _PortalTester
 
 import pytest
 

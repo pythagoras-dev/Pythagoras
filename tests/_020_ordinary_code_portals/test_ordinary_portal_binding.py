@@ -1,8 +1,8 @@
 # import pytest
 #
-# from src.pythagoras import OrdinaryCodePortal
-# from src.pythagoras import _PortalTester
-# from src.pythagoras import ordinary
+# from pythagoras import OrdinaryCodePortal
+# from pythagoras import _PortalTester
+# from pythagoras import ordinary
 #
 # def demo_fn():
 #     return 42

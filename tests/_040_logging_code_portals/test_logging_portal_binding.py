@@ -1,8 +1,8 @@
 import pytest
 
-from src.pythagoras import LoggingCodePortal
-from src.pythagoras import _PortalTester
-from src.pythagoras import logging
+from pythagoras import LoggingCodePortal
+from pythagoras import _PortalTester
+from pythagoras import logging
 
 def demo_fn():
     return 42

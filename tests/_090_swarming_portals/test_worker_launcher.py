@@ -1,7 +1,7 @@
 # from parameterizable import sort_dict_by_keys
 #
-# from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-# from src.pythagoras._090_swarming_portals.swarming_portals import (
+# from pythagoras._010_basic_portals.portal_tester import _PortalTester
+# from pythagoras._090_swarming_portals.swarming_portals import (
 #     SwarmingPortal, _launch_many_background_workers)
 # from src import pythagoras as pth
 #

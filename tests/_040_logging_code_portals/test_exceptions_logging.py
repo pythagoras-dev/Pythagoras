@@ -1,7 +1,7 @@
-from src import pythagoras as pth
-from src.pythagoras import _PortalTester
-from src.pythagoras import LoggingCodePortal
-from src.pythagoras._040_logging_code_portals.logging_portal_core_classes import LoggingFnCallSignature
+import pythagoras as pth
+from pythagoras import _PortalTester
+from pythagoras import LoggingCodePortal
+from pythagoras._040_logging_code_portals.logging_portal_core_classes import LoggingFnCallSignature
 
 
 def test_exception_inside_with(tmpdir):

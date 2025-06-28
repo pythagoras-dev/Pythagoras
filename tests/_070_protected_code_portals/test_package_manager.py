@@ -2,7 +2,7 @@ import random
 import string
 import pytest
 
-from src.pythagoras._070_protected_code_portals.package_manager import *
+from pythagoras._070_protected_code_portals.package_manager import *
 
 def test_actual_package():
     """Test if package installer installs a package.

@@ -1,4 +1,4 @@
-from src.pythagoras import autonomous, _PortalTester, AutonomousCodePortal
+from pythagoras import autonomous, _PortalTester, AutonomousCodePortal
 
 
 def simple_a_function(a:int,b:int)->int:

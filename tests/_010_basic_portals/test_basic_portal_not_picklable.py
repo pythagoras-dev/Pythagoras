@@ -1,5 +1,5 @@
-from src.pythagoras._010_basic_portals import BasicPortal
-from src.pythagoras._010_basic_portals import _PortalTester
+from pythagoras._010_basic_portals import BasicPortal
+from pythagoras._010_basic_portals import _PortalTester
 
 import pytest
 

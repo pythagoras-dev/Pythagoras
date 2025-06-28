@@ -1,5 +1,5 @@
-from src.pythagoras import DataPortal
-from src.pythagoras import _PortalTester
+from pythagoras import DataPortal
+from pythagoras import _PortalTester
 from parameterizable import get_object_from_portable_params
 
 def test_data_portal_get_params(tmpdir):

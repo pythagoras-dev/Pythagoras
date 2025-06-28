@@ -1,12 +1,12 @@
-from src.pythagoras._010_basic_portals import (
+from pythagoras._010_basic_portals import (
     get_active_portal
     , get_number_of_known_portals
     , get_number_of_portals_in_active_stack
     , get_depth_of_active_portal_stack)
-from src.pythagoras._030_data_portals import ValueAddr
-from src.pythagoras._030_data_portals.data_portal_core_classes import DataPortal
+from pythagoras._030_data_portals import ValueAddr
+from pythagoras._030_data_portals.data_portal_core_classes import DataPortal
 
-from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._010_basic_portals.portal_tester import _PortalTester
 
 
 def test_value_address_basic(tmpdir):

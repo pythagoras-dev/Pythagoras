@@ -1,5 +1,5 @@
-from src.pythagoras._040_logging_code_portals import LoggingCodePortal
-from src.pythagoras import _PortalTester
+from pythagoras._040_logging_code_portals import LoggingCodePortal
+from pythagoras import _PortalTester
 from parameterizable import smoketest_parameterizable_class
 
 

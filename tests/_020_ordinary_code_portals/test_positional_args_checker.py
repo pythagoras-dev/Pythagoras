@@ -1,4 +1,4 @@
-from src.pythagoras._020_ordinary_code_portals.function_processing import (
+from pythagoras._020_ordinary_code_portals.function_processing import (
     accepts_unlimited_positional_args)
 
 def test_with_arbitrary_positional_args():

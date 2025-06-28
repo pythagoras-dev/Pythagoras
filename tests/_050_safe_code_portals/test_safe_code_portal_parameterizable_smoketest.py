@@ -1,5 +1,5 @@
-from src.pythagoras._050_safe_code_portals import SafeCodePortal
-from src.pythagoras import _PortalTester
+from pythagoras._050_safe_code_portals import SafeCodePortal
+from pythagoras import _PortalTester
 from parameterizable import smoketest_parameterizable_class
 
 

@@ -1,8 +1,8 @@
 import pytest
 
-from src.pythagoras import ValueAddr, DataPortal, PackedKwArgs, get_random_signature, UnpackedKwArgs
-from src.pythagoras import _PortalTester
-from src.pythagoras import KwArgs
+from pythagoras import ValueAddr, DataPortal, PackedKwArgs, get_random_signature, UnpackedKwArgs
+from pythagoras import _PortalTester
+from pythagoras import KwArgs
 
 
 dict1 = {"yyy":-100, "a": 1, "b": 2, "c": 3}

@@ -1,7 +1,7 @@
 import pytest
 
-from src.pythagoras import NonCompliantFunction
-from src.pythagoras._020_ordinary_code_portals.function_processing import assert_ordinarity
+from pythagoras import NonCompliantFunction
+from pythagoras._020_ordinary_code_portals.function_processing import assert_ordinarity
 
 
 

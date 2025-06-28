@@ -1,4 +1,4 @@
-from src.pythagoras._070_protected_code_portals import flatten_list
+from pythagoras._070_protected_code_portals import flatten_list
 
 def test_fltattener_int():
     model_list = [1, 2, 3, 4, 5, 6, 7, 8, 9]

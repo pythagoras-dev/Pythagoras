@@ -1,5 +1,5 @@
 import sys, logging
-from src.pythagoras._040_logging_code_portals.output_capturer import OutputCapturer
+from pythagoras._040_logging_code_portals.output_capturer import OutputCapturer
 
 def test_capture_stdout():
     with OutputCapturer() as capturer:

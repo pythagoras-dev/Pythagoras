@@ -3,9 +3,9 @@ from typing import Any
 
 import pytest
 
-from src.pythagoras._010_basic_portals import (
+from pythagoras._010_basic_portals import (
     get_active_portal, _PortalTester)
-from src.pythagoras._030_data_portals import *
+from pythagoras._030_data_portals import *
 
 
 

@@ -1,7 +1,7 @@
-from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._080_pure_code_portals.pure_core_classes import (
+from pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal,PureFnExecutionResultAddr)
-from src.pythagoras._080_pure_code_portals.pure_decorator import pure
+from pythagoras._080_pure_code_portals.pure_decorator import pure
 import pytest
 
 

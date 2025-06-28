@@ -1,6 +1,6 @@
-from src.pythagoras._030_data_portals import (
+from pythagoras._030_data_portals import (
     DataPortal)
-from src.pythagoras import _PortalTester
+from pythagoras import _PortalTester
 from parameterizable import smoketest_parameterizable_class
 
 

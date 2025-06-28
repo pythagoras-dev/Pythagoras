@@ -1,4 +1,4 @@
-from src.pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
 
 
 def simple_nested(x):

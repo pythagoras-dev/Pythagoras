@@ -4,11 +4,10 @@ from copy import copy
 from typing import Any
 
 import pytest
-import src.pythagoras
 
-from src.pythagoras._010_basic_portals import (
+from pythagoras._010_basic_portals import (
     get_active_portal, _PortalTester)
-from src.pythagoras._030_data_portals import *
+from pythagoras._030_data_portals import *
 
 #
 # def test_value_address_basic():

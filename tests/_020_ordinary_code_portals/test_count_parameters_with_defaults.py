@@ -1,4 +1,4 @@
-from src.pythagoras._020_ordinary_code_portals.function_processing import (
+from pythagoras._020_ordinary_code_portals.function_processing import (
     count_parameters_with_defaults)
 
 

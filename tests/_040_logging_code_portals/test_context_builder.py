@@ -1,4 +1,4 @@
-from src.pythagoras import build_execution_environment_summary
+from pythagoras import build_execution_environment_summary
 
 def test_build_context():
     context = build_execution_environment_summary()

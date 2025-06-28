@@ -1,5 +1,5 @@
-from src.pythagoras import SwarmingPortal
-from src.pythagoras import _PortalTester
+from pythagoras import SwarmingPortal
+from pythagoras import _PortalTester
 from parameterizable import get_object_from_portable_params
 
 def test_swarming_portal_get_params(tmpdir):

@@ -1,5 +1,5 @@
-from src.pythagoras import AutonomousCodePortal
-from src.pythagoras import _PortalTester
+from pythagoras import AutonomousCodePortal
+from pythagoras import _PortalTester
 from parameterizable import get_object_from_portable_params
 
 def test_autonomous_portal_get_params(tmpdir):

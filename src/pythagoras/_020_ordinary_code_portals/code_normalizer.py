@@ -1,3 +1,5 @@
+import sys
+
 from .._010_basic_portals.exceptions import NonCompliantFunction
 import ast
 import inspect
@@ -7,8 +9,8 @@ import autopep8
 from .function_processing import get_function_name_from_source
 from .._010_basic_portals.long_infoname import get_long_infoname
 from .function_processing import assert_ordinarity
-from ... import pythagoras as pth
 
+import pythagoras as pth
 
 def _get_normalized_function_source_impl(
         a_func: Callable | str

@@ -6,7 +6,7 @@ import psutil
 import pytest
 
 
-from src.pythagoras._090_swarming_portals.system_utils import (
+from pythagoras._090_swarming_portals.system_utils import (
     get_available_ram_mb,
     get_available_cpu_cores,
     process_is_active,

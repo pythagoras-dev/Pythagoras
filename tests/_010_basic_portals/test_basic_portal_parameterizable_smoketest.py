@@ -1,6 +1,6 @@
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import (
+from pythagoras._010_basic_portals.basic_portal_core_classes import (
     BasicPortal)
-from src.pythagoras import _PortalTester
+from pythagoras import _PortalTester
 from parameterizable import smoketest_parameterizable_class
 
 

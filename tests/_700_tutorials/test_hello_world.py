@@ -1,6 +1,6 @@
 import time
 
-from src.pythagoras import PureFnExecutionResultAddr,SwarmingPortal, pure
+from pythagoras import PureFnExecutionResultAddr,SwarmingPortal, pure
 
 
 def get(l:list|set) -> list:

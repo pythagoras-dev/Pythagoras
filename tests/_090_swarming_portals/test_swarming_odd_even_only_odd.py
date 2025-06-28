@@ -1,7 +1,7 @@
-from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._090_swarming_portals.swarming_portals import (
+from pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._090_swarming_portals.swarming_portals import (
     SwarmingPortal)
-from src.pythagoras._080_pure_code_portals.pure_decorator import pure
+from pythagoras._080_pure_code_portals.pure_decorator import pure
 import pytest
 
 

@@ -1,5 +1,5 @@
-from src import pythagoras as pth
-from src.pythagoras import ordinary
+import pythagoras as pth
+from pythagoras import ordinary
 
 
 def simple_o_function(a:int,b:int)->int:

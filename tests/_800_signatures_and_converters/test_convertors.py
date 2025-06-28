@@ -1,6 +1,6 @@
 from persidict import replace_unsafe_chars
 
-from src.pythagoras import convert_base16_to_base32, convert_base_32_to_int
+from pythagoras import convert_base16_to_base32, convert_base_32_to_int
 
 
 def test_small_range():

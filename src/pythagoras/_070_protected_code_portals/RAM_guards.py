@@ -1,12 +1,12 @@
 from .._060_autonomous_code_portals import AutonomousFn, autonomous
-from ... import pythagoras as pth
+from .OK_const import OK
 
 
 def free_ram_bytes(packed_kwargs, fn_addr, required_memory):
     import psutil
     mem_info = psutil.virtual_memory()
     if mem_info.available >= required_memory:
-        return pth.OK
+        return OK
 
 
 def RAM_K(limit:int) -> AutonomousFn:

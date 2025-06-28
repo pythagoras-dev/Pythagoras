@@ -1,4 +1,4 @@
-from src.pythagoras import OrdinaryFn, _PortalTester, OrdinaryCodePortal
+from pythagoras import OrdinaryFn, _PortalTester, OrdinaryCodePortal
 
 
 def simple_function(a:int,b:int) -> int:

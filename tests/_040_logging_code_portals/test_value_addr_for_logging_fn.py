@@ -1,6 +1,6 @@
-from src.pythagoras import ValueAddr
-from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._040_logging_code_portals import (
+from pythagoras import ValueAddr
+from pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._040_logging_code_portals import (
     LoggingCodePortal, logging)
 
 def wonderful_function():

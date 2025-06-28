@@ -1,4 +1,4 @@
-from src.pythagoras._030_data_portals import ready, HashAddr
+from pythagoras._030_data_portals import ready, HashAddr
 
 
 class MockHashAddr(HashAddr):

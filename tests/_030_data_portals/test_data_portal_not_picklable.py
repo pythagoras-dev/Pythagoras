@@ -1,5 +1,5 @@
-from src.pythagoras._030_data_portals import DataPortal
-from src.pythagoras._010_basic_portals import _PortalTester
+from pythagoras._030_data_portals import DataPortal
+from pythagoras._010_basic_portals import _PortalTester
 
 import pytest
 

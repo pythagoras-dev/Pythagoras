@@ -3,8 +3,8 @@
 # from parameterizable import sort_dict_by_keys
 #
 # from pythagoras import get_current_process_start_time, get_current_process_id
-# from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-# from src.pythagoras._090_swarming_portals.swarming_portals import (
+# from pythagoras._010_basic_portals.portal_tester import _PortalTester
+# from pythagoras._090_swarming_portals.swarming_portals import (
 #     SwarmingPortal, _process_random_execution_request)
 # from src import pythagoras as pth
 #

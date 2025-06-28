@@ -1,11 +1,11 @@
 from persidict import PersiDict
 
-from src.pythagoras._010_basic_portals import (
+from pythagoras._010_basic_portals import (
     get_number_of_portals_in_active_stack
     , get_depth_of_active_portal_stack
     , get_active_portal
     , _PortalTester)
-from src.pythagoras._040_logging_code_portals import (
+from pythagoras._040_logging_code_portals import (
     LoggingCodePortal)
 
 def test_empty_logging_code_portal(tmpdir):

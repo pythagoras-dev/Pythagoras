@@ -1,4 +1,4 @@
-from src.pythagoras import BasicPortal, PortalAwareClass, _PortalTester
+from pythagoras import BasicPortal, PortalAwareClass, _PortalTester
 
 class SampleClass(PortalAwareClass):
 

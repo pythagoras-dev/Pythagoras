@@ -13,7 +13,7 @@ from .._060_autonomous_code_portals.names_usage_analyzer import (
 from .._050_safe_code_portals.safe_portal_core_classes import (
     SafeFn, SafeCodePortal)
 
-from ... import pythagoras as pth
+import pythagoras as pth
 
 
 class AutonomousCodePortal(SafeCodePortal):

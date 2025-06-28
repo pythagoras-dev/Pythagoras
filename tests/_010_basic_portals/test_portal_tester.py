@@ -1,7 +1,7 @@
 import pytest
 
-from src.pythagoras import BasicPortal, _PortalTester
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import (
+from pythagoras import BasicPortal, _PortalTester
+from pythagoras._010_basic_portals.basic_portal_core_classes import (
     get_active_portal
     , get_number_of_known_portals
     , get_number_of_portals_in_active_stack

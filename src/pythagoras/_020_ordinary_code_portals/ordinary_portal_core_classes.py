@@ -227,7 +227,7 @@ class OrdinaryFn(PortalAwareClass):
 
     def _available_names(self):
         """Returns a dictionary with the names, available inside the function."""
-        from ... import pythagoras as pth
+        import pythagoras as pth
         names= dict(globals())
         names[self.name] = self
         names["self"] = self

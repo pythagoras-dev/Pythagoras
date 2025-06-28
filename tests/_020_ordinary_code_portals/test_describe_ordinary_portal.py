@@ -1,8 +1,8 @@
-from src.pythagoras._020_ordinary_code_portals import OrdinaryCodePortal, ordinary
-from src.pythagoras._010_basic_portals import _PortalTester
-from src.pythagoras._010_basic_portals.basic_portal_core_classes import (
+from pythagoras._020_ordinary_code_portals import OrdinaryCodePortal, ordinary
+from pythagoras._010_basic_portals import _PortalTester
+from pythagoras._010_basic_portals.basic_portal_core_classes import (
     _get_description_value_by_key)
-from src.pythagoras._020_ordinary_code_portals.ordinary_portal_core_classes import (
+from pythagoras._020_ordinary_code_portals.ordinary_portal_core_classes import (
     REGISTERED_FUNCTIONS_TXT)
 
 

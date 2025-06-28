@@ -1,4 +1,4 @@
-from src.pythagoras._010_basic_portals import NotPicklable
+from pythagoras._010_basic_portals import NotPicklable
 
 import pytest
 

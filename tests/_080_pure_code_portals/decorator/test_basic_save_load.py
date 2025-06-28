@@ -1,8 +1,8 @@
-from src.pythagoras._030_data_portals import ValueAddr
-from src.pythagoras._010_basic_portals.portal_tester import _PortalTester
-from src.pythagoras._080_pure_code_portals.pure_core_classes import (
+from pythagoras._030_data_portals import ValueAddr
+from pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal)
-from src.pythagoras._080_pure_code_portals.pure_decorator import pure
+from pythagoras._080_pure_code_portals.pure_decorator import pure
 
 
 def my_function():
