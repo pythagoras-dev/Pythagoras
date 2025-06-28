@@ -1,8 +1,7 @@
 import ast
 from typing import Callable, Union
 
-from src.pythagoras._020_ordinary_code_portals import (
-    get_normalized_function_source)
+from .._020_ordinary_code_portals import get_normalized_function_source
 
 class NamesUsedInFunction:
     def __init__(self):

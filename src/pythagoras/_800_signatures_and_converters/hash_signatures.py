@@ -3,8 +3,7 @@ from typing import Any
 
 import joblib.hashing
 
-from src.pythagoras._800_signatures_and_converters.base_16_32_convertors import (
-    convert_base16_to_base32)
+from .base_16_32_convertors import convert_base16_to_base32
 
 
 hash_type: str = "sha256"

@@ -1,6 +1,6 @@
 import uuid, platform, getpass
 
-from src.pythagoras._800_signatures_and_converters.hash_signatures import get_hash_signature
+from .hash_signatures import get_hash_signature
 
 
 def get_node_signature() -> str:
