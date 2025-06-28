@@ -5,7 +5,6 @@ import socket
 from typing import Dict
 from getpass import getuser
 from datetime import datetime
-import torch
 from .notebook_checker import is_executed_in_notebook
 from .._010_basic_portals import BasicPortal
 
@@ -28,7 +27,7 @@ def build_execution_environment_summary()-> Dict:
         ,processor = platform.processor()
         ,cpu_count = psutil.cpu_count()
         ,cpu_load_avg = psutil.getloadavg()
-        ,cuda_gpu_count=torch.cuda.device_count()
+        # ,cuda_gpu_count=torch.cuda.device_count()
         ,disk_usage = psutil.disk_usage(cwd)
         ,virtual_memory = psutil.virtual_memory()
         ,working_directory = cwd

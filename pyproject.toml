@@ -1,6 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
-build-backend = "setuptools.build_meta"
+requires = ["uv_build"]
+build-backend = "uv_build"
 
 [project]
 name = "pythagoras"
@@ -34,7 +34,11 @@ dependencies = [
     "jsonpickle",
     "psutil",
     "autopep8",
-    "deepdiff"
+    "deepdiff",
+    "pytest",
+    "boto3",
+    "moto",
+    "uv",
 ]
 
 [project.urls]

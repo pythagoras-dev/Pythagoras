@@ -7,7 +7,6 @@ import pandas as pd
 from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
-from torch.distributed.pipeline.sync.skip import portal
 
 from .._010_basic_portals import BasicPortal
 from .._010_basic_portals import get_active_portal, get_nonactive_portals

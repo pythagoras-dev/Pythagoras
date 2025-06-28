@@ -8,7 +8,7 @@ def install_package(package_name:str
         , version:Optional[str]=None
         ) -> None:
     """Install package using pip."""
-    command = [sys.executable, "-m", "pip", "install"]
+    command = [sys.executable, "-m", "uv", "pip", "install"]
 
     if upgrade:
         command += ["--upgrade"]
@@ -24,7 +24,7 @@ def install_package(package_name:str
 def uninstall_package(package_name:str)->None:
     """Uninstall package using pip."""
 
-    command = [sys.executable, "-m", "pip", "uninstall", "-y", package_name]
+    command = [sys.executable, "-m", "uv", "pip", "uninstall", package_name]
     subprocess.run(command, check=True, stdout=subprocess.PIPE
         , stderr=subprocess.STDOUT, text=True)
 
