@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pythagoras"
-version = "0.20.0"
+version = "0.20.1"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
@@ -26,6 +26,7 @@ classifiers = [
 ]
 keywords = ["cloud", "ML", "AI", "serverless", "distributed", "parallel", "machine-learning", "deep-learning", "pythagoras"]
 dependencies = [
+    "parameterizable",
     "persidict",
     "lz4",
     "joblib",
