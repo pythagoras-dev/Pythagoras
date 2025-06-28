@@ -3,6 +3,8 @@ import string
 import pytest
 
 from pythagoras._070_protected_code_portals.package_manager import *
+from pythagoras._070_protected_code_portals.package_manager import _install_uv_and_pip
+
 
 def test_actual_package():
     """Test if package installer installs a package.
@@ -26,6 +28,7 @@ def test_actual_package():
 def test_nonexisting_package():
     """Test if package installer throws an exception for nonexistent packages.
     """
+
     nonexisting_package_name = ""
     for i in range(20):
         nonexisting_package_name += random.choice(string.ascii_letters)
