@@ -1,3 +1,10 @@
+"""This modukle provides foundational functionality for wotk with portals,
+specifically for managing the portal stack and for accessing the current
+portal. It keeps track of all portals created in the system and manages
+the stack of entered ('active') portals. It also provides a method to
+clear all portals and their state.
+"""
+
 from __future__ import annotations
 
 import random
@@ -84,7 +91,7 @@ def get_all_known_portals() -> list[BasicPortal]:
 
 
 def get_number_of_portals_in_active_stack() -> int:
-    """Get the number of currently active portals."""
+    """Get the number of portals in a stack."""
     global _active_portals_stack
     return len(set(_active_portals_stack))
 
@@ -124,6 +131,7 @@ def get_active_portal() -> BasicPortal:
 
 
 def get_nonactive_portals() -> list[BasicPortal]:
+    """Get a list of all portals that are not in the active stack."""
     active_portal_str_id = get_active_portal()._str_id
     found_portals = []
     for portal_str_id, portal in _all_known_portals.items():
@@ -160,13 +168,9 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
     A Pythagoras-based application can have multiple portals,
     and there is usually a current (default) portal, accessible via
-    get_current_portal().
+    get_active_portal().
 
-    BasicPortal is a base class for all portal objects. It provides foundational
-    functionality for managing the portal stack and for accessing the current
-    portal. It keeps track of all portals created in the system and manages
-    the stack of entered ('active') portals. It also provides a method to
-    clear all portals and their state.
+    BasicPortal is a base class for all portal objects.
 
     The class is not intended to be used directly. Instead, it should
     be subclassed to provide additional functionality.
@@ -193,6 +197,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def _post_init_hook(self) -> None:
+        """This method is always called after all __init__() methods"""
         global _most_recently_created_portal, _all_known_portals
         _all_known_portals[self._str_id] = self
         _most_recently_created_portal = self
@@ -216,7 +221,6 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
     def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
         """Get the list of objects, linked to the portal"""
-
         found_linked_objects_ids = self._get_linked_objects_ids(target_class)
         found_linked_objects = []
         for obj_str_id in found_linked_objects_ids:
@@ -243,7 +247,11 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
     @property
     def is_active(self) -> bool:
-        """Check if the portal is the current one"""
+        """Check if the portal is the current one.
+
+        The 'active' portal is the innermost portal
+        in the stack of portal's 'with' statements.
+        """
         return (len(_active_portals_stack) > 0
                 and _active_portals_stack[-1]._str_id == self._str_id)
 
@@ -257,13 +265,21 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
     @property
     def _ephemeral_param_names(self) -> set[str]:
-        """Get the names of the portal's ephemeral parameters"""
+        """Get the names of the portal's ephemeral parameters.
+
+        Portal's ephemeral parameters are not stored persistently.
+        They affect behaviour of a portal object in an application session,
+        but they do not affect behaviour of the actual portal across multiple runs.
+        """
         return set()
 
 
     @property
     def _str_id(self) -> PortalStrID:
-        """Get the portal's persistent hash"""
+        """Get the portal's persistent hash.
+
+        It's an internal hash used by Pythagoras and is different from .__hash__()
+        """
         if hasattr(self,"_str_id_cache") and self._str_id_cache is not None:
             return self._str_id_cache
         else:
@@ -297,7 +313,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def __enter__(self):
-        """Set the portal as the current one"""
+        """Set the portal as the active one and add it to the stack"""
         global _active_portals_stack, _active_portals_counters_stack
         if (len(_active_portals_stack) == 0 or
                 id(_active_portals_stack[-1]) != id(self)):
@@ -309,7 +325,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Remove the portal from the current context"""
+        """Pop the portal from the stack of active ones"""
         global _active_portals_stack, _active_portals_counters_stack
         assert _active_portals_stack[-1] == self, (
             "Inconsistent state of the portal stack. "
@@ -327,7 +343,6 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         self._root_dict = None
         self._str_id_cache = None
         self._entropy_infuser = None
-        # self._linked_objects = None
 
 
 _all_activated_portal_aware_objects: dict[PObjectStrID, PortalAwareClass] = dict()
@@ -342,19 +357,9 @@ def get_number_of_linked_portal_aware_objects() -> int:
 class PortalAwareClass(metaclass = PostInitMeta):
     """A base class for objects that need to access a portal.
 
-    The class enables functionality for saving and loading its objects.
-    When a portal-aware object is saved (pickled), the portal data is not saved,
-    and the object is pickled as if it were a regular object.
-    After the object is unpickled, the portal is restored to the current portal.
-
-    The "current" portal is the innermost portal
-    in the stack of portal "with" statements. It means that
-    a portal-aware object can only be unpickled from within a portal context.
-
-    A portal-aware object accepts a portal as an input parameter
-    for its constructor. It also supports late portal binding: it
-    can be created with `portal=None`, and its portal will be set later
-    to the current portal.
+    These objects either always work with a currently active portal,
+    or they have a preferred (linked) portal which they activate every
+    time their methods are called.
     """
 
     # _linked_portal: BasicPortal | None
@@ -364,14 +369,13 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     def __init__(self, portal:BasicPortal|None=None):
         assert portal is None or isinstance(portal, BasicPortal)
-        # self._linked_portal = portal
         self._linked_portal_at_init = portal
         self._hash_id_cache = None
         self._visited_portals = set()
 
 
     def _post_init_hook(self):
-        """ This method is called after the object is fully initialized."""
+        """ This method is called after all object's .__init__() methods."""
         global _all_links_from_objects_to_portals
         global _all_activated_portal_aware_objects
         if self._linked_portal_at_init is not None:
@@ -382,8 +386,19 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     @property
     def _linked_portal(self) -> BasicPortal | None:
+        """Get the portal's preferred (linked) portal.
+
+        If the linked portal is not None, the object will activate
+        this portal every time the object's methods are called.
+        If it's None, the object will never try to change the active portal.
+        """
         global _all_links_from_objects_to_portals, _all_known_portals
         portal = None
+        if self._linked_portal_at_init is not None and len(self._visited_portals)==0:
+            _all_links_from_objects_to_portals[self._str_id
+                ] = self._linked_portal_at_init._str_id
+            self._first_visit_to_portal(self._linked_portal_at_init)
+            portal = self._linked_portal_at_init
         if self._str_id in _all_links_from_objects_to_portals:
             portal_str_id = _all_links_from_objects_to_portals[self._str_id]
             assert isinstance(portal_str_id, str)
@@ -393,8 +408,11 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     @property
     def portal(self) -> BasicPortal:
-        # if self._linked_portal is None:
-        #     self._try_to_find_linked_portal_and_register_there()
+        """Get the portal which the object's methods will be using.
+
+        It's either the object's linked portal or
+        (if the linked portal is None) the currently active portal.
+        """
         global _all_links_from_objects_to_portals, _all_known_portals
         portal_to_use = self._linked_portal
         if portal_to_use is None:
@@ -405,25 +423,18 @@ class PortalAwareClass(metaclass = PostInitMeta):
         return portal_to_use
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
+        """Register an object in a portal that the object has not seen before."""
         global _all_activated_portal_aware_objects
         _all_activated_portal_aware_objects[self._str_id] = self
         self._visited_portals.add(portal._str_id)
 
 
-    # @portal.setter
-    # def portal(self, new_portal: BasicPortal|None) -> None:
-    #     """Set the portal to the given one."""
-    #     assert new_portal is not None
-    #     assert not hasattr(self, "_linked_portal") or self._linked_portal is None
-    #     self._linked_portal = new_portal
-    #     self._try_to_find_linked_portal_and_register_there()
-    #     if new_portal._str_id not in self._visited_portals:
-    #         self._first_visit_to_portal(new_portal)
-
-
     @property
     def _str_id(self) -> PObjectStrID:
-        """Return the hash ID of the portal-aware object."""
+        """Return the hash ID of the portal-aware object.
+
+        It's an internal hash used by Pythagoras and is different from .__hash__()
+        """
         if hasattr(self, "_str_id_cache") and self._hash_id_cache is not None:
             return self._hash_id_cache
         else:
@@ -445,19 +456,25 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     @abstractmethod
     def __setstate__(self, state):
-        """This method is called when the object is unpickled.
-
-        """
+        """This method is called when the object is unpickled."""
         self._invalidate_cache()
         self._visited_portals = set()
+        self._linked_portal_at_init = None
 
 
     def _invalidate_cache(self):
+        """Invalidate the object's attribute cache.
+
+        If you cache the object's attribute named ATTR,
+        its cached value should be stored in an attribute named _ATTR_cache
+        This method should delete or assign None to all such attributes.
+        """
         self._hash_id_cache = None
 
 
     @property
     def is_activated(self) -> bool:
+        """Return True if the object has been registered in at least one of the portals."""
         global _all_activated_portal_aware_objects
         if len(self._visited_portals) >=1:
             assert self._str_id in _all_activated_portal_aware_objects
@@ -466,13 +483,15 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
 
     def _deactivate(self):
+        """Mark the object as not activated.
+
+        Empty the list of portals it has been registered into.
+        """
         global _all_activated_portal_aware_objects
         assert self.is_activated
         del _all_activated_portal_aware_objects[self._str_id]
         self._invalidate_cache()
         self._visited_portals = set()
-
-
 
 
 def _clear_all_portals() -> None:
