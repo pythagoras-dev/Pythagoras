@@ -104,11 +104,13 @@ class AutonomousFn(SafeFn):
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = super().__getstate__()
         state["_fixed_kwargs"] = self._fixed_kwargs
         return state
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         super().__setstate__(state)
         self._fixed_kwargs = state["_fixed_kwargs"]
 

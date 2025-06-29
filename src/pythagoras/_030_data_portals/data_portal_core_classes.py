@@ -268,11 +268,13 @@ class StorableFn(OrdinaryFn):
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         super().__setstate__(state)
         self._ephemeral_config_params_at_init = dict()
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         return super().__getstate__()
 
 
@@ -547,11 +549,13 @@ class ValueAddr(HashAddr):
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = dict(strings=self.strings)
         return state
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         self._invalidate_cache()
         self.strings = state["strings"]
         self._containing_portals = set()

@@ -323,12 +323,14 @@ class PureFnExecutionResultAddr(HashAddr):
         return self._kwargs_cache
 
 
-    def __setstate__(self, state): #*#*#
+    def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         self._invalidate_cache()
         self.strings = state["strings"]
 
 
-    def __getstate__(self): #*#*#
+    def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = dict(strings=self.strings)
         return state
 

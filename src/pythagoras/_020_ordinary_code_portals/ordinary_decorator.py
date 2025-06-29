@@ -24,8 +24,10 @@ class ordinary:
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         raise TypeError("Decorators cannot be pickled.")
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         raise TypeError("Decorators cannot be pickled.")

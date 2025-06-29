@@ -34,11 +34,13 @@ class SafeFn(LoggingFn):
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = super().__getstate__()
         return state
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         super().__setstate__(state)
 
 

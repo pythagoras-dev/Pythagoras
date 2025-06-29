@@ -111,6 +111,7 @@ class LoggingFnCallSignature:
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = dict(
             _fn_addr=self._fn_addr
             , _kwargs_addr=self._kwargs_addr)
@@ -118,6 +119,7 @@ class LoggingFnCallSignature:
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         self._invalidate_cache()
         self._fn_addr = state["_fn_addr"]
         self._kwargs_addr = state["_kwargs_addr"]

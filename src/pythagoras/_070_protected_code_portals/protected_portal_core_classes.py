@@ -66,6 +66,7 @@ class ProtectedFn(AutonomousFn):
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = super().__getstate__()
         state["guards_addrs"] = self._guards_addrs
         state["validators_addrs"] = self._validators_addrs
@@ -73,6 +74,7 @@ class ProtectedFn(AutonomousFn):
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         self._invalidate_cache()
         super().__setstate__(state)
         self._guards_addrs = state["guards_addrs"]

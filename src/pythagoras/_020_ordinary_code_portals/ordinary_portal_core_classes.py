@@ -122,16 +122,23 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def portal(self) -> OrdinaryCodePortal:
-        return PortalAwareClass.portal.__get__(self)
+        """Get the portal which the function's methods will be using.
+
+        It's either the function's linked portal or
+        (if the linked portal is None) the currently active portal.
+        """
+        return super().portal
 
 
     @property
     def source_code(self) -> str:
+        """Get the source code of the function."""
         return self._source_code
 
 
     @property
     def name(self) -> str:
+        """Get the name of the function."""
         if not hasattr(self, "_name_cache") or self._name_cache is None:
             self._name_cache = get_function_name_from_source(self.source_code)
         return self._name_cache
@@ -139,7 +146,8 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def hash_signature(self):
-        if not hasattr(self, "_hash_signature_cache") or self._hash_signature_cache is None:
+        """Get the hash signature of the function."""
+        if not hasattr(self, "_hash_signature_cache"):
             self._hash_signature_cache = get_hash_signature(self)
         return self._hash_signature_cache
 
@@ -245,11 +253,13 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def __getstate__(self):
+        """This method is called when the object is pickled."""
         state = dict(source_code=self._source_code)
         return state
 
 
     def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
         PortalAwareClass.__setstate__(self, state)
         self._source_code = state["source_code"]
 
