@@ -13,7 +13,7 @@ def test_portal(tmpdir):
         description = portal.describe()
         assert description.shape == (11, 3)
         assert _get_description_value_by_key(description
-            , BACKGROUND_WORKERS_TXT) == 4
+            , BACKGROUND_WORKERS_TXT) == portal.max_n_workers
 
 
 

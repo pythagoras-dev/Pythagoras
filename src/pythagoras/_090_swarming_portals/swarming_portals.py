@@ -138,7 +138,7 @@ class SwarmingPortal(PureCodePortal):
                 n = 10
             n = min(n, get_available_cpu_cores())
             n = min(n, get_available_ram_mb() / 500)
-            n = int(n)
+            n = int(n)+1
             self._max_n_workers_cache = n
 
         return self._max_n_workers_cache
