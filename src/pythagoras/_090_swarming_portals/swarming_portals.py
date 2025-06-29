@@ -134,7 +134,7 @@ class SwarmingPortal(PureCodePortal):
         """Get the maximum number of background workers"""
         n = self._get_config_setting("max_n_workers")
         if n in (None, KEEP_CURRENT):
-            n = 5
+            n = 10
         return n
 
 
