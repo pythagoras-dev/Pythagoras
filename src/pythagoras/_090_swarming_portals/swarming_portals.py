@@ -165,8 +165,8 @@ class SwarmingPortal(PureCodePortal):
 
     def _randomly_delay_execution(self
             , p:float = 0.5
-            , min_delay:float = 0.05
-            , max_delay:float = 0.33
+            , min_delay:float = 0.02
+            , max_delay:float = 0.22
             ) -> None:
         """Randomly delay execution by a given probability."""
         if self.entropy_infuser.uniform(0, 1) < p:
@@ -249,28 +249,45 @@ def _process_random_execution_request(**portal_init_params):
         portal_init_params)
     assert isinstance(portal, SwarmingPortal)
     with portal:
-        max_addresses_to_consider = random.randint(200, 5000)
-        # TODO: are 200 and 5000 good values for max_addresses_to_consider?
-        with OutputSuppressor():
-            candidate_addresses = []
-            while len(candidate_addresses) == 0:
-                if not portal.parent_runtime_is_live():
-                    return
-                for addr in portal._execution_requests:
-                    new_address = PureFnExecutionResultAddr.from_strings(
-                        prefix=addr[0], hash_signature=addr[1]
-                        ,assert_readiness=False) # How does it handle portals?
-                    if not new_address.needs_execution:
-                        continue
-                    if not new_address.can_be_executed:
-                        continue
-                    candidate_addresses.append(new_address)
-                    if len(candidate_addresses) > max_addresses_to_consider:
-                        break
-                if len(candidate_addresses) == 0:
-                    portal._randomly_delay_execution(p=1)
-            random_address = portal.entropy_infuser.choice(candidate_addresses)
-            random_address.execute()
+
+        while True:
+            addr = portal._execution_requests.random_key()
+            if addr is None:
+                portal._randomly_delay_execution()
+                continue
+            new_address = PureFnExecutionResultAddr.from_strings(
+                prefix=addr[0], hash_signature=addr[1]
+                ,assert_readiness=False)
+            if not new_address.needs_execution:
+                continue
+            if not new_address.can_be_executed:
+                continue
+            with OutputSuppressor():
+                new_address.execute()
+            return
+
+        # max_addresses_to_consider = random.randint(200, 5000)
+        # # TODO: are 200 and 5000 good values for max_addresses_to_consider?
+        # with OutputSuppressor():
+        #     candidate_addresses = []
+        #     while len(candidate_addresses) == 0:
+        #         if not portal.parent_runtime_is_live():
+        #             return
+        #         for addr in portal._execution_requests:
+        #             new_address = PureFnExecutionResultAddr.from_strings(
+        #                 prefix=addr[0], hash_signature=addr[1]
+        #                 ,assert_readiness=False) # How does it handle portals?
+        #             if not new_address.needs_execution:
+        #                 continue
+        #             if not new_address.can_be_executed:
+        #                 continue
+        #             candidate_addresses.append(new_address)
+        #             if len(candidate_addresses) > max_addresses_to_consider:
+        #                 break
+        #         if len(candidate_addresses) == 0:
+        #             portal._randomly_delay_execution(p=1)
+        #     random_address = portal.entropy_infuser.choice(candidate_addresses)
+        #     random_address.execute()
 
 
 def _terminate_all_portals_child_processes():

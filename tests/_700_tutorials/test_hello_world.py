@@ -1,20 +1,23 @@
 import time
 
-from pythagoras import PureFnExecutionResultAddr,SwarmingPortal, pure
-
-
-def get(l:list|set) -> list:
-    result = []
-    for i in l:
-        result.append(i.get())
-    return result
-
-def ready(l) -> list:
-    result = True
-    for i in l:
-        assert isinstance(i, PureFnExecutionResultAddr)
-        result &= i.ready
-    return result
+from pythagoras.core import *
+import pythagoras as pth
+#
+# from pythagoras import PureFnExecutionResultAddr,SwarmingPortal, pure
+#
+#
+# def get(l:list|set) -> list:
+#     result = []
+#     for i in l:
+#         result.append(i.get())
+# #     return result
+#
+# def ready(l) -> list:
+#     result = True
+#     for i in l:
+#         assert isinstance(i, PureFnExecutionResultAddr)
+#         result &= i.ready
+#     return result
 
 @pure()
 def long_running(a:float, b:float, c:float) -> float:
