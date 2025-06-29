@@ -2,6 +2,8 @@
 
 Planet-scale distributed computing in Python.
 
+!!! RESEARCH PREVIEW !!!
+
 ## What is it?
 
 `Pythagoras` is an easy-to-use framework for cost-efficient
@@ -19,7 +21,7 @@ with intelligent data and code change tracking;
 ## Usage
 
 * `Introduction to Pythagoras` notebook:
-https://colab.research.google.com/drive/1tSJkpHl49Y9ZrYskkdoH2ti3_VZ5_6cj
+https://colab.research.google.com/drive/117rAtaWxjfSubzGx0shgqNjONY3E5jgd
 
 ## How to get it?
 
