@@ -125,12 +125,6 @@ class OrdinaryFn(PortalAwareClass):
         return PortalAwareClass.portal.__get__(self)
 
 
-    # @portal.setter
-    # def portal(self, new_portal: OrdinaryCodePortal) -> None:
-    #     if not isinstance(new_portal, OrdinaryCodePortal):
-    #         raise TypeError("portal must be a OrdinaryCodePortal instance")
-    #     PortalAwareClass.portal.__set__(self, new_portal)
-
     @property
     def source_code(self) -> str:
         return self._source_code
@@ -196,6 +190,12 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def _invalidate_cache(self):
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         if hasattr(self, "_compiled_code_cache"):
             del self._compiled_code_cache
         if hasattr(self, "_tmp_fn_name_cache"):

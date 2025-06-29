@@ -14,7 +14,7 @@ from .._010_basic_portals import get_number_of_known_portals, get_all_known_port
 from .._010_basic_portals import BasicPortal
 from .system_utils import (
     get_current_process_id, process_is_active,
-    get_process_start_time, get_current_process_start_time)
+    get_process_start_time, get_current_process_start_time, get_available_cpu_cores, get_available_ram_mb)
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from .._800_signatures_and_converters.random_signatures import get_random_signature
@@ -179,6 +179,8 @@ parameterizable.register_parameterizable_class(SwarmingPortal)
 def _launch_many_background_workers(**portal_init_params) -> None:
     """Launch many background worker processes."""
     n_workers_to_launch = portal_init_params["max_n_workers"]
+    n_workers_to_launch = min(n_workers_to_launch, get_available_cpu_cores())
+    n_workers_to_launch = min(n_workers_to_launch, get_available_ram_mb()/500)
     portal_init_params["max_n_workers"] = 0
     current_process_id = get_current_process_id()
     portal_init_params["parent_process_id"] = current_process_id
@@ -194,6 +196,7 @@ def _launch_many_background_workers(**portal_init_params) -> None:
 
     list_of_all_workers = []
 
+    n_workers_to_launch = int(n_workers_to_launch)
     with portal:
         for i in range(n_workers_to_launch):
             portal._randomly_delay_execution(p=1)

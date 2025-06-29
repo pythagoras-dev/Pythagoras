@@ -179,12 +179,11 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
     _entropy_infuser = random.Random()
 
     _root_dict: PersiDict | None
-    _str_id_cache: PortalStrID | None
+    _str_id_cache: PortalStrID
 
 
     def __init__(self, root_dict:PersiDict|str|None = None):
         ParameterizableClass.__init__(self)
-        self._str_id_cache = None
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
         if not isinstance(root_dict, PersiDict):
@@ -280,21 +279,25 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
         It's an internal hash used by Pythagoras and is different from .__hash__()
         """
-        if hasattr(self,"_str_id_cache") and self._str_id_cache is not None:
-            return self._str_id_cache
-        else:
+        if not hasattr(self,"_str_id_cache"):
             params = self.get_portable_params()
             ephemeral_names = self._ephemeral_param_names
             nonephemeral_params = {k:params[k] for k in params
                 if k not in ephemeral_names}
             self._str_id_cache = PortalStrID(
                 get_hash_signature(nonephemeral_params))
-            return self._str_id_cache
+        return self._str_id_cache
 
 
     def _invalidate_cache(self) -> None:
-        """Invalidate object's caches"""
-        self._str_id_cache = None
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
+        if hasattr(self, "_str_id_cache"):
+            del self._str_id_cache
 
 
     def describe(self) -> pd.DataFrame:
@@ -340,8 +343,8 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
     def _clear(self) -> None:
         """Clear and invalidate the portal's state"""
+        self._invalidate_cache()
         self._root_dict = None
-        self._str_id_cache = None
         self._entropy_infuser = None
 
 
@@ -364,13 +367,13 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     # _linked_portal: BasicPortal | None
     _linked_portal_at_init: BasicPortal|None
-    _hash_id_cache: PObjectStrID | None
+    _hash_id_cache: PObjectStrID
     _visited_portals: set[str] | None
 
     def __init__(self, portal:BasicPortal|None=None):
         assert portal is None or isinstance(portal, BasicPortal)
         self._linked_portal_at_init = portal
-        self._hash_id_cache = None
+        # self._hash_id_cache = None
         self._visited_portals = set()
 
 
@@ -435,11 +438,9 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
         It's an internal hash used by Pythagoras and is different from .__hash__()
         """
-        if hasattr(self, "_str_id_cache") and self._hash_id_cache is not None:
-            return self._hash_id_cache
-        else:
+        if not hasattr(self, "_str_id_cache"):
             self._hash_id_cache = PObjectStrID(get_hash_signature(self))
-            return self._hash_id_cache
+        return self._hash_id_cache
 
 
     @abstractmethod
@@ -465,11 +466,12 @@ class PortalAwareClass(metaclass = PostInitMeta):
     def _invalidate_cache(self):
         """Invalidate the object's attribute cache.
 
-        If you cache the object's attribute named ATTR,
-        its cached value should be stored in an attribute named _ATTR_cache
-        This method should delete or assign None to all such attributes.
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
         """
-        self._hash_id_cache = None
+        if hasattr(self, "_hash_id_cache"):
+            del self._hash_id_cache
 
 
     @property

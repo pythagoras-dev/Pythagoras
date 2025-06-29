@@ -249,13 +249,19 @@ class StorableFn(OrdinaryFn):
 
     @property
     def addr(self) -> ValueAddr:
-        with self.portal:
-            if not hasattr(self, "_addr_cache") or self._addr_cache is None:
+        if not hasattr(self, "_addr_cache"):
+            with self.portal:
                 self._addr_cache = ValueAddr(self)
-            return self._addr_cache
+        return self._addr_cache
 
 
     def _invalidate_cache(self):
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         if hasattr(self, "_addr_cache"):
             del self._addr_cache
         super()._invalidate_cache()
@@ -382,6 +388,12 @@ class HashAddr(SafeStrTuple):
 
 
     def _invalidate_cache(self):
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         pass
 
 
@@ -397,10 +409,11 @@ class ValueAddr(HashAddr):
     It makes it easier for humans to interpret an address,
     and further decreases collision risk.
     """
-    _containing_portals_cache: set[str]
+    _containing_portals: set[str]
     _value_cache: Any
 
     def __init__(self, data: Any, store: bool = True):
+        self._containing_portals = set()
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
@@ -422,20 +435,24 @@ class ValueAddr(HashAddr):
             , hash_signature=hash_signature)
 
         self._value_cache = data
-        self._containing_portals_cache = set()
 
         if store:
             portal = get_active_data_portal()
             portal._value_store[self] = data
-            self._containing_portals_cache.add(portal._str_id)
+            self._containing_portals.add(portal._str_id)
 
 
     def _invalidate_cache(self):
-        super()._invalidate_cache()
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         if hasattr(self, "_value_cache"):
             del self._value_cache
-        if hasattr(self, "_containing_portals_cache"):
-            del self._containing_portals_cache
+        self._containing_portals = set()
+        super()._invalidate_cache()
 
 
     def get_ValueAddr(self):
@@ -446,11 +463,11 @@ class ValueAddr(HashAddr):
     def _ready_in_active_portal(self) -> bool:
         portal = get_active_data_portal()
         portal_id = portal._str_id
-        if portal_id in self._containing_portals_cache:
+        if portal_id in self._containing_portals:
             return True
         result = self in portal._value_store
         if result:
-            self._containing_portals_cache.add(portal_id)
+            self._containing_portals.add(portal_id)
         return result
 
 
@@ -461,7 +478,7 @@ class ValueAddr(HashAddr):
                 value = portal._value_store[self]
                 get_active_data_portal()._value_store[self] = value
                 new_ids = {portal._str_id, get_active_portal()._str_id}
-                self._containing_portals_cache |= new_ids
+                self._containing_portals |= new_ids
                 self._value_cache = value
                 return True
         return False
@@ -470,9 +487,6 @@ class ValueAddr(HashAddr):
     @property
     def ready(self) -> bool:
         """Check if address points to a value that is ready to be retrieved."""
-        if not hasattr(self, "_containing_portals_cache"):
-            self._containing_portals_cache = set()
-
         if self._ready_in_active_portal:
             return True
         if self._ready_in_nonactive_portals:
@@ -484,16 +498,16 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if get_active_portal()._str_id in self._containing_portals_cache:
+            if get_active_portal()._str_id in self._containing_portals:
                 return self._value_cache
             else:
                 get_active_data_portal()._value_store[self] = self._value_cache
-                self._containing_portals_cache |= {get_active_portal()._str_id}
+                self._containing_portals |= {get_active_portal()._str_id}
                 return self._value_cache
 
         value = get_active_data_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals_cache |= {get_active_portal()._str_id}
+        self._containing_portals |= {get_active_portal()._str_id}
         return value
 
 
@@ -506,7 +520,7 @@ class ValueAddr(HashAddr):
                 get_active_data_portal()._value_store[self] = value
                 self._value_cache = value
                 new_ids = {portal._str_id, get_active_portal()._str_id}
-                self._containing_portals_cache |= new_ids
+                self._containing_portals |= new_ids
                 return value
             except:
                 continue
@@ -519,9 +533,6 @@ class ValueAddr(HashAddr):
             , expected_type:Type[T]= Any
             ) -> T:
         """Retrieve value, referenced by the address from any available portal"""
-
-        if not hasattr(self, "_containing_portals_cache"):
-            self._containing_portals_cache = set()
 
         try:
             result = self._get_from_active_portal()
@@ -543,3 +554,20 @@ class ValueAddr(HashAddr):
     def __setstate__(self, state):
         self._invalidate_cache()
         self.strings = state["strings"]
+        self._containing_portals = set()
+
+
+    @classmethod
+    def from_strings(cls, *
+                     , prefix: str
+                     , hash_signature: str
+                     , assert_readiness: bool = True
+                     ) -> HashAddr:
+        """(Re)construct address from text representations of prefix and hash"""
+
+        address = super().from_strings(prefix=prefix, hash_signature=hash_signature, assert_readiness=False)
+        address._containing_portals = set()
+        if assert_readiness:
+            if not address.ready:
+                raise ValueError("Address is not ready for retrieving data")
+        return address

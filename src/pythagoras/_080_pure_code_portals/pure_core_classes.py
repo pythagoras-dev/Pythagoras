@@ -271,6 +271,12 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def _invalidate_cache(self):
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         if hasattr(self, "_ready_cache"):
             del self._ready_cache
         if hasattr(self, "_result_cache"):
