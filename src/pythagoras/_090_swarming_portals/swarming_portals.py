@@ -190,8 +190,8 @@ parameterizable.register_parameterizable_class(SwarmingPortal)
 def _launch_many_background_workers(**portal_init_params) -> None:
     """Launch many background worker processes."""
     n_workers_to_launch = portal_init_params["max_n_workers"]
-    n_workers_to_launch = min(n_workers_to_launch, get_available_cpu_cores())
-    n_workers_to_launch = min(n_workers_to_launch, get_available_ram_mb()/500)
+    n_workers_to_launch = int(n_workers_to_launch)
+
     portal_init_params["max_n_workers"] = 0
     current_process_id = get_current_process_id()
     portal_init_params["parent_process_id"] = current_process_id
@@ -207,7 +207,6 @@ def _launch_many_background_workers(**portal_init_params) -> None:
 
     list_of_all_workers = []
 
-    n_workers_to_launch = int(n_workers_to_launch)
     with portal:
         for i in range(n_workers_to_launch):
             portal._randomly_delay_execution(p=1)
