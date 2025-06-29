@@ -132,10 +132,16 @@ class SwarmingPortal(PureCodePortal):
     @property
     def max_n_workers(self) -> int:
         """Get the maximum number of background workers"""
-        n = self._get_config_setting("max_n_workers")
-        if n in (None, KEEP_CURRENT):
-            n = 10
-        return n
+        if not hasattr(self, "_max_n_workers_cache"):
+            n = self._get_config_setting("max_n_workers")
+            if n in (None, KEEP_CURRENT):
+                n = 10
+            n = min(n, get_available_cpu_cores())
+            n = min(n, get_available_ram_mb() / 500)
+            n = int(n)
+            self._max_n_workers_cache = n
+
+        return self._max_n_workers_cache
 
 
     def describe(self) -> pd.DataFrame:
@@ -172,6 +178,11 @@ class SwarmingPortal(PureCodePortal):
         if self.entropy_infuser.uniform(0, 1) < p:
             delay = self.entropy_infuser.uniform(min_delay, max_delay)
             sleep(delay)
+
+
+    def _invalidate_cache(self):
+        if hasattr(self, "_max_n_workers_cache"):
+            del self._max_n_workers_cache
 
 parameterizable.register_parameterizable_class(SwarmingPortal)
 
