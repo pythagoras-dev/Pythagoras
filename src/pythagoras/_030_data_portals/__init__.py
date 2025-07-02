@@ -12,8 +12,8 @@ A ValueAddr is a unique identifier for an immutable value.
 Two objects with exactly the same type and value will always have
 exactly the same ValueAddr-es.
 
-A ValueAddr consists of 2 strings: a prefix, and a hash.
-A prefix contains human-readable information about an object's type.
+A ValueAddr consists of 2 strings: a descriptor, and a hash.
+A descriptor contains human-readable information about an object's type.
 A hash string contains the object's hash signature.
 
 Typically, a DataPortal is implemented as

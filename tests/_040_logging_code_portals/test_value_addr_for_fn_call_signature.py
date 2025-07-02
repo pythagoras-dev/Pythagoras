@@ -16,9 +16,9 @@ def test_simple_signature_value_addr(tmpdir):
         signature = LoggingFnCallSignature(wonderful_function, KwArgs())
 
         addr = ValueAddr(signature)
-        assert len(addr) == 2
-        assert "wonderful_function" in addr[0]
-        assert "fncallsignature" in addr[0]
+        assert len(addr) == 4
+        assert "wonderful_function" in addr[2]
+        assert "fncallsignature" in addr[2]
 
 def plus(x, y):
     return x+y
@@ -31,6 +31,6 @@ def test_complex_signature_value_addr(tmpdir):
         signature = LoggingFnCallSignature(plus, KwArgs(x=1, y=2))
 
         addr = ValueAddr(signature)
-        assert len(addr) == 2
-        assert "plus" in addr[0]
-        assert "fncallsignature" in addr[0]
+        assert len(addr) == 4
+        assert "plus" in addr[2]
+        assert "fncallsignature" in addr[2]

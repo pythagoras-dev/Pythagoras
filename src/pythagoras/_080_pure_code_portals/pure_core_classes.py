@@ -261,13 +261,13 @@ class PureFnExecutionResultAddr(HashAddr):
         assert isinstance(fn, PureFn)
         with fn.portal as portal:
             self._kwargs_cache = KwArgs(**arguments)
+            self._fn_cache = fn
             signature = LoggingFnCallSignature(fn, self._kwargs_cache)
             self._call_signature_cache = signature
             tmp = ValueAddr(signature)
-            new_prefix = fn.name +"_result_addr"
+            new_descriptor = fn.name +"_result_addr"
             new_hash_signature = tmp.hash_signature
-            super().__init__(new_prefix, new_hash_signature)
-            self._fn_cache = fn
+            super().__init__(new_descriptor, new_hash_signature)
 
 
     def _invalidate_cache(self):
@@ -289,13 +289,11 @@ class PureFnExecutionResultAddr(HashAddr):
             del self._call_signature_cache
 
 
-    def get_ValueAddr(self): #?????????????
-        # prefix = self.fn.name.lower() + "_"
-        # prefix += LoggingFnCallSignature.__name__.lower()
-        prefix = self.prefix.removesuffix("_result_addr")
-        prefix += "_" + LoggingFnCallSignature.__name__.lower()
+    def get_ValueAddr(self):
+        descriptor = self.descriptor.removesuffix("_result_addr")
+        descriptor += "_" + LoggingFnCallSignature.__name__.lower()
         return ValueAddr.from_strings(  # TODO: refactor this
-            prefix = prefix
+            descriptor= descriptor
             , hash_signature=self.hash_signature)
 
 

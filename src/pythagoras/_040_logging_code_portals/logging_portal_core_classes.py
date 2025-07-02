@@ -113,16 +113,16 @@ class LoggingFnCallSignature:
     def __getstate__(self):
         """This method is called when the object is pickled."""
         state = dict(
-            _fn_addr=self._fn_addr
-            , _kwargs_addr=self._kwargs_addr)
+            fn_addr=self._fn_addr
+            , kwargs_addr=self._kwargs_addr)
         return state
 
 
     def __setstate__(self, state):
         """This method is called when the object is unpickled."""
         self._invalidate_cache()
-        self._fn_addr = state["_fn_addr"]
-        self._kwargs_addr = state["_kwargs_addr"]
+        self._fn_addr = state["fn_addr"]
+        self._kwargs_addr = state["kwargs_addr"]
 
 
     def _invalidate_cache(self):
@@ -181,11 +181,11 @@ class LoggingFnCallSignature:
         return self.fn.excessive_logging
 
 
-    def __hash_signature_prefix__(self) -> str:
-        prefix = self.fn_name
-        prefix += "_" + self.__class__.__name__
-        prefix = prefix.lower()
-        return prefix
+    def __hash_signature_descriptor__(self) -> str:
+        descriptor = self.fn_name
+        descriptor += "_" + self.__class__.__name__
+        descriptor = descriptor.lower()
+        return descriptor
 
 
     def execute(self) -> Any:

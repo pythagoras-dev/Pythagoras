@@ -284,81 +284,93 @@ class HashAddr(SafeStrTuple):
     Two objects with exactly the same type and value will always have
     exactly the same HashAddr-es.
 
-    A HashAddr consists of 2 components: a prefix, and a hash.
-    A prefix contains human-readable information about an object's type.
-    A hash string contains the object's hash signature. It may begin with
-    an optional descriptor, which provides additional human-readable
+    A HashAddr consists of 2 components: a descriptor, and a hash.
+    A descriptor contains human-readable information about an object's type.
+    A hash string contains the object's hash signature. It may contain
+    an optional suffix, which provides additional human-readable
     information about the object's structure / value.
     """
 
-    def __init__(self, prefix:str
+    def __init__(self, descriptor:str
                  , hash_signature:str):
-        if not isinstance(prefix, str) or not isinstance(hash_signature, str):
-            raise TypeError("prefix and hash_signature must be strings")
-        if len(prefix) == 0 or len(hash_signature) == 0:
-            raise ValueError("prefix and hash_signature must not be empty")
-        SafeStrTuple.__init__(self,prefix,hash_signature)
+        if not isinstance(descriptor, str) or not isinstance(hash_signature, str):
+            raise TypeError("descriptor and hash_signature must be strings")
+        if len(descriptor) == 0 or len(hash_signature) == 0:
+            raise ValueError("descriptor and hash_signature must not be empty")
+        SafeStrTuple.__init__(self,hash_signature[:3], hash_signature[3:6]
+                              ,descriptor, hash_signature[6:])
 
 
     @property
-    def prefix(self) -> str:
+    def shard(self)->str:
         return self.strings[0]
 
     @property
-    def hash_signature(self) -> str:
+    def subshard(self)->str:
         return self.strings[1]
 
+    @property
+    def descriptor(self) -> str:
+        return self.strings[2]
+
+    @property
+    def hash_tail(self)->str:
+        return self.strings[3]
+
+    @property
+    def hash_signature(self) -> str:
+        return self.shard+self.subshard+self.hash_tail
+
     @staticmethod
-    def _build_prefix(x: Any) -> str:
+    def _build_descriptor(x: Any) -> str:
         """Create a short human-readable summary of an object."""
 
-        if (hasattr(x, "__hash_signature_prefix__")
-                and callable(x.__hash_signature_prefix__)):
-            prfx = x.__hash_signature_prefix__()
+        if (hasattr(x, "__hash_signature_descriptor__")
+                and callable(x.__hash_signature_descriptor__)):
+            descriptor = x.__hash_signature_descriptor__()
         else:
-            prfx = x.__class__.__name__.lower()
+            descriptor = x.__class__.__name__.lower()
+            if (hasattr(x, "shape") and hasattr(x.shape, "__iter__")
+                    and callable(x.shape.__iter__) and not callable(x.shape)):
+                suffix, connector = "_shape_", "_x_"
+                for n in x.shape:
+                    suffix += str(n) + connector
+                suffix = suffix[:-len(connector)]
+            elif hasattr(x, "__len__") and callable(x.__len__):
+                suffix = "_len_" + str(len(x))
+            else:
+                suffix = ""
 
-        return prfx
+            suffix = replace_unsafe_chars(suffix, replace_with="_")
+            descriptor = descriptor + suffix
+
+        return descriptor
 
 
     @staticmethod
     def _build_hash_signature(x: Any) -> str:
         """Create a URL-safe hashdigest for an object."""
-
-        if (hasattr(x, "shape") and hasattr(x.shape, "__iter__")
-                and callable(x.shape.__iter__) and not callable(x.shape)):
-            descriptor, connector = "shape_", "_x_"
-            for n in x.shape:
-                descriptor += str(n) + connector
-            descriptor = descriptor[:-len(connector)] + "_"
-        elif hasattr(x, "__len__") and callable(x.__len__):
-            descriptor = "len_" + str(len(x)) + "_"
-        else:
-            descriptor = ""
-
-        descriptor = replace_unsafe_chars(descriptor, replace_with="_")
-        raw_hash_signature = get_hash_signature(x)
-        hash_signature = descriptor + raw_hash_signature
-
+        hash_signature = get_hash_signature(x)
         return hash_signature
 
 
     @classmethod
     def from_strings(cls, *
-                     , prefix:str
+                     , descriptor:str
                      , hash_signature:str
                      , assert_readiness:bool=True
                      ) -> HashAddr:
-        """(Re)construct address from text representations of prefix and hash"""
+        """(Re)construct address from text representations of descriptor and hash"""
 
-        if not isinstance(prefix, str) or not isinstance(hash_signature, str):
-            raise TypeError("prefix and hash_signature must be strings")
+        if not isinstance(descriptor, str) or not isinstance(hash_signature, str):
+            raise TypeError("descriptor and hash_signature must be strings")
 
-        if len(prefix) == 0 or len(hash_signature) == 0:
-            raise ValueError("prefix and hash_signature must not be empty")
+        if len(descriptor) == 0 or len(hash_signature) == 0:
+            raise ValueError("descriptor and hash_signature must not be empty")
 
         address = cls.__new__(cls)
-        super(cls, address).__init__(prefix, hash_signature)
+        super(cls, address).__init__(descriptor=descriptor
+            , hash_signature=hash_signature)
         if assert_readiness:
             if not address.ready:
                 raise ValueError("Address is not ready for retrieving data")
@@ -407,7 +419,7 @@ class ValueAddr(HashAddr):
     uniquely address all possible data objects that the humanity  will create
     in the foreseeable future (see, for example ipfs.io).
 
-    However, an address also includes a prefix and an optional descriptor.
+    However, an address also includes a descriptor with an optional suffix.
     It makes it easier for humans to interpret an address,
     and further decreases collision risk.
     """
@@ -419,22 +431,22 @@ class ValueAddr(HashAddr):
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
-            prefix = data_value_addr.prefix
+            descriptor = data_value_addr.descriptor
             hash_signature = data_value_addr.hash_signature
             HashAddr.__init__(self
-                , prefix=prefix
-                , hash_signature=hash_signature)
+                              , descriptor=descriptor
+                              , hash_signature=hash_signature)
             return
 
         assert not isinstance(data, HashAddr), (
                 "get_ValueAddr is the only way to "
                 + "convert HashAddr into ValueAddr")
 
-        prefix = self._build_prefix(data)
+        descriptor = self._build_descriptor(data)
         hash_signature = self._build_hash_signature(data)
         HashAddr.__init__(self
-            , prefix=prefix
-            , hash_signature=hash_signature)
+                          , descriptor=descriptor
+                          , hash_signature=hash_signature)
 
         self._value_cache = data
 
@@ -563,13 +575,13 @@ class ValueAddr(HashAddr):
 
     @classmethod
     def from_strings(cls, *
-                     , prefix: str
+                     , descriptor: str
                      , hash_signature: str
                      , assert_readiness: bool = True
                      ) -> HashAddr:
-        """(Re)construct address from text representations of prefix and hash"""
+        """(Re)construct address from text representations of descriptor and hash"""
 
-        address = super().from_strings(prefix=prefix, hash_signature=hash_signature, assert_readiness=False)
+        address = super().from_strings(descriptor=descriptor, hash_signature=hash_signature, assert_readiness=False)
         address._containing_portals = set()
         if assert_readiness:
             if not address.ready:

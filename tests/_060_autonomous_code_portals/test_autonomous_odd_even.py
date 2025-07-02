@@ -47,9 +47,9 @@ def test_odd_even_two_decorators_autonomous(tmpdir,pr):
             isEven = oldIsEven
             isOdd = oldIsOdd
 
-        assert len(l.portal._value_store.get_subdict("bool")) == 2
-        assert len(l.portal._value_store.get_subdict("int")) == N
-        assert len(l.portal._value_store.get_subdict("packedkwargs")) == N
+        assert len([k for k in l.portal._value_store.keys() if k[2]=="bool"]) == 2
+        assert len([k for k in l.portal._value_store.keys() if k[2]=="int"]) == N
+        assert len([k for k in l.portal._value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
 
 
 
@@ -80,6 +80,6 @@ def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir,pr):
             isOdd = oldIsOdd
 
         assert l.portal.get_number_of_linked_functions() == 4
-        assert len(l.portal._value_store.get_subdict("bool")) == 2
-        assert len(l.portal._value_store.get_subdict("int")) == N
-        assert len(l.portal._value_store.get_subdict("packedkwargs")) == N
+        assert len([k for k in l.portal._value_store.keys() if k[2]=="bool"]) == 2
+        assert len([k for k in l.portal._value_store.keys() if k[2]=="int"]) == N
+        assert len([k for k in l.portal._value_store.keys() if k[2]=="packedkwargs_len_3"]) == N

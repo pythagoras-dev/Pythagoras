@@ -4,7 +4,7 @@ from pythagoras._030_data_portals import ready, HashAddr
 class MockHashAddr(HashAddr):
     """Mock HashAddr class for testing."""
     def __init__(self, ready_value=True):
-        super().__init__("a","b")
+        super().__init__("aaaaaaaaaaaaa","bbbbbbbbbbbbbbbbb")
         self._ready = ready_value
 
     @property

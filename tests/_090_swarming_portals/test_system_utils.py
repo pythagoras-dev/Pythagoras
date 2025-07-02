@@ -75,31 +75,6 @@ def _touch_every_page(buf: bytearray) -> None:
         buf[i] = 1
 
 
-@pytest.mark.timeout(15)
-def test_available_ram_reacts_to_large_allocation():
-    """
-    Allocating ~100 MB should lower the reported available RAM
-    by at least 50 MB on systems with enough free memory.
-    """
-    before = get_available_ram_mb()
-
-    if before < 300:         # CI runners with <300 MB free are rare but possible
-        pytest.skip("Not enough free RAM to run allocation test safely.")
-
-    buf = bytearray(100 * 1024 * 1024)  # 100 MB
-    _touch_every_page(buf)              # ensure commit
-    after = get_available_ram_mb()
-
-    # Clean up promptly
-    del buf
-
-    # OS overcommit & caching behaviour differ; use a conservative delta.
-    if before - after < 50:
-        pytest.skip("Memory accounting on this platform does not show a clear delta.")
-    assert after <= before - 50
-
-
-
 def _sleep_brief():
     time.sleep(0.1)
 

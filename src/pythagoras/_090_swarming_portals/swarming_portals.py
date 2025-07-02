@@ -269,7 +269,7 @@ def _process_random_execution_request(**portal_init_params):
                 portal._randomly_delay_execution()
                 continue
             new_address = PureFnExecutionResultAddr.from_strings(
-                prefix=addr[0], hash_signature=addr[1]
+                descriptor=addr[2], hash_signature=addr[0]+addr[1]+addr[3]
                 ,assert_readiness=False)
             if not new_address.needs_execution:
                 continue

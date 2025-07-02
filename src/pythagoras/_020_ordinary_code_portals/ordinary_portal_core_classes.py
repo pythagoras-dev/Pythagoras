@@ -264,8 +264,8 @@ class OrdinaryFn(PortalAwareClass):
         self._source_code = state["source_code"]
 
 
-    def __hash_signature_prefix__(self) -> str:
-        prefix = self.name
-        prefix += "_" + self.__class__.__name__
-        prefix = prefix.lower()
-        return prefix
+    def __hash_signature_descriptor__(self) -> str:
+        descriptor = self.name
+        descriptor += "_" + self.__class__.__name__
+        descriptor = descriptor.lower()
+        return descriptor
