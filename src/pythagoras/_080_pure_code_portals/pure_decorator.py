@@ -10,26 +10,26 @@ from persidict import KEEP_CURRENT, Joker
 class pure(protected):
 
     def __init__(self
-                 , guards: list[AutonomousFn] | None = None
-                 , validators: list[AutonomousFn] | None = None
+                 , pre_validators: list[AutonomousFn] | None = None
+                 , post_validators: list[AutonomousFn] | None = None
                  , fixed_kwargs: dict | None = None
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , portal: PureCodePortal | None = None
                  ):
         protected.__init__(self=self
-            , portal=portal
-            , excessive_logging=excessive_logging
-            , fixed_kwargs=fixed_kwargs
-            , guards=guards
-            , validators=validators)
+                           , portal=portal
+                           , excessive_logging=excessive_logging
+                           , fixed_kwargs=fixed_kwargs
+                           , pre_validators=pre_validators
+                           , post_validators=post_validators)
 
 
     def __call__(self, fn:Callable|str) -> PureFn:
         wrapper = PureFn(fn
-            , portal=self._portal
-            , guards=self._guards
-            , fixed_kwargs=self._fixed_kwargs
-            , validators=self._validators
-            , excessive_logging=self._excessive_logging)
+                         , portal=self._portal
+                         , pre_validators=self._pre_validators
+                         , fixed_kwargs=self._fixed_kwargs
+                         , post_validators=self._post_validators
+                         , excessive_logging=self._excessive_logging)
         return wrapper
 

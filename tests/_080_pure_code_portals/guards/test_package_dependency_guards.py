@@ -31,7 +31,7 @@ def test_real_package_installation_via_guard(tmpdir):
             return pth.OK
 
 
-        @pth.pure(guards = [check_nothing])
+        @pth.pure(pre_validators= [check_nothing])
         def do_something():
             return 10
 
@@ -68,7 +68,7 @@ def test_fake_package_installation_via_guard(tmpdir):
             return pth.OK
 
 
-        @pth.pure(guards = [check_nonexisting])
+        @pth.pure(pre_validators= [check_nonexisting])
         def do_weird_thing():
             return 10
 

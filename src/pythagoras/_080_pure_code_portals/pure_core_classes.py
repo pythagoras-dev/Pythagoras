@@ -93,18 +93,18 @@ class PureCodePortal(ProtectedCodePortal):
 class PureFn(ProtectedFn):
 
     def __init__(self, fn: Callable | str
-                 , guards: list[AutonomousFn] | List[Callable] | None = None
-                 , validators: list[AutonomousFn] | List[Callable] | None = None
+                 , pre_validators: list[AutonomousFn] | List[Callable] | None = None
+                 , post_validators: list[AutonomousFn] | List[Callable] | None = None
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None = None):
         ProtectedFn.__init__(self
-            ,fn=fn
-            , portal = portal
-            , fixed_kwargs=fixed_kwargs
-            , excessive_logging = excessive_logging
-            , guards=guards
-            , validators=validators)
+                             , fn=fn
+                             , portal = portal
+                             , fixed_kwargs=fixed_kwargs
+                             , excessive_logging = excessive_logging
+                             , pre_validators=pre_validators
+                             , post_validators=post_validators)
 
 
     def get_address(self, **kwargs) -> PureFnExecutionResultAddr:
@@ -463,7 +463,7 @@ class PureFnExecutionResultAddr(HashAddr):
     def can_be_executed(self) -> bool: #*#*#
         """Indicates if the function can be executed in the current session.
 
-        The function should be refactored once we start fully supporting
+        TODO: The function should be refactored once we start fully supporting
         guards
         """
         with self.fn.portal:

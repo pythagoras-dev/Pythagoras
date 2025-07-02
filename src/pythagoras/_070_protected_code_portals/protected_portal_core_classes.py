@@ -32,17 +32,17 @@ class ProtectedCodePortal(AutonomousCodePortal):
 
 class ProtectedFn(AutonomousFn):
 
-    _guards: list[AutonomousFn] | None
-    _validators: list[AutonomousFn] | None
-    _guards_addrs: list[ValueAddr]
-    _validators_addrs: list[ValueAddr]
+    _pre_validators: list[AutonomousFn] | None
+    _post_validators: list[AutonomousFn] | None
+    _pre_validators_addrs: list[ValueAddr]
+    _post_validators_addrs: list[ValueAddr]
 
-    validators_arg_names = ["packed_kwargs", "fn_addr", "result"]
-    guards_arg_names = ["packed_kwargs", "fn_addr"]
+    post_validators_arg_names = ["packed_kwargs", "fn_addr", "result"]
+    pre_validators_arg_names = ["packed_kwargs", "fn_addr"]
 
     def __init__(self, fn: Callable | str
-                 , guards: list[AutonomousFn] | List[Callable] | None = None
-                 , validators: list[AutonomousFn] | List[Callable] | None = None
+                 , pre_validators: list[AutonomousFn] | List[Callable] | None = None
+                 , post_validators: list[AutonomousFn] | List[Callable] | None = None
                  , excessive_logging: bool|None = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: AutonomousCodePortal | None = None):
@@ -53,23 +53,23 @@ class ProtectedFn(AutonomousFn):
             , excessive_logging = excessive_logging)
 
         if isinstance(fn, ProtectedFn):
-            assert guards is None
-            assert validators is None
+            assert pre_validators is None
+            assert post_validators is None
             return
 
-        self._guards = self._normalize_protectors(
-            guards, ProtectedFn.guards_arg_names)
-        self._validators = self._normalize_protectors(
-            validators, ProtectedFn.validators_arg_names)
-        self._guards_addrs = [ValueAddr(g, store=False) for g in self._guards]
-        self._validators_addrs = [ValueAddr(v, store=False) for v in self._validators]
+        self._pre_validators = self._normalize_protectors(
+            pre_validators, ProtectedFn.pre_validators_arg_names)
+        self._post_validators = self._normalize_protectors(
+            post_validators, ProtectedFn.post_validators_arg_names)
+        self._pre_validators_addrs = [ValueAddr(g, store=False) for g in self._pre_validators]
+        self._post_validators_addrs = [ValueAddr(v, store=False) for v in self._post_validators]
 
 
     def __getstate__(self):
         """This method is called when the object is pickled."""
         state = super().__getstate__()
-        state["guards_addrs"] = self._guards_addrs
-        state["validators_addrs"] = self._validators_addrs
+        state["pre_validators_addrs"] = self._pre_validators_addrs
+        state["post_validators_addrs"] = self._post_validators_addrs
         return state
 
 
@@ -77,53 +77,54 @@ class ProtectedFn(AutonomousFn):
         """This method is called when the object is unpickled."""
         self._invalidate_cache()
         super().__setstate__(state)
-        self._guards_addrs = state["guards_addrs"]
-        self._validators_addrs = state["validators_addrs"]
+        self._pre_validators_addrs = state["pre_validators_addrs"]
+        self._post_validators_addrs = state["post_validators_addrs"]
 
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
+        """Register an object in a portal that the object has not seen before."""
         super()._first_visit_to_portal(portal)
         with portal:
-            if hasattr(self, "_guards") and self._guards is not None:
-                new_guards_addrs = [ValueAddr(g) for g in self._guards]
-                assert self._guards_addrs == new_guards_addrs
-            if hasattr(self, "_validators") and self._validators is not None:
-                new_validators_addrs = [ValueAddr(v) for v in self._validators]
-                assert self._validators_addrs == new_validators_addrs
+            if hasattr(self, "_pre_validators") and self._pre_validators is not None:
+                new_pre_validators_addrs = [ValueAddr(g) for g in self._pre_validators]
+                assert self._pre_validators_addrs == new_pre_validators_addrs
+            if hasattr(self, "_post_validators") and self._post_validators is not None:
+                new_post_validators_addrs = [ValueAddr(v) for v in self._post_validators]
+                assert self._post_validators_addrs == new_post_validators_addrs
 
 
     @property
-    def guards(self) -> list[AutonomousFn]:
-        if not hasattr(self, "_guards") or self._guards is None:
-            self._guards = [addr.get() for addr in self._guards_addrs]
-        return self._guards
+    def pre_validators(self) -> list[AutonomousFn]:
+        if not hasattr(self, "_pre_validators") or self._pre_validators is None:
+            self._pre_validators = [addr.get() for addr in self._pre_validators_addrs]
+        return self._pre_validators
 
 
     @property
-    def validators(self) -> list[AutonomousFn]:
-        if not hasattr(self, "_validators") or self._validators is None:
-            self._validators = [addr.get() for addr in self._validators_addrs]
-        return self._validators
+    def post_validators(self) -> list[AutonomousFn]:
+        if not hasattr(self, "_post_validators") or self._post_validators is None:
+            self._post_validators = [addr.get() for addr in self._post_validators_addrs]
+        return self._post_validators
 
 
     def can_be_executed(self, kw_args: KwArgs) -> bool:
         with self.portal as portal:
             kw_args = kw_args.pack()
-            guards = copy(self.guards)
-            portal.entropy_infuser.shuffle(guards)
-            for guard in guards:
-                if guard(packed_kwargs=kw_args, fn_addr = self.addr) is not OK:
+            pre_validators = copy(self.pre_validators)
+            portal.entropy_infuser.shuffle(pre_validators)
+            for pre_validator in pre_validators:
+                if pre_validator(packed_kwargs=kw_args, fn_addr = self.addr) is not OK:
                     return False
             return True
 
 
-    def validate_result(self, kw_args: KwArgs,  result: Any) -> bool:
+    def validate_execution_result(self, kw_args: KwArgs, result: Any) -> bool:
         with self.portal as portal:
             kw_args = kw_args.pack()
-            validators = copy(self.validators)
-            portal.entropy_infuser.shuffle(validators)
-            for validator in validators:
-                if validator(packed_kwargs=kw_args, fn_addr = self.addr
+            post_validators = copy(self.post_validators)
+            portal.entropy_infuser.shuffle(post_validators)
+            for post_validator in post_validators:
+                if post_validator(packed_kwargs=kw_args, fn_addr = self.addr
                         , result=result) is not OK:
                     return False
             return True
@@ -134,7 +135,7 @@ class ProtectedFn(AutonomousFn):
             kw_args = KwArgs(**kwargs)
             assert self.can_be_executed(kw_args)
             result = super().execute(**kwargs)
-            assert self.validate_result(kw_args, result)
+            assert self.validate_execution_result(kw_args, result)
             return result
 
 

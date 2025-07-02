@@ -33,8 +33,8 @@ def test_load_save_protected_dummy_good_guard(tmpdir):
             , [dummy_good_guard, dummy_good_guard]]:
 
         with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
-            f_1 = ProtectedFn(f, guards = guards)
-            assert len(f_1.guards) == 1
+            f_1 = ProtectedFn(f, pre_validators= guards)
+            assert len(f_1.pre_validators) == 1
             f_address = ValueAddr(f_1)
             f_2 = f_address.get()
             assert f_2(a=1, b=2) == f(a=1, b=2) == 3
@@ -44,7 +44,7 @@ def test_load_save_protected_dummy_good_guard(tmpdir):
 
         with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
             f_3 = f_address.get()
-            assert len(f_3.guards) == 1
+            assert len(f_3.pre_validators) == 1
             assert f_3(a=1, b=2) == f(a=1, b=2) == 3
 
 
@@ -55,8 +55,8 @@ def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
         dummy_good_guard_autonomous = autonomous()(dummy_good_guard)
         guards = [dummy_good_guard_autonomous, dummy_good_guard_autonomous]
 
-        f_1 = ProtectedFn(f, guards = guards)
-        assert len(f_1.guards) == 1
+        f_1 = ProtectedFn(f, pre_validators= guards)
+        assert len(f_1.pre_validators) == 1
         f_address = ValueAddr(f_1)
         f_2 = f_address.get()
         assert f_2(a=1, b=2) == f(a=1, b=2) == 3
@@ -66,7 +66,7 @@ def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
 
     with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
         f_3 = f_address.get()
-        assert len(f_3.guards) == 1
+        assert len(f_3.pre_validators) == 1
         assert f_3(a=1, b=2) == f(a=1, b=2) == 3
 
 
@@ -74,7 +74,7 @@ def test_load_save_protected_dummy_bad_guard(tmpdir):
     for guards in [dummy_bad_guard, [[dummy_good_guard], [dummy_bad_guard]]
         ,[dummy_bad_guard, dummy_good_guard]]:
         with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
-            f_1 = ProtectedFn(f, guards = guards)
+            f_1 = ProtectedFn(f, pre_validators= guards)
             f_address = ValueAddr(f_1)
             f_2 = f_address.get()
             with pytest.raises(Exception):
@@ -97,7 +97,7 @@ def test_load_save_protected_dummy_bad_guard_autonomous(tmpdir):
         dummy_bad_guard_autonomous = autonomous()(dummy_bad_guard)
         guards = [dummy_bad_guard_autonomous, dummy_bad_guard_autonomous]
 
-        f_1 = ProtectedFn(f, guards = guards)
+        f_1 = ProtectedFn(f, pre_validators= guards)
         f_address = ValueAddr(f_1)
         f_2 = f_address.get()
         with pytest.raises(Exception):

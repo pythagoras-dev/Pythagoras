@@ -12,7 +12,7 @@ def test_basic_addr(tmpdir):
         def do_nothing(**kwargs):
             return pth.OK
 
-        @pth.pure(guards = [do_nothing])
+        @pth.pure(pre_validators= [do_nothing])
         def do_nothing_pure():
             return 10
 
@@ -42,8 +42,8 @@ def test_laternative_validators(tmpdir):
         def my_beloved_function():
             return 10
 
-        mbl_pure_1 = pth.pure(guards=[do_something_1])(my_beloved_function)
-        mbl_pure_2 = pth.pure(guards=[do_something_2])(my_beloved_function)
+        mbl_pure_1 = pth.pure(pre_validators=[do_something_1])(my_beloved_function)
+        mbl_pure_2 = pth.pure(pre_validators=[do_something_2])(my_beloved_function)
 
         assert mbl_pure_1() == 10
         assert mbl_pure_2() == 10

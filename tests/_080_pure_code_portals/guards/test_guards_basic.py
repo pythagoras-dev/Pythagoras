@@ -12,7 +12,7 @@ def test_basic_execution(tmpdir):
         def do_nothing(**kwargs):
             return pth.OK
 
-        @pth.pure(guards = [do_nothing])
+        @pth.pure(pre_validators= [do_nothing])
         def do_nothing_pure():
             return 10
 
@@ -27,7 +27,7 @@ def test_basic_exception(tmpdir):
         def no_go(**kwargs):
             return "some message"
 
-        @pth.pure(guards = [no_go])
+        @pth.pure(pre_validators= [no_go])
         def do_nothing_pure():
             return 10
 

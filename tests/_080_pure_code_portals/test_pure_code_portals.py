@@ -89,6 +89,6 @@ def test_pure_portals_always_OK(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
         portal = t.portal
         global fibonacci,factorial,do_nothing
-        fibonacci_p = pure(guards=[always_OK])(fibonacci)
+        fibonacci_p = pure(pre_validators=[always_OK])(fibonacci)
 
         assert fibonacci_p(n=4) == 3

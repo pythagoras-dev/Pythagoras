@@ -8,12 +8,12 @@ from persidict import Joker, KEEP_CURRENT
 
 class protected(autonomous):
 
-    _guards: list[AutonomousFn] | None
-    _validators: list[AutonomousFn] | None
+    _pre_validators: list[AutonomousFn] | None
+    _post_validators: list[AutonomousFn] | None
 
     def __init__(self
-                 , guards: list[AutonomousFn] | None = None
-                 , validators: list[AutonomousFn] | None = None
+                 , pre_validators: list[AutonomousFn] | None = None
+                 , post_validators: list[AutonomousFn] | None = None
                  , fixed_kwargs: dict | None = None
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: ProtectedCodePortal | None = None
@@ -24,15 +24,15 @@ class protected(autonomous):
             , portal=portal
             , excessive_logging=excessive_logging
             , fixed_kwargs=fixed_kwargs)
-        self._guards = guards
-        self._validators = validators
+        self._pre_validators = pre_validators
+        self._post_validators = post_validators
 
 
     def __call__(self, fn: Callable|str) -> ProtectedFn:
         wrapper = ProtectedFn(fn
-            ,portal=self._portal
-            ,guards=self._guards
-            ,fixed_kwargs=self._fixed_kwargs
-            ,validators=self._validators
-            ,excessive_logging=self._excessive_logging)
+                              , portal=self._portal
+                              , pre_validators=self._pre_validators
+                              , fixed_kwargs=self._fixed_kwargs
+                              , post_validators=self._post_validators
+                              , excessive_logging=self._excessive_logging)
         return wrapper
