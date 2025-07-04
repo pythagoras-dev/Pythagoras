@@ -5,7 +5,7 @@ from copy import copy
 from typing import Callable, Any, List, TypeAlias
 
 import pandas as pd
-from sklearn.model_selection import ParameterGrid
+# from sklearn.model_selection import ParameterGrid
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
@@ -207,24 +207,24 @@ class PureFn(ProtectedFn):
         return addrs
 
 
-    def swarm_grid(
-            self
-            , grid_of_kwargs:dict[str, list] # refactor
-            ) -> list[PureFnExecutionResultAddr]:
-        with self.portal:
-            param_list = list(ParameterGrid(grid_of_kwargs))
-            addrs = self.swarm_list(param_list)
-            return addrs
-
-
-    def run_grid(
-            self
-            , grid_of_kwargs:dict[str, list] # refactor
-            ) -> list[PureFnExecutionResultAddr]:
-        with self.portal:
-            param_list = list(ParameterGrid(grid_of_kwargs))
-            addrs = self.run_list(param_list)
-            return addrs
+    # def swarm_grid(
+    #         self
+    #         , grid_of_kwargs:dict[str, list] # refactor
+    #         ) -> list[PureFnExecutionResultAddr]:
+    #     with self.portal:
+    #         param_list = list(ParameterGrid(grid_of_kwargs))
+    #         addrs = self.swarm_list(param_list)
+    #         return addrs
+    #
+    #
+    # def run_grid(
+    #         self
+    #         , grid_of_kwargs:dict[str, list] # refactor
+    #         ) -> list[PureFnExecutionResultAddr]:
+    #     with self.portal:
+    #         param_list = list(ParameterGrid(grid_of_kwargs))
+    #         addrs = self.run_list(param_list)
+    #         return addrs
 
 
     @property
