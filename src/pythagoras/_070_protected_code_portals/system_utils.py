@@ -1,5 +1,6 @@
 import os
 import psutil
+import pynvml
 
 def get_available_ram_mb() -> int:
     """Returns the amount of available RAM in MB. """
@@ -7,7 +8,7 @@ def get_available_ram_mb() -> int:
     return int(free_ram)
 
 
-def get_available_cpu_cores() -> float:
+def get_unused_cpu_cores() -> float:
     """Returns the free (logical) CPU capacity"""
 
     cnt = psutil.cpu_count(logical=True) or 1
@@ -50,3 +51,30 @@ def get_current_process_start_time() -> int:
     return get_process_start_time(get_current_process_id())
 
 
+def get_unused_nvidia_gpus() -> float:
+    """Returns the total unused GPU capacity as a float value.
+
+    The function calculates the sum of unused capacity across all available NVIDIA GPUs.
+    For example, 2.0 means two completely unused GPUs
+    0 is returned if no GPUs or on error.
+    """
+    try:
+        pynvml.nvmlInit()
+        device_count = pynvml.nvmlDeviceGetCount()
+        unused_capacity = 0.0
+
+        for i in range(device_count):
+            handle = pynvml.nvmlDeviceGetHandleByIndex(i)
+            utilization = pynvml.nvmlDeviceGetUtilizationRates(handle)
+            unused_capacity += max(0.0, 100.0 - utilization.gpu)  # Clamp to avoid negative values
+
+        return unused_capacity / 100.0
+
+    except pynvml.NVMLError as e:
+        # Return 0.0 on any NVML error (no GPUs, driver issues, etc.)
+        return 0.0
+    finally:
+        try:
+            pynvml.nvmlShutdown()
+        except:
+            pass  # Safe cleanup even if initialization failed

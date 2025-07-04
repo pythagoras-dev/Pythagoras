@@ -10,7 +10,15 @@ from .function_processing import get_function_name_from_source
 from .._010_basic_portals.long_infoname import get_long_infoname
 from .function_processing import assert_ordinarity
 
-import pythagoras as pth
+_pythagoras_decorator_names = {
+    "ordinary"
+    , "storable"
+    , "logging"
+    , "safe"
+    , "autonomous"
+    , "protected"
+    , "pure"
+}
 
 def _get_normalized_function_source_impl(
         a_func: Callable | str
@@ -72,13 +80,13 @@ def _get_normalized_function_source_impl(
                 f"Function {a_func_name} can't have multiple decorators,"
                 + " only one decorator is allowed.")
 
-        all_decorators = pth.all_decorators
+        # all_decorators = pth.all_decorators
         # all_decorators = sys.modules['pythagoras'].all_decorators
 
         if drop_pth_decorators and len(decorator_list):
             decorator = decorator_list[0].func
             pth_dec_counter = 0
-            for candidate in all_decorators:
+            for candidate in _pythagoras_decorator_names:
                 try:
                     if decorator.id == candidate:
                         pth_dec_counter += 1

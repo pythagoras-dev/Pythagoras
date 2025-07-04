@@ -205,6 +205,8 @@ class StorableFn(OrdinaryFn):
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
         super()._first_visit_to_portal(portal)
         self._persist_initial_config_params(portal)
+        with portal:
+            _ = ValueAddr(self)
 
 
     def _persist_initial_config_params(self, portal:DataPortal) -> None:
@@ -217,11 +219,11 @@ class StorableFn(OrdinaryFn):
         return OrdinaryFn.portal.__get__(self)
 
 
-    @portal.setter
-    def portal(self, new_portal: DataPortal) -> None:
-        if not isinstance(new_portal, DataPortal):
-            raise TypeError("portal must be a DataPortal instance")
-        OrdinaryFn.portal.__set__(self, new_portal)
+    # @portal.setter
+    # def portal(self, new_portal: DataPortal) -> None:
+    #     if not isinstance(new_portal, DataPortal):
+    #         raise TypeError("portal must be a DataPortal instance")
+    #     OrdinaryFn.portal.__set__(self, new_portal)
 
 
     def _get_config_setting(self, key: SafeStrTuple, portal:DataPortal) -> Any:

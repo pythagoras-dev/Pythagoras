@@ -59,13 +59,17 @@ class KwArgs(dict):
         return unpacked_copy
 
 
-    def pack(self) -> PackedKwArgs:
+    def pack(self, store = True) -> PackedKwArgs:
         """ Replace values with their hash addresses."""
-        portal = get_active_portal()
         packed_copy = dict()
-        with portal:
-            for k,v in self.items():
-                packed_copy[k] = ValueAddr(v)
+        if store:
+            portal = get_active_portal()
+            with portal:
+                for k,v in self.items():
+                    packed_copy[k] = ValueAddr(v,store=True)
+        else:
+            for k, v in self.items():
+                packed_copy[k] = ValueAddr(v, store=False)
         packed_copy = PackedKwArgs(**packed_copy)
         return packed_copy
 

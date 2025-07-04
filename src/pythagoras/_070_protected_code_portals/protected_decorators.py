@@ -2,18 +2,19 @@
 
 from typing import Callable
 
-from .._060_autonomous_code_portals import autonomous, AutonomousFn
+from .validator_fn_classes import ValidatorFn
+from .._060_autonomous_code_portals import autonomous
 from .protected_portal_core_classes import ProtectedFn, ProtectedCodePortal
 from persidict import Joker, KEEP_CURRENT
 
 class protected(autonomous):
 
-    _pre_validators: list[AutonomousFn] | None
-    _post_validators: list[AutonomousFn] | None
+    _pre_validators: list[ValidatorFn] | None
+    _post_validators: list[ValidatorFn] | None
 
     def __init__(self
-                 , pre_validators: list[AutonomousFn] | None = None
-                 , post_validators: list[AutonomousFn] | None = None
+                 , pre_validators: list[ValidatorFn] | None = None
+                 , post_validators: list[ValidatorFn] | None = None
                  , fixed_kwargs: dict | None = None
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: ProtectedCodePortal | None = None

@@ -3,16 +3,16 @@ import time
 import multiprocessing as mp
 
 import psutil
-import pytest
+import pynvml
 
-
-from pythagoras._090_swarming_portals.system_utils import (
+from pythagoras._070_protected_code_portals.system_utils import (
     get_available_ram_mb,
-    get_available_cpu_cores,
+    get_unused_cpu_cores,
     process_is_active,
     get_process_start_time,
     get_current_process_id,
     get_current_process_start_time,
+    get_unused_nvidia_gpus,
 )
 
 
@@ -29,7 +29,7 @@ def test_available_ram_is_int_and_within_bounds():
 
 
 def test_available_cpu_cores_range_and_type():
-    free_cores = get_available_cpu_cores()
+    free_cores = get_unused_cpu_cores()
     logical_cnt = psutil.cpu_count(logical=True) or 1
     assert isinstance(free_cores, (float, int))
     assert 0.0 <= free_cores <= float(logical_cnt)
@@ -114,3 +114,24 @@ def test_child_start_time_close_to_now():
 
     # Start-time recorded between the moments just before and after .start()
     assert t0 - 2 <= ts <= t1 + 2        # generous ±2 s guard
+
+
+def test_nvidia_gpu_value_is_within_bounds():
+    """
+    0 ≤ unused ≤ #GPUs because each GPU can contribute at most 1.0.
+    """
+    gpu_count = None
+    try:
+        pynvml.nvmlInit()
+        try:
+            gpu_count = pynvml.nvmlDeviceGetCount()
+        finally:
+            pynvml.nvmlShutdown()
+    except:
+        pass
+
+    unused = get_unused_nvidia_gpus()
+    if gpu_count is None:
+        assert unused == 0
+    else:
+        assert 0.0 <= unused <= gpu_count

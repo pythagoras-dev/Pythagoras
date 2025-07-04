@@ -27,7 +27,7 @@ classifiers = [
 keywords = ["cloud", "ML", "AI", "serverless", "distributed", "parallel", "machine-learning", "deep-learning", "pythagoras"]
 dependencies = [
     "parameterizable",
-    "persidict",
+    "persidict==0.32.2",
     "lz4",
     "joblib",
     "scikit-learn",
@@ -40,6 +40,7 @@ dependencies = [
     "boto3",
     "moto",
     "uv",
+    "nvidia-ml-py",
 ]
 
 [project.urls]

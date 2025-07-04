@@ -1,7 +1,8 @@
 import ast
-from typing import List
+from typing import List, Set
 
-def check_if_fn_accepts_args(required_arg_names: List[str], fn: str) -> bool:
+
+def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) -> bool:
     """
     Analyzes the source code (string) `fn` of a Python function and determines
     if it can accept the arguments named in `required_arg_names`.

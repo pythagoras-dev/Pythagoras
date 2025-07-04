@@ -3,8 +3,10 @@ from __future__ import annotations
 import builtins
 from typing import Callable, Any
 
+from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
-
+from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
+from .. import DataPortal
 from .._040_logging_code_portals import KwArgs
 
 from .._060_autonomous_code_portals.names_usage_analyzer import (
@@ -31,7 +33,8 @@ class AutonomousCodePortal(SafeCodePortal):
 
 class AutonomousFn(SafeFn):
 
-    _fixed_kwargs: KwArgs | None
+    _fixed_kwargs_cached: KwArgs | None
+    _fixed_kwargs_packed: KwArgs | None
 
     def __init__(self, fn: Callable|str|SafeFn
                  , fixed_kwargs: dict|None = None
@@ -42,15 +45,13 @@ class AutonomousFn(SafeFn):
             , portal = portal
             , excessive_logging = excessive_logging)
 
-        if isinstance(fn, AutonomousFn):
-            assert fixed_kwargs is None
-            assert isinstance(self._fixed_kwargs, KwArgs)
-            return
-
         fn_name = self.name
 
         fixed_kwargs = dict() if fixed_kwargs is None else fixed_kwargs
-        self._fixed_kwargs = KwArgs(fixed_kwargs)
+        self._fixed_kwargs_cached = KwArgs(**fixed_kwargs)
+        self._fixed_kwargs_packed = self._fixed_kwargs_cached.pack(store=False)
+        if hasattr(fn, "_fixed_kwargs_packed"):
+            new_fixed_kwargs_packed =  KwArgs({**fn._fixed_kwargs_packed,**fn._fixed_kwargs_packed})
 
         analyzer = analyze_names_in_function(self.source_code)
         normalized_source = analyzer["normalized_source"]
@@ -58,7 +59,7 @@ class AutonomousFn(SafeFn):
         assert self.source_code == normalized_source
 
         nonlocal_names = analyzer.names.explicitly_nonlocal_unbound_deep
-        all_decorators = pth.all_decorators
+        all_decorators = _pythagoras_decorator_names
         # all_decorators = sys.modules["pythagoras"].all_decorators
         nonlocal_names -= set(all_decorators) #????????????
 
@@ -71,7 +72,8 @@ class AutonomousFn(SafeFn):
 
         import_required = analyzer.names.explicitly_global_unbound_deep
         import_required |= analyzer.names.unclassified_deep
-        import_required -= set(pth.primary_decorators)
+        # import_required -= set(pth.primary_decorators)
+        import_required -= {"pure", "autonomous"}
         builtin_names = set(dir(builtins))
         import_required -= builtin_names
         pth_names = set(self._available_names())
@@ -84,40 +86,61 @@ class AutonomousFn(SafeFn):
             + f" without importing them inside the function body")
 
 
+    @property
+    def fixed_kwargs(self) -> KwArgs:
+        if not hasattr(self, "_fixed_kwargs_cached"):
+            self._fixed_kwargs_cached = self._fixed_kwargs_packed.unpack()
+        return self._fixed_kwargs_cached
+
+
     def execute(self, **kwargs) -> Any:
         with self.portal:
-            overlapping_keys = set(kwargs.keys()) & set(self._fixed_kwargs.keys())
+            overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
             assert len(overlapping_keys) == 0
-            kwargs.update(self._fixed_kwargs)
-            return SafeFn.execute(self, **kwargs)
+            kwargs.update(self.fixed_kwargs)
+            return super().execute(**kwargs)
 
 
     def fix_kwargs(self, **kwargs) -> AutonomousFn:
-        overlapping_keys = set(kwargs.keys()) & set(self._fixed_kwargs.keys())
+        overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
         assert len(overlapping_keys) == 0
-        new_fixed_kwargs = self._fixed_kwargs.copy()
+        new_fixed_kwargs = self.fixed_kwargs.copy()
         new_fixed_kwargs.update(kwargs)
         new_fn = AutonomousFn(self.source_code
-                              , fixed_kwargs=new_fixed_kwargs
-                              , portal=self._linked_portal)
+              , fixed_kwargs=new_fixed_kwargs
+              , portal=self._linked_portal)
         return new_fn
+
+
+    def _first_visit_to_portal(self, portal: DataPortal) -> None:
+        super()._first_visit_to_portal(portal)
+        if hasattr(self,"_fixed_kwargs_cached"):
+            with portal:
+                _ = self._fixed_kwargs_cached.pack()
 
 
     def __getstate__(self):
         """This method is called when the object is pickled."""
         state = super().__getstate__()
-        state["_fixed_kwargs"] = self._fixed_kwargs
+        state["fixed_kwargs_packed"] = self._fixed_kwargs_packed
         return state
+
 
     def __setstate__(self, state):
         """This method is called when the object is unpickled."""
         super().__setstate__(state)
-        self._fixed_kwargs = state["_fixed_kwargs"]
+        self._fixed_kwargs_packed = state["fixed_kwargs_packed"]
 
 
     @property
     def portal(self) -> AutonomousCodePortal:
         return SafeFn.portal.__get__(self)
+
+
+    def _invalidate_cache(self):
+        super()._invalidate_cache()
+        if hasattr(self, "_fixed_kwargs_cached"):
+            del self._fixed_kwargs_cached
 
 
     # @portal.setter

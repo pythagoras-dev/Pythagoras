@@ -21,19 +21,19 @@ from ._100_top_level_API import *
 from ._800_signatures_and_converters import *
 
 
-primary_decorators = {d.__name__:d for d in [
-    autonomous
-    , pure
-    ]}
-
-all_decorators = {d.__name__:d for d in [
-    ordinary
-    , storable
-    , logging
-    , safe
-    , autonomous
-    , protected
-    , pure
-]}
+# primary_decorators = {d.__name__:d for d in [
+#     autonomous
+#     , pure
+#     ]}
+#
+# all_decorators = {d.__name__:d for d in [
+#     ordinary
+#     , storable
+#     , logging
+#     , safe
+#     , autonomous
+#     , protected
+#     , pure
+# ]}
 
 
