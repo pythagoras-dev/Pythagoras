@@ -1,3 +1,4 @@
+from .._070_protected_code_portals import SimplePreValidatorFn
 from .._060_autonomous_code_portals import autonomous
 from .OK_const import OK, OKClass
 from .system_utils import *
@@ -44,7 +45,7 @@ def at_least_X_G_RAM_free_check(x:int)->bool|OKClass:
 def unused_ram(Gb:int):
     assert isinstance(Gb, int)
     assert Gb > 0
-    return at_least_X_G_RAM_free_check.fix_kwargs(x=Gb)
+    return SimplePreValidatorFn(at_least_X_G_RAM_free_check.fix_kwargs(x=Gb))
 
 at_least_1_G_RAM_free = unused_ram(Gb=1)
 at_least_2_G_RAM_free = unused_ram(Gb=2)
