@@ -35,7 +35,7 @@ from .system_utils import *
 
 @autonomous()
 def at_least_X_G_RAM_free_check(x:int)->bool|OKClass:
-    ram = pth.get_available_ram_mb()/1024
+    ram = pth.get_unused_ram_mb() / 1024
     if ram >= x:
         return pth.OK
     else:

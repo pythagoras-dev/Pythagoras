@@ -2,7 +2,7 @@ import os
 import psutil
 import pynvml
 
-def get_available_ram_mb() -> int:
+def get_unused_ram_mb() -> int:
     """Returns the amount of available RAM in MB. """
     free_ram = psutil.virtual_memory().available / (1024 * 1024)
     return int(free_ram)

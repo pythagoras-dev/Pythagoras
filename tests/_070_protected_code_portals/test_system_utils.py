@@ -6,7 +6,7 @@ import psutil
 import pynvml
 
 from pythagoras._070_protected_code_portals.system_utils import (
-    get_available_ram_mb,
+    get_unused_ram_mb,
     get_unused_cpu_cores,
     process_is_active,
     get_process_start_time,
@@ -22,7 +22,7 @@ from pythagoras._070_protected_code_portals.system_utils import (
 # ---------------------------------------------------------------------------
 
 def test_available_ram_is_int_and_within_bounds():
-    avail = get_available_ram_mb()
+    avail = get_unused_ram_mb()
     total = psutil.virtual_memory().total // (1024 * 1024)
     assert isinstance(avail, int)
     assert 0 <= avail <= total
