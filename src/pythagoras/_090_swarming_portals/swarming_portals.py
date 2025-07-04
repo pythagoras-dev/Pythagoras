@@ -9,7 +9,8 @@ from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .._010_basic_portals import get_all_known_portals
-from .._070_protected_code_portals.system_utils import *
+from .._070_protected_code_portals.system_utils import get_unused_ram_mb, get_unused_cpu_cores, process_is_active, \
+    get_process_start_time, get_current_process_id, get_current_process_start_time
 from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from persidict import OverlappingMultiDict
@@ -130,9 +131,9 @@ class SwarmingPortal(PureCodePortal):
             n = self._get_config_setting("max_n_workers")
             if n in (None, KEEP_CURRENT):
                 n = 10
-            n = min(n, get_unused_cpu_cores())
+            n = min(n, get_unused_cpu_cores() + 2)
             n = min(n, get_unused_ram_mb() / 500)
-            n = int(n)+1
+            n = int(n)
             self._max_n_workers_cache = n
 
         return self._max_n_workers_cache

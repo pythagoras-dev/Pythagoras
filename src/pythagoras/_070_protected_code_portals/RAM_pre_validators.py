@@ -41,18 +41,18 @@ def at_least_X_G_RAM_free_check(x:int)->bool|OKClass:
     else:
         return False
 
-def at_least_X_G_RAM_free(x:int):
-    assert isinstance(x, int)
-    assert x > 0
-    return at_least_X_G_RAM_free_check.fix_kwargs(x=x)
+def unused_ram(Gb:int):
+    assert isinstance(Gb, int)
+    assert Gb > 0
+    return at_least_X_G_RAM_free_check.fix_kwargs(x=Gb)
 
-at_least_1_G_RAM_free = at_least_X_G_RAM_free(x=1)
-at_least_2_G_RAM_free = at_least_X_G_RAM_free(x=2)
-at_least_4_G_RAM_free = at_least_X_G_RAM_free(x=4)
-at_least_8_G_RAM_free = at_least_X_G_RAM_free(x=8)
-at_least_16_G_RAM_free = at_least_X_G_RAM_free(x=16)
-at_least_32_G_RAM_free = at_least_X_G_RAM_free(x=32)
-at_least_64_G_RAM_free = at_least_X_G_RAM_free(x=64)
-at_least_128_G_RAM_free = at_least_X_G_RAM_free(x=128)
-at_least_256_G_RAM_free = at_least_X_G_RAM_free(x=256)
-at_least_512_G_RAM_free = at_least_X_G_RAM_free(x=512)
+at_least_1_G_RAM_free = unused_ram(Gb=1)
+at_least_2_G_RAM_free = unused_ram(Gb=2)
+at_least_4_G_RAM_free = unused_ram(Gb=4)
+at_least_8_G_RAM_free = unused_ram(Gb=8)
+at_least_16_G_RAM_free = unused_ram(Gb=16)
+at_least_32_G_RAM_free = unused_ram(Gb=32)
+at_least_64_G_RAM_free = unused_ram(Gb=64)
+at_least_128_G_RAM_free = unused_ram(Gb=128)
+at_least_256_G_RAM_free = unused_ram(Gb=256)
+at_least_512_G_RAM_free = unused_ram(Gb=512)
