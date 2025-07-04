@@ -40,11 +40,16 @@ class LoggingFn(StorableFn):
             , excessive_logging: bool|Joker = KEEP_CURRENT
             , portal: LoggingCodePortal | None = None
             ):
+        super().__init__(fn=fn, portal=portal)
+
         if not isinstance(excessive_logging, (bool, Joker)):
             raise TypeError(
                 "excessive_logging must be a boolean or Joker, "
                 f"got {type(excessive_logging)}")
-        StorableFn.__init__(self, fn=fn, portal=portal)
+
+        if excessive_logging is KEEP_CURRENT and isinstance(fn, LoggingFn):
+            excessive_logging = fn._ephemeral_config_params_at_init["excessive_logging"]
+
         self._ephemeral_config_params_at_init[
             "excessive_logging"] = excessive_logging
 
@@ -69,12 +74,6 @@ class LoggingFn(StorableFn):
     def portal(self) -> LoggingCodePortal:
         return StorableFn.portal.__get__(self)
 
-
-    # @portal.setter
-    # def portal(self, new_portal: LoggingCodePortal) -> None:
-    #     if not isinstance(new_portal, LoggingCodePortal):
-    #         raise TypeError("portal must be a LoggingCodePortal instance")
-    #     StorableFn.portal.__set__(self, new_portal)
 
 
 class LoggingFnCallSignature:

@@ -48,16 +48,17 @@ class ProtectedFn(AutonomousFn):
                  , excessive_logging: bool|None = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: ProtectedCodePortal | None = None):
-        AutonomousFn.__init__(self
-            ,fn=fn
+        super().__init__(fn=fn
             , portal = portal
             , fixed_kwargs=fixed_kwargs
             , excessive_logging = excessive_logging)
 
-        if isinstance(fn, ProtectedFn): #TODO: check the logic
-            assert pre_validators is None
-            assert post_validators is None
-            return
+        pre_validators = self._normalize_validators(pre_validators, PreValidatorFn)
+        post_validators = self._normalize_validators(post_validators, PostValidatorFn)
+
+        if isinstance(fn, ProtectedFn):
+            pre_validators += fn.pre_validators
+            post_validators += fn.post_validators
 
         self._pre_validators_cached = self._normalize_validators(pre_validators, PreValidatorFn)
         self._post_validators_cached = self._normalize_validators(post_validators, PostValidatorFn)
@@ -189,6 +190,8 @@ class ProtectedFn(AutonomousFn):
     def _invalidate_cache(self):
         super()._invalidate_cache()
         if hasattr(self, "_post_validators_cached"):
+            assert hasattr(self, "_post_validators_addrs"), "Premature cache invalidation: _post_validators_addrs is missing."
             del self._post_validators_cached
         if hasattr(self, "_pre_validators_cached"):
+            assert hasattr(self, "_pre_validators_addrs"), "Premature cache invalidation: _pre_validators_addrs is missing."
             del self._pre_validators_cached

@@ -93,8 +93,3 @@ class PostValidatorFn(ValidatorFn):
     def get_allowed_kwargs_names(cls) -> set[str]:
         """Post-validators use info about the function, its input arguments and returned value."""
         return {"packed_kwargs", "fn_addr", "result" }
-
-
-def convert_autonomous_fn_to_validator_fn(fn:AutonomousFn) -> ValidatorFn:
-    assert type(fn) is AutonomousFn
-    return fn

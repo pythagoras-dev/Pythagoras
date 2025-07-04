@@ -3,7 +3,6 @@ from __future__ import annotations
 import builtins
 from typing import Callable, Any
 
-from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
 from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
 from .. import DataPortal
@@ -40,18 +39,22 @@ class AutonomousFn(SafeFn):
                  , fixed_kwargs: dict|None = None
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: AutonomousCodePortal|None = None):
-        SafeFn.__init__(self
-            ,fn=fn
+        super().__init__(fn=fn
             , portal = portal
             , excessive_logging = excessive_logging)
 
-        fn_name = self.name
-
         fixed_kwargs = dict() if fixed_kwargs is None else fixed_kwargs
-        self._fixed_kwargs_cached = KwArgs(**fixed_kwargs)
-        self._fixed_kwargs_packed = self._fixed_kwargs_cached.pack(store=False)
-        if hasattr(fn, "_fixed_kwargs_packed"):
-            new_fixed_kwargs_packed =  KwArgs({**fn._fixed_kwargs_packed,**fn._fixed_kwargs_packed})
+        fixed_kwargs = KwArgs(**fixed_kwargs)
+        fixed_kwargs_packed = fixed_kwargs.pack(store=False)
+
+        if isinstance(fn, AutonomousFn):
+            self._fixed_kwargs_packed.update(fixed_kwargs_packed)
+            self._fixed_kwargs_cached = KwArgs(**{**fn.fixed_kwargs, **fixed_kwargs})
+        else:
+            self._fixed_kwargs_cached = fixed_kwargs
+            self._fixed_kwargs_packed = fixed_kwargs_packed
+
+        fn_name = self.name
 
         analyzer = analyze_names_in_function(self.source_code)
         normalized_source = analyzer["normalized_source"]
@@ -89,7 +92,8 @@ class AutonomousFn(SafeFn):
     @property
     def fixed_kwargs(self) -> KwArgs:
         if not hasattr(self, "_fixed_kwargs_cached"):
-            self._fixed_kwargs_cached = self._fixed_kwargs_packed.unpack()
+            with self.portal:
+                self._fixed_kwargs_cached = self._fixed_kwargs_packed.unpack()
         return self._fixed_kwargs_cached
 
 
@@ -104,11 +108,8 @@ class AutonomousFn(SafeFn):
     def fix_kwargs(self, **kwargs) -> AutonomousFn:
         overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
         assert len(overlapping_keys) == 0
-        new_fixed_kwargs = self.fixed_kwargs.copy()
-        new_fixed_kwargs.update(kwargs)
-        new_fn = AutonomousFn(self.source_code
-              , fixed_kwargs=new_fixed_kwargs
-              , portal=self._linked_portal)
+        new_fixed_kwargs = {**self.fixed_kwargs,**kwargs}
+        new_fn = type(self)(fn=self, fixed_kwargs=new_fixed_kwargs)
         return new_fn
 
 
@@ -140,11 +141,5 @@ class AutonomousFn(SafeFn):
     def _invalidate_cache(self):
         super()._invalidate_cache()
         if hasattr(self, "_fixed_kwargs_cached"):
+            assert hasattr(self, "_fixed_kwargs_packed"), "Premature cache invalidation: fixed_kwargs_packed is missing."
             del self._fixed_kwargs_cached
-
-
-    # @portal.setter
-    # def portal(self, new_portal: AutonomousCodePortal) -> None:
-    #     if not isinstance(new_portal, AutonomousCodePortal):
-    #         raise TypeError("portal must be a AutonomousCodePortal instance")
-    #     SafeFn.portal.__set__(self, new_portal)

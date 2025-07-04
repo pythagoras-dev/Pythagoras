@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Callable, Any
 
 import pandas as pd
@@ -111,7 +112,9 @@ class OrdinaryFn(PortalAwareClass):
                  ):
         PortalAwareClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
-            self.__setstate__(fn.__getstate__())
+            self.__setstate__(deepcopy(fn.__getstate__()))
+            if self._linked_portal_at_init is None:
+                self._linked_portal_at_init = fn._linked_portal_at_init
             #TODO: check this logic
         else:
             if not (callable(fn) or isinstance(fn, str)):
