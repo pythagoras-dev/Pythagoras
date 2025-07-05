@@ -22,10 +22,10 @@ This is done to address limitations of some file systems
 and to optimize work sith cloud storage (e.g. S3).
 
 Typically, a DataPortal is implemented as
-a shared directory on a file system (e.g. Amazon EFS),
-or as a shared bucket in a cloud storage (e.g. Amazon S3).
-In this case, a ValueAddr becomes a part of file path
-or a URL (e.g. a hash serves as a filename,
+a shared directory on a file system (e.g., Amazon EFS),
+or as a shared bucket in a cloud storage (e.g., Amazon S3).
+In this case, a ValueAddr becomes a part of a file path
+or a URL (e.g., a hash serves as a filename,
 and a prefix is a folder name).
 """
 

@@ -419,7 +419,7 @@ class ValueAddr(HashAddr):
     ValueAddr is a universal global identifier of any (constant) value.
 
     Using only the value's hash should (theoretically) be enough to
-    uniquely address all possible data objects that the humanity will create
+    uniquely address all possible data objects that humanity will create
     in the foreseeable future (see, for example, ipfs.io).
 
     However, an address also includes a descriptor with an optional suffix.
@@ -437,8 +437,8 @@ class ValueAddr(HashAddr):
             descriptor = data_value_addr.descriptor
             hash_signature = data_value_addr.hash_signature
             HashAddr.__init__(self
-                              , descriptor=descriptor
-                              , hash_signature=hash_signature)
+                , descriptor=descriptor
+                , hash_signature=hash_signature)
             return
 
         assert not isinstance(data, HashAddr), (
@@ -448,8 +448,8 @@ class ValueAddr(HashAddr):
         descriptor = self._build_descriptor(data)
         hash_signature = self._build_hash_signature(data)
         HashAddr.__init__(self
-                          , descriptor=descriptor
-                          , hash_signature=hash_signature)
+            , descriptor=descriptor
+            , hash_signature=hash_signature)
 
         self._value_cache = data
 
@@ -584,7 +584,10 @@ class ValueAddr(HashAddr):
                      ) -> HashAddr:
         """(Re)construct address from text representations of descriptor and hash"""
 
-        address = super().from_strings(descriptor=descriptor, hash_signature=hash_signature, assert_readiness=False)
+        address = super().from_strings(
+            descriptor=descriptor
+            , hash_signature=hash_signature
+            , assert_readiness=False)
         address._containing_portals = set()
         if assert_readiness:
             if not address.ready:
