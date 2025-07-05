@@ -1,6 +1,13 @@
+from typing import Any
+
 from .data_portal_core_classes import HashAddr
 
-def ready(obj, seen=None):
+def ready(obj) -> bool:
+    """Return True if all objects in the data structure are ready."""
+    return _ready(obj)
+
+def _ready(obj, seen=None):
+    """Return True if all objects in the data structure are ready."""
     if seen is None:
         seen = set()
 
@@ -12,14 +19,20 @@ def ready(obj, seen=None):
     if isinstance(obj, HashAddr):
         return obj.ready
     elif isinstance(obj, (list,tuple)):
-        return all(ready(item, seen) for item in obj)
+        return all(_ready(item, seen) for item in obj)
     elif isinstance(obj, dict):
-        return all(ready(value, seen) for key, value in obj.items())
+        return all(_ready(value, seen) for key, value in obj.items())
     else:
         return True
 
 
-def get(obj, seen=None):
+def get(obj:Any) -> Any:
+    """Return copy of data structure with addresses replaced with objects."""
+    return _get(obj)
+
+
+def _get(obj:Any, seen=None)->Any:
+    """Return copy of data structure with addresses replaced with objects."""
     if seen is None:
         seen = dict()
 
@@ -34,12 +47,12 @@ def get(obj, seen=None):
         seen[id(obj)] = placeholder
 
         if isinstance(obj, list):
-            result = [get(item, seen) for item in obj]
+            result = [_get(item, seen) for item in obj]
             # Update the placeholder with the actual values
             placeholder.extend(result)
             return placeholder
         elif isinstance(obj, dict):
-            result = {key: get(value, seen) for key, value in obj.items()}
+            result = {key: _get(value, seen) for key, value in obj.items()}
             # Update the placeholder with the actual values
             placeholder.update(result)
             return placeholder
@@ -47,7 +60,7 @@ def get(obj, seen=None):
     if isinstance(obj, HashAddr):
         result = obj.get()
     elif isinstance(obj, tuple):
-        result = tuple(get(item, seen) for item in obj)
+        result = tuple(_get(item, seen) for item in obj)
     else:
         result = obj
 
