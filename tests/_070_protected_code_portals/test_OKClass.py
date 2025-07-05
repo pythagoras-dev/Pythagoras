@@ -1,8 +1,8 @@
-from pythagoras import OKClass, OK
+from pythagoras import ValidationStatusClass, VALIDATION_SUCCESSFUL
 
 def test_OKClass():
     """Test if OKClass is a singleton.
     """
-    assert OK is OKClass()
-    OK_1 = OKClass()
-    assert OK is OK_1
+    assert VALIDATION_SUCCESSFUL is ValidationStatusClass()
+    OK_1 = ValidationStatusClass()
+    assert VALIDATION_SUCCESSFUL is OK_1

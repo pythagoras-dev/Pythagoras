@@ -10,7 +10,7 @@ def test_basic_addr(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir):
         @pth.autonomous()
         def do_nothing(**kwargs):
-            return pth.OK
+            return pth.VALIDATION_SUCCESSFUL
 
         @pth.pure(pre_validators= [do_nothing])
         def do_nothing_pure():
@@ -32,11 +32,11 @@ def test_laternative_validators(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir):
         @pth.autonomous()
         def do_something_1(**kwargs):
-            return pth.OK
+            return pth.VALIDATION_SUCCESSFUL
 
         @pth.autonomous()
         def do_something_2(**kwargs):
-            return pth.OK
+            return pth.VALIDATION_SUCCESSFUL
 
 
         def my_beloved_function():

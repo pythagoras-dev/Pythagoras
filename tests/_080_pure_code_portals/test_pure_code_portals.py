@@ -22,7 +22,7 @@ def do_nothing(x: int) -> int:
     return x
 
 def always_OK(**kwargs):
-    return pth.OK
+    return pth.VALIDATION_SUCCESSFUL
 
 
 def test_pure_portals_smoke_test(tmpdir):

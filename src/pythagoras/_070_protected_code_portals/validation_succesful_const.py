@@ -1,4 +1,4 @@
-class OKClass:
+class ValidationStatusClass:
     _instance = None
 
     def __new__(cls):
@@ -6,4 +6,4 @@ class OKClass:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-OK = OKClass()
+VALIDATION_SUCCESSFUL = ValidationStatusClass()

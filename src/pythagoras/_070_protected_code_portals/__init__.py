@@ -1,4 +1,4 @@
-from .OK_const import *
+from .validation_succesful_const import *
 from .protected_portal_core_classes import *
 from .protected_decorators import *
 from .system_utils import *

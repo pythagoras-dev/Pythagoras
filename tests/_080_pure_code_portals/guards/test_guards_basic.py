@@ -10,7 +10,7 @@ def test_basic_execution(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir):
         @pth.autonomous()
         def do_nothing(**kwargs):
-            return pth.OK
+            return pth.VALIDATION_SUCCESSFUL
 
         @pth.pure(pre_validators= [do_nothing])
         def do_nothing_pure():

@@ -12,7 +12,7 @@ from .._040_logging_code_portals import KwArgs
 from .._030_data_portals import ValueAddr
 from parameterizable import sort_dict_by_keys
 from .list_flattener import flatten_list
-from .OK_const import OK
+from .validation_succesful_const import VALIDATION_SUCCESSFUL
 
 
 from .._060_autonomous_code_portals import (
@@ -120,7 +120,7 @@ class ProtectedFn(AutonomousFn):
                     pre_validation_result = pre_validator()
                 else:
                     pre_validation_result = pre_validator(packed_kwargs=kw_args, fn_addr = self.addr)
-                if pre_validation_result is not OK:
+                if pre_validation_result is not VALIDATION_SUCCESSFUL:
                     return False
             return True
 
@@ -132,7 +132,7 @@ class ProtectedFn(AutonomousFn):
             portal.entropy_infuser.shuffle(post_validators)
             for post_validator in post_validators:
                 if post_validator(packed_kwargs=kw_args, fn_addr = self.addr
-                        , result=result) is not OK:
+                        , result=result) is not VALIDATION_SUCCESSFUL:
                     return False
             return True
 

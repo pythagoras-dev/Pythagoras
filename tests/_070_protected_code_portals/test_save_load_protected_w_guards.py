@@ -4,7 +4,7 @@ from pythagoras._010_basic_portals.portal_tester import _PortalTester
 from pythagoras._070_protected_code_portals import *
 
 def dummy_good_guard(packed_kwargs, fn_addr):
-    return pth.OK
+    return pth.VALIDATION_SUCCESSFUL
 
 def dummy_bad_guard(packed_kwargs, fn_addr):
     return True
