@@ -1,12 +1,12 @@
 """Distributed serverless compute at a global scale.
 
-Pythagoras is a framework for distributed compute in Python.
+Pythagoras is a framework for distributed computations in Python.
 
 It offers 3 main advantages:
 
 - Global scale: parallelize your algorithms to scale to millions of nodes.
 - Low maintenance: no need to manage servers and infrastructure,
-we replace expensive compute with cheap storage.
+Pythagoras replaces expensive compute with cheap storage.
 - High performance: 'compute once, reuse forever' strategy
 significanty accelerates long-running workflows.
 
