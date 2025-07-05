@@ -1,9 +1,17 @@
-"""Pythagoras aims to democratize access to distributed serverless compute.
+"""Distributed serverless compute at a global scale.
 
-We make it simple and inexpensive to create, deploy and run
-massively parallel algorithms from within local Python scripts and notebooks.
-Pythagoras makes data scientists' lives easier, while allowing them to
-solve more complex problems in a shorter time with smaller budgets.
+Pythagoras is a framework for distributed compute in Python.
+
+It offers 3 main advantages:
+
+- Global scale: parallelize your algorithms to scale to millions of nodes.
+- Low maintenance: no need to manage servers and infrastructure,
+we replace expensive compute with cheap storage.
+- High performance: 'compute once, reuse forever' strategy
+significanty accelerates long-running workflows.
+
+Pythagoras is able to affer these benefits as it's the first framework
+to fully implement the Functional Programming 2.0 paradigm.
 """
 
 
@@ -19,21 +27,5 @@ from ._080_pure_code_portals import *
 from ._090_swarming_portals import *
 from ._100_top_level_API import *
 from ._800_signatures_and_converters import *
-
-
-# primary_decorators = {d.__name__:d for d in [
-#     autonomous
-#     , pure
-#     ]}
-#
-# all_decorators = {d.__name__:d for d in [
-#     ordinary
-#     , storable
-#     , logging
-#     , safe
-#     , autonomous
-#     , protected
-#     , pure
-# ]}
 
 

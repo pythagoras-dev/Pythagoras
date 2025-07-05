@@ -123,7 +123,7 @@ def get_active_portal() -> BasicPortal:
         return _active_portals_stack[-1]
 
     if _most_recently_created_portal is None:
-        sys.modules["pythagoras"].instantiate_default_local_portal()
+        sys.modules["pythagoras"]._instantiate_default_local_portal()
 
     _active_portals_stack.append(_most_recently_created_portal)
     _active_portals_counters_stack.append(1)
