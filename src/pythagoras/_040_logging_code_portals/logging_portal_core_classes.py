@@ -75,7 +75,6 @@ class LoggingFn(StorableFn):
         return StorableFn.portal.__get__(self)
 
 
-
 class LoggingFnCallSignature:
     """A signature of a call to a (logging) function.
 
@@ -389,7 +388,6 @@ class LoggingFnExecutionRecord(NotPicklable):
                 f"{self.call_signature.fn_name} execution results.")
 
 
-
 class LoggingFnExecutionFrame(NotPicklable):
     call_stack: list[LoggingFnExecutionFrame] = []
 
@@ -512,7 +510,7 @@ class LoggingCodePortal(DataPortal):
     from which the event or exception is raised.
 
     The class provides two dictionaries, `_crash_history` and `event_log`,
-    to store the exceptions history and event log respectively.
+    to store the exception history and event log respectively.
 
     Static methods `log_exception` and `log_event` are provided to log
     exceptions and events. These methods are designed to be

@@ -7,7 +7,7 @@ from .safe_portal_core_classes import SafeFn, SafeCodePortal
 
 
 class safe(logging):
-    """A decorator that converts a Python function into an SafeFn object.
+    """A decorator that converts a Python function into a SafeFn object.
     """
 
     def __init__(self

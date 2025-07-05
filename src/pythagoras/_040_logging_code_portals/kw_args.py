@@ -7,7 +7,7 @@ from parameterizable import sort_dict_by_keys
 class KwArgs(dict):
     """ A class that encapsulates keyword arguments for a function call.
 
-    It allows to "normalize" the dictionary by sorting the keys
+    It allows "normalizing" the dictionary by sorting the keys
     and replacing values with their hash addresses
     in order to always get the same hash values
     for the same lists of arguments.
