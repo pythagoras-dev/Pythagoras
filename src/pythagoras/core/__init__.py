@@ -3,4 +3,4 @@ from .._060_autonomous_code_portals import autonomous
 from .._080_pure_code_portals import pure
 from .._090_swarming_portals import SwarmingPortal
 from .._100_top_level_API import get_portal
-from .._070_protected_code_portals import unused_ram
+from .._070_protected_code_portals import unused_ram, unused_cpu, installed_packages
