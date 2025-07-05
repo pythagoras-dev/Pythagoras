@@ -14,7 +14,7 @@ class NamesUsedInFunction:
         self.accessible = set() # all names, currently accessable within the function
 
 class NamesUsageAnalyzer(ast.NodeVisitor):
-    """Collect data needed to analyze function autonomy.
+    """Collect data needed to analyze function autonomicity.
 
     This class is a visitor of an AST (Abstract Syntax Tree) that collects data
     needed to analyze function autonomy.

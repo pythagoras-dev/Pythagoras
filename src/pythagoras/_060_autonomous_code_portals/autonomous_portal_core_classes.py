@@ -5,7 +5,7 @@ from typing import Callable, Any
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
-from .. import DataPortal
+from .._030_data_portals import DataPortal
 from .._040_logging_code_portals import KwArgs
 
 from .._060_autonomous_code_portals.names_usage_analyzer import (
@@ -13,9 +13,6 @@ from .._060_autonomous_code_portals.names_usage_analyzer import (
 
 from .._050_safe_code_portals.safe_portal_core_classes import (
     SafeFn, SafeCodePortal)
-
-import pythagoras as pth
-
 
 class AutonomousCodePortal(SafeCodePortal):
     
@@ -106,6 +103,14 @@ class AutonomousFn(SafeFn):
 
 
     def fix_kwargs(self, **kwargs) -> AutonomousFn:
+        """Create a new function by pre-filling some arguments.
+
+        This is called a partial application in functional programming
+        It allows creating specialized functions from general ones by
+        transforming a function with multiple parameters
+        into another function with fewer parameters by fixing some arguments.
+        """
+
         overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
         assert len(overlapping_keys) == 0
         new_fixed_kwargs = {**self.fixed_kwargs,**kwargs}
@@ -147,5 +152,6 @@ class AutonomousFn(SafeFn):
         """
         super()._invalidate_cache()
         if hasattr(self, "_fixed_kwargs_cached"):
-            assert hasattr(self, "_fixed_kwargs_packed"), "Premature cache invalidation: fixed_kwargs_packed is missing."
+            assert (hasattr(self, "_fixed_kwargs_packed")
+                , "Premature cache invalidation: fixed_kwargs_packed is missing.")
             del self._fixed_kwargs_cached

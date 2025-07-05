@@ -15,7 +15,7 @@ from .._010_basic_portals.basic_portal_core_classes import (
 
 
 def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
-    """Return function's source code in a 'canonical' form.
+    """Return a function's source code in a 'canonical' form.
 
     Remove all comments, docstrings and empty lines;
     standardize code formatting based on PEP 8.

@@ -1,33 +1,39 @@
 """Support for work with autonomous functions.
 
-In essence, an autonomous function contains self-sufficient code
-that does not depend on external imports or definitions.
+In essence, an 'autonomous' function contains self-sufficient code
+that does not depend on external imports or definitions. All required
+imports should be done inside the function body.
+Only ordinary functions can be autonomous.
 
 Autonomous functions are always allowed to use the built-in objects
 (functions, types, variables), as well as global objects,
 explicitly imported inside the function body. An autonomous function
-may be allowed to use other autonomous functions, which are created or imported
-outside the autonomous function, provided that they belong to the same island.
+is allowed to use other autonomous functions if they are passed as
+input arguments to the function.
 
 Autonomous functions are not allowed to:
+
     * use global objects, imported or defined outside the function body
-      (except built-in objects and, possibly,
-      other autonomous functions from the same island);
+      (except built-in objects);
     * use yield (yield from) statements;
     * use nonlocal variables, referencing the outside objects.
 
-If an autonomous function is allowed to use other autonomous functions,
-it is called "loosely autonomous function". Otherwise, it is called
-"strictly autonomous function".
-
 Autonomous functions can have nested functions and classes.
 
-Only ordinary functions can be autonomous. Asynchronous functions,
-class methods and lambda functions cannot be autonomous.
+Only ordinary functions can be autonomous. Asynchronous functions, closures,
+class methods, and lambda functions cannot be autonomous.
 
-Decorators @autonomous, @loosely_autonomous, and @strictly_autonomous
-allow to inform Pythagoras that a function is intended to be autonomous,
-and to enforce autonomicity requirements for the function.
+Autonomous functions support partial application of arguments:
+the process of pre-filling some arguments of a function,
+producing a new autonomous function that takes the remaining arguments.
+
+This module defines a decorator which is used to
+inform Pythagoras that a function is intended to be autonomous
+and to enforce autonomicity requirements.
+
+Applying a decorator to a function ensures both static and runtime autonomicity
+checks are performed for the function. Static checks happen at the time
+of decoration, while runtime checks happen at the time of function execution.
 """
 from typing import Callable
 
@@ -59,31 +65,6 @@ class autonomous(safe):
 
 
     def __call__(self, fn: Callable|str) -> AutonomousFn:
-        """Decorator for autonomous functions.
-
-        It does both static and dynamic checks for autonomous functions.
-
-        Static checks: it checks whether the function uses any global
-        non-built-in objects which do not have associated import statements
-        inside the function. If allow_idempotent==True,
-        global idempotent functions are also allowed.
-        The decorator also checks whether the function is using
-        any non-local objects variables, and whether the function
-        has yield / yield from statements in its code. If static checks fail,
-        the decorator throws a FunctionAutonomicityError exception.
-
-        Dynamic checks: during the execution time it hides all the global
-        and non-local objects from the function, except the built-in ones
-        (and idempotent ones, if allow_idempotent==True).
-        If a function tries to use a non-built-in
-        (and non-idempotent, if allow_idempotent==True)
-        object without explicitly importing it inside the function body,
-        it will result in raising an exception.
-
-        Currently, neither static nor dynamic checks are guaranteed to catch
-        all possible violations of function autonomy requirements.
-        """
-
         wrapper = AutonomousFn(fn
             ,portal=self._portal
             ,fixed_kwargs=self._fixed_kwargs
