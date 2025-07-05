@@ -60,7 +60,7 @@ class ProtectedFn(AutonomousFn):
                  , pre_validators: list[ValidatorFn] | list[Callable] | None = None
                  , post_validators: list[ValidatorFn] | list[Callable] | None = None
                  , excessive_logging: bool | Joker = KEEP_CURRENT
-                 , fixed_kwargs: dict | None = None
+                 , fixed_kwargs: dict[str,Any] | None = None
                  , portal: ProtectedCodePortal | None = None):
         super().__init__(fn=fn
             , portal = portal

@@ -1,3 +1,33 @@
+"""Classes to work with pure functions.
+
+A pure function is a protected function that has no side effects and
+always returns the same result if it is called multiple times
+with the same arguments.
+
+This subpackage defines a decorator which is used to inform Pythagoras that
+a function is intended to be pure: @pure().
+
+Pythagoras persistently caches results, produced by a pure function, so that
+if the function is called multiple times with the same arguments,
+the function is executed only once, and the cached result is returned
+for all the subsequent executions.
+
+While caching the results of a pure function, Pythagoras also tracks
+changes in the source code of the function. If the source code of a pure
+function changes, the function is executed again on the next call.
+However, the previously cached results are still available
+for the old version of the function. Only changes in the function's
+source code are tracked.
+
+Pythagoras provides infrastructure for remote execution of
+pure functions in distributed environments. Pythagoras employs
+an asynchronous execution model called 'swarming':
+you do not know when your function will be executed,
+what machine will execute it, and how many times it will be executed.
+Pythagoras ensures that the function will be eventually executed
+at least once but does not offer any further guarantees.
+"""
+
 from __future__ import annotations
 
 import time
@@ -9,22 +39,19 @@ import pandas as pd
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._010_basic_portals import get_all_known_portals, get_nonactive_portals, get_active_portal
-from .._070_protected_code_portals import ProtectedCodePortal, ProtectedFn
+from persidict import WriteOnceDict
+
+from .._010_basic_portals import *
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
-from persidict import WriteOnceDict
-from .._040_logging_code_portals.logging_portal_core_classes import (
-    LoggingFnCallSignature)
 
 from .._030_data_portals import HashAddr, ValueAddr
-
-from .._060_autonomous_code_portals.autonomous_portal_core_classes import (
-    AutonomousFn)
+from .._040_logging_code_portals import *
 
 
-from .._040_logging_code_portals.kw_args import KwArgs
+from .._070_protected_code_portals import *
 
+# from .._040_logging_code_portals.kw_args import KwArgs
 
 ASupportingFunc:TypeAlias = str | AutonomousFn
 
@@ -232,23 +259,16 @@ class PureFn(ProtectedFn):
         return ProtectedFn.portal.__get__(self)
 
 
-    # @portal.setter
-    # def portal(self, new_portal: PureCodePortal) -> None: #*#*#
-    #     if not isinstance(new_portal, PureCodePortal):
-    #         raise TypeError("portal must be a PureCodePortal instance")
-    #     ProtectedFn.portal.__set__(self, new_portal)
-
-
 class PureFnExecutionResultAddr(HashAddr):
-    """An address of the result of an execution of a pure function.
+    """An address of a (future) result of pure function execution.
 
     This class is used to point to the result of an execution of a pure
-    function in a portal. The address is used to request an execution and
+    function in a portal. The address is used to request an execution or
     to retrieve the result (if available) from the portal.
 
     The address also provides access to various logs and records of the
     function execution, such as environmental contexts of the execution attempts,
-    outputs printed, exceptions thrown and events emitted.
+    outputs printed, exceptions thrown, and events emitted.
     """
     _fn_cache: PureFn | None
     _call_signature_cache: LoggingFnCallSignature | None

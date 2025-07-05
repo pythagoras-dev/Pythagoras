@@ -1,6 +1,6 @@
 """Support for work with protected functions."""
 
-from typing import Callable
+from typing import Callable, Any
 
 from .validator_fn_classes import ValidatorFn
 from .._060_autonomous_code_portals import autonomous
@@ -15,7 +15,7 @@ class protected(autonomous):
     def __init__(self
                  , pre_validators: list[ValidatorFn] | None = None
                  , post_validators: list[ValidatorFn] | None = None
-                 , fixed_kwargs: dict | None = None
+                 , fixed_kwargs: dict[str,Any] | None = None
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: ProtectedCodePortal | None = None
                  ):

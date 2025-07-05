@@ -1,10 +1,10 @@
 """Decorators and utilities to work with pure functions.
 
-A pure function is an autonomous function that has no side effects and
+A pure function is a protected function that has no side effects and
 always returns the same result if it is called multiple times
 with the same arguments.
 
-This module defines a decorator which is used to inform Pythagoras that
+This subpackage defines a decorator which is used to inform Pythagoras that
 a function is intended to be pure: @pure().
 
 Pythagoras persistently caches results, produced by a pure function, so that
@@ -16,14 +16,8 @@ While caching the results of a pure function, Pythagoras also tracks
 changes in the source code of the function. If the source code of a pure
 function changes, the function is executed again on the next call.
 However, the previously cached results are still available
-for the old version of the function.
-
-A pure function must be autonomous. Pythagoras tracks source code changes
-for the pure function as well other autonomous functions it is using,
-provided they belong to the same island. Pythagoras does not track source code
-changes for functions from other islands, even if they are used
-by the pure function. Pythagoras also does not track any other
-source code changes (e.g. changes in the imported packages).
+for the old version of the function. Only changes in the function's
+source code are tracked.
 
 Pythagoras provides infrastructure for remote execution of
 pure functions in distributed environments. Pythagoras employs

@@ -33,7 +33,7 @@ class AutonomousFn(SafeFn):
     _fixed_kwargs_packed: KwArgs | None
 
     def __init__(self, fn: Callable|str|SafeFn
-                 , fixed_kwargs: dict|None = None
+                 , fixed_kwargs: dict[str,Any]|None = None
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: AutonomousCodePortal|None = None):
         super().__init__(fn=fn
