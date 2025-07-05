@@ -8,7 +8,6 @@ from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
-from .._010_basic_portals import BasicPortal
 from .._010_basic_portals import get_active_portal, get_nonactive_portals
 from .._800_signatures_and_converters import get_hash_signature
 
@@ -41,7 +40,7 @@ def get_nonactive_data_portals() -> list[DataPortal]:
 class DataPortal(OrdinaryCodePortal):
     """A portal that persistently stores values.
 
-    Values are accessible via their hash_address-es,
+    Immutable values are accessible via their hash_address-es,
     which are unique identifiers of the values.
 
     If the current portal does not contain a specific value,
@@ -51,8 +50,11 @@ class DataPortal(OrdinaryCodePortal):
 
     A portal can serve as a context manager, enabling the use of the
     'with' statement to support portal-aware code blocks. If some code is
-    supposed to explicitly read anything from a portal, it should be wrapped
-    in a 'with' statement that marks the portal as the current.
+    supposed to explicitly read anything from (or save to) a portal,
+    it should be wrapped in a 'with' statement that
+    marks the portal as active for the duration of the code block.
+
+    DataPortal also supports random consistency checks.
     """
 
     _value_store: WriteOnceDict | None
@@ -190,6 +192,7 @@ class DataPortal(OrdinaryCodePortal):
 
 
 class StorableFn(OrdinaryFn):
+    """An ordinary function that can be persistently stored in a DataPortal."""
 
     _addr_cache: ValueAddr
     _ephemeral_config_params_at_init: dict[str, Any] | None
@@ -217,13 +220,6 @@ class StorableFn(OrdinaryFn):
     @property
     def portal(self) -> DataPortal:
         return OrdinaryFn.portal.__get__(self)
-
-
-    # @portal.setter
-    # def portal(self, new_portal: DataPortal) -> None:
-    #     if not isinstance(new_portal, DataPortal):
-    #         raise TypeError("portal must be a DataPortal instance")
-    #     OrdinaryFn.portal.__set__(self, new_portal)
 
 
     def _get_config_setting(self, key: SafeStrTuple, portal:DataPortal) -> Any:
@@ -258,9 +254,9 @@ class StorableFn(OrdinaryFn):
 
 
     def _invalidate_cache(self):
-        """Invalidate the object's attribute cache.
+        """Invalidate the function's attribute cache.
 
-        If the object's attribute named ATTR is cached,
+        If the function's attribute named ATTR is cached,
         its cached value will be stored in an attribute named _ATTR_cache
         This method should delete all such attributes.
         """
@@ -286,11 +282,15 @@ class HashAddr(SafeStrTuple):
     Two objects with exactly the same type and value will always have
     exactly the same HashAddr-es.
 
-    A HashAddr consists of 2 components: a descriptor, and a hash.
-    A descriptor contains human-readable information about an object's type.
-    A hash string contains the object's hash signature. It may contain
-    an optional suffix, which provides additional human-readable
-    information about the object's structure / value.
+    Conceptually, HashAddr consists of 2 components: a descriptor,
+    and a hash signature. A descriptor contains human-readable information
+    about an object's type. A hash signature string contains
+    the object's sha256 value, encoded in base-32.
+
+    Under the hood, the hash signature is further split into 3 strings:
+    a shard, a subshard and a hash tail.
+    This is done to address limitations of some file systems
+    and to optimize work sith cloud storage (e.g. S3).
     """
 
     def __init__(self, descriptor:str
@@ -362,7 +362,7 @@ class HashAddr(SafeStrTuple):
                      , hash_signature:str
                      , assert_readiness:bool=True
                      ) -> HashAddr:
-        """(Re)construct address from text representations of descriptor and hash"""
+        """(Re)construct address from str versions of a descriptor and a hash"""
 
         if not isinstance(descriptor, str) or not isinstance(hash_signature, str):
             raise TypeError("descriptor and hash_signature must be strings")
@@ -382,7 +382,7 @@ class HashAddr(SafeStrTuple):
     @property
     @abstractmethod
     def ready(self) -> bool:
-        """Check if address points to a value that is ready to be retrieved."""
+        """Check if the address points to a value that is ready to be retrieved."""
         # TODO: decide whether we need .ready() at the base class
         raise NotImplementedError
 
@@ -417,12 +417,13 @@ class ValueAddr(HashAddr):
     """A globally unique address of an immutable value.
 
     ValueAddr is a universal global identifier of any (constant) value.
+
     Using only the value's hash should (theoretically) be enough to
-    uniquely address all possible data objects that the humanity  will create
-    in the foreseeable future (see, for example ipfs.io).
+    uniquely address all possible data objects that the humanity will create
+    in the foreseeable future (see, for example, ipfs.io).
 
     However, an address also includes a descriptor with an optional suffix.
-    It makes it easier for humans to interpret an address,
+    It makes it easier for humans to interpret an address
     and further decreases collision risk.
     """
     _containing_portals: set[str]

@@ -176,8 +176,15 @@ class SwarmingPortal(PureCodePortal):
 
 
     def _invalidate_cache(self):
+        """Invalidate the object's attribute cache.
+
+        If the object's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         if hasattr(self, "_max_n_workers_cache"):
             del self._max_n_workers_cache
+        super()._invalidate_cache()
 
 parameterizable.register_parameterizable_class(SwarmingPortal)
 

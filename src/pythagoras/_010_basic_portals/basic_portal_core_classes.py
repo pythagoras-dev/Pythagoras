@@ -290,9 +290,9 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def _invalidate_cache(self) -> None:
-        """Invalidate the object's attribute cache.
+        """Invalidate the portal's attribute cache.
 
-        If the object's attribute named ATTR is cached,
+        If the portal's attribute named ATTR is cached,
         its cached value will be stored in an attribute named _ATTR_cache
         This method should delete all such attributes.
         """

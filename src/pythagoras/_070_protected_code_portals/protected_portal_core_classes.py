@@ -188,10 +188,18 @@ class ProtectedFn(AutonomousFn):
 
 
     def _invalidate_cache(self):
+        """Invalidate the function's attribute cache.
+
+        If the function's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         super()._invalidate_cache()
         if hasattr(self, "_post_validators_cached"):
-            assert hasattr(self, "_post_validators_addrs"), "Premature cache invalidation: _post_validators_addrs is missing."
+            assert (hasattr(self, "_post_validators_addrs")
+                , "Premature cache invalidation: _post_validators_addrs is missing.")
             del self._post_validators_cached
         if hasattr(self, "_pre_validators_cached"):
-            assert hasattr(self, "_pre_validators_addrs"), "Premature cache invalidation: _pre_validators_addrs is missing."
+            assert (hasattr(self, "_pre_validators_addrs")
+                , "Premature cache invalidation: _pre_validators_addrs is missing.")
             del self._pre_validators_cached

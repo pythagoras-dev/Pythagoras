@@ -287,6 +287,7 @@ class PureFnExecutionResultAddr(HashAddr):
             del self._kwargs_cache
         if hasattr(self, "_call_signature_cache"):
             del self._call_signature_cache
+        super()._invalidate_cache()
 
 
     def get_ValueAddr(self):

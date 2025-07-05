@@ -139,6 +139,12 @@ class AutonomousFn(SafeFn):
 
 
     def _invalidate_cache(self):
+        """Invalidate the function's attribute cache.
+
+        If the function's attribute named ATTR is cached,
+        its cached value will be stored in an attribute named _ATTR_cache
+        This method should delete all such attributes.
+        """
         super()._invalidate_cache()
         if hasattr(self, "_fixed_kwargs_cached"):
             assert hasattr(self, "_fixed_kwargs_packed"), "Premature cache invalidation: fixed_kwargs_packed is missing."
