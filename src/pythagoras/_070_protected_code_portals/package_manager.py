@@ -9,7 +9,6 @@ def _install_uv_and_pip() -> None:
     global _uv_and_pip_installation_needed
     if not _uv_and_pip_installation_needed:
         return
-    _uv_pip_installation_attempted = False
 
     try:
         importlib.import_module("uv")

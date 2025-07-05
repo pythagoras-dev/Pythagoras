@@ -1,4 +1,6 @@
 class ValidationSuccessClass:
+    """Singleton class to represent a successful validation."""
+
     _instance = None
 
     def __new__(cls):

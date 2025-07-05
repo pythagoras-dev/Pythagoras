@@ -1,12 +1,27 @@
+"""Classes and functions that allow protected execution of code.
+
+Protected functions are functions that can be executed only if
+certain conditions are met before the execution; also, certain conditions
+must be met after the execution in order for the system to accept
+and use execution results. These conditions are called validators
+(pre-validators and post-validators). A protected function can have many
+pre-validators and post-validators.
+
+Validators can be passive (e.g., check if the node has enough RAM)
+or active (e.g., check if some external library is installed, and,
+if not, try to install it). Validators can be rather complex
+(e.g., check if the result, returned by the function, is a valid image).
+Under the hood, validators are autonomous functions.
+"""
+
 from __future__ import annotations
 
 from copy import copy
-from typing import Callable, Any, List
+from typing import Callable, Any
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .validator_fn_classes import ValidatorFn, PreValidatorFn, PostValidatorFn, SimplePreValidatorFn, \
-    ComplexPreValidatorFn
+from .validator_fn_classes import *
 from .._030_data_portals import DataPortal
 from .._040_logging_code_portals import KwArgs
 from .._030_data_portals import ValueAddr
@@ -17,7 +32,6 @@ from .validation_succesful_const import VALIDATION_SUCCESSFUL
 
 from .._060_autonomous_code_portals import (
     AutonomousCodePortal, AutonomousFn)
-from .fn_arg_names_checker import check_if_fn_accepts_args
 
 
 class ProtectedCodePortal(AutonomousCodePortal):
@@ -34,8 +48,8 @@ class ProtectedCodePortal(AutonomousCodePortal):
 
 class ProtectedFn(AutonomousFn):
 
-    _pre_validators_cached: list[AutonomousFn] | None
-    _post_validators_cached: list[AutonomousFn] | None
+    _pre_validators_cached: list[ValidatorFn] | None
+    _post_validators_cached: list[ValidatorFn] | None
     _pre_validators_addrs: list[ValueAddr]
     _post_validators_addrs: list[ValueAddr]
 
@@ -43,9 +57,9 @@ class ProtectedFn(AutonomousFn):
     pre_validators_arg_names = ["packed_kwargs", "fn_addr"]
 
     def __init__(self, fn: Callable | str
-                 , pre_validators: list[AutonomousFn] | List[Callable] | None = None
-                 , post_validators: list[AutonomousFn] | List[Callable] | None = None
-                 , excessive_logging: bool|None = KEEP_CURRENT
+                 , pre_validators: list[ValidatorFn] | list[Callable] | None = None
+                 , post_validators: list[ValidatorFn] | list[Callable] | None = None
+                 , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: ProtectedCodePortal | None = None):
         super().__init__(fn=fn
@@ -53,17 +67,29 @@ class ProtectedFn(AutonomousFn):
             , fixed_kwargs=fixed_kwargs
             , excessive_logging = excessive_logging)
 
-        pre_validators = self._normalize_validators(pre_validators, PreValidatorFn)
-        post_validators = self._normalize_validators(post_validators, PostValidatorFn)
+        if pre_validators is None:
+            pre_validators = list()
+        else:
+            pre_validators = copy(pre_validators)
+
+        if post_validators is None:
+            post_validators = list()
+        else:
+            post_validators = copy(post_validators)
 
         if isinstance(fn, ProtectedFn):
             pre_validators += fn.pre_validators
             post_validators += fn.post_validators
 
-        self._pre_validators_cached = self._normalize_validators(pre_validators, PreValidatorFn)
-        self._post_validators_cached = self._normalize_validators(post_validators, PostValidatorFn)
-        self._pre_validators_addrs = [ValueAddr(g, store=False) for g in self._pre_validators_cached]
-        self._post_validators_addrs = [ValueAddr(v, store=False) for v in self._post_validators_cached]
+        pre_validators = self._normalize_validators(pre_validators, PreValidatorFn)
+        post_validators = self._normalize_validators(post_validators, PostValidatorFn)
+
+        self._pre_validators_cached = pre_validators
+        self._post_validators_cached = post_validators
+        self._pre_validators_addrs = [ValueAddr(g, store=False)
+                                      for g in self._pre_validators_cached]
+        self._post_validators_addrs = [ValueAddr(v, store=False)
+                                       for v in self._post_validators_cached]
 
 
     def __getstate__(self):

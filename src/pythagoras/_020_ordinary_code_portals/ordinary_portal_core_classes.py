@@ -263,7 +263,7 @@ class OrdinaryFn(PortalAwareClass):
 
     def __setstate__(self, state):
         """This method is called when the object is unpickled."""
-        PortalAwareClass.__setstate__(self, state)
+        super().__setstate__(state)
         self._source_code = state["source_code"]
 
 
