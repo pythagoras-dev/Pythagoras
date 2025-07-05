@@ -2,23 +2,31 @@
 
 Planet-scale distributed computing in Python.
 
-!!! RESEARCH PREVIEW !!!
+**!!! RESEARCH PREVIEW !!!**
 
 ## What is it?
 
-`Pythagoras` is an easy-to-use framework for cost-efficient
+`Pythagoras` is a super-scalable, low-maintenance framework for 
 massive algorithm parallelization in Python. It simplifies and accelerates 
 data science, machine learning, and AI workflows.
 
 Pythagoras offers:
 
 * seamless parallel execution of Python code, locally or 
-in diverse distributed environments of virtually any scale;
+in heterogeneous distributed environments of virtually any scale;
 * ubiquitous caching for intermediate program states, 
 with intelligent data and code change tracking;
 * simple and budget-friendly orchestration backend.
 
+Pythagoras excels at optimizing complex, long-running,
+resource-demanding computations. It’s not the optimal choice for real-time,
+latency-sensitive workflows.
+
 ## Usage
+
+Pythagoras elevates two popular techniques — memoization and parallelization — 
+to a global scale and then fuses them, unlocking performance and scalability 
+that were previously out of reach.
 
 * `Introduction to Pythagoras` notebook:
 https://colab.research.google.com/drive/117rAtaWxjfSubzGx0shgqNjONY3E5jgd
