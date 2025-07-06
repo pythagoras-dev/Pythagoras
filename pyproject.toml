@@ -36,6 +36,7 @@ dependencies = [
     "psutil",
     "autopep8",
     "deepdiff",
+    "numpy",
     "pytest",
     "boto3",
     "moto",

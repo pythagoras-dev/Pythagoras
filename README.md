@@ -19,7 +19,7 @@ with intelligent data and code change tracking;
 * simple and budget-friendly orchestration backend.
 
 Pythagoras excels at optimizing complex, long-running,
-resource-demanding computations. It’s not the optimal choice for real-time,
+resource-demanding computations. It’s not the best choice for real-time,
 latency-sensitive workflows.
 
 ## Usage
@@ -51,6 +51,7 @@ pip install pythagoras
 ## Dependencies
 
 * [persidict](https://pypi.org/project/persidict)
+* [parameterizable](https://pypi.org/project/parameterizable/)
 * [jsonpickle](https://jsonpickle.github.io)
 * [joblib](https://joblib.readthedocs.io)
 * [lz4](https://python-lz4.readthedocs.io)
@@ -65,10 +66,9 @@ pip install pythagoras
 * [jsonpickle](https://jsonpickle.github.io)
 * [scikit-learn](https://scikit-learn.org)
 * [autopep8](https://pypi.org/project/autopep8)
-* [pytorch](https://pytorch.org)
-* [tensorflow](https://www.tensorflow.org)
-* [keras](https://keras.io)
 * [deepdiff](https://zepworks.com/deepdiff/current/)
+* [nvidia-ml-p](https://pypi.org/project/nvidia-ml-py/)
+* [uv](https://docs.astral.sh/uv/)
 
 ## Key Contacts
 
