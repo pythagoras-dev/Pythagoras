@@ -31,6 +31,9 @@ that were previously out of reach.
 * `Introduction to Pythagoras` notebook:
 https://colab.research.google.com/drive/117rAtaWxjfSubzGx0shgqNjONY3E5jgd
 
+
+**!!! BOOKMARK THIS PAGE AND COME BACK LATER, WE WILL PUBLISH MORE TUTORIALS SOON !!!**
+
 ## How to get it?
 
 The source code is hosted on GitHub at: https://github.com/pythagoras-dev/pythagoras
