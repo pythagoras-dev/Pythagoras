@@ -21,7 +21,7 @@ from .._020_ordinary_code_portals import (
 from persidict import WriteOnceDict
 
 TOTAL_VALUES_TXT = "Values, total"
-PROBABILITY_OF_CHECKS_TXT = "Probability of checks"
+PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
 def get_active_data_portal() -> DataPortal:
