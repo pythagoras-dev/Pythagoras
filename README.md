@@ -28,8 +28,9 @@ Pythagoras elevates two popular techniques â€” memoization and parallelization â
 to a global scale and then fuses them, unlocking performance and scalability 
 that were previously out of reach.
 
-* `Pythagoras 101: Introduction to Memoization` notebook:
-https://colab.research.google.com/drive/1bvNXFP1BQJqhoS270Dz1lNT4jPCuj540
+* [Pythagoras 101: Introduction to Memoization](https://colab.research.google.com/drive/1bvNXFP1BQJqhoS270Dz1lNT4jPCuj540)
+
+* [Pythagoras 102: Parallelization Basics](https://colab.research.google.com/drive/1DZxgwoiTnyy1qE7T5JunU4GN4j0w6CVk)
 
 
 **!!! BOOKMARK THIS PAGE AND COME BACK LATER, WE WILL PUBLISH MORE TUTORIALS SOON !!!**
