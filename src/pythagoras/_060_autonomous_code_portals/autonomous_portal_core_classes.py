@@ -152,6 +152,7 @@ class AutonomousFn(SafeFn):
         """
         super()._invalidate_cache()
         if hasattr(self, "_fixed_kwargs_cached"):
-            assert (hasattr(self, "_fixed_kwargs_packed")
-                , "Premature cache invalidation: fixed_kwargs_packed is missing.")
+            if not hasattr(self, "_fixed_kwargs_packed"):
+                raise AttributeError("Premature cache invalidation: "
+                                     "fixed_kwargs_packed is missing.")
             del self._fixed_kwargs_cached

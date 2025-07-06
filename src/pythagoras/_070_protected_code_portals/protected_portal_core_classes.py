@@ -222,10 +222,12 @@ class ProtectedFn(AutonomousFn):
         """
         super()._invalidate_cache()
         if hasattr(self, "_post_validators_cached"):
-            assert (hasattr(self, "_post_validators_addrs")
-                , "Premature cache invalidation: _post_validators_addrs is missing.")
+            if not hasattr(self, "_post_validators_addrs"):
+                raise AttributeError("Premature cache invalidation: "
+                                     "_post_validators_addrs is missing.")
             del self._post_validators_cached
         if hasattr(self, "_pre_validators_cached"):
-            assert (hasattr(self, "_pre_validators_addrs")
-                , "Premature cache invalidation: _pre_validators_addrs is missing.")
+            if not hasattr(self, "_pre_validators_addrs"):
+                raise AttributeError("Premature cache invalidation: "
+                                     "_pre_validators_addrs is missing.")
             del self._pre_validators_cached
