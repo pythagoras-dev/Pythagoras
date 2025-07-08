@@ -3,7 +3,6 @@ import string
 import pytest
 
 from pythagoras._070_protected_code_portals.package_manager import *
-from pythagoras._070_protected_code_portals.package_manager import _install_uv_and_pip
 
 
 def test_actual_package():

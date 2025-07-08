@@ -27,7 +27,7 @@ from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_cha
 from persidict import OverlappingMultiDict
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr)
-from .._800_signatures_and_converters.node_signatures import get_node_signature
+from .._800_signatures_and_converters.node_signature import get_node_signature
 
 from multiprocessing import get_context
 

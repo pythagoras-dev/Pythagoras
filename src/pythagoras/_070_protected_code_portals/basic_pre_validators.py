@@ -26,21 +26,31 @@ def unused_ram(Gb:int) -> SimplePreValidatorFn:
     return SimplePreValidatorFn(_at_least_X_G_RAM_free_check).fix_kwargs(x=Gb)
 
 
-def _check_python_package_and_install_if_needed(package_name)-> ValidationSuccessClass | None:
+def _check_python_package_and_install_if_needed(
+        package_name)-> ValidationSuccessClass | None:
     assert isinstance(package_name, str)
-    import importlib
+    import importlib, time
     try:
         importlib.import_module(package_name)
         return pth.VALIDATION_SUCCESSFUL
     except:
-        pth.install_package(package_name)
-        return pth.VALIDATION_SUCCESSFUL
+        portal = self.portal
+        address = (pth.get_node_signature()
+                    , package_name
+                    , "installation_attempt")
+        # allow installation retries every 10 minutes
+        if (not address in portal._config_settings
+                or portal._config_settings[address] < time.time() - 600):
+            portal._config_settings[address] = time.time()
+            pth.install_package(package_name)
+            return pth.VALIDATION_SUCCESSFUL
 
 
 def installed_packages(*args)  -> list[SimplePreValidatorFn]:
     validators = []
     for package_name in args:
         assert isinstance(package_name, str)
+        #TODO: check if the package is available on pypi.org
         new_validator = SimplePreValidatorFn(_check_python_package_and_install_if_needed)
         new_validator = new_validator.fix_kwargs(package_name=package_name)
         validators.append(new_validator)

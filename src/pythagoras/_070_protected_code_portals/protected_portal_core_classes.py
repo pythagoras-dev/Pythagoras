@@ -57,8 +57,8 @@ class ProtectedFn(AutonomousFn):
     pre_validators_arg_names = ["packed_kwargs", "fn_addr"]
 
     def __init__(self, fn: Callable | str
-                 , pre_validators: list[ValidatorFn] | list[Callable] | None = None
-                 , post_validators: list[ValidatorFn] | list[Callable] | None = None
+                 , pre_validators: list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None = None
+                 , post_validators: list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None = None
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict[str,Any] | None = None
                  , portal: ProtectedCodePortal | None = None):
@@ -173,7 +173,7 @@ class ProtectedFn(AutonomousFn):
 
 
     def _normalize_validators(self
-            , validators: list[ValidatorFn] | None
+            , validators: list[ValidatorFn] | ValidatorFn | None
             , validator_type: type
             ) -> list[ValidatorFn]:
         """Return list of validators in a normalized form.
