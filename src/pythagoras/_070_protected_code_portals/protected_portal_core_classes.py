@@ -48,8 +48,8 @@ class ProtectedCodePortal(AutonomousCodePortal):
 
 class ProtectedFn(AutonomousFn):
 
-    _pre_validators_cached: list[ValidatorFn] | None
-    _post_validators_cached: list[ValidatorFn] | None
+    _pre_validators_cache: list[ValidatorFn] | None
+    _post_validators_cache: list[ValidatorFn] | None
     _pre_validators_addrs: list[ValueAddr]
     _post_validators_addrs: list[ValueAddr]
 
@@ -84,12 +84,12 @@ class ProtectedFn(AutonomousFn):
         pre_validators = self._normalize_validators(pre_validators, PreValidatorFn)
         post_validators = self._normalize_validators(post_validators, PostValidatorFn)
 
-        self._pre_validators_cached = pre_validators
-        self._post_validators_cached = post_validators
+        self._pre_validators_cache = pre_validators
+        self._post_validators_cache = post_validators
         self._pre_validators_addrs = [ValueAddr(g, store=False)
-                                      for g in self._pre_validators_cached]
+                                      for g in self._pre_validators_cache]
         self._post_validators_addrs = [ValueAddr(v, store=False)
-                                       for v in self._post_validators_cached]
+                                       for v in self._post_validators_cache]
 
 
     def __getstate__(self):
@@ -112,27 +112,37 @@ class ProtectedFn(AutonomousFn):
         """Register an object in a portal that the object has not seen before."""
         super()._first_visit_to_portal(portal)
 
-        if hasattr(self,"_pre_validators_cached"):
-            with portal:
-                _ = [ValueAddr(g) for g in self._pre_validators_cached]
+        for f in self.pre_validators:
+            f._first_visit_to_portal(portal)
+        for f in self.post_validators:
+            f._first_visit_to_portal(portal)
 
-        if hasattr(self,"_post_validators_cached"):
-            with portal:
-                _ = [ValueAddr(g) for g in self._post_validators_cached]
+
+        # if hasattr(self,"_pre_validators_cache"):
+        #     with portal:
+        #         _ = [ValueAddr(g) for g in self._pre_validators_cache]
+        # else:
+        #     raise AttributeError("Missing pre-validators: ")
+        #
+        # if hasattr(self,"_post_validators_cache"):
+        #     with portal:
+        #         _ = [ValueAddr(g) for g in self._post_validators_cache]
+        # else:
+        #     raise AttributeError("Missing post-validators: ")
 
 
     @property
     def pre_validators(self) -> list[AutonomousFn]:
-        if not hasattr(self, "_pre_validators_cached"):
-            self._pre_validators_cached = [addr.get() for addr in self._pre_validators_addrs]
-        return self._pre_validators_cached
+        if not hasattr(self, "_pre_validators_cache"):
+            self._pre_validators_cache = [addr.get() for addr in self._pre_validators_addrs]
+        return self._pre_validators_cache
 
 
     @property
     def post_validators(self) -> list[AutonomousFn]:
-        if not hasattr(self, "_post_validators_cached"):
-            self._post_validators_cached = [addr.get() for addr in self._post_validators_addrs]
-        return self._post_validators_cached
+        if not hasattr(self, "_post_validators_cache"):
+            self._post_validators_cache = [addr.get() for addr in self._post_validators_addrs]
+        return self._post_validators_cache
 
 
     def can_be_executed(self, kw_args: KwArgs) -> bool:
@@ -210,7 +220,7 @@ class ProtectedFn(AutonomousFn):
 
     @property
     def portal(self) -> ProtectedCodePortal:
-        return AutonomousFn.portal.__get__(self)
+        return super().portal
 
 
     def _invalidate_cache(self):
@@ -225,9 +235,9 @@ class ProtectedFn(AutonomousFn):
             if not hasattr(self, "_post_validators_addrs"):
                 raise AttributeError("Premature cache invalidation: "
                                      "_post_validators_addrs is missing.")
-            del self._post_validators_cached
+            del self._post_validators_cache
         if hasattr(self, "_pre_validators_cached"):
             if not hasattr(self, "_pre_validators_addrs"):
                 raise AttributeError("Premature cache invalidation: "
                                      "_pre_validators_addrs is missing.")
-            del self._pre_validators_cached
+            del self._pre_validators_cache

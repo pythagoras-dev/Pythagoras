@@ -248,7 +248,7 @@ class PureFn(ProtectedFn):
 
     @property
     def portal(self) -> PureCodePortal: #*#*#
-        return ProtectedFn.portal.__get__(self)
+        return super().portal
 
 
 class PureFnExecutionResultAddr(HashAddr):

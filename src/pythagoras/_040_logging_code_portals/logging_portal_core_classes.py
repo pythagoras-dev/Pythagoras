@@ -72,7 +72,7 @@ class LoggingFn(StorableFn):
 
     @property
     def portal(self) -> LoggingCodePortal:
-        return StorableFn.portal.__get__(self)
+        return super().portal
 
 
 class LoggingFnCallSignature:

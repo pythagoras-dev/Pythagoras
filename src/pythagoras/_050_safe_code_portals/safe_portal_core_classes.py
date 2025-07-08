@@ -59,7 +59,7 @@ class SafeFn(LoggingFn):
 
     @property
     def portal(self) -> SafeCodePortal:
-        return LoggingFn.portal.__get__(self)
+        return super().portal
 
 
 register_parameterizable_class(SafeCodePortal)

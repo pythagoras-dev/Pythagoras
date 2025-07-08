@@ -219,7 +219,7 @@ class StorableFn(OrdinaryFn):
 
     @property
     def portal(self) -> DataPortal:
-        return OrdinaryFn.portal.__get__(self)
+        return super().portal
 
 
     def _get_config_setting(self, key: SafeStrTuple, portal:DataPortal) -> Any:

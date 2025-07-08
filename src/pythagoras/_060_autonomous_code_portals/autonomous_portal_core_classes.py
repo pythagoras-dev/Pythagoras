@@ -4,6 +4,8 @@ import builtins
 from typing import Callable, Any
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
+
+from .._010_basic_portals import PortalAwareClass
 from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
 from .._030_data_portals import DataPortal
 from .._040_logging_code_portals import KwArgs
@@ -29,7 +31,7 @@ class AutonomousCodePortal(SafeCodePortal):
 
 class AutonomousFn(SafeFn):
 
-    _fixed_kwargs_cached: KwArgs | None
+    _fixed_kwargs_cache: KwArgs | None
     _fixed_kwargs_packed: KwArgs | None
 
     def __init__(self, fn: Callable|str|SafeFn
@@ -46,9 +48,9 @@ class AutonomousFn(SafeFn):
 
         if isinstance(fn, AutonomousFn):
             self._fixed_kwargs_packed.update(fixed_kwargs_packed)
-            self._fixed_kwargs_cached = KwArgs(**{**fn.fixed_kwargs, **fixed_kwargs})
+            self._fixed_kwargs_cache = KwArgs(**{**fn.fixed_kwargs, **fixed_kwargs})
         else:
-            self._fixed_kwargs_cached = fixed_kwargs
+            self._fixed_kwargs_cache = fixed_kwargs
             self._fixed_kwargs_packed = fixed_kwargs_packed
 
         fn_name = self.name
@@ -88,10 +90,10 @@ class AutonomousFn(SafeFn):
 
     @property
     def fixed_kwargs(self) -> KwArgs:
-        if not hasattr(self, "_fixed_kwargs_cached"):
+        if not hasattr(self, "_fixed_kwargs_cache"):
             with self.portal:
-                self._fixed_kwargs_cached = self._fixed_kwargs_packed.unpack()
-        return self._fixed_kwargs_cached
+                self._fixed_kwargs_cache = self._fixed_kwargs_packed.unpack()
+        return self._fixed_kwargs_cache
 
 
     def execute(self, **kwargs) -> Any:
@@ -120,9 +122,12 @@ class AutonomousFn(SafeFn):
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
         super()._first_visit_to_portal(portal)
-        if hasattr(self,"_fixed_kwargs_cached"):
+        if hasattr(self,"_fixed_kwargs_cache"):
             with portal:
-                _ = self._fixed_kwargs_cached.pack()
+                for v in self._fixed_kwargs_cache.values():
+                    if isinstance(v, PortalAwareClass):
+                        v._first_visit_to_portal(portal)
+                _ = self._fixed_kwargs_cache.pack()
 
 
     def __getstate__(self):
@@ -140,7 +145,7 @@ class AutonomousFn(SafeFn):
 
     @property
     def portal(self) -> AutonomousCodePortal:
-        return SafeFn.portal.__get__(self)
+        return super().portal
 
 
     def _invalidate_cache(self):
@@ -151,8 +156,8 @@ class AutonomousFn(SafeFn):
         This method should delete all such attributes.
         """
         super()._invalidate_cache()
-        if hasattr(self, "_fixed_kwargs_cached"):
+        if hasattr(self, "_fixed_kwargs_cache"):
             if not hasattr(self, "_fixed_kwargs_packed"):
                 raise AttributeError("Premature cache invalidation: "
                                      "fixed_kwargs_packed is missing.")
-            del self._fixed_kwargs_cached
+            del self._fixed_kwargs_cache
