@@ -6,14 +6,13 @@ Planet-scale distributed computing in Python.
 
 ## What is it?
 
-`Pythagoras` is a super-scalable, easy-to-use, and
+Pythagoras is a super-scalable, easy-to-use, and
 low-maintenance framework for (1) massive algorithm parallelization and 
-(2) resource usage optimization in Python. It simplifies and speeds up 
+(2) hardware usage optimization in Python. It simplifies and speeds up 
 data science, machine learning, and AI workflows.
 
-Pythagoras excels at optimizing complex, long-running,
-resource-demanding computations. It’s not recommended for real-time,
-latency-sensitive workflows.
+Pythagoras excels at complex, long-running, resource-demanding computations. 
+It’s not recommended for real-time, latency-sensitive workflows.
 
 ## Usage
 
