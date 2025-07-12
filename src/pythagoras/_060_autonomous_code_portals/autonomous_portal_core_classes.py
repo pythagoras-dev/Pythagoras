@@ -6,6 +6,7 @@ from typing import Callable, Any
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .._010_basic_portals import PortalAwareClass
+from .._010_basic_portals.basic_portal_core_classes import _visit_portal
 from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
 from .._030_data_portals import DataPortal
 from .._040_logging_code_portals import KwArgs
@@ -122,12 +123,8 @@ class AutonomousFn(SafeFn):
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
         super()._first_visit_to_portal(portal)
-        if hasattr(self,"_fixed_kwargs_cache"):
-            with portal:
-                for v in self._fixed_kwargs_cache.values():
-                    if isinstance(v, PortalAwareClass):
-                        v._first_visit_to_portal(portal)
-                _ = self._fixed_kwargs_cache.pack()
+        with portal:
+            _ = self.fixed_kwargs.pack()
 
 
     def __getstate__(self):

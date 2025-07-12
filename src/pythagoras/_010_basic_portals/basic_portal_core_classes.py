@@ -7,6 +7,7 @@ clear all portals and their state.
 
 from __future__ import annotations
 
+import collections
 import random
 import sys
 from abc import abstractmethod
@@ -15,7 +16,7 @@ from typing import TypeVar, Type, Any, NewType
 import pandas as pd
 from parameterizable import ParameterizableClass, sort_dict_by_keys
 
-from persidict import PersiDict, FileDirDict
+from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .post_init_metaclass import PostInitMeta
 from .not_picklable_class import NotPicklable
 from .._800_signatures_and_converters import get_hash_signature
@@ -397,12 +398,13 @@ class PortalAwareClass(metaclass = PostInitMeta):
         """
         global _all_links_from_objects_to_portals, _all_known_portals
         portal = None
-        if self._linked_portal_at_init is not None and len(self._visited_portals)==0:
+        if (self._linked_portal_at_init is not None
+                and self._str_id not in _all_links_from_objects_to_portals):
             _all_links_from_objects_to_portals[self._str_id
                 ] = self._linked_portal_at_init._str_id
-            self._first_visit_to_portal(self._linked_portal_at_init)
+            self._visit_portal(self._linked_portal_at_init)
             portal = self._linked_portal_at_init
-        if self._str_id in _all_links_from_objects_to_portals:
+        elif self._str_id in _all_links_from_objects_to_portals:
             portal_str_id = _all_links_from_objects_to_portals[self._str_id]
             assert isinstance(portal_str_id, str)
             portal = _all_known_portals[portal_str_id]
@@ -420,10 +422,14 @@ class PortalAwareClass(metaclass = PostInitMeta):
         portal_to_use = self._linked_portal
         if portal_to_use is None:
             portal_to_use = get_active_portal()
-        assert isinstance(portal_to_use, BasicPortal)
-        if portal_to_use._str_id not in self._visited_portals:
-            self._first_visit_to_portal(portal_to_use)
+        self._visit_portal(portal_to_use)
         return portal_to_use
+
+
+    def _visit_portal(self, portal: BasicPortal) -> None:
+        if portal._str_id not in self._visited_portals:
+            self._first_visit_to_portal(portal)
+
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
         """Register an object in a portal that the object has not seen before."""
@@ -519,3 +525,46 @@ def _clear_all_portals() -> None:
 
 
 PortalType = TypeVar("PortalType")
+
+
+##################################################
+
+def _visit_portal(obj:Any, portal:BasicPortal) -> None:
+    return _visit_portal_impl(obj, portal=portal)
+
+
+def _visit_portal_impl(obj:Any, portal:BasicPortal, seen=None)->None:
+    if seen is None:
+        seen = set()
+
+    if id(obj) in seen:
+        return
+
+    if isinstance(obj, (str, range, bytearray, bytes)):
+        return
+
+    if isinstance(obj, SafeStrTuple):
+        return
+
+    seen.add(id(obj))
+
+    if isinstance(obj, PortalAwareClass):
+        obj._visit_portal(portal)
+        return
+
+    if isinstance(obj, (list, tuple)):
+        for item in obj:
+            _visit_portal_impl(item, portal, seen)
+        return
+
+    if isinstance(obj, dict):
+        for item in obj.values():
+            _visit_portal_impl(item, portal, seen)
+        return
+
+    # TODO: decide how to deal with Sequences/Mappings
+    # if isinstance(obj, collections.abc.Sequence):
+    #     raise TypeError("Unsupported Sequence type: " + str(type(obj)))
+    #
+    # if isinstance(obj, collections.abc.Mapping):
+    #     raise TypeError("Unsupported Mapping type: " + str(type(obj)))
