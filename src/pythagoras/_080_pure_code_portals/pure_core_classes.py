@@ -43,8 +43,6 @@ from .._040_logging_code_portals import *
 
 from .._070_protected_code_portals import *
 
-# from .._040_logging_code_portals.kw_args import KwArgs
-
 ASupportingFunc:TypeAlias = str | AutonomousFn
 
 SupportingFuncs:TypeAlias = ASupportingFunc | List[ASupportingFunc] | None
@@ -247,7 +245,7 @@ class PureFn(ProtectedFn):
 
 
     @property
-    def portal(self) -> PureCodePortal: #*#*#
+    def portal(self) -> PureCodePortal:
         return super().portal
 
 
@@ -326,7 +324,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def kwargs(self) -> KwArgs: #*#*#*
+    def kwargs(self) -> KwArgs:
         """Unpacked arguments of the function call, referenced by the address."""
         if not hasattr(self, "_kwargs_cache") or self._kwargs_cache is None:
             with self.fn.portal:
@@ -347,7 +345,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def _ready_in_active_portal(self): #*#*#
+    def _ready_in_active_portal(self):
         """Indicates if the result of the function call is available."""
         result = (self in get_active_portal()._execution_results)
         if result:
@@ -355,7 +353,7 @@ class PureFnExecutionResultAddr(HashAddr):
         return result
 
     @property
-    def _ready_in_nonactive_portals(self) -> bool: #*#*#
+    def _ready_in_nonactive_portals(self) -> bool:
         for another_portal in get_nonactive_portals():
             with another_portal:
                 if self in another_portal._execution_results:
@@ -370,7 +368,7 @@ class PureFnExecutionResultAddr(HashAddr):
         return False
 
     @property
-    def ready(self) -> bool: #*#*#
+    def ready(self) -> bool:
         if hasattr(self, "_ready_cache"):
             assert self._ready_cache
             return True
@@ -384,7 +382,7 @@ class PureFnExecutionResultAddr(HashAddr):
         return False
 
 
-    def execute(self): #*#*#
+    def execute(self):
         """Execute the function and store the result in the portal."""
         if hasattr(self, "_result_cache"):
             return self._result_cache
@@ -393,7 +391,7 @@ class PureFnExecutionResultAddr(HashAddr):
             return self._result_cache
 
 
-    def request_execution(self): #*#*#
+    def request_execution(self):
         """Request execution of the function, without actually executing it."""
         with self.fn.portal as portal:
             if self.ready:
@@ -402,7 +400,7 @@ class PureFnExecutionResultAddr(HashAddr):
                 portal._execution_requests[self] = True
 
 
-    def drop_execution_request(self): #*#*#
+    def drop_execution_request(self):
         """Remove the request for execution from all known portals"""
         for portal in get_all_known_portals():
             with portal:
@@ -410,7 +408,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def execution_requested(self): #*#*#
+    def execution_requested(self):
         """Indicates if the function execution has been requested."""
         with self.fn.portal as active_portal:
             if self in active_portal._execution_requests:
@@ -473,7 +471,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def can_be_executed(self) -> bool: #*#*#
+    def can_be_executed(self) -> VALIDATION_SUCCESSFUL | None:
         """Indicates if the function can be executed in the current session.
 
         TODO: The function should be refactored once we start fully supporting
@@ -484,7 +482,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def needs_execution(self) -> bool: #*#*#
+    def needs_execution(self) -> bool:
         """Indicates if the function is a good candidate for execution.
 
         Returns False if the result is already available, or if some other

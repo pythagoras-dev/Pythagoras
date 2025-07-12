@@ -130,23 +130,22 @@ class ProtectedFn(AutonomousFn):
         return self._post_validators_cache
 
 
-    def can_be_executed(self, kw_args: KwArgs) -> bool:
+    def can_be_executed(self, kw_args: KwArgs) -> VALIDATION_SUCCESSFUL|None:
         with self.portal as portal:
             kw_args = kw_args.pack()
             pre_validators = copy(self.pre_validators)
             portal.entropy_infuser.shuffle(pre_validators)
             for pre_validator in pre_validators:
-                pre_validation_result = None
                 if isinstance(pre_validator, SimplePreValidatorFn):
                     pre_validation_result = pre_validator()
                 else:
                     pre_validation_result = pre_validator(packed_kwargs=kw_args, fn_addr = self.addr)
                 if pre_validation_result is not VALIDATION_SUCCESSFUL:
-                    return False
-            return True
+                    return None
+            return VALIDATION_SUCCESSFUL
 
 
-    def validate_execution_result(self, kw_args: KwArgs, result: Any) -> bool:
+    def validate_execution_result(self, kw_args: KwArgs, result: Any) -> VALIDATION_SUCCESSFUL | None:
         with self.portal as portal:
             kw_args = kw_args.pack()
             post_validators = copy(self.post_validators)
@@ -154,14 +153,14 @@ class ProtectedFn(AutonomousFn):
             for post_validator in post_validators:
                 if post_validator(packed_kwargs=kw_args, fn_addr = self.addr
                         , result=result) is not VALIDATION_SUCCESSFUL:
-                    return False
-            return True
+                    return None
+            return VALIDATION_SUCCESSFUL
 
 
     def execute(self, **kwargs) -> Any:
         with self.portal:
             kw_args = KwArgs(**kwargs)
-            assert self.can_be_executed(kw_args)
+            assert self.can_be_executed(kw_args) is VALIDATION_SUCCESSFUL
             result = super().execute(**kwargs)
             assert self.validate_execution_result(kw_args, result)
             return result

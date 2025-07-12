@@ -19,6 +19,7 @@ import parameterizable
 from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
+from .. import VALIDATION_SUCCESSFUL
 from .._010_basic_portals import get_all_known_portals
 from .._070_protected_code_portals.system_utils import get_unused_ram_mb, get_unused_cpu_cores, process_is_active, \
     get_process_start_time, get_current_process_id, get_current_process_start_time
@@ -286,7 +287,7 @@ def _process_random_execution_request(**portal_init_params):
                 ,assert_readiness=False)
             if not new_address.needs_execution:
                 continue
-            if not new_address.can_be_executed:
+            if not new_address.can_be_executed is VALIDATION_SUCCESSFUL:
                 continue
             with OutputSuppressor():
                 new_address.execute()
