@@ -18,8 +18,7 @@ from typing import Callable
 from parameterizable import register_parameterizable_class
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .._040_logging_code_portals.logging_portal_core_classes import (
-    LoggingCodePortal, LoggingFn)
+from .._040_logging_code_portals.logging_portal_core_classes import *
 
 
 class SafeCodePortal(LoggingCodePortal):
@@ -32,6 +31,21 @@ class SafeCodePortal(LoggingCodePortal):
             , root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
+
+
+class SafeFnCallSignature(LoggingFnCallSignature):
+    """A signature of a call to a safe function"""
+    _fn_cache: SafeFn | None
+
+    def __init__(self, fn: SafeFn, arguments: dict):
+        assert isinstance(fn, SafeFn)
+        assert isinstance(arguments, dict)
+        super().__init__(fn, arguments)
+
+    @property
+    def fn(self) -> SafeFn:
+        """Return the function object referenced by the signature."""
+        return super().fn
 
 
 class SafeFn(LoggingFn):
@@ -60,6 +74,10 @@ class SafeFn(LoggingFn):
     @property
     def portal(self) -> SafeCodePortal:
         return super().portal
+
+
+    def get_signature(self, arguments:dict) -> SafeFnCallSignature:
+        return SafeFnCallSignature(fn=self, arguments=arguments)
 
 
 register_parameterizable_class(SafeCodePortal)

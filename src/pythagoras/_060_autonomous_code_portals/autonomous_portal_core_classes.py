@@ -14,8 +14,7 @@ from .._040_logging_code_portals import KwArgs
 from .._060_autonomous_code_portals.names_usage_analyzer import (
     analyze_names_in_function)
 
-from .._050_safe_code_portals.safe_portal_core_classes import (
-    SafeFn, SafeCodePortal)
+from .._050_safe_code_portals.safe_portal_core_classes import *
 
 class AutonomousCodePortal(SafeCodePortal):
     
@@ -28,6 +27,21 @@ class AutonomousCodePortal(SafeCodePortal):
             , root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
+
+
+class AutonomousFnCallSignature(SafeFnCallSignature):
+    """A signature of a call to an autonomous function"""
+    _fn_cache: AutonomousFn | None
+
+    def __init__(self, fn: AutonomousFn, arguments: dict):
+        assert isinstance(fn, AutonomousFn)
+        assert isinstance(arguments, dict)
+        super().__init__(fn, arguments)
+
+    @property
+    def fn(self) -> AutonomousFn:
+        """Return the function object referenced by the signature."""
+        return super().fn
 
 
 class AutonomousFn(SafeFn):
@@ -103,6 +117,10 @@ class AutonomousFn(SafeFn):
             assert len(overlapping_keys) == 0
             kwargs.update(self.fixed_kwargs)
             return super().execute(**kwargs)
+
+
+    def get_signature(self, arguments:dict) -> AutonomousFnCallSignature:
+        return AutonomousFnCallSignature(fn=self, arguments=arguments)
 
 
     def fix_kwargs(self, **kwargs) -> AutonomousFn:

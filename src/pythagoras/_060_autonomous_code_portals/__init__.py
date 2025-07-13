@@ -37,7 +37,6 @@ of decoration, while runtime checks happen at the time of function execution.
 """
 
 
-from .autonomous_portal_core_classes import AutonomousFn, AutonomousCodePortal
-
-from .autonomous_decorators import autonomous
+from .autonomous_portal_core_classes import *
+from .autonomous_decorators import *
 

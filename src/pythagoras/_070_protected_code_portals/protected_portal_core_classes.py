@@ -23,14 +23,10 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._010_basic_portals.basic_portal_core_classes import _visit_portal
-from .._030_data_portals import DataPortal, ValueAddr
-from .._040_logging_code_portals import KwArgs, LoggingFnCallSignature
-from .validator_fn_classes import *
 from .list_flattener import flatten_list
 from .validation_succesful_const import VALIDATION_SUCCESSFUL, ValidationSuccessFlag
 
-from .._060_autonomous_code_portals import (
-    AutonomousCodePortal, AutonomousFn)
+from .._060_autonomous_code_portals import *
 
 
 class ProtectedCodePortal(AutonomousCodePortal):
@@ -134,7 +130,7 @@ class ProtectedFn(AutonomousFn):
 
     def can_be_executed(self
             , kw_args: KwArgs
-            ) -> LoggingFnCallSignature|ValidationSuccessFlag|None:
+            ) -> ProtectedFnCallSignature|ValidationSuccessFlag|None:
         with self.portal as portal:
             kw_args = kw_args.pack()
             pre_validators = copy(self.pre_validators)
@@ -144,7 +140,7 @@ class ProtectedFn(AutonomousFn):
                     pre_validation_result = pre_validator()
                 else:
                     pre_validation_result = pre_validator(packed_kwargs=kw_args, fn_addr = self.addr)
-                if isinstance(pre_validation_result, LoggingFnCallSignature):
+                if isinstance(pre_validation_result, ProtectedFnCallSignature):
                     return pre_validation_result
                 elif pre_validation_result is not VALIDATION_SUCCESSFUL:
                     return None
@@ -170,7 +166,7 @@ class ProtectedFn(AutonomousFn):
             kw_args = KwArgs(**kwargs)
             while True:
                 validation_result = self.can_be_executed(kw_args)
-                if isinstance(validation_result, LoggingFnCallSignature):
+                if isinstance(validation_result, ProtectedFnCallSignature):
                     validation_result.execute()
                     continue
                 elif validation_result is None:
@@ -247,7 +243,7 @@ class ProtectedFn(AutonomousFn):
         return ProtectedFnCallSignature(self, arguments)
 
 
-class ProtectedFnCallSignature(LoggingFnCallSignature):
+class ProtectedFnCallSignature(AutonomousFnCallSignature):
     """A signature of a call to a pure function"""
     _fn_cache: ProtectedFn | None
 
