@@ -60,10 +60,14 @@ class LoggingFn(StorableFn):
         return bool(value)
 
 
+    def get_signature(self, arguments:dict) -> LoggingFnCallSignature:
+        return LoggingFnCallSignature(self, arguments)
+
+
     def execute(self,**kwargs):
         with self.portal:
             packed_kwargs = KwArgs(**kwargs).pack()
-            fn_call_signature = LoggingFnCallSignature(self, packed_kwargs)
+            fn_call_signature = self.get_signature(packed_kwargs)
             with LoggingFnExecutionFrame(fn_call_signature) as frame:
                 result = super().execute(**kwargs)
                 frame._register_execution_result(result)
@@ -75,8 +79,8 @@ class LoggingFn(StorableFn):
         return super().portal
 
 
-class LoggingFnCallSignature:
-    """A signature of a call to a (logging) function.
+class   LoggingFnCallSignature:
+    """A signature of a call to a logging function.
 
     This class is used to create a unique identifier for a call to
     a function, consisting of the function itself as well as all its arguments.

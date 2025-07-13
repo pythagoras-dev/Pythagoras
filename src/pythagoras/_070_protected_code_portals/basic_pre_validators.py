@@ -1,8 +1,8 @@
 from .._070_protected_code_portals import SimplePreValidatorFn
-from .validation_succesful_const import ValidationSuccessClass
+from .validation_succesful_const import ValidationSuccessFlag
 
 
-def _at_least_X_CPU_cores_free_check(n:int)-> ValidationSuccessClass | None:
+def _at_least_X_CPU_cores_free_check(n:int)-> ValidationSuccessFlag | None:
     cores = pth.get_unused_cpu_cores()
     if cores >= n-0.1:
         return pth.VALIDATION_SUCCESSFUL
@@ -14,7 +14,7 @@ def unused_cpu(cores:int) -> SimplePreValidatorFn:
     return SimplePreValidatorFn(_at_least_X_CPU_cores_free_check).fix_kwargs(n=cores)
 
 
-def _at_least_X_G_RAM_free_check(x:int)-> ValidationSuccessClass | None:
+def _at_least_X_G_RAM_free_check(x:int)-> ValidationSuccessFlag | None:
     ram = pth.get_unused_ram_mb() / 1024
     if ram >= x-0.1:
         return pth.VALIDATION_SUCCESSFUL
@@ -27,7 +27,7 @@ def unused_ram(Gb:int) -> SimplePreValidatorFn:
 
 
 def _check_python_package_and_install_if_needed(
-        package_name)-> ValidationSuccessClass | None:
+        package_name)-> ValidationSuccessFlag | None:
     assert isinstance(package_name, str)
     import importlib, time
     try:

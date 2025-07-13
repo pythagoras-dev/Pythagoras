@@ -2,9 +2,9 @@
 
 from typing import Callable, Any
 
-from .validator_fn_classes import ValidatorFn
+# from .validator_fn_classes import ValidatorFn
 from .._060_autonomous_code_portals import autonomous
-from .protected_portal_core_classes import ProtectedFn, ProtectedCodePortal
+from .protected_portal_core_classes import *
 from persidict import Joker, KEEP_CURRENT
 
 class protected(autonomous):

@@ -1,4 +1,4 @@
-class ValidationSuccessClass:
+class ValidationSuccessFlag:
     """Singleton class to represent a successful validation."""
 
     _instance = None
@@ -8,4 +8,4 @@ class ValidationSuccessClass:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-VALIDATION_SUCCESSFUL = ValidationSuccessClass()
+VALIDATION_SUCCESSFUL = ValidationSuccessFlag()

@@ -107,6 +107,21 @@ class PureCodePortal(ProtectedCodePortal):
         super()._clear()
 
 
+class PureFnCallSignature(ProtectedFnCallSignature):
+    """A signature of a call to a pure function"""
+    _fn_cache: PureFn | None
+
+    def __init__(self, fn: PureFn, arguments: dict):
+        assert isinstance(fn, PureFn)
+        assert isinstance(arguments, dict)
+        super().__init__(fn, arguments)
+
+    @property
+    def fn(self) -> PureFn:
+        """Return the function object referenced by the signature."""
+        return super().fn
+
+
 class PureFn(ProtectedFn):
 
     def __init__(self, fn: Callable | str
@@ -129,6 +144,10 @@ class PureFn(ProtectedFn):
         with self.portal:
             packed_kwargs = KwArgs(**kwargs).pack()
             return PureFnExecutionResultAddr(self, packed_kwargs)
+
+
+    def get_signature(self, arguments: dict) -> PureFnCallSignature:
+        return PureFnCallSignature(self, arguments)
 
 
     def swarm(self, **kwargs) -> PureFnExecutionResultAddr:
@@ -261,7 +280,7 @@ class PureFnExecutionResultAddr(HashAddr):
     outputs printed, exceptions thrown, and events emitted.
     """
     _fn_cache: PureFn | None
-    _call_signature_cache: LoggingFnCallSignature | None
+    _call_signature_cache: PureFnCallSignature | None
     _kwargs_cache: KwArgs | None
 
     _result_cache: Any | None
@@ -272,7 +291,7 @@ class PureFnExecutionResultAddr(HashAddr):
         with fn.portal as portal:
             self._kwargs_cache = KwArgs(**arguments)
             self._fn_cache = fn
-            signature = LoggingFnCallSignature(fn, self._kwargs_cache)
+            signature = PureFnCallSignature(fn, self._kwargs_cache)
             self._call_signature_cache = signature
             tmp = ValueAddr(signature)
             new_descriptor = fn.name +"_result_addr"
@@ -302,14 +321,14 @@ class PureFnExecutionResultAddr(HashAddr):
 
     def get_ValueAddr(self):
         descriptor = self.descriptor.removesuffix("_result_addr")
-        descriptor += "_" + LoggingFnCallSignature.__name__.lower()
+        descriptor += "_" + PureFnCallSignature.__name__.lower()
         return ValueAddr.from_strings(  # TODO: refactor this
             descriptor= descriptor
             , hash_signature=self.hash_signature)
 
 
     @property
-    def call_signature(self) -> LoggingFnCallSignature:
+    def call_signature(self) -> PureFnCallSignature:
         if not hasattr(self, "_call_signature_cache") or self._call_signature_cache is None:
             self._call_signature_cache = self.get_ValueAddr().get()
         return self._call_signature_cache
@@ -471,7 +490,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def can_be_executed(self) -> VALIDATION_SUCCESSFUL | None:
+    def can_be_executed(self) -> PureFnCallSignature | ValidationSuccessFlag | None:
         """Indicates if the function can be executed in the current session.
 
         TODO: The function should be refactored once we start fully supporting

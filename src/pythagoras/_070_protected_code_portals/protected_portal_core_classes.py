@@ -17,19 +17,17 @@ Under the hood, validators are autonomous functions.
 from __future__ import annotations
 
 from copy import copy
-from typing import Callable, Any
-
+from typing import Any, Callable
+from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from .validator_fn_classes import *
+from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._010_basic_portals.basic_portal_core_classes import _visit_portal
-from .._030_data_portals import DataPortal
-from .._040_logging_code_portals import KwArgs
-from .._030_data_portals import ValueAddr
-from parameterizable import sort_dict_by_keys
+from .._030_data_portals import DataPortal, ValueAddr
+from .._040_logging_code_portals import KwArgs, LoggingFnCallSignature
+from .validator_fn_classes import *
 from .list_flattener import flatten_list
-from .validation_succesful_const import VALIDATION_SUCCESSFUL
-
+from .validation_succesful_const import VALIDATION_SUCCESSFUL, ValidationSuccessFlag
 
 from .._060_autonomous_code_portals import (
     AutonomousCodePortal, AutonomousFn)
@@ -82,8 +80,10 @@ class ProtectedFn(AutonomousFn):
             pre_validators += fn.pre_validators
             post_validators += fn.post_validators
 
-        pre_validators = self._normalize_validators(pre_validators, PreValidatorFn)
-        post_validators = self._normalize_validators(post_validators, PostValidatorFn)
+        pre_validators = self._normalize_validators(
+            pre_validators, PreValidatorFn)
+        post_validators = self._normalize_validators(
+            post_validators, PostValidatorFn)
 
         self._pre_validators_cache = pre_validators
         self._post_validators_cache = post_validators
@@ -119,18 +119,22 @@ class ProtectedFn(AutonomousFn):
     @property
     def pre_validators(self) -> list[AutonomousFn]:
         if not hasattr(self, "_pre_validators_cache"):
-            self._pre_validators_cache = [addr.get() for addr in self._pre_validators_addrs]
+            self._pre_validators_cache = [
+                addr.get() for addr in self._pre_validators_addrs]
         return self._pre_validators_cache
 
 
     @property
     def post_validators(self) -> list[AutonomousFn]:
         if not hasattr(self, "_post_validators_cache"):
-            self._post_validators_cache = [addr.get() for addr in self._post_validators_addrs]
+            self._post_validators_cache = [
+                addr.get() for addr in self._post_validators_addrs]
         return self._post_validators_cache
 
 
-    def can_be_executed(self, kw_args: KwArgs) -> VALIDATION_SUCCESSFUL|None:
+    def can_be_executed(self
+            , kw_args: KwArgs
+            ) -> LoggingFnCallSignature|ValidationSuccessFlag|None:
         with self.portal as portal:
             kw_args = kw_args.pack()
             pre_validators = copy(self.pre_validators)
@@ -140,12 +144,16 @@ class ProtectedFn(AutonomousFn):
                     pre_validation_result = pre_validator()
                 else:
                     pre_validation_result = pre_validator(packed_kwargs=kw_args, fn_addr = self.addr)
-                if pre_validation_result is not VALIDATION_SUCCESSFUL:
+                if isinstance(pre_validation_result, LoggingFnCallSignature):
+                    return pre_validation_result
+                elif pre_validation_result is not VALIDATION_SUCCESSFUL:
                     return None
             return VALIDATION_SUCCESSFUL
 
 
-    def validate_execution_result(self, kw_args: KwArgs, result: Any) -> VALIDATION_SUCCESSFUL | None:
+    def validate_execution_result(self
+            , kw_args: KwArgs
+            , result: Any) -> ValidationSuccessFlag|None:
         with self.portal as portal:
             kw_args = kw_args.pack()
             post_validators = copy(self.post_validators)
@@ -158,12 +166,18 @@ class ProtectedFn(AutonomousFn):
 
 
     def execute(self, **kwargs) -> Any:
-        with self.portal:
+        with (self.portal):
             kw_args = KwArgs(**kwargs)
-            assert self.can_be_executed(kw_args) is VALIDATION_SUCCESSFUL
-            result = super().execute(**kwargs)
-            assert self.validate_execution_result(kw_args, result)
-            return result
+            while True:
+                validation_result = self.can_be_executed(kw_args)
+                if isinstance(validation_result, LoggingFnCallSignature):
+                    validation_result.execute()
+                    continue
+                elif validation_result is None:
+                    assert False, (f"Pre-validators failed for function {self.name}")
+                result = super().execute(**kwargs)
+                assert self.validate_execution_result(kw_args, result)
+                return result
 
 
     def _normalize_validators(self
@@ -179,7 +193,9 @@ class ProtectedFn(AutonomousFn):
         if validators is None:
             return []
         if not isinstance(validators, list):
-            if callable(validators) or isinstance(validators, ValidatorFn) or isinstance(validators, str):
+            if (callable(validators)
+                    or isinstance(validators, ValidatorFn)
+                    or isinstance(validators, str)):
                 validators = [validators]
         assert isinstance(validators, list)
         validators = flatten_list(validators)
@@ -225,3 +241,112 @@ class ProtectedFn(AutonomousFn):
                 raise AttributeError("Premature cache invalidation: "
                                      "_pre_validators_addrs is missing.")
             del self._pre_validators_cache
+
+
+    def get_signature(self, arguments:dict) -> ProtectedFnCallSignature:
+        return ProtectedFnCallSignature(self, arguments)
+
+
+class ProtectedFnCallSignature(LoggingFnCallSignature):
+    """A signature of a call to a pure function"""
+    _fn_cache: ProtectedFn | None
+
+    def __init__(self, fn: ProtectedFn, arguments: dict):
+        assert isinstance(fn, ProtectedFn)
+        assert isinstance(arguments, dict)
+        super().__init__(fn, arguments)
+
+    @property
+    def fn(self) -> ProtectedFn:
+        """Return the function object referenced by the signature."""
+        return super().fn
+
+
+class ValidatorFn(AutonomousFn):
+    def __init__(self, fn: Callable | str | AutonomousFn
+        , fixed_kwargs: dict | None = None
+        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , portal: AutonomousCodePortal | None = None):
+        super().__init__(
+            fn=fn
+            , fixed_kwargs=fixed_kwargs
+            , excessive_logging=excessive_logging
+            , portal=portal)
+
+        check_if_fn_accepts_args(self.get_allowed_kwargs_names(), self.source_code)
+
+
+    @classmethod
+    def get_allowed_kwargs_names(cls)->set[str]:
+        raise NotImplementedError("This method must be overridden")
+
+
+    def execute(self,**kwargs) \
+            -> ProtectedFnCallSignature | ValidationSuccessFlag | None:
+        assert set(kwargs) == self.get_allowed_kwargs_names()
+        return super().execute(**kwargs)
+
+
+class PreValidatorFn(ValidatorFn):
+    def __init__(self, fn: Callable | str | AutonomousFn
+        , fixed_kwargs: dict | None = None
+        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , portal: AutonomousCodePortal | None = None):
+        super().__init__(
+            fn=fn
+            , fixed_kwargs=fixed_kwargs
+            , excessive_logging=excessive_logging
+            , portal=portal)
+
+
+class SimplePreValidatorFn(PreValidatorFn):
+    def __init__(self, fn: Callable | str | AutonomousFn
+        , fixed_kwargs: dict | None = None
+        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , portal: AutonomousCodePortal | None = None):
+        super().__init__(
+            fn=fn
+            , fixed_kwargs=fixed_kwargs
+            , excessive_logging=excessive_logging
+            , portal=portal)
+
+
+    @classmethod
+    def get_allowed_kwargs_names(cls) -> set[str]:
+        """Simple pre-validators do not take any inputs."""
+        return set()
+
+
+class ComplexPreValidatorFn(PreValidatorFn):
+    def __init__(self, fn: Callable | str | AutonomousFn
+        , fixed_kwargs: dict | None = None
+        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , portal: AutonomousCodePortal | None = None):
+        super().__init__(
+            fn=fn
+            , fixed_kwargs=fixed_kwargs
+            , excessive_logging=excessive_logging
+            , portal=portal)
+
+
+    @classmethod
+    def get_allowed_kwargs_names(cls) -> set[str]:
+        """Complex pre-validators use info about the function and its input arguments."""
+        return {"packed_kwargs", "fn_addr"}
+
+
+class PostValidatorFn(ValidatorFn):
+    def __init__(self, fn: Callable | str | AutonomousFn
+        , fixed_kwargs: dict | None = None
+        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , portal: AutonomousCodePortal | None = None):
+        super().__init__(
+            fn=fn
+            , fixed_kwargs=fixed_kwargs
+            , excessive_logging=excessive_logging
+            , portal=portal)
+
+    @classmethod
+    def get_allowed_kwargs_names(cls) -> set[str]:
+        """Post-validators use info about the function, its input arguments and returned value."""
+        return {"packed_kwargs", "fn_addr", "result" }
