@@ -110,6 +110,7 @@ class PureCodePortal(ProtectedCodePortal):
 class PureFnCallSignature(ProtectedFnCallSignature):
     """A signature of a call to a pure function"""
     _fn_cache: PureFn | None
+    _execution_results_addr_cache: PureFnExecutionResultAddr | None
 
     def __init__(self, fn: PureFn, arguments: dict):
         assert isinstance(fn, PureFn)
@@ -120,6 +121,14 @@ class PureFnCallSignature(ProtectedFnCallSignature):
     def fn(self) -> PureFn:
         """Return the function object referenced by the signature."""
         return super().fn
+
+    @property
+    def execution_results_addr(self) -> PureFnExecutionResultAddr:
+        """Return the address of the execution results of the function call."""
+        if not hasattr(self, "_execution_results_addr_cache"):
+            self._execution_results_addr_cache = PureFnExecutionResultAddr(
+                fn=self.fn, arguments=self.packed_kwargs)
+        return self._execution_results_addr_cache
 
 
 class PureFn(ProtectedFn):
@@ -330,7 +339,8 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def call_signature(self) -> PureFnCallSignature:
-        if not hasattr(self, "_call_signature_cache") or self._call_signature_cache is None:
+        if (not hasattr(self, "_call_signature_cache")
+            or self._call_signature_cache is None):
             self._call_signature_cache = self.get_ValueAddr().get()
         return self._call_signature_cache
 

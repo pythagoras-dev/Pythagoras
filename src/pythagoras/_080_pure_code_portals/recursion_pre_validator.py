@@ -18,16 +18,18 @@ def _recursion_pre_validator(
     assert isinstance(param_value, int)
     assert param_value >= 0
     if param_value in {0,1}:
-        return VALIDATION_SUCCESSFUL
+        return pth.VALIDATION_SUCCESSFUL
     for n in range(2, param_value): #TODO: optimize this
         unpacked_kwargs[param_name] = n
-        if not fn.ready_to_execute(**unpacked_kwargs):
-            return PureFnCallSignature(fn, unpacked_kwargs)
-    return VALIDATION_SUCCESSFUL
+        result_addr = pth.PureFnExecutionResultAddr(
+            fn=fn, arguments = unpacked_kwargs)
+        if not result_addr.ready:
+            return result_addr.call_signature
+    return pth.VALIDATION_SUCCESSFUL
 
 
 def recursive_parameter(param_name:str):
-    return PreValidatorFn(
+    return ComplexPreValidatorFn(
         _recursion_pre_validator
         , fixed_kwargs=dict(param_name=param_name))
 
