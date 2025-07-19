@@ -184,7 +184,8 @@ class PureFn(ProtectedFn):
 
         with self.portal as portal:
             packed_kwargs = KwArgs(**kwargs).pack()
-            output_address = PureFnExecutionResultAddr(self, packed_kwargs)
+            output_address = PureFnExecutionResultAddr(
+                fn=self, arguments=packed_kwargs)
             random_x = portal.entropy_infuser.random()
             p_consistency_checks = portal.p_consistency_checks
             conduct_consistency_checks = False

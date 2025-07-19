@@ -27,7 +27,7 @@ from .._040_logging_code_portals.logging_portal_core_classes import build_execut
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from persidict import OverlappingMultiDict
 from .._080_pure_code_portals.pure_core_classes import (
-    PureCodePortal, PureFnExecutionResultAddr)
+    PureCodePortal, PureFnExecutionResultAddr, PureFnCallSignature)
 from .._800_signatures_and_converters.node_signature import get_node_signature
 
 from multiprocessing import get_context
@@ -276,22 +276,39 @@ def _process_random_execution_request(**portal_init_params):
         portal_init_params)
     assert isinstance(portal, SwarmingPortal)
     with portal:
-
+        call_signature:PureFnCallSignature|None = None
         while True:
-            addr = portal._execution_requests.random_key()
-            if addr is None:
-                portal._randomly_delay_execution()
-                continue
-            new_address = PureFnExecutionResultAddr.from_strings(
-                descriptor=addr[2], hash_signature=addr[0]+addr[1]+addr[3]
-                ,assert_readiness=False)
-            if not new_address.needs_execution:
-                continue
-            if not new_address.can_be_executed is VALIDATION_SUCCESSFUL:
-                continue
-            with OutputSuppressor():
-                new_address.execute()
-            return
+            if call_signature is not None:
+                pre_validation_result = call_signature.fn.can_be_executed(
+                    call_signature.packed_kwargs)
+                if isinstance(pre_validation_result, PureFnCallSignature):
+                    call_signature = pre_validation_result
+                    continue
+                elif pre_validation_result is VALIDATION_SUCCESSFUL:
+                    call_signature.fn.execute(**call_signature.packed_kwargs)
+                    return
+                else:
+                    call_signature = None
+                    continue
+            else:
+                addr = portal._execution_requests.random_key()
+                if addr is None:
+                    portal._randomly_delay_execution()
+                    continue
+                new_address = PureFnExecutionResultAddr.from_strings(
+                    descriptor=addr[2], hash_signature=addr[0]+addr[1]+addr[3]
+                    ,assert_readiness=False)
+                if not new_address.needs_execution:
+                    continue
+                pre_validation_result =  new_address.can_be_executed
+                if isinstance(pre_validation_result, PureFnCallSignature):
+                    call_signature = pre_validation_result
+                    continue
+                elif not pre_validation_result is VALIDATION_SUCCESSFUL:
+                    continue
+                with OutputSuppressor():
+                    new_address.execute()
+                return
 
         # max_addresses_to_consider = random.randint(200, 5000)
         # # TODO: are 200 and 5000 good values for max_addresses_to_consider?
