@@ -79,6 +79,74 @@ if ready(future_result_address):
     result = get(future_result_address)
 ```
 
+Pre-conditions for executing a function:
+```python
+@pure(pre_validators=[
+    unused_ram(Gb=5),
+    installed_packages("scikit-learn","pandas"),
+    unused_cpu(cores=10)])
+def my_long_running_function(a:float, b:float) -> float:
+  from time import sleep
+  for i in range(5):
+    sleep(1)
+    print(
+        "waiting...."
+        )
+  return a+10*b
+```
+
+Recursion:
+```python
+@pure(pre_validators=[recursive_parameters("n")])
+def factorial(n:int)->int:
+  if n == 1:
+    return 1
+  else:
+    return n*factorial(n=n-1)
+```
+
+Partial function application:
+```python
+@pure()
+def my_map(input_list:list, transformer: PureFn)->list:
+  result = []
+  for element in input_list:
+    transformed_element = transformer(x=element)
+    result.append(transformed_element)
+  return result
+
+@pure()
+def my_square(x):
+  return x*x
+
+result = my_map(input_list=[1,2,3,4,5], transformer=my_square)
+
+my_square_map = my_map.fix_kwargs(transformer = my_square)
+
+result = my_square_map(input_list=[1,2,3,4,5])
+```
+
+Mutually recursive functions:
+```python
+@pure(pre_validators=recursive_parameters("n"))
+def is_even(n:int, is_odd ,is_even)->bool:
+  if n in {0,2}:
+    return True
+  else:
+    return is_odd(n=n-1, is_even=is_even, is_odd=is_odd)
+
+@pure(pre_validators=recursive_parameters("n"))
+def is_odd(n:int, is_even, is_odd)->bool:
+  if n in {0,2}:
+    return False
+  else:
+    return is_even(n=n-1, is_odd=is_odd, is_even=is_even)
+
+(is_even, is_odd) = (
+  is_even.fix_kwargs(is_odd=is_odd, is_even=is_even)
+  , is_odd.fix_kwargs(is_odd=is_odd, is_even=is_even) )
+```
+
 ## How to get it?
 
 The source code is hosted on GitHub at: https://github.com/pythagoras-dev/pythagoras
