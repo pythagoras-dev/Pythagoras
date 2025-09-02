@@ -35,7 +35,7 @@ preferred functional patterns, augmented by new capabilities.
 
 ## Videos
 
-[Data Phoenix Webinar, August 27, 2025](https://youtu.be/eb6_atu1RQI)
+[Data Phoenix Webinar, August 27, 2025](https://youtu.be/eb6_atu1RQI) ([slides](https://docs.google.com/presentation/d/1fGBqnp0aqVHPJ-BYGYnUll1_TJI_WObAbEVX89Z3-yA))
 
 ## How to get it?
 
