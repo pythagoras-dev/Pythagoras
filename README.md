@@ -33,6 +33,10 @@ preferred functional patterns, augmented by new capabilities.
 
 **!!! BOOKMARK THIS PAGE AND COME BACK LATER, WE WILL PUBLISH MORE TUTORIALS SOON !!!**
 
+## Videos
+
+[Data Phoenix Webinar, August 27, 2025](https://youtu.be/eb6_atu1RQI)
+
 ## How to get it?
 
 The source code is hosted on GitHub at: https://github.com/pythagoras-dev/pythagoras
