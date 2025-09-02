@@ -61,15 +61,13 @@ Decorating a function:
 @pure()
 def my_long_running_function(a:float, b:float) -> float:
   from time import sleep # imports must be placed inside a pure function
-  for i in range(5):
-    sleep(1)
-    print("waiting....")
+  sleep(5)
   return a+10*b
 ```
 
 Using a decorated function synchronously:
 ```python
-result = my_long_running_function(a=1, b=2)
+result = my_long_running_function(a=1, b=2) # only named arguments are allowed
 ```
 
 Using a decorated function asynchronously:
@@ -87,11 +85,7 @@ Pre-conditions for executing a function:
     unused_cpu(cores=10)])
 def my_long_running_function(a:float, b:float) -> float:
   from time import sleep
-  for i in range(5):
-    sleep(1)
-    print(
-        "waiting...."
-        )
+  sleep(5)
   return a+10*b
 ```
 
@@ -102,7 +96,7 @@ def factorial(n:int)->int:
   if n == 1:
     return 1
   else:
-    return n*factorial(n=n-1)
+    return n*factorial(n=n-1) # only named arguments are allowed
 ```
 
 Partial function application:
