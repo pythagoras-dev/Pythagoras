@@ -145,6 +145,9 @@ def is_odd(n:int, is_even, is_odd)->bool:
 (is_even, is_odd) = (
   is_even.fix_kwargs(is_odd=is_odd, is_even=is_even)
   , is_odd.fix_kwargs(is_odd=is_odd, is_even=is_even) )
+
+assert is_even(n=10)
+assert is_odd(n=11)
 ```
 
 ## How to get it?
