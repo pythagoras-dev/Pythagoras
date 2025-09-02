@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pythagoras"
-version = "0.23.17"
+version = "0.23.18"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
