@@ -14,7 +14,7 @@ data science, machine learning, and AI workflows.
 Pythagoras excels at complex, long-running, resource-demanding computations. 
 It’s not recommended for real-time, latency-sensitive workflows.
 
-## Usage
+## Tutorials
 
 Pythagoras elevates two popular techniques — memoization and parallelization — 
 to a global scale and then fuses them, unlocking performance and scalability 
@@ -32,6 +32,35 @@ preferred functional patterns, augmented by new capabilities.
 * [Pythagoras 203: Work with Functions](https://colab.research.google.com/drive/1tlG-p-QnHI6p3K1mdGyHzPzwi6CGRg1a)
 
 **!!! BOOKMARK THIS PAGE AND COME BACK LATER, WE WILL PUBLISH MORE TUTORIALS SOON !!!**
+
+## Usage Examples
+
+Importing Pythagoras:
+```python
+from pythagoras.core import *
+import pythagoras as pth
+```
+
+Creating a portal based on a (shared) folder:
+```python
+my_portal = get_portal("./my_local_folder")
+```
+
+Checking the state of a portal:
+```python
+my_portal.describe()
+```
+
+Decorating a function:
+```python
+@pure()
+def my_long_running_function(a:float, b:float) -> float:
+  from time import sleep # imports must be placed inside a pure function
+  for i in range(5):
+    sleep(1)
+    print("waiting....")
+  return a+10*b
+```
 
 ## Videos
 
