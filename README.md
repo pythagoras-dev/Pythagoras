@@ -33,6 +33,11 @@ preferred functional patterns, augmented by new capabilities.
 
 **!!! BOOKMARK THIS PAGE AND COME BACK LATER, WE WILL PUBLISH MORE TUTORIALS SOON !!!**
 
+## Videos
+
+* [Data Phoenix Webinar, August 27, 2025](https://youtu.be/eb6_atu1RQI) ([slides](https://docs.google.com/presentation/d/1fGBqnp0aqVHPJ-BYGYnUll1_TJI_WObAbEVX89Z3-yA))
+
+
 ## Usage Examples
 
 Importing Pythagoras:
@@ -62,9 +67,17 @@ def my_long_running_function(a:float, b:float) -> float:
   return a+10*b
 ```
 
-## Videos
+Using a decorated function synchronously:
+```python
+result = my_long_running_function(a=1, b=2)
+```
 
-[Data Phoenix Webinar, August 27, 2025](https://youtu.be/eb6_atu1RQI) ([slides](https://docs.google.com/presentation/d/1fGBqnp0aqVHPJ-BYGYnUll1_TJI_WObAbEVX89Z3-yA))
+Using a decorated function asynchronously:
+```python
+future_result_address = my_long_running_function.swarm(a=10, b=20)
+if ready(future_result_address):
+    result = get(future_result_address)
+```
 
 ## How to get it?
 
