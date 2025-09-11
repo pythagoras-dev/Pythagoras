@@ -8,7 +8,6 @@ clear all portals and their state.
 
 from __future__ import annotations
 
-import collections
 import random
 import sys
 from abc import abstractmethod
@@ -71,16 +70,16 @@ BACKEND_TYPE_TXT = "Backend type"
 
 
 def _get_description_value_by_key(dataframe:pd.DataFrame, key:str) -> Any:
-    """
-    Retrieves the value corresponding to a given key from a DataFrame.
+    """Retrieve the value corresponding to a given key from a DataFrame.
 
-    Parameters:
-    - dataframe (pd.DataFrame): The input DataFrame with at least 4 columns.
-    - key (str): The key to search for in the third column of the DataFrame.
+    Args:
+        dataframe: The input DataFrame with 4 columns.
+            It is supposed to be an output of portal.describe() method.
+        key: The key to search for in the third column of the DataFrame.
 
     Returns:
-    - value (any): The value from the fourth column corresponding to the key.
-                   Returns None if the key is not found.
+        The value from the fourth column corresponding to the key.
+        Returns None if the key is not found.
     """
     # Check if the key exists in the 3rd column
     result = dataframe.loc[dataframe.iloc[:, 1] == key]
@@ -231,6 +230,17 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def __init__(self, root_dict:PersiDict|str|None = None):
+        """Initialize a BasicPortal instance.
+
+        Sets up the portal with a root dictionary for persistent storage.
+        If no root_dict is provided, uses the default portal base directory
+        to create a FileDirDict.
+
+        Args:
+            root_dict: The root dictionary for persistent storage, a path string,
+                or None to use the default location. If a string is provided,
+                it will be converted to a FileDirDict using that path.
+        """
         ParameterizableClass.__init__(self)
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
@@ -244,7 +254,12 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def _post_init_hook(self) -> None:
-        """This method is always called after all __init__() methods"""
+        """Execute post-initialization tasks for the portal.
+
+        This method is automatically called after all __init__() methods
+        complete. It registers the portal in the global registry and updates
+        the most recently created portal reference.
+        """
         global _most_recently_created_portal, _all_known_portals
         _all_known_portals[self._str_id] = self
         _most_recently_created_portal = self
@@ -252,7 +267,16 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
     def _get_linked_objects_ids(self
             , target_class: type | None = None) -> set[PObjectStrID]:
-        """Get the set str_ids of objects, linked to the portal."""
+        """Get the set of string IDs of objects linked to this portal.
+
+        Args:
+            target_class: The class type to filter for, or None to include
+                all linked objects regardless of type.
+
+        Returns:
+            A set of string IDs representing objects linked to this portal,
+            optionally filtered by the specified target class.
+        """
         global _all_links_from_objects_to_portals
         result = set()
         for obj_str_id, portal_str_id in _all_links_from_objects_to_portals.items():
@@ -267,7 +291,16 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
-        """Get the list of objects, linked to the portal"""
+        """Get the list of objects linked to this portal.
+
+        Args:
+            target_class: The class type to filter for, or None to include
+                all linked objects regardless of type.
+
+        Returns:
+            A list of PortalAwareClass instances that are linked to this portal,
+            optionally filtered by the specified target class.
+        """
         found_linked_objects_ids = self._get_linked_objects_ids(target_class)
         found_linked_objects = []
         for obj_str_id in found_linked_objects_ids:
@@ -277,12 +310,27 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
 
 
     def get_number_of_linked_objects(self, target_class: type | None = None) -> int:
-        """Get the number of linked portal-aware objects of the given class name."""
-        return len(self._get_linked_objects_ids())
+        """Get the number of objects linked to this portal.
+
+        Args:
+            target_class: The class type to filter for, or None to include
+                all linked objects regardless of type.
+
+        Returns:
+            The count of portal-aware objects linked to this portal,
+            optionally filtered by the specified target class.
+        """
+        return len(self._get_linked_objects_ids(target_class))
 
 
     @property
     def entropy_infuser(self) -> random.Random:
+        """Get the shared random number generator for the portal system.
+
+        Returns:
+            A Random instance shared across all BasicPortal instances for
+            generating random values and entropy when needed.
+        """
         return BasicPortal._entropy_infuser
 
 
@@ -419,6 +467,16 @@ class PortalAwareClass(metaclass = PostInitMeta):
     _visited_portals: set[str] | None
 
     def __init__(self, portal:BasicPortal|None=None):
+        """Initialize a PortalAwareClass instance.
+
+        Sets up the object with an optional linked portal. If a portal is provided,
+        the object will be linked to that portal and will use it for all operations.
+        If no portal is provided, the object will use the currently active portal.
+
+        Args:
+            portal: The portal to link this object to, or None to use the
+                currently active portal for operations.
+        """
         assert portal is None or isinstance(portal, BasicPortal)
         self._linked_portal_at_init = portal
         # self._hash_id_cache = None
@@ -426,7 +484,12 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
 
     def _post_init_hook(self):
-        """ This method is called after all object's .__init__() methods."""
+        """Execute post-initialization tasks for the portal-aware object.
+
+        This method is automatically called after all object's __init__() methods
+        complete. It registers the object with its linked portal if one was provided
+        during initialization, establishing the connection between the object and portal.
+        """
         global _all_links_from_objects_to_portals
         global _all_activated_portal_aware_objects
         if self._linked_portal_at_init is not None:
@@ -474,6 +537,14 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
 
     def _visit_portal(self, portal: BasicPortal) -> None:
+        """Visit a portal and register the object if this is the first visit.
+
+        Checks if the object has previously visited the specified portal.
+        If this is the first visit, registers the object with that portal.
+
+        Args:
+            portal: The BasicPortal instance to visit.
+        """
         if portal._str_id not in self._visited_portals:
             self._first_visit_to_portal(portal)
 
@@ -510,7 +581,14 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
     @abstractmethod
     def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
+        """This method is called when the object is unpickled.
+
+        Restores the object's state from unpickling and resets portal-related
+        attributes to ensure proper initialization in the new environment.
+
+        Args:
+            state: The state dictionary used for unpickling the object.
+        """
         self._invalidate_cache()
         self._visited_portals = set()
         self._linked_portal_at_init = None
