@@ -1,5 +1,6 @@
-"""This modukle provides foundational functionality for wotk with portals,
-specifically for managing the portal stack and for accessing the current
+"""This module provides foundational functionality for work with portals.
+
+This module specifically handles portal stack management and provides access to the current
 portal. It keeps track of all portals created in the system and manages
 the stack of entered ('active') portals. It also provides a method to
 clear all portals and their state.
@@ -27,6 +28,14 @@ def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
     A helper function used by the describe() method of BasicPortal
     and its subclasses. It creates a DataFrame with a single row
     containing the type, name, and value of the characteristic.
+
+    Args:
+        name: The name of the characteristic.
+        value: The value of the characteristic.
+
+    Returns:
+        A pandas DataFrame with columns 'type', 'name', and 'value',
+        containing a single row with type="Disk".
     """
     d = dict(
         type="Disk"
@@ -41,6 +50,14 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
     A helper function used by the describe() method of BasicPortal
     and its subclasses. It creates a DataFrame with a single row
     containing the type, name, and value of the characteristic.
+
+    Args:
+        name: The name of the characteristic.
+        value: The value of the characteristic.
+
+    Returns:
+        A pandas DataFrame with columns 'type', 'name', and 'value',
+        containing a single row with type="Runtime".
     """
     d = dict(
         type = "Runtime"
@@ -80,31 +97,51 @@ _active_portals_counters_stack: list = [int]
 _most_recently_created_portal: BasicPortal | None = None
 
 def get_number_of_known_portals() -> int:
-    """Get the number of portals currently in the system."""
+    """Get the number of portals currently in the system.
+
+    Returns:
+        The total count of all known portals in the system.
+    """
     global _all_known_portals
     return len(_all_known_portals)
 
 
 def get_all_known_portals() -> list[BasicPortal]:
-    """Get a list of all known portals."""
+    """Get a list of all known portals.
+
+    Returns:
+        A list containing all portal instances currently known to the system.
+    """
     global _all_known_portals
     return list(_all_known_portals.values())
 
 
 def get_number_of_portals_in_active_stack() -> int:
-    """Get the number of portals in a stack."""
+    """Get the number of unique portals in the active stack.
+
+    Returns:
+        The count of unique portals currently in the active portal stack.
+    """
     global _active_portals_stack
     return len(set(_active_portals_stack))
 
 
 def get_depth_of_active_portal_stack() -> int:
-    """Get the depth of the active portal stack."""
+    """Get the depth of the active portal stack.
+
+    Returns:
+        The total depth (sum of all counters) of the active portal stack.
+    """
     global _active_portals_counters_stack
     return sum(_active_portals_counters_stack)
 
 
 def get_most_recently_created_portal() -> BasicPortal | None:
-    """Get the most recently created portal, or None if no portals exist."""
+    """Get the most recently created portal.
+
+    Returns:
+        The most recently created portal instance, or None if no portals exist.
+    """
     global _most_recently_created_portal
     return _most_recently_created_portal
 
@@ -117,6 +154,9 @@ def get_active_portal() -> BasicPortal:
     it finds the most recently created portal and makes it active.
     If there are currently no portals exist in the system,
     it creates and returns the default portal.
+
+    Returns:
+        The currently active portal instance.
     """
     global _most_recently_created_portal, _active_portals_stack
 
@@ -132,7 +172,11 @@ def get_active_portal() -> BasicPortal:
 
 
 def get_nonactive_portals() -> list[BasicPortal]:
-    """Get a list of all portals that are not in the active stack."""
+    """Get a list of all portals that are not in the active stack.
+
+    Returns:
+        A list of portal instances that are not currently in the active portal stack.
+    """
     active_portal_str_id = get_active_portal()._str_id
     found_portals = []
     for portal_str_id, portal in _all_known_portals.items():
@@ -149,6 +193,9 @@ def get_default_portal_base_dir() -> str:
     Pythagoras connects to the default local portal
     when no other portal is specified in the
     program which uses Pythagoras.
+
+    Returns:
+        The absolute path to the default portal's base directory as a string.
     """
     home_directory = Path.home()
     target_directory = home_directory / ".pythagoras" / ".default_portal"
@@ -168,7 +215,7 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
     across multiple runs of the application, and across multiple computers.
 
     A Pythagoras-based application can have multiple portals,
-    and there is usually a current (default) portal, accessible via
+    and there is usually a currently active one, accessible via
     get_active_portal().
 
     BasicPortal is a base class for all portal objects.
