@@ -20,16 +20,16 @@ Pythagoras elevates two popular techniques â€” memoization and parallelization â
 to a global scale and then fuses them, unlocking performance and scalability 
 that were previously out of reach.
 
-* [Pythagoras 101: Introduction to Memoization](https://colab.research.google.com/drive/1bvNXFP1BQJqhoS270Dz1lNT4jPCuj540)
+* [Pythagoras 101: Introduction to Memoization](https://pythagoras.link/tutorial-101)
 
-* [Pythagoras 102: Parallelization Basics](https://colab.research.google.com/drive/1DZxgwoiTnyy1qE7T5JunU4GN4j0w6CVk)
+* [Pythagoras 102: Parallelization Basics](https://pythagoras.link/tutorial-102)
 
 Drawing from many years of functional-programming practice, 
 Pythagoras extends these proven ideas to the next level. 
 In a Pythagoras environment, you can seamlessly employ your 
 preferred functional patterns, augmented by new capabilities.
 
-* [Pythagoras 203: Work with Functions](https://colab.research.google.com/drive/1tlG-p-QnHI6p3K1mdGyHzPzwi6CGRg1a)
+* [Pythagoras 203: Work with Functions](https://pythagoras.link/tutorial-203)
 
 **!!! BOOKMARK THIS PAGE AND COME BACK LATER, WE WILL PUBLISH MORE TUTORIALS SOON !!!**
 
