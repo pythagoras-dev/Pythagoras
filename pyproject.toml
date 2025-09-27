@@ -26,8 +26,8 @@ classifiers = [
 ]
 keywords = ["cloud", "ML", "AI", "serverless", "distributed", "parallel", "machine-learning", "deep-learning", "pythagoras"]
 dependencies = [
-    "parameterizable",
-    "persidict",
+    "parameterizable==0.8.1",
+    "persidict==0.32.2",
     "lz4",
     "joblib",
     "scikit-learn",
