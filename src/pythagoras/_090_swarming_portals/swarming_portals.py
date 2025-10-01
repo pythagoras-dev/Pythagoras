@@ -77,8 +77,8 @@ class SwarmingPortal(PureCodePortal):
         compute_nodes = OverlappingMultiDict(
             dict_type=dict_type
             , shared_subdicts_params=compute_nodes_shared_params
-            , json=dict(immutable_items=False)
-            , pkl=dict(immutable_items=False)
+            , json=dict(append_only=False)
+            , pkl=dict(append_only=False)
             )
         self._compute_nodes = compute_nodes
 

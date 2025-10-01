@@ -75,7 +75,7 @@ class DataPortal(OrdinaryCodePortal):
         config_settings_prototype = self._root_dict.get_subdict("config_settings")
         config_settings_params = config_settings_prototype.get_params()
         config_settings_params.update(
-            digest_len=0, immutable_items=False, file_type="pkl")
+            digest_len=0, append_only=False, serialization_format="pkl")
         config_settings = type(self._root_dict)(**config_settings_params)
         self._config_settings = config_settings
 
@@ -90,7 +90,7 @@ class DataPortal(OrdinaryCodePortal):
         value_store_prototype = self._root_dict.get_subdict("value_store")
         value_store_params = value_store_prototype.get_params()
         value_store_params.update(
-            digest_len=0, immutable_items=True, file_type = "pkl")
+            digest_len=0, append_only=True, serialization_format = "pkl")
         value_store = type(self._root_dict)(**value_store_params)
         value_store = WriteOnceDict(value_store, 0)
         self._value_store = value_store

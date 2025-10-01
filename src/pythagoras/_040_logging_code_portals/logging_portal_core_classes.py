@@ -551,13 +551,13 @@ class LoggingCodePortal(DataPortal):
         crash_history_prototype = self._root_dict.get_subdict("crash_history")
         crash_history_params = crash_history_prototype.get_params()
         crash_history_params.update(
-            dict(file_type="json", immutable_items=True , digest_len=0))
+            dict(serialization_format="json", append_only=True , digest_len=0))
         self._crash_history = type(self._root_dict)(**crash_history_params)
 
         event_history_prototype = self._root_dict.get_subdict("event_history")
         event_history_params = event_history_prototype.get_params()
         event_history_params.update(
-            dict(file_type="json", immutable_items=True, digest_len=0))
+            dict(serialization_format="json", append_only=True, digest_len=0))
         self._event_history = type(self._root_dict)(**event_history_params)
 
         run_history_prototype = self._root_dict.get_subdict("run_history")
@@ -566,10 +566,10 @@ class LoggingCodePortal(DataPortal):
         run_history = OverlappingMultiDict(
             dict_type=dict_type
             , shared_subdicts_params=run_history_shared_params
-            , json=dict(immutable_items=True)
-            , py=dict(base_class_for_values=str, immutable_items=False) # Immutable items????
-            , txt=dict(base_class_for_values=str, immutable_items=True)
-            , pkl=dict(immutable_items=True)
+            , json=dict(append_only=True)
+            , py=dict(base_class_for_values=str, append_only=False) # Immutable items????
+            , txt=dict(base_class_for_values=str, append_only=True)
+            , pkl=dict(append_only=True)
         )
         self._run_history = run_history
 

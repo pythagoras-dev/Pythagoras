@@ -68,7 +68,7 @@ class PureCodePortal(ProtectedCodePortal):
         results_dict_prototype = self._root_dict.get_subdict(
             "execution_results")
         results_dict_params = results_dict_prototype.get_params()
-        results_dict_params.update(immutable_items=True,  file_type = "pkl")
+        results_dict_params.update(append_only=True,  serialization_format = "pkl")
         execution_results = type(self._root_dict)(**results_dict_params)
         execution_results = WriteOnceDict(execution_results, 0)
         self._execution_results = execution_results
@@ -76,7 +76,7 @@ class PureCodePortal(ProtectedCodePortal):
         requests_dict_prototype = self._root_dict.get_subdict(
             "execution_requests")
         requests_dict_params = requests_dict_prototype.get_params()
-        requests_dict_params.update(immutable_items=False, file_type="pkl")
+        requests_dict_params.update(append_only=False, serialization_format="pkl")
         execution_requests = type(self._root_dict)(**requests_dict_params)
         self._execution_requests = execution_requests
 
