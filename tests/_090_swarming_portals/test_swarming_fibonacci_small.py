@@ -1,3 +1,5 @@
+import time
+
 import pytest
 from pythagoras._010_basic_portals.portal_tester import _PortalTester
 from pythagoras._090_swarming_portals.swarming_portals import (
@@ -14,7 +16,7 @@ def fibonacci(n: int) -> int:
 
 @pytest.mark.parametrize("p",[0, 0.5, 1])
 def test_swarming_fibonacci_small(tmpdir,p):
-    # tmpdir = 20*"Q" + str(int(time.time()))
+    # tmpdir = 2*"TEST_SWARMING_FIBONACCI_SMALL_" + str(int(time.time()))
     global fibonacci
     address = None
     with _PortalTester(SwarmingPortal

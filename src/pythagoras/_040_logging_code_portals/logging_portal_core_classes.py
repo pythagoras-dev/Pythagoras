@@ -5,7 +5,7 @@ import traceback
 from typing import Callable, Any
 
 import pandas as pd
-from parameterizable import register_parameterizable_class
+# from parameterizable import register_parameterizable_class
 from persidict import PersiDict, KEEP_CURRENT, Joker
 
 from .._010_basic_portals import NotPicklable, get_active_portal
@@ -611,7 +611,7 @@ class LoggingCodePortal(DataPortal):
         super()._clear()
 
 
-register_parameterizable_class(LoggingCodePortal)
+# register_parameterizable_class(LoggingCodePortal)
 
 
 def log_exception() -> None:

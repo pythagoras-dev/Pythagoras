@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from typing import Callable
 
-from parameterizable import register_parameterizable_class
+# from parameterizable import register_parameterizable_class
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .._040_logging_code_portals.logging_portal_core_classes import *
@@ -80,4 +80,4 @@ class SafeFn(LoggingFn):
         return SafeFnCallSignature(fn=self, arguments=arguments)
 
 
-register_parameterizable_class(SafeCodePortal)
+# register_parameterizable_class(SafeCodePortal)

@@ -12,12 +12,18 @@ at least once but does not offer any further guarantees.
 from __future__ import annotations
 
 import atexit
+import json
 from time import sleep
 
 import pandas as pd
 import parameterizable
-from parameterizable import sort_dict_by_keys
+from parameterizable import (
+    sort_dict_by_keys,
+    update_jsparams,
+    access_jsparams)
 from persidict import PersiDict, Joker, KEEP_CURRENT
+
+from parameterizable.json_processor import _Markers
 
 from .. import VALIDATION_SUCCESSFUL
 from .._010_basic_portals import get_all_known_portals
@@ -88,6 +94,14 @@ class SwarmingPortal(PureCodePortal):
         self._child_process = None
 
 
+    def get_params(self) -> dict:
+        params = super().get_params()
+        params["parent_process_id"] = self._parent_process_id
+        params["parent_process_start_time"] = self._parent_process_start_time
+        sorted_params = sort_dict_by_keys(params)
+        return sorted_params
+
+
     @property
     def is_parent(self) -> bool:
         """Check if this portal is the parent process."""
@@ -106,14 +120,14 @@ class SwarmingPortal(PureCodePortal):
         if self.is_parent:
             if self.max_n_workers > 0:
 
-                portal_init_params = self.get_portable_params()
-                portal_init_params["max_n_workers"] = self.max_n_workers
-                portal_init_params = sort_dict_by_keys(portal_init_params)
+                portal_init_jsparams = parameterizable.dumpjs(self)
+                portal_init_jsparams = update_jsparams(portal_init_jsparams,
+                    max_n_workers = self.max_n_workers)
 
                 ctx = get_context("spawn")
                 self._child_process = ctx.Process(
                     target=_launch_many_background_workers
-                    , kwargs=portal_init_params)
+                    , args=(portal_init_jsparams,))
                 self._child_process.start()
 
 
@@ -198,22 +212,22 @@ class SwarmingPortal(PureCodePortal):
             del self._max_n_workers_cache
         super()._invalidate_cache()
 
-parameterizable.register_parameterizable_class(SwarmingPortal)
+# parameterizable.register_parameterizable_class(SwarmingPortal)
 
 
-def _launch_many_background_workers(**portal_init_params) -> None:
+def _launch_many_background_workers(portal_init_jsparams:JsonSerializedParams) -> None:
     """Launch many background worker processes."""
-    n_workers_to_launch = portal_init_params["max_n_workers"]
+
+
+    n_workers_to_launch = access_jsparams(portal_init_jsparams
+        , "max_n_workers")["max_n_workers"]
     n_workers_to_launch = int(n_workers_to_launch)
 
-    portal_init_params["max_n_workers"] = 0
-    current_process_id = get_current_process_id()
-    portal_init_params["parent_process_id"] = current_process_id
-    portal_init_params["parent_process_start_time"
-        ] = get_current_process_start_time()
-    portal_init_params = sort_dict_by_keys(portal_init_params)
-    portal = parameterizable.get_object_from_portable_params(
-        portal_init_params)
+    portal_init_jsparams = update_jsparams(portal_init_jsparams,
+        max_n_workers=0, parent_process_id = get_current_process_id(),
+        parent_process_start_time = get_current_process_start_time())
+
+    portal = parameterizable.loadjs(portal_init_jsparams)
     assert isinstance(portal, SwarmingPortal)
 
     summary = build_execution_environment_summary()
@@ -226,7 +240,7 @@ def _launch_many_background_workers(**portal_init_params) -> None:
             portal._randomly_delay_execution(p=1)
             ctx = get_context("spawn")
             try:
-                p = ctx.Process(target=_background_worker, kwargs=portal_init_params)
+                p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
                 p.start()
                 list_of_all_workers.append(p)
             except Exception as e:
@@ -243,7 +257,7 @@ def _launch_many_background_workers(**portal_init_params) -> None:
                     portal._randomly_delay_execution(p=1)
                     ctx = get_context("spawn")
                     try:
-                        p = ctx.Process(target=_background_worker, kwargs=portal_init_params)
+                        p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
                         p.start()
                         new_list_of_all_workers.append(p)
                     except Exception as e:
@@ -251,10 +265,9 @@ def _launch_many_background_workers(**portal_init_params) -> None:
             list_of_all_workers = new_list_of_all_workers
 
 
-def _background_worker(**portal_init_params) -> None:
+def _background_worker(portal_init_jsparams:JsonSerializedParams) -> None:
     """Background worker that keeps processing random execution requests."""
-    portal = parameterizable.get_object_from_portable_params(
-        portal_init_params)
+    portal = parameterizable.loadjs(portal_init_jsparams)
     assert isinstance(portal, SwarmingPortal)
     with portal:
         ctx = get_context("spawn")
@@ -264,16 +277,19 @@ def _background_worker(**portal_init_params) -> None:
                     return
                 p = ctx.Process(
                     target=_process_random_execution_request
-                    , kwargs=portal_init_params)
+                    , args=(portal_init_jsparams,))
                 p.start()
                 p.join()
                 portal._randomly_delay_execution()
 
 
-def _process_random_execution_request(**portal_init_params):
+def _process_random_execution_request(portal_init_jsparams:JsonSerializedParams):
     """Process one random execution request."""
-    portal = parameterizable.get_object_from_portable_params(
-        portal_init_params)
+    # portal = parameterizable.get_object_from_portable_params(
+    #     portal_init_params)
+    portal_init_jsparams = update_jsparams(
+        portal_init_jsparams, max_n_workers=0)
+    portal = parameterizable.loadjs(portal_init_jsparams)
     assert isinstance(portal, SwarmingPortal)
     with portal:
         call_signature:PureFnCallSignature|None = None

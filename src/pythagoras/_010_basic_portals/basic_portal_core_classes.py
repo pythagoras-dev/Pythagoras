@@ -14,6 +14,7 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import TypeVar, Type, Any, NewType
 import pandas as pd
+import parameterizable
 from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
@@ -376,7 +377,10 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         It's an internal hash used by Pythagoras and is different from .__hash__()
         """
         if not hasattr(self,"_str_id_cache"):
-            params = self.get_portable_params()
+            params = self.get_params()
+            jsparams = parameterizable.dumpjs(params)
+            param_names = set(params.keys())
+            params = parameterizable.access_jsparams(jsparams, *param_names)
             ephemeral_names = self._ephemeral_param_names
             nonephemeral_params = {k:params[k] for k in params
                 if k not in ephemeral_names}
