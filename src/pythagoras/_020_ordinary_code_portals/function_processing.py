@@ -6,7 +6,27 @@ from .._010_basic_portals.long_infoname import get_long_infoname
 
 
 def get_function_name_from_source(function_source_code: str) -> str:
-    """Return the name of a function from its source code."""
+    """Extract the function name from a source code snippet.
+
+    This parser scans the source code line-by-line and returns the name
+    from the first line that starts with "def ". It assumes a standard
+    function definition like:
+
+    def my_func(arg1, arg2):
+        ...
+
+    It does not currently detect async functions defined with "async def",
+    and it will raise an error if no valid definition is found.
+
+    Args:
+        function_source_code: The source code containing a function definition.
+
+    Returns:
+        The function name as it appears before the opening parenthesis.
+
+    Raises:
+        ValueError: If no function definition line is found in the input.
+    """
     lines = function_source_code.split('\n')
     for line in lines:
         stripped_line = line.strip()
@@ -18,11 +38,17 @@ def get_function_name_from_source(function_source_code: str) -> str:
 
 
 def accepts_unlimited_positional_args(func: Callable) -> bool:
-    """Check if a function accepts an arbitrary number of positional arguments.
+    """Return True if the function accepts arbitrary positional args.
 
-    This function inspects the signature of the provided callable and
-    checks if it includes a name defined with `*args`,
-    which allows it to accept any number of positional arguments.
+    The check is based on inspect.signature and looks for a parameter of
+    kind VAR_POSITIONAL (i.e., a "*args" parameter).
+
+    Args:
+        func: The callable to inspect.
+
+    Returns:
+        True if the function defines a VAR_POSITIONAL ("*args") parameter;
+        False otherwise.
     """
 
     signature = inspect.signature(func)
@@ -33,7 +59,14 @@ def accepts_unlimited_positional_args(func: Callable) -> bool:
 
 
 def count_parameters_with_defaults(func: Callable) -> int:
-    """Returns the number of function parameters that have default values."""
+    """Count parameters that have default values in the function signature.
+
+    Args:
+        func: The callable to inspect.
+
+    Returns:
+        The number of parameters with default values.
+    """
     signature = inspect.signature(func)
     return sum(
         param.default is not param.empty
@@ -41,18 +74,28 @@ def count_parameters_with_defaults(func: Callable) -> int:
     )
 
 
-def assert_ordinarity(a_func:Callable) -> None:
-    """Assert that a function is ordinary.
+def assert_ordinarity(a_func: Callable) -> None:
+    """Validate that a callable complies with Pythagoras "ordinary" rules.
 
-    A function is ordinary if it is not a method,
-    a classmethod, a staticmethod, or a lambda function,
-    or a build-in function.
+    In Pythagoras, an "ordinary" function is a regular Python function that:
+    - is a plain function object (not a bound/unbound method, classmethod,
+      staticmethod object, lambda, closure, coroutine, or built-in), and
+    - does not accept unlimited positional arguments (no "*args"), and
+    - has no parameters with default values.
 
-    An ordinary function can only be called with keyword arguments,
-    and its parameters can't have default values.
+    Notes:
+    - Static methods: The handling of static methods is undecided; for now they
+      are treated the same as regular functions only if provided directly as a
+      function object. If a function fails any of the checks below, an error is
+      raised.
 
-    assert_ordinarity checks a function, given as an input name,
-    and throws an exception if the function is not ordinary.
+    Args:
+        a_func: The callable to validate.
+
+    Raises:
+        NonCompliantFunction: If the callable violates any of the ordinarity
+            constraints described above (e.g., not a function, is a method,
+            is a lambda/closure/async function, accepts *args, or has defaults).
     """
 
     # TODO: decide how to handle static methods

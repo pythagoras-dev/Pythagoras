@@ -15,13 +15,27 @@ from .._010_basic_portals.basic_portal_core_classes import (
 
 
 def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
-    """Return a function's source code in a 'canonical' form.
+    """Get the normalized source code for a function or OrdinaryFn.
 
-    Remove all comments, docstrings and empty lines;
-    standardize code formatting based on PEP 8.
+    This is a convenience wrapper around the internal normalizer that:
+    - Accepts either an OrdinaryFn instance, a regular callable, or a string of
+      source code containing a single function definition.
+    - Returns a normalized string representing the function's source code, with
+      comments, docstrings, type annotations, and empty lines removed and the
+      result formatted per PEP 8.
 
-    Only ordinary functions are supported;
-    methods and lambdas are not supported.
+    Args:
+        a_func: An OrdinaryFn instance, a Python callable, or a string with the
+            function's source code.
+
+    Returns:
+        The normalized source code string.
+
+    Raises:
+        NonCompliantFunction: If the function is not compliant with Pythagoras'
+            ordinarity rules or multiple decorators are present.
+        AssertionError: If input type is invalid or integrity checks fail.
+        SyntaxError: If the provided source cannot be parsed.
     """
 
     if isinstance(a_func, OrdinaryFn):
@@ -34,10 +48,22 @@ def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
 REGISTERED_FUNCTIONS_TXT = "Registered functions"
 
 class OrdinaryCodePortal(BasicPortal):
+    """Portal that manages OrdinaryFn instances and their runtime context.
+
+    The portal is responsible for tracking linked OrdinaryFn objects and
+    providing a context manager used during execution. It extends BasicPortal
+    with convenience methods specific to ordinary functions.
+    """
 
     def __init__(self
             , root_dict: PersiDict | str | None = None
             ):
+        """Initialize the portal.
+
+        Args:
+            root_dict: Optional persistence root (PersiDict or path-like string)
+                used by the underlying BasicPortal to store state.
+        """
         super().__init__(root_dict = root_dict)
 
 
@@ -47,7 +73,18 @@ class OrdinaryCodePortal(BasicPortal):
 
 
     def _get_linked_functions_ids(self, target_class: type | None=None) -> set[str]:
-        """Get the set of known functions' IDs"""
+        """Return the set of IDs for functions linked to this portal.
+
+        Args:
+            target_class: Optional subclass of OrdinaryFn to filter the results.
+                If None, OrdinaryFn is used.
+
+        Returns:
+            A set of string IDs corresponding to linked OrdinaryFn instances.
+
+        Raises:
+            TypeError: If target_class is not a subclass of OrdinaryFn.
+        """
         if target_class is None:
             target_class = OrdinaryFn
         if not issubclass(target_class, OrdinaryFn):
@@ -56,7 +93,18 @@ class OrdinaryCodePortal(BasicPortal):
 
 
     def get_linked_functions(self, target_class: type | None=None) -> list[OrdinaryFn]:
-        """Get the list of known functions"""
+        """Return linked OrdinaryFn instances managed by this portal.
+
+        Args:
+            target_class: Optional subclass of OrdinaryFn to filter the results.
+                If None, OrdinaryFn is used.
+
+        Returns:
+            A list of linked OrdinaryFn instances.
+
+        Raises:
+            TypeError: If target_class is not a subclass of OrdinaryFn.
+        """
         if target_class is None:
             target_class = OrdinaryFn
         if not issubclass(target_class, OrdinaryFn):
@@ -65,11 +113,26 @@ class OrdinaryCodePortal(BasicPortal):
 
 
     def get_number_of_linked_functions(self, target_class: type | None=None) -> int:
+        """Return the number of OrdinaryFn objects linked to this portal.
+
+        Args:
+            target_class: Optional subclass of OrdinaryFn to filter the results.
+                If None, OrdinaryFn is used.
+
+        Returns:
+            The number of linked functions matching the filter.
+        """
         return len(self._get_linked_functions_ids(target_class=target_class))
 
 
     def describe(self) -> pd.DataFrame:
-        """Get a DataFrame describing the portal's current state"""
+        """Describe the portal's current state.
+
+        Returns:
+            A pandas DataFrame with runtime characteristics of the portal,
+            including the number of registered functions, combined with the
+            base portal description.
+        """
         all_params = [super().describe()]
 
         all_params.append(_describe_runtime_characteristic(
@@ -110,6 +173,19 @@ class OrdinaryFn(PortalAwareClass):
                  , fn: Callable | str
                  , portal: OrdinaryCodePortal | None = None
                  ):
+        """Create a new OrdinaryFn wrapper.
+
+        Args:
+            fn: Either a regular callable, a string with the function's source,
+                or another OrdinaryFn instance to clone.
+            portal: Optional OrdinaryCodePortal to link to this instance.
+
+        Raises:
+            TypeError: If fn is neither callable, a string, nor an OrdinaryFn.
+            NonCompliantFunction: If the provided function source is not
+                compliant with Pythagoras ordinarity rules.
+            SyntaxError: If the provided source cannot be parsed.
+        """
         PortalAwareClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
             self.__setstate__(deepcopy(fn.__getstate__()))
@@ -125,10 +201,13 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def portal(self) -> OrdinaryCodePortal:
-        """Get the portal which the function's methods will be using.
+        """Return the portal used by this function.
 
-        It's either the function's linked portal or
-        (if the linked portal is None) the currently active portal.
+        It's either the function's linked portal or, if that is None, the
+        currently active portal from the ambient context.
+
+        Returns:
+            OrdinaryCodePortal: The portal to be used by this object.
         """
         return super().portal
 
@@ -157,6 +236,12 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def _virtual_file_name(self):
+        """Return a synthetic filename used when compiling the function.
+
+        Returns:
+            str: A stable file name derived from the function name and hash
+            signature, ending with ".py".
+        """
         if not hasattr(self, "_virtual_file_name_cache") or self._virtual_file_name_cache is None:
             self._virtual_file_name_cache = self.name + "_" + self.hash_signature + ".py"
         return self._virtual_file_name_cache
@@ -164,6 +249,11 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def _kwargs_var_name(self):
+        """Return the internal name used to store call kwargs during exec.
+
+        Returns:
+            str: A stable variable name unique to this function instance.
+        """
         if not hasattr(self, "_kwargs_var_name_cache") or self._kwargs_var_name_cache is None:
             self._kwargs_var_name_cache = "kwargs_" + self.name
             self._kwargs_var_name_cache += "_" + self.hash_signature
@@ -172,6 +262,11 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def _result_var_name(self):
+        """Return the internal name used to store the call result.
+
+        Returns:
+            str: A stable variable name unique to this function instance.
+        """
         if not hasattr(self, "_result_var_name_cache") or self._result_var_name_cache is None:
             self._result_var_name_cache = "result_" + self.name
             self._result_var_name_cache += "_" + self.hash_signature
@@ -180,6 +275,11 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def _tmp_fn_name(self):
+        """Return the internal temporary function name used during exec.
+
+        Returns:
+            str: A stable function name unique to this function instance.
+        """
         if not hasattr(self, "_tmp_fn_name_cache") or self._tmp_fn_name_cache is None:
             self._tmp_fn_name_cache = "func_" + self.name
             self._tmp_fn_name_cache += "_" + self.hash_signature
@@ -188,6 +288,11 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def _compiled_code(self):
+        """Return cached code object used to execute the function call.
+
+        Returns:
+            Any: A Python code object suitable for exec.
+        """
         if not hasattr(self, "_compiled_code_cache") or (
                 self._compiled_code_cache is None):
             source_to_execute = self.source_code
@@ -230,6 +335,18 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def __call__(self,* args, **kwargs) -> Any:
+        """Invoke the wrapped function using only keyword arguments.
+
+        Args:
+            *args: Positional arguments are not allowed and will raise.
+            **kwargs: Keyword arguments to pass to the function.
+
+        Returns:
+            Any: The result of executing the function.
+
+        Raises:
+            AssertionError: If positional arguments are supplied.
+        """
         assert len(args) == 0, (f"Function {self.name} can't"
             + " be called with positional arguments,"
             + " only keyword arguments are allowed.")
@@ -237,7 +354,13 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def _available_names(self):
-        """Returns a dictionary with the names, available inside the function."""
+        """Return names injected into the function's execution context.
+
+        Returns:
+            dict: A mapping of name to object made available during execution,
+            including globals(), the OrdinaryFn itself under its function name
+            and under "self", and the pythagoras package as "pth".
+        """
         import pythagoras as pth
         names= dict(globals())
         names[self.name] = self
@@ -247,6 +370,17 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def execute(self,**kwargs):
+        """Execute the underlying function with the provided keyword args.
+
+        The call is executed inside the portal context, with an execution
+        namespace populated by _available_names().
+
+        Args:
+            **kwargs: Keyword-only arguments for the function call.
+
+        Returns:
+            Any: The value returned by the function.
+        """
         with self.portal:
             names_dict = self._available_names()
             names_dict[self._kwargs_var_name] = kwargs
@@ -268,6 +402,11 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def __hash_signature_descriptor__(self) -> str:
+        """Return a short descriptor string used in hashing.
+
+        Returns:
+            str: Lowercased string combining the function name and class name.
+        """
         descriptor = self.name
         descriptor += "_" + self.__class__.__name__
         descriptor = descriptor.lower()

@@ -21,16 +21,44 @@ _pythagoras_decorator_names = {
 }
 
 def _get_normalized_function_source_impl(
-        a_func: Callable | str
-        , drop_pth_decorators: bool = False
+        a_func: Callable | str,
+        drop_pth_decorators: bool = False,
         ) -> str:
-        """Return function's source code in a 'canonical' form.
+        """Produce a normalized representation of a function's source code.
 
-        Remove all comments, docstrings, type annotations, and empty lines;
-        standardize code formatting based on PEP 8.
-        If drop_pth_decorators == True, remove Pythagoras decorators.
+        The normalization process performs the following steps:
+        1) Accepts either a callable or a string of source code. If a callable
+           is provided, it must be an ordinary function (validated) and its
+           source is retrieved with inspect.getsource.
+        2) Removes empty lines and normalizes indentation for functions defined
+           inside other scopes so that parsing can succeed.
+        3) Parses the code with ast.parse and validates there is exactly one
+           top-level function definition.
+        4) Optionally drops a single Pythagoras decorator (if present) when
+           drop_pth_decorators=True. Only known Pythagoras decorator names are
+           removed; any other decorator remains.
+        5) Strips all docstrings, return/type annotations, and variable
+           annotations from the AST. For nodes that become empty as a result,
+           a "pass" is inserted to keep the code valid.
+        6) Unparses the AST back to code and runs autopep8 to enforce PEP 8
+           formatting.
 
-        Only regular functions are supported; methods and lambdas are not supported.
+        Args:
+            a_func: The target function or a string containing its source code.
+            drop_pth_decorators: If True, remove a single known Pythagoras
+                decorator (e.g., @ordinary) from the function, if present.
+
+        Returns:
+            A normalized source code string for the function.
+
+        Raises:
+            NonCompliantFunction: If the function has multiple decorators when
+                a callable or a string representing a single function is
+                expected; or if it fails ordinarity checks.
+            AssertionError: If input is neither a callable nor a string, if
+                parsing assumptions fail (e.g., unexpected AST node types), or
+                when internal integrity checks do not hold.
+            SyntaxError: If the provided source string cannot be parsed.
         """
 
         a_func_name, code = None, ""

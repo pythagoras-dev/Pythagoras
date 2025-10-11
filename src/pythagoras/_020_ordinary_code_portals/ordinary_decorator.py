@@ -14,11 +14,25 @@ class ordinary:
     _portal: OrdinaryCodePortal | None
 
     def __init__(self, portal: OrdinaryCodePortal | None = None):
+       """Initialize the decorator.
+
+       Args:
+           portal: Optional OrdinaryCodePortal to link to the resulting
+               OrdinaryFn wrappers.
+       """
        assert portal is None or isinstance(portal, OrdinaryCodePortal)
        self._portal=portal
 
 
     def __call__(self,fn:Callable)->OrdinaryFn:
+        """Wrap a callable and return its OrdinaryFn representation.
+
+        Args:
+            fn: The function to convert into an OrdinaryFn.
+
+        Returns:
+            OrdinaryFn: The wrapper around the provided function.
+        """
         wrapper = OrdinaryFn(fn, portal=self._portal)
         return wrapper
 
