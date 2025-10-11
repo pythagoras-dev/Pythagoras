@@ -14,10 +14,7 @@ from .._800_signatures_and_converters import get_hash_signature
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic
     , _describe_runtime_characteristic)
-from .._020_ordinary_code_portals import (
-    get_normalized_function_source
-    ,OrdinaryCodePortal
-    ,OrdinaryFn)
+from .._020_ordinary_code_portals import OrdinaryCodePortal ,OrdinaryFn
 from persidict import WriteOnceDict
 
 TOTAL_VALUES_TXT = "Values, total"
@@ -25,36 +22,63 @@ PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
 def get_active_data_portal() -> DataPortal:
+    """Return the currently active DataPortal.
+
+    Returns:
+        DataPortal: The portal that is active in the current context ("with" block).
+
+    Raises:
+        AssertionError: If the active portal is not an instance of DataPortal.
+    """
     portal = get_active_portal()
     assert isinstance(portal, DataPortal)
     return portal
 
 
 def get_nonactive_data_portals() -> list[DataPortal]:
-    """Get a list of all nonactive DataPortals"""
+    """Return all known DataPortals that are not currently active.
+
+    Returns:
+        list[DataPortal]: A list of DataPortal instances that are available to
+            the runtime but are not the current active portal stack.
+
+    Raises:
+        AssertionError: If any returned portal is not an instance of DataPortal.
+    """
     portals = get_nonactive_portals()
     assert all(isinstance(p, DataPortal) for p in portals)
     return portals
 
 
 class DataPortal(OrdinaryCodePortal):
-    """A portal that persistently stores values.
+    """A portal that persistently stores and retrieves immutable values.
 
-    Immutable values are accessible via their hash_address-es,
-    which are unique identifiers of the values.
+    A DataPortal is responsible for addressing, storing, and retrieving
+    values by their content-derived addresses. It exposes a context manager
+    interface so that code running within a "with portal:" block treats that
+    portal as the active one.
 
-    If the current portal does not contain a specific value,
-    referenced by a hash_address, but this value can be retrieved
-    from another portal known to the program,
-    the value will be automatically copied to the current portal.
+    Behavior overview:
+    - Content-addressed storage: immutable values are referenced by a
+      HashAddr/ValueAddr that is derived from the value's bytes and a
+      human-readable descriptor.
+    - Transparent fetch and replication: if a value is not present in the
+      active portal but exists in any other known portal, it is fetched
+      and copied into the active portal on demand.
+    - Config settings: portal-specific and function-specific settings are
+      persisted in a dedicated config store.
+    - Consistency checks: the underlying persistent dictionary can perform
+      random, probabilistic consistency checks controlled by the
+      p_consistency_checks parameter.
 
-    A portal can serve as a context manager, enabling the use of the
-    'with' statement to support portal-aware code blocks. If some code is
-    supposed to explicitly read anything from (or save to) a portal,
-    it should be wrapped in a 'with' statement that
-    marks the portal as active for the duration of the code block.
+    Note:
+        Use the portal as a context manager whenever code performs I/O with
+        the portal (reading or storing values):
 
-    DataPortal also supports random consistency checks.
+        with portal:
+            addr = ValueAddr(data)
+            value = addr.get()
+
     """
 
     _value_store: WriteOnceDict | None
@@ -67,6 +91,18 @@ class DataPortal(OrdinaryCodePortal):
             , root_dict: PersiDict|str|None = None
             , p_consistency_checks: float|Joker = KEEP_CURRENT
             ):
+        """Initialize a DataPortal.
+
+        Args:
+            root_dict: Prototype PersiDict or a path/URI used to create
+                a persistent dictionary for internal stores. If None, uses
+                the parent's default.
+            p_consistency_checks: Probability in [0, 1] or KEEP_CURRENT Joker
+                that controls random consistency checks of the value store.
+
+        Raises:
+            ValueError: If p_consistency_checks is not in [0, 1] and not a Joker.
+        """
         OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
         self._auxiliary_config_params_at_init = dict()
@@ -102,14 +138,24 @@ class DataPortal(OrdinaryCodePortal):
 
 
     def _post_init_hook(self) -> None:
-        """Hook to be called after all __init__ methods are done"""
+        """Finalize initialization after __init__ completes across the MRO.
+
+        Ensures that auxiliary configuration parameters are persisted and that
+        the value store is configured according to the portal's
+        p_consistency_checks setting.
+        """
         super()._post_init_hook()
         self._persist_initial_config_params()
         self._value_store.p_consistency_checks = self.p_consistency_checks
 
 
     def get_params(self) -> dict:
-        """Get the portal's configuration parameters"""
+        """Return the portal's configuration parameters.
+
+        Returns:
+            dict: A sorted dictionary of base parameters augmented with
+            auxiliary config entries defined at initialization.
+        """
         params = super().get_params()
         params.update(self._auxiliary_config_params_at_init)
         sorted_params = sort_dict_by_keys(params)
@@ -201,6 +247,12 @@ class StorableFn(OrdinaryFn):
         , fn: Callable | str
         , portal: DataPortal | None = None
         ):
+        """Create a storable wrapper around an ordinary function.
+
+        Args:
+            fn: A Python function or its source code (normalized) as a string.
+            portal: Optional DataPortal to bind the function to.
+        """
         OrdinaryFn.__init__(self, fn=fn, portal=portal)
         self._auxiliary_config_params_at_init = dict()
 
