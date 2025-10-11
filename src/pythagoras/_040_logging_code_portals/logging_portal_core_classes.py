@@ -481,14 +481,17 @@ class   LoggingFnCallSignature:
 
 
 class LoggingFnExecutionRecord(NotPicklableClass):
-    """ A record of one full function execution session.
+    """Record of a single function execution session.
 
-    It provides access to all information logged during the
-    execution session, which includes information about the execution context
-    (environment), function arguments, its output (everything that was
-    printed to stdout/stderr during the execution attempt), any crashes
-    (exceptions) and events fired, and an actual result of the execution
-    created by a 'return' statement within the function code.
+    Provides convenient accessors to all artifacts logged for one particular
+    execution of a LoggingFn: environment context, captured output, crashes,
+    events, and the returned result value.
+
+    Attributes:
+        call_signature (LoggingFnCallSignature): The function-call identity
+            this record belongs to.
+        session_id (str): Unique identifier for the execution session ("run_*"),
+            shared by all artifacts emitted during this run.
     """
     call_signature: LoggingFnCallSignature
     session_id: str
@@ -496,17 +499,34 @@ class LoggingFnExecutionRecord(NotPicklableClass):
             self
             , call_signature: LoggingFnCallSignature
             , session_id: str):
+        """Construct an execution record.
+
+        Args:
+            call_signature: The call signature the record is associated with.
+            session_id: The unique ID of the execution session.
+        """
         self.call_signature = call_signature
         self.session_id = session_id
 
 
     @property
     def portal(self):
+        """LoggingCodePortal used to resolve underlying artifacts.
+
+        Returns:
+            LoggingCodePortal: The portal associated with the call signature.
+        """
         return self.call_signature.portal
 
 
     @property
     def output(self) -> str|None:
+        """Combined stdout/stderr/logging output captured for the session.
+
+        Returns:
+            str | None: The captured text output, or None when no output
+            was recorded for this session.
+        """
         with self.portal:
             execution_outputs = self.call_signature.execution_outputs
             for k in execution_outputs:
@@ -517,6 +537,12 @@ class LoggingFnExecutionRecord(NotPicklableClass):
 
     @property
     def attempt_context(self)-> dict|None:
+        """Environment/context snapshot captured at attempt start.
+
+        Returns:
+            dict | None: The environment summary dict for this session, or
+            None if not present (e.g., excessive logging disabled).
+        """
         with self.portal:
             execution_attempts = self.call_signature.execution_attempts
             for k in execution_attempts:
@@ -527,6 +553,11 @@ class LoggingFnExecutionRecord(NotPicklableClass):
 
     @property
     def crashes(self) -> list[dict]:
+        """All exceptions recorded during the session.
+
+        Returns:
+            list[dict]: A list of exception payload dicts in chronological order.
+        """
         result = []
         with self.portal:
             crashes = self.call_signature.crashes
@@ -538,6 +569,11 @@ class LoggingFnExecutionRecord(NotPicklableClass):
 
     @property
     def events(self) -> list[dict]:
+        """All events recorded during the session.
+
+        Returns:
+            list[dict]: A list of event payload dicts in chronological order.
+        """
         result = []
         with self.portal:
             events = self.call_signature.events
@@ -549,6 +585,14 @@ class LoggingFnExecutionRecord(NotPicklableClass):
 
     @property
     def result(self)->Any:
+        """Return value produced by the function in this session.
+
+        Returns:
+            Any: The object returned by the wrapped function for the run.
+
+        Raises:
+            ValueError: If there is no stored result for this session ID.
+        """
         with self.portal:
             execution_results = self.call_signature.execution_results
             for k in execution_results:
@@ -560,6 +604,16 @@ class LoggingFnExecutionRecord(NotPicklableClass):
 
 
 class LoggingFnExecutionFrame(NotPicklableClass):
+    """Context manager managing a single function execution with logging.
+
+    When used as a context, optionally captures stdout/stderr/logging,
+    registers attempt metadata, stores results and output, and routes
+    exceptions/events to both per-call artifacts and portal-level histories.
+
+    Attributes:
+        call_stack (list[LoggingFnExecutionFrame]): Class-level stack of active
+            frames (last item is the current execution frame).
+    """
     call_stack: list[LoggingFnExecutionFrame] = []
 
     session_id: str
@@ -571,6 +625,12 @@ class LoggingFnExecutionFrame(NotPicklableClass):
     context_used: bool
 
     def __init__(self, fn_call_signature: LoggingFnCallSignature):
+        """Initialize the execution frame for a specific function call.
+
+        Args:
+            fn_call_signature: The call signature identifying the function and
+                its (packed) arguments.
+        """
         with fn_call_signature.portal:
             self.session_id = "run_"+get_random_signature()
             self.fn_call_signature = fn_call_signature
@@ -588,40 +648,84 @@ class LoggingFnExecutionFrame(NotPicklableClass):
 
     @property
     def portal(self) -> LoggingCodePortal:
+        """Portal associated with the current execution frame.
+
+        Returns:
+            LoggingCodePortal: The portal used for logging within this frame.
+        """
         return self.fn.portal
 
 
     @property
     def fn(self) -> LoggingFn:
+        """The LoggingFn being executed in this frame.
+
+        Returns:
+            LoggingFn: The wrapped function object.
+        """
         return self.fn_call_signature.fn
 
 
     @property
     def fn_name(self) -> str:
+        """Name of the function being executed.
+
+        Returns:
+            str: The wrapped function's name.
+        """
         return self.fn_call_signature.fn_name
 
 
     @property
     def excessive_logging(self) -> bool:
+        """Whether the frame should capture detailed artifacts.
+
+        Returns:
+            bool: True if excessive logging is enabled for the function.
+        """
         return self.fn.excessive_logging
 
 
     @property
     def fn_addr(self) -> ValueAddr:
+        """Address of the wrapped function in storage.
+
+        Returns:
+            ValueAddr: The persisted address of the LoggingFn.
+        """
         return self.fn_call_signature.fn_addr
 
 
     @property
     def packed_args(self) -> PackedKwArgs:
+        """Packed keyword arguments used for this execution.
+
+        Returns:
+            PackedKwArgs: The packed argument mapping.
+        """
         return self.fn_call_signature.packed_kwargs
 
 
     @property
     def kwargs_addr(self) -> ValueAddr:
+        """Address of the packed arguments in storage.
+
+        Returns:
+            ValueAddr: The persisted address of the packed kwargs.
+        """
         return self.fn_call_signature.kwargs_addr
 
 
     def __enter__(self):
+        """Enter the execution frame context.
+
+        Performs sanity checks, enters the portal context, optionally starts
+        capturing output, pushes the frame onto the call stack, and registers
+        an execution attempt if excessive logging is enabled.
+
+        Returns:
+            LoggingFnExecutionFrame: This frame instance for use as a context var.
+        """
         assert not self.context_used, (
             "An instance of PureFnExecutionFrame can be used only once.")
         self.context_used = True
@@ -638,6 +742,10 @@ class LoggingFnExecutionFrame(NotPicklableClass):
 
 
     def _register_execution_attempt(self):
+        """Record an execution attempt with environment and source snapshot.
+
+        No-op when excessive logging is disabled.
+        """
         if not self.excessive_logging:
             return
         execution_attempts = self.fn_call_signature.execution_attempts
@@ -648,6 +756,14 @@ class LoggingFnExecutionFrame(NotPicklableClass):
 
 
     def _register_execution_result(self, result: Any):
+        """Store the function's return value into the results timeline.
+
+        Args:
+            result: The value returned by the wrapped function.
+
+        Notes:
+            No-op when excessive logging is disabled.
+        """
         if not self.excessive_logging:
             return
         execution_results = self.fn_call_signature.execution_results
@@ -656,6 +772,17 @@ class LoggingFnExecutionFrame(NotPicklableClass):
 
 
     def __exit__(self, exc_type, exc_value, trace_back):
+        """Exit the execution frame context.
+
+        Ensures the current exception (if any) is logged, finalizes output
+        capture and stores it, pops the frame from the call stack, and exits
+        the underlying portal context.
+
+        Args:
+            exc_type: Exception class raised within the context, if any.
+            exc_value: Exception instance raised within the context, if any.
+            trace_back: Traceback object associated with the exception, if any.
+        """
         log_exception()
         if isinstance(self.output_capturer, OutputCapturer):
             self.output_capturer.__exit__(exc_type, exc_value, traceback)
@@ -703,6 +830,22 @@ class LoggingCodePortal(DataPortal):
             , p_consistency_checks: float|Joker = KEEP_CURRENT
             , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
+        """Construct a LoggingCodePortal.
+
+        Args:
+            root_dict: PersiDict instance or filesystem path serving as the
+                storage root. When None, a default in-memory or configured
+                PersiDict is used by the base DataPortal.
+            p_consistency_checks: Probability [0..1] to run consistency checks
+                on storage operations; KEEP_CURRENT inherits existing setting.
+            excessive_logging: If True, functions executed via this portal will
+                store detailed artifacts (attempts/results/outputs). If
+                KEEP_CURRENT, the setting is inherited when cloning or
+                otherwise unspecified.
+
+        Raises:
+            TypeError: If excessive_logging is not a bool or Joker.
+        """
         super().__init__(root_dict=root_dict
             , p_consistency_checks=p_consistency_checks)
         del root_dict
@@ -744,17 +887,35 @@ class LoggingCodePortal(DataPortal):
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Exit the portal context, ensuring any active exception is logged.
+
+        Args:
+            exc_type: Exception class raised within the portal context, if any.
+            exc_val: Exception instance, if any.
+            exc_tb: Traceback object, if any.
+        """
         log_exception()
         super().__exit__(exc_type, exc_val, exc_tb)
 
 
     @property
     def excessive_logging(self) -> bool:
+        """Whether this portal captures detailed per-call artifacts.
+
+        Returns:
+            bool: True if excessive logging is enabled, False otherwise.
+        """
         return bool(self._get_config_setting("excessive_logging"))
 
 
     def describe(self) -> pd.DataFrame:
-        """Get a DataFrame describing the portal's current state"""
+        """Summarize the portal's current persistent and runtime state.
+
+        Returns:
+            pandas.DataFrame: A table with key characteristics, including
+            total crashes logged, today's crashes, and whether excessive
+            logging is enabled, combined with the base DataPortal summary.
+        """
         all_params = [super().describe()]
         all_params.append(_describe_persistent_characteristic(
             EXCEPTIONS_TOTAL_TXT, len(self._crash_history)))
@@ -770,7 +931,12 @@ class LoggingCodePortal(DataPortal):
 
 
     def _clear(self) -> None:
-        """Clear the portal's state"""
+        """Clear the portal's internal state and unregister handlers.
+
+        Side Effects:
+            - Drops references to crash/event/run histories.
+            - Unregisters global uncaught exception handlers.
+        """
         self._crash_history = None
         self._event_log = None
         self._run_history = None
