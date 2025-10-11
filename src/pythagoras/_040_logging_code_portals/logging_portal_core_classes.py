@@ -5,10 +5,10 @@ import traceback
 from typing import Callable, Any
 
 import pandas as pd
-# from parameterizable import register_parameterizable_class
+from parameterizable import NotPicklableClass
 from persidict import PersiDict, KEEP_CURRENT, Joker
 
-from .._010_basic_portals import NotPicklable, get_active_portal
+from .._010_basic_portals import get_active_portal
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic, _describe_runtime_characteristic)
 
@@ -313,7 +313,7 @@ class   LoggingFnCallSignature:
             return result
 
 
-class LoggingFnExecutionRecord(NotPicklable):
+class LoggingFnExecutionRecord(NotPicklableClass):
     """ A record of one full function execution session.
 
     It provides access to all information logged during the
@@ -392,7 +392,7 @@ class LoggingFnExecutionRecord(NotPicklable):
                 f"{self.call_signature.fn_name} execution results.")
 
 
-class LoggingFnExecutionFrame(NotPicklable):
+class LoggingFnExecutionFrame(NotPicklableClass):
     call_stack: list[LoggingFnExecutionFrame] = []
 
     session_id: str

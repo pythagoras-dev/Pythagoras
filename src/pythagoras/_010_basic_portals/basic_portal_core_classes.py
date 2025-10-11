@@ -14,12 +14,11 @@ from abc import abstractmethod
 from pathlib import Path
 from typing import TypeVar, Type, Any, NewType
 import pandas as pd
-import parameterizable
+from parameterizable import NotPicklableClass
 from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .post_init_metaclass import PostInitMeta
-from .not_picklable_class import NotPicklable
 from .._800_signatures_and_converters import get_hash_signature
 
 def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
@@ -205,7 +204,7 @@ def get_default_portal_base_dir() -> str:
     return target_directory_str
 
 
-class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
+class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -357,17 +356,6 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         params = dict(root_dict=self._root_dict)
         sorted_params = sort_dict_by_keys(params)
         return sorted_params
-
-
-    # @property
-    # def auxiliary_param_names(self) -> set[str]:
-    #     """Get the names of the portal's ephemeral parameters.
-    #
-    #     Portal's ephemeral parameters are not stored persistently.
-    #     They affect behaviour of a portal object in an application session,
-    #     but they do not affect behaviour of the actual portal across multiple runs.
-    #     """
-    #     return set()
 
 
     @property

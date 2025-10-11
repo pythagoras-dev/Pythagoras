@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pythagoras"
-version = "0.24.2"
+version = "0.24.3"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
@@ -26,7 +26,6 @@ classifiers = [
 ]
 keywords = ["cloud", "ML", "AI", "serverless", "distributed", "parallel", "machine-learning", "deep-learning", "pythagoras"]
 dependencies = [
-    "persidict==0.104.1",
     "lz4",
     "joblib",
     "scikit-learn",
@@ -37,11 +36,12 @@ dependencies = [
     "deepdiff",
     "numpy",
     "pytest",
+    "persidict==0.104.2",
     "boto3",
     "moto",
     "uv",
     "nvidia-ml-py",
-    "parameterizable==0.100.0",
+    "parameterizable==0.101.0",
 ]
 
 [project.urls]
