@@ -95,6 +95,15 @@ def register_systemwide_uncaught_exception_handlers() -> None:
 
 
 def unregister_systemwide_uncaught_exception_handlers() -> None:
+    """Uninstall previously registered Pythagoras exception handlers.
+
+    Decrements the registration reference counter. When it reaches zero,
+    restores the previous sys.excepthook (if any) and removes the custom
+    IPython exception handler in notebook environments.
+
+    Returns:
+        None
+    """
     global _number_of_handlers_registrations, _previous_excepthook
     _number_of_handlers_registrations -= 1
     if _number_of_handlers_registrations > 0:

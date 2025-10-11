@@ -94,7 +94,20 @@ class KwArgs(dict):
 
 
     def pack(self, store = True) -> PackedKwArgs:
-        """ Replace values with their hash addresses."""
+        """Pack values into ValueAddr handles, optionally storing them.
+
+        Each argument value is replaced by a ValueAddr pointing to either the
+        stored value (when store=True) or a non-stored address (when store=False)
+        that can still serve as a stable identifier for hashing/equality.
+
+        Args:
+            store: If True, values are stored in the active portal and the
+                returned addresses persist across sessions. If False, produces
+                non-stored addresses suitable for transient signatures.
+
+        Returns:
+            PackedKwArgs: A new mapping with values converted to ValueAddr.
+        """
         packed_copy = dict()
         if store:
             portal = get_active_portal()
@@ -110,10 +123,26 @@ class KwArgs(dict):
 
 
 class PackedKwArgs(KwArgs):
+    """KwArgs where all values are ValueAddr instances.
+
+    This is the packed form produced by KwArgs.pack().
+    """
     def __init__(self,*args, **kargs):
+        """Construct a PackedKwArgs mapping.
+
+        Accepts the same arguments as dict/KwArgs.
+        """
         super().__init__(*args, **kargs)
 
 
 class UnpackedKwArgs(KwArgs):
+    """KwArgs where all values are raw (non-ValueAddr) objects.
+
+    This is the unpacked form produced by KwArgs.unpack().
+    """
     def __init__(self,*args, **kargs):
+        """Construct an UnpackedKwArgs mapping.
+
+        Accepts the same arguments as dict/KwArgs.
+        """
         super().__init__(*args, **kargs)

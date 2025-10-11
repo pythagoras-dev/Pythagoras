@@ -223,6 +223,11 @@ class   LoggingFnCallSignature:
 
     @property
     def fn_name(self) -> str:
+        """Name of the wrapped function.
+
+        Returns:
+            str: The function's name, cached after first access.
+        """
         if not hasattr(self, "_fn_name_cache") or self._fn_name_cache is None:
             self._fn_name_cache = self.fn.name
         return self._fn_name_cache
@@ -230,16 +235,31 @@ class   LoggingFnCallSignature:
 
     @property
     def fn_addr(self) -> ValueAddr:
+        """Address of the wrapped LoggingFn in the portal storage.
+
+        Returns:
+            ValueAddr: The persisted address pointing to the LoggingFn.
+        """
         return self._fn_addr
 
 
     @property
     def kwargs_addr(self) -> ValueAddr:
+        """Address of the packed keyword arguments in portal storage.
+
+        Returns:
+            ValueAddr: The persisted address pointing to the packed kwargs.
+        """
         return self._kwargs_addr
 
 
     @property
     def packed_kwargs(self) -> PackedKwArgs:
+        """Packed keyword arguments for this call signature.
+
+        Returns:
+            PackedKwArgs: The packed kwargs, fetched from storage if not cached.
+        """
         if (not hasattr(self,"_packed_kwargs_cache")
                 or self._packed_kwargs_cache is None):
             with self.portal:
@@ -250,10 +270,21 @@ class   LoggingFnCallSignature:
 
     @property
     def excessive_logging(self) -> bool:
+        """Whether excessive logging is enabled for the underlying function.
+
+        Returns:
+            bool: True if excessive logging is enabled, False otherwise.
+        """
         return self.fn.excessive_logging
 
 
     def __hash_signature_descriptor__(self) -> str:
+        """Descriptor string contributing to the address hash.
+
+        Returns:
+            str: A lowercase string combining the function name and this class
+            name, used as part of the address hashing scheme.
+        """
         descriptor = self.fn_name
         descriptor += "_" + self.__class__.__name__
         descriptor = descriptor.lower()
@@ -261,11 +292,21 @@ class   LoggingFnCallSignature:
 
 
     def execute(self) -> Any:
+        """Execute the underlying function with stored arguments.
+
+        Returns:
+            Any: The function's return value.
+        """
         return self.fn.execute(**self.packed_kwargs.unpack())
 
 
     @property
     def addr(self) -> ValueAddr:
+        """Address uniquely identifying this call signature.
+
+        Returns:
+            ValueAddr: Address of the LoggingFnCallSignature persisted in portal.
+        """
         if hasattr(self, "_addr_cache") and self._addr_cache is not None:
             return self._addr_cache
         with self.portal:
@@ -275,6 +316,11 @@ class   LoggingFnCallSignature:
 
     @property
     def execution_attempts(self) -> PersiDict:
+        """Timeline of execution attempts metadata for this call.
+
+        Returns:
+            PersiDict: Append-only JSON sub-dictionary keyed by timestamped IDs.
+        """
         with self.portal as portal:
             attempts_path = self.addr + ["attempts"]
             attempts = portal._run_history.json.get_subdict(attempts_path)
@@ -283,6 +329,11 @@ class   LoggingFnCallSignature:
 
     @property
     def last_execution_attempt(self) -> Any:
+        """Most recent execution attempt metadata, if any.
+
+        Returns:
+            Any: Latest attempt metadata dict, or None if no attempts exist.
+        """
         with self.portal:
             attempts = self.execution_attempts
             timeline = attempts.newest_values(1)
@@ -295,6 +346,11 @@ class   LoggingFnCallSignature:
 
     @property
     def execution_results(self) -> PersiDict:
+        """Timeline of execution results for this call.
+
+        Returns:
+            PersiDict: Append-only PKL sub-dictionary storing returned values.
+        """
         with self.portal as portal:
             results_path = self.addr + ["results"]
             results = portal._run_history.pkl.get_subdict(results_path)
@@ -303,6 +359,11 @@ class   LoggingFnCallSignature:
 
     @property
     def last_execution_result(self) -> Any:
+        """Most recent execution result, if any.
+
+        Returns:
+            Any: Latest return value, or None if no results exist.
+        """
         with self.portal:
             results = self.execution_results
             timeline = results.newest_values(1)
@@ -315,6 +376,11 @@ class   LoggingFnCallSignature:
 
     @property
     def execution_outputs(self) -> PersiDict:
+        """Timeline of captured stdout/stderr/logging output for this call.
+
+        Returns:
+            PersiDict: Append-only TXT sub-dictionary of captured output strings.
+        """
         with self.portal as portal:
             outputs_path = self.addr + ["outputs"]
             outputs = portal._run_history.txt.get_subdict(outputs_path)
@@ -323,6 +389,11 @@ class   LoggingFnCallSignature:
 
     @property
     def last_execution_output(self) -> Any:
+        """Most recent captured combined output, if any.
+
+        Returns:
+            Any: Latest captured output string, or None if no outputs exist.
+        """
         with self.portal:
             outputs = self.execution_outputs
             timeline = outputs.newest_values(1)
@@ -335,6 +406,11 @@ class   LoggingFnCallSignature:
 
     @property
     def crashes(self) -> PersiDict:
+        """Timeline of crashes (exceptions) observed during this call.
+
+        Returns:
+            PersiDict: Append-only JSON sub-dictionary of exception payloads.
+        """
         with self.portal as portal:
             crashes_path = self.addr + ["crashes"]
             crashes = portal._run_history.json.get_subdict(crashes_path)
@@ -343,6 +419,11 @@ class   LoggingFnCallSignature:
 
     @property
     def last_crash(self) -> Any:
+        """Most recent crash payload, if any.
+
+        Returns:
+            Any: Latest exception payload dict, or None if no crashes exist.
+        """
         with self.portal as portal:
             crashes = self.crashes
             timeline = crashes.newest_values(1)
@@ -355,6 +436,11 @@ class   LoggingFnCallSignature:
 
     @property
     def events(self) -> PersiDict:
+        """Timeline of user events emitted during this call.
+
+        Returns:
+            PersiDict: Append-only JSON sub-dictionary of event payloads.
+        """
         with self.portal as portal:
             events_path = self.addr + ["events"]
             events = portal._run_history.json.get_subdict(events_path)
@@ -363,6 +449,11 @@ class   LoggingFnCallSignature:
 
     @property
     def last_event(self) -> Any:
+        """Most recent user event payload, if any.
+
+        Returns:
+            Any: Latest event payload dict, or None if no events exist.
+        """
         with self.portal:
             events = self.events
             timeline = events.newest_values(1)
@@ -375,6 +466,12 @@ class   LoggingFnCallSignature:
 
     @property
     def execution_records(self) -> list[LoggingFnExecutionRecord]:
+        """All execution sessions derived from attempts for this call.
+
+        Returns:
+            list[LoggingFnExecutionRecord]: Records constructed from stored
+            attempt IDs for convenient access to artifacts per run session.
+        """
         with self.portal:
             result = []
             for k in self.execution_attempts:
