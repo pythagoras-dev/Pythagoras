@@ -214,21 +214,35 @@ class OrdinaryFn(PortalAwareClass):
 
     @property
     def source_code(self) -> str:
-        """Get the source code of the function."""
+        """Get the normalized source code of the function.
+
+        Returns:
+            str: The function source after normalization (no comments,
+            docstrings, annotations; PEP 8 formatting).
+        """
         return self._source_code
 
 
     @property
     def name(self) -> str:
-        """Get the name of the function."""
+        """Get the name of the function.
+
+        Returns:
+            str: The function identifier parsed from the source code.
+        """
         if not hasattr(self, "_name_cache") or self._name_cache is None:
             self._name_cache = get_function_name_from_source(self.source_code)
         return self._name_cache
 
 
     @property
-    def hash_signature(self):
-        """Get the hash signature of the function."""
+    def hash_signature(self) -> str:
+        """Get the hash signature of the function.
+
+        Returns:
+            str: A stable, content-derived signature used to uniquely identify
+            the function's normalized source and selected metadata.
+        """
         if not hasattr(self, "_hash_signature_cache"):
             self._hash_signature_cache = get_hash_signature(self)
         return self._hash_signature_cache
@@ -306,11 +320,11 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def _invalidate_cache(self):
-        """Invalidate the function's attribute cache.
+        """Invalidate all cached, derived attributes for this function.
 
-        If the function's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
+        Any property backed by a "_..._cache" attribute is deleted so that it
+        will be recomputed on next access. Also calls the superclass
+        implementation to clear any portal-related caches.
         """
         if hasattr(self, "_compiled_code_cache"):
             del self._compiled_code_cache
@@ -331,6 +345,15 @@ class OrdinaryFn(PortalAwareClass):
 
     @classmethod
     def _compile(cls,*args, **kwargs) -> Any:
+        """Compile Python source code.
+
+        Args:
+            *args: Positional arguments passed to compile().
+            **kwargs: Keyword arguments passed to compile().
+
+        Returns:
+            Any: The code object returned by compile().
+        """
         return compile(*args, **kwargs)
 
 
@@ -390,13 +413,23 @@ class OrdinaryFn(PortalAwareClass):
 
 
     def __getstate__(self):
-        """This method is called when the object is pickled."""
+        """Return the picklable state for this instance.
+
+        Returns:
+            dict: A mapping that contains the normalized source code under the
+            "source_code" key. Runtime caches and portal references are omitted.
+        """
         state = dict(source_code=self._source_code)
         return state
 
 
     def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
+        """Restore instance state from pickled data.
+
+        Args:
+            state (dict): The state mapping previously produced by __getstate__,
+                expected to contain the "source_code" key.
+        """
         super().__setstate__(state)
         self._source_code = state["source_code"]
 
