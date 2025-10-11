@@ -6,24 +6,37 @@ from .._030_data_portals import DataPortal, ValueAddr
 from parameterizable import sort_dict_by_keys
 
 class KwArgs(dict):
-    """ A class that encapsulates keyword arguments for a function call.
+    """Container for keyword arguments with deterministic ordering and packing.
 
-    It allows "normalizing" the dictionary by sorting the keys
-    and replacing values with their hash addresses
-    in order to always get the same hash values
-    for the same lists of arguments.
+    Provides utilities to sort keys deterministically and to pack/unpack values
+    to and from ValueAddr instances so that argument sets can be compared and
+    hashed reliably across runs.
     """
 
 
     def __init__(self, *args, **kargs):
+        """Create a KwArgs mapping with deterministically sorted keys.
+
+        Args:
+            *args: Positional arguments accepted by dict().
+            **kargs: Keyword arguments accepted by dict().
+        """
         dict.__init__(self)
         tmp_dict = dict(*args, **kargs)
         tmp_dict = sort_dict_by_keys(tmp_dict)
         self.update(tmp_dict)
 
 
-    def sort(self, inplace:bool) -> KwArgs:
-        """Sort the keys in the dictionary."""
+    def sort(self, inplace: bool) -> KwArgs:
+        """Return a version with keys sorted, optionally in place.
+
+        Args:
+            inplace: If True, sorts this instance and returns it. If False,
+                returns a new KwArgs instance with sorted keys.
+
+        Returns:
+            KwArgs: The sorted KwArgs (self when inplace=True, otherwise a new instance).
+        """
         if inplace:
             sorted_dict = sort_dict_by_keys(self)
             self.clear()
@@ -34,7 +47,18 @@ class KwArgs(dict):
 
 
     def __setitem__(self, key, value):
-        """Overridden to ensure only string keys are allowed."""
+        """Set an item enforcing KwArgs invariants.
+
+        Enforces that keys are strings and values are not KwArgs themselves.
+
+        Args:
+            key: The key to set; must be a str.
+            value: The value to associate with the key.
+
+        Raises:
+            KeyError: If the key is not a string.
+            ValueError: If the value is a KwArgs (nested KwArgs are disallowed).
+        """
         if not isinstance(key, str):
             raise KeyError("Keys must be strings in KwArgs.")
         if isinstance(value, KwArgs):
@@ -43,15 +67,24 @@ class KwArgs(dict):
 
 
     def __reduce__(self):
-        """ Sort the keys before pickling."""
+        """Support pickling by sorting keys first for stable serialization.
+
+        Returns:
+            tuple: Standard pickle reduce tuple from dict.__reduce__().
+        """
         self.sort(inplace=True)
         return super().__reduce__()
 
 
     def unpack(self) -> UnpackedKwArgs:
-        """ Restore values based on their hash addresses."""
+        """Return a copy with all ValueAddr values resolved to raw values.
+
+        Returns:
+            UnpackedKwArgs: A new mapping where each ValueAddr is replaced with
+            its underlying value via ValueAddr.get().
+        """
         unpacked_copy = dict()
-        for k,v in self.items():
+        for k, v in self.items():
             if isinstance(v, ValueAddr):
                 unpacked_copy[k] = v.get()
             else:
