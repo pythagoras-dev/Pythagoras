@@ -72,7 +72,7 @@ class SwarmingPortal(PureCodePortal):
         if parent_process_id is None or parent_process_start_time is None:
             assert parent_process_id is None
             assert parent_process_start_time is None
-            self._ephemeral_config_params_at_init["max_n_workers"
+            self._auxiliary_config_params_at_init["max_n_workers"
                 ] = max_n_workers
         else:
             assert max_n_workers == 0

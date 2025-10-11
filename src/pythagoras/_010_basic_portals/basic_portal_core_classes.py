@@ -359,15 +359,15 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         return sorted_params
 
 
-    @property
-    def _ephemeral_param_names(self) -> set[str]:
-        """Get the names of the portal's ephemeral parameters.
-
-        Portal's ephemeral parameters are not stored persistently.
-        They affect behaviour of a portal object in an application session,
-        but they do not affect behaviour of the actual portal across multiple runs.
-        """
-        return set()
+    # @property
+    # def auxiliary_param_names(self) -> set[str]:
+    #     """Get the names of the portal's ephemeral parameters.
+    #
+    #     Portal's ephemeral parameters are not stored persistently.
+    #     They affect behaviour of a portal object in an application session,
+    #     but they do not affect behaviour of the actual portal across multiple runs.
+    #     """
+    #     return set()
 
 
     @property
@@ -377,15 +377,8 @@ class BasicPortal(NotPicklable,ParameterizableClass, metaclass = PostInitMeta):
         It's an internal hash used by Pythagoras and is different from .__hash__()
         """
         if not hasattr(self,"_str_id_cache"):
-            params = self.get_params()
-            jsparams = parameterizable.dumpjs(params)
-            param_names = set(params.keys())
-            params = parameterizable.access_jsparams(jsparams, *param_names)
-            ephemeral_names = self._ephemeral_param_names
-            nonephemeral_params = {k:params[k] for k in params
-                if k not in ephemeral_names}
             self._str_id_cache = PortalStrID(
-                get_hash_signature(nonephemeral_params))
+                get_hash_signature(self.get_essential_jsparams()))
         return self._str_id_cache
 
 

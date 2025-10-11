@@ -48,9 +48,9 @@ class LoggingFn(StorableFn):
                 f"got {type(excessive_logging)}")
 
         if excessive_logging is KEEP_CURRENT and isinstance(fn, LoggingFn):
-            excessive_logging = fn._ephemeral_config_params_at_init["excessive_logging"]
+            excessive_logging = fn._auxiliary_config_params_at_init["excessive_logging"]
 
-        self._ephemeral_config_params_at_init[
+        self._auxiliary_config_params_at_init[
             "excessive_logging"] = excessive_logging
 
 
@@ -545,7 +545,7 @@ class LoggingCodePortal(DataPortal):
                 "excessive_logging must be a boolean or Joker, "
                 f"got {type(excessive_logging)}")
 
-        self._ephemeral_config_params_at_init["excessive_logging"
+        self._auxiliary_config_params_at_init["excessive_logging"
             ] = excessive_logging
 
         crash_history_prototype = self._root_dict.get_subdict("crash_history")

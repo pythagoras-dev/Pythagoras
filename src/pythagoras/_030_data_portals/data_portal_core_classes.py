@@ -61,7 +61,7 @@ class DataPortal(OrdinaryCodePortal):
     _config_settings: PersiDict | None
     _config_settings_cache: dict
 
-    _ephemeral_config_params_at_init: dict[str, Any] | None
+    _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self
             , root_dict: PersiDict|str|None = None
@@ -69,7 +69,7 @@ class DataPortal(OrdinaryCodePortal):
             ):
         OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
-        self._ephemeral_config_params_at_init = dict()
+        self._auxiliary_config_params_at_init = dict()
         self._config_settings_cache = dict()
 
         config_settings_prototype = self._root_dict.get_subdict("config_settings")
@@ -84,7 +84,7 @@ class DataPortal(OrdinaryCodePortal):
             raise ValueError("p_consistency_checks must be a float in [0,1] "
                 +f"or a Joker, but got {p_consistency_checks}")
 
-        self._ephemeral_config_params_at_init["p_consistency_checks"
+        self._auxiliary_config_params_at_init["p_consistency_checks"
             ] = p_consistency_checks
 
         value_store_prototype = self._root_dict.get_subdict("value_store")
@@ -97,7 +97,7 @@ class DataPortal(OrdinaryCodePortal):
 
 
     def _persist_initial_config_params(self) -> None:
-        for key, value in self._ephemeral_config_params_at_init.items():
+        for key, value in self._auxiliary_config_params_at_init.items():
             self._set_config_setting(key, value)
 
 
@@ -111,15 +111,15 @@ class DataPortal(OrdinaryCodePortal):
     def get_params(self) -> dict:
         """Get the portal's configuration parameters"""
         params = super().get_params()
-        params.update(self._ephemeral_config_params_at_init)
+        params.update(self._auxiliary_config_params_at_init)
         sorted_params = sort_dict_by_keys(params)
         return sorted_params
 
 
     @property
-    def _ephemeral_param_names(self) -> set[str]:
-        names = super()._ephemeral_param_names
-        names.update(self._ephemeral_config_params_at_init)
+    def auxiliary_param_names(self) -> set[str]:
+        names = super().auxiliary_param_names
+        names.update(self._auxiliary_config_params_at_init)
         return names
 
 
@@ -186,7 +186,7 @@ class DataPortal(OrdinaryCodePortal):
         """Clear the portal's state"""
         self._value_store = None
         self._config_settings = None
-        self._ephemeral_config_params_at_init = None
+        self._auxiliary_config_params_at_init = None
         self._invalidate_cache()
         super()._clear()
 
@@ -195,14 +195,14 @@ class StorableFn(OrdinaryFn):
     """An ordinary function that can be persistently stored in a DataPortal."""
 
     _addr_cache: ValueAddr
-    _ephemeral_config_params_at_init: dict[str, Any] | None
+    _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self
         , fn: Callable | str
         , portal: DataPortal | None = None
         ):
         OrdinaryFn.__init__(self, fn=fn, portal=portal)
-        self._ephemeral_config_params_at_init = dict()
+        self._auxiliary_config_params_at_init = dict()
 
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
@@ -213,7 +213,7 @@ class StorableFn(OrdinaryFn):
 
 
     def _persist_initial_config_params(self, portal:DataPortal) -> None:
-        for key, value in self._ephemeral_config_params_at_init.items():
+        for key, value in self._auxiliary_config_params_at_init.items():
             self._set_config_setting(key, value, portal)
 
 
@@ -268,7 +268,7 @@ class StorableFn(OrdinaryFn):
     def __setstate__(self, state):
         """This method is called when the object is unpickled."""
         super().__setstate__(state)
-        self._ephemeral_config_params_at_init = dict()
+        self._auxiliary_config_params_at_init = dict()
 
 
     def __getstate__(self):
