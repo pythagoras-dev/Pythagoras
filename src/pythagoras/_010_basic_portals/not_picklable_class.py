@@ -10,6 +10,19 @@ class NotPicklable:
     should not be persisted for security or architectural reasons.
     """
 
+    def __reduce__(self):
+        """Prevent object serialization by raising TypeError.
+
+        This method is called by the pickle module to get a picklable
+        representation of the object. It unconditionally raises
+        a TypeError to prevent pickling.
+
+        Raises:
+            TypeError: Always raised to prevent the object from being pickled.
+        """
+        raise TypeError(f"{type(self).__name__} cannot be pickled")
+
+
     def __getstate__(self):
         """Prevent object serialization by raising TypeError.
 
@@ -20,6 +33,7 @@ class NotPicklable:
             TypeError: Always raised to prevent the object from being pickled.
         """
         raise TypeError(f"{type(self).__name__} cannot be pickled")
+
 
     def __setstate__(self, state):
         """Prevent object deserialization by raising TypeError.
