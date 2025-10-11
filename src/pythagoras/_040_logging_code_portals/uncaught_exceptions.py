@@ -16,6 +16,17 @@ from .._800_signatures_and_converters.random_signatures import (
 
 
 def pth_excepthook(exc_type, exc_value, trace_back) -> None:
+    """sys.excepthook replacement that logs uncaught exceptions.
+
+    Args:
+        exc_type: The exception class.
+        exc_value: The exception instance.
+        trace_back: Traceback object for the exception.
+
+    Side Effects:
+        - Records the exception in the active LoggingCodePortal's crash history.
+        - Calls the original sys.__excepthook__ after logging.
+    """
     if _exception_needs_to_be_processed(exc_type, exc_value, trace_back):
         exception_id = "app_"+ get_random_signature() + "_crash"
         event_body = add_execution_environment_summary(
@@ -30,6 +41,17 @@ def pth_excepthook(exc_type, exc_value, trace_back) -> None:
 
 def pth_excepthandler(_, exc_type, exc_value
                     , trace_back, tb_offset=None) -> None:
+    """IPython custom exception handler that logs uncaught exceptions.
+
+    This signature matches IPython's set_custom_exc handler protocol.
+
+    Args:
+        _: Unused first parameter required by IPython.
+        exc_type: The exception class.
+        exc_value: The exception instance.
+        trace_back: Traceback object for the exception.
+        tb_offset: Optional traceback offset used by IPython. Unused.
+    """
     if _exception_needs_to_be_processed(exc_type, exc_value, trace_back):
         exception_id = "app_" + get_random_signature() + "_crash"
         event_body = add_execution_environment_summary(
@@ -45,6 +67,15 @@ _previous_excepthook = None
 _number_of_handlers_registrations = 0
 
 def register_systemwide_uncaught_exception_handlers() -> None:
+    """Install Pythagoras handlers for uncaught exceptions system-wide.
+
+    In standard Python, replaces sys.excepthook; in Jupyter/IPython,
+    registers a custom exception handler via IPython.set_custom_exc when
+    available. Multiple registrations are reference-counted and idempotent.
+
+    Returns:
+        None
+    """
     global _number_of_handlers_registrations, _previous_excepthook
     _number_of_handlers_registrations += 1
     if _number_of_handlers_registrations > 1:

@@ -32,6 +32,18 @@ from .._800_signatures_and_converters.random_signatures import (
 
 
 class LoggingFn(StorableFn):
+    """A function wrapper that logs executions, outputs, events, and crashes.
+
+    LoggingFn wraps a callable and, when executed within a LoggingCodePortal,
+    records execution attempts, results, captured stdout/stderr, raised
+    exceptions, and custom events. It also supports an excessive_logging mode
+    that enables storing rich per-call artifacts.
+
+    Attributes:
+        _auxiliary_config_params_at_init (dict): Internal configuration store
+            inherited from StorableFn. Includes the 'excessive_logging' flag
+            when provided.
+    """
 
     # _excessive_logging_at_init: bool | Joker
 
@@ -40,6 +52,19 @@ class LoggingFn(StorableFn):
             , excessive_logging: bool|Joker = KEEP_CURRENT
             , portal: LoggingCodePortal | None = None
             ):
+        """Initialize a LoggingFn wrapper.
+
+        Args:
+            fn: A callable to wrap or a string with a function's source code.
+            excessive_logging: If True, capture detailed per-execution
+                artifacts (attempt context, outputs, results). If KEEP_CURRENT,
+                will inherit the setting from another LoggingFn when cloning.
+            portal: Optional LoggingCodePortal to bind this function to. If
+                omitted, uses the active portal during execution.
+
+        Raises:
+            TypeError: If excessive_logging is not a bool or Joker.
+        """
         super().__init__(fn=fn, portal=portal)
 
         if not isinstance(excessive_logging, (bool, Joker)):
@@ -56,15 +81,43 @@ class LoggingFn(StorableFn):
 
     @property
     def excessive_logging(self) -> bool:
+        """Whether rich per-execution logging is enabled for this function.
+
+        Returns:
+            bool: True if excessive logging is enabled for this function (from
+            its own config or inherited via the portal); False otherwise.
+        """
         value = self._get_config_setting("excessive_logging", self.portal)
         return bool(value)
 
 
     def get_signature(self, arguments:dict) -> LoggingFnCallSignature:
+        """Create a call signature for this function and the given arguments.
+
+        Args:
+            arguments: A mapping of keyword arguments for the call. Values may
+                be raw or ValueAddr; they will be normalized and packed.
+
+        Returns:
+            LoggingFnCallSignature: A signature object uniquely identifying
+            the combination of function and arguments.
+        """
         return LoggingFnCallSignature(self, arguments)
 
 
     def execute(self,**kwargs):
+        """Execute the wrapped function and log artifacts via the portal.
+
+        Args:
+            **kwargs: Keyword arguments to pass to the wrapped function.
+
+        Returns:
+            Any: The result returned by the wrapped function.
+
+        Side Effects:
+            - Registers an execution attempt and, if enabled, captures
+              stdout/stderr and stores the result and output.
+        """
         with self.portal:
             packed_kwargs = KwArgs(**kwargs).pack()
             fn_call_signature = self.get_signature(packed_kwargs)
@@ -76,6 +129,12 @@ class LoggingFn(StorableFn):
 
     @property
     def portal(self) -> LoggingCodePortal:
+        """The LoggingCodePortal associated with this function.
+
+        Returns:
+            LoggingCodePortal: The portal used for storage and logging during
+            execution.
+        """
         return super().portal
 
 
@@ -109,6 +168,12 @@ class   LoggingFnCallSignature:
 
     @property
     def portal(self):
+        """Portal associated with the underlying function.
+
+        Returns:
+            LoggingCodePortal: The portal used to store and retrieve logging
+            artifacts for this call signature.
+        """
         return self.fn.portal
 
 
@@ -146,6 +211,11 @@ class   LoggingFnCallSignature:
 
     @property
     def fn(self) -> LoggingFn:
+        """Resolve and cache the wrapped LoggingFn instance.
+
+        Returns:
+            LoggingFn: The function associated with this call signature.
+        """
         if not hasattr(self, "_fn_cache") or self._fn_cache is None:
             self._fn_cache = self.fn_addr.get(expected_type=LoggingFn)
         return self._fn_cache
@@ -615,6 +685,16 @@ class LoggingCodePortal(DataPortal):
 
 
 def log_exception() -> None:
+    """Log the currently handled exception to the active LoggingCodePortal.
+
+    Captures the exception from sys.exc_info(), enriches it with execution
+    environment context, and stores it in the portal-level crash history. If
+    called during a function execution with excessive logging enabled, also
+    stores the event under the function's per-call crash log.
+
+    Returns:
+        None
+    """
     exc_type, exc_value, trace_back = sys.exc_info()
     if not _exception_needs_to_be_processed(
             exc_type, exc_value, trace_back):
@@ -642,6 +722,19 @@ def log_exception() -> None:
 
 
 def log_event(*args, **kwargs):
+    """Record an application event to the active LoggingCodePortal.
+
+    Adds environment context and optional positional messages to the event
+    payload. When called during a function execution, also attaches the event
+    to that call's event log.
+
+    Args:
+        *args: Optional positional messages to include in the event payload.
+        **kwargs: Key-value pairs forming the body of the event.
+
+    Returns:
+        None
+    """
     if len(LoggingFnExecutionFrame.call_stack):
         frame = LoggingFnExecutionFrame.call_stack[-1]
         event_id = frame.session_id + "_event_" + str(frame.event_counter)
