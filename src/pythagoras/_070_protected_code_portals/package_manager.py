@@ -14,10 +14,21 @@ Key points:
 import subprocess
 import importlib
 import sys
+from functools import lru_cache
 from typing import Optional
 
-_uv_and_pip_installation_needed:bool = True
 
+def _run(command: list[str]) -> str:
+    """Run command; raise RuntimeError on failure."""
+    try:
+        subprocess.run(command, check=True, stdout=subprocess.PIPE
+            , stderr=subprocess.STDOUT, text=True)
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(
+            f"Command failed: {' '.join(command)}\n{e.stdout}") from e
+
+
+@lru_cache(maxsize=1) # ensure only one call to _install_uv_and_pip
 def _install_uv_and_pip() -> None:
     """Ensure the 'uv' and 'pip' frontends are available.
 
@@ -31,18 +42,14 @@ def _install_uv_and_pip() -> None:
     This function is an internal helper and is called implicitly by
     install_package() for any package other than 'pip' or 'uv'.
     """
-    global _uv_and_pip_installation_needed
-    if not _uv_and_pip_installation_needed:
-        return
-
     try:
         importlib.import_module("uv")
-    except:
+    except ModuleNotFoundError:
         install_package("uv", use_uv=False)
 
     try:
         importlib.import_module("pip")
-    except:
+    except ModuleNotFoundError:
         install_package("pip", use_uv=True)
 
 
@@ -68,16 +75,23 @@ def install_package(package_name:str
     - Imports the package after installation to verify it is importable.
 
     Raises:
-    - subprocess.CalledProcessError: if the installation command fails.
-    - AssertionError: if attempting to install pip with use_uv=False or uv with use_uv=True.
+    - RuntimeError: if the installation command fails.
+    - ValueError: if package_name or version are invalid, or if attempting
+      to install pip with use_uv=False or uv with use_uv=True.
     - ModuleNotFoundError: if the package cannot be imported after installation.
     """
 
-    if package_name == "pip":
-        assert use_uv
-    elif package_name == "uv":
-        assert not use_uv
-    else:
+    if not package_name or not isinstance(package_name, str):
+        raise ValueError("package_name must be a non-empty string")
+
+    if version and not isinstance(version, str):
+        raise ValueError("version must be a string")
+
+    if package_name == "pip" and not use_uv:
+            raise ValueError("pip must be installed using uv (use_uv=True)")
+    elif package_name == "uv" and use_uv:
+            raise ValueError("uv must be installed using pip (use_uv=False)")
+    elif package_name not in ("pip", "uv"):
         _install_uv_and_pip()
 
     if use_uv:
@@ -91,9 +105,9 @@ def install_package(package_name:str
     package_spec = f"{package_name}=={version}" if version else package_name
     command += [package_spec]
 
-    subprocess.run(command, check=True, stdout=subprocess.PIPE
-        , stderr=subprocess.STDOUT, text=True)
+    _run(command)
 
+    # Verify import. Note: assumes package name matches importable module name.
     importlib.import_module(package_name)
 
 
@@ -110,26 +124,27 @@ def uninstall_package(package_name:str, use_uv:bool=True)->None:
       succeeds, raises an Exception to indicate the package still appears installed.
 
     Raises:
-    - AssertionError: if package_name is 'pip' or 'uv'.
-    - subprocess.CalledProcessError: if the uninstall command fails.
-    - Exception: if post-uninstall validation indicates the package is still importable.
+    - ValueError: if package_name is 'pip' or 'uv'.
+    - RuntimeError: if the uninstall command fails, or if post-uninstall
+      validation indicates the package is still importable.
     """
 
-    assert package_name not in ["pip", "uv"]
+    if package_name in ["pip", "uv"]:
+        raise ValueError(f"Cannot uninstall '{package_name}' "
+                         "- it's a protected package")
 
     if use_uv:
         command = [sys.executable, "-m", "uv", "pip", "uninstall", package_name]
     else:
         command = [sys.executable, "-m", "pip", "uninstall", "-y", package_name]
 
-    subprocess.run(command, check=True, stdout=subprocess.PIPE
-        , stderr=subprocess.STDOUT, text=True)
+    _run(command)
 
     try:
         package = importlib.import_module(package_name)
         importlib.reload(package)
-    except:
+        raise RuntimeError(
+            f"Package '{package_name}' still importable after uninstallation")
+    except ModuleNotFoundError:
         pass
-    else:
-        raise Exception(
-            f"Failed to validate package uninstallation for '{package_name}'. ")
+
