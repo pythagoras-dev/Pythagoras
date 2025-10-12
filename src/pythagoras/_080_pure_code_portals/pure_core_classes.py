@@ -672,8 +672,8 @@ class PureFnExecutionResultAddr(HashAddr):
         process is currently working on it, or if there were too many
         past attempts to execute it. Otherwise, returns True.
         """
-        DEFAULT_EXECUTION_TIME = 10 #TODO: move to portal config
-        MAX_EXECUTION_ATTEMPTS = 5
+        _DEFAULT_EXECUTION_TIME = 10 #TODO: move to portal config
+        _MAX_EXECUTION_ATTEMPTS = 5
         # TODO: these should not be constants
         if self.ready:
             return False
@@ -682,13 +682,13 @@ class PureFnExecutionResultAddr(HashAddr):
             n_past_attempts = len(past_attempts)
             if n_past_attempts == 0:
                 return True
-            if n_past_attempts > MAX_EXECUTION_ATTEMPTS:
+            if n_past_attempts > _MAX_EXECUTION_ATTEMPTS:
                 #TODO: log this event. Should we have DLQ?
                 return False
             most_recent_timestamp = max(
                 past_attempts.timestamp(a) for a in past_attempts)
             current_timestamp = time.time()
             if (current_timestamp - most_recent_timestamp
-                    > DEFAULT_EXECUTION_TIME*(2**n_past_attempts)):
+                    > _DEFAULT_EXECUTION_TIME*(2**n_past_attempts)):
                 return True
             return False
