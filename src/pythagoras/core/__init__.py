@@ -1,62 +1,55 @@
-"""Core convenience namespace for Pythagoras.
+"""Pythagoras core convenience namespace.
 
-This module aggregates the most frequently used decorators and helpers into a
-single import location, so you can write concise imports like::
+This module re-exports the most frequently used decorators, classes, and
+helpers from the Pythagoras subpackages, providing a compact import surface
+for day‑to‑day work. It is safe to use either explicit imports or a star import
+from this module depending on your style and needs.
 
-    from pythagoras.core import *
+Public API
+    ready, get
+        Utilities for working with addressable values. "ready(obj)" recursively
+        checks that all ValueAddr/HashAddr objects inside a nested structure are
+        ready. "get(obj)" deep‑copies a structure and replaces every contained
+        address with the concrete value via .get().
 
-or explicitly import only what you need::
+    pure, recursive_parameters, PureFn
+        Decorator and helpers for pure functions. A pure function is assumed to
+        be deterministic and side‑effect free; Pythagoras persistently caches
+        its results by call signature and tracks source‑code changes. The
+        "recursive_parameters(...)" factory returns pre‑validators used to
+        optimize recursive computations.
 
-    from pythagoras.core import pure, autonomous, ready, get
+    autonomous
+        Decorator for declaring an autonomous function: implementation must be
+        self‑contained (imports done inside the body, no nonlocal/global state
+        except built‑ins), with autonomicity validated at decoration and at
+        runtime.
 
-The symbols re-exported here come from specialized subpackages and are commonly
-used together when building Pythagoras-based workflows.
+    Basic pre‑validators
+        Small, composable validators intended to be attached to pure functions,
+        for example::
 
-Exports
--------
-- ready, get:
-  Utilities to work with values referenced through addresses.
-  - ready(obj): Recursively checks that all addresses within a nested
-    structure are ready to be fetched.
-  - get(obj): Deep-copies a structure, replacing every address with
-    the actual stored value via .get().
+            - unused_cpu(cores: int)
+            - unused_ram(Gb: int)
+            - installed_packages(*names: str)
 
-- autonomous:
-  A decorator that marks a function as autonomous and enforces autonomicity
-  constraints both at decoration time and at runtime.
+        These factories return validator instances (SimplePreValidatorFn) that
+        a portal can execute to check whether it should run the user code.
 
-- Basic pre-validators:
-  A set of small, composable validators intended to be attached to protected
-  portals before executing user code (e.g., unused_cpu, unused_ram,
-  installed_packages, etc.). These are star-imported for convenience.
+    SwarmingPortal
+        Portal enabling asynchronous, distributed ("swarming") execution of
+        pure functions across background workers and processes. Execution is
+        best‑effort with eventual‑execution semantics.
 
-- pure, recursive_parameters, PureFn:
-  Tools for declaring and working with pure functions whose results are
-  persistently cached. The recursive_parameters pre-validator helps optimize
-  execution of the recursive code.
-
-- SwarmingPortal:
-  Infrastructure for asynchronous, distributed execution ("swarming") of
-  pure functions in a cluster or cloud environment.
-
-- get_portal:
-  Factory for obtaining a configured portal instance to coordinate execution
-  and storage.
-
-Usage
------
-Typical usage patterns include attaching validators pure functions,
-leveraging ready/get to materialize data structures, and using
-autonomous/pure decorators to control execution guarantees.
+    get_portal
+        Factory for constructing a portal.
 
 Notes
------
-- Star-importing also brings in basic pre-validators into your namespace. If
-  you prefer a stricter namespace, import names explicitly instead of using
-  a wildcard import.
-- The re-export list is intentionally small and focused on high-impact, common
-  primitives. For advanced usage, import directly from the corresponding
-  subpackages.
+    - Star‑importing from this module will also bring the basic pre‑validators
+      into your namespace. Prefer explicit imports if you want a stricter
+      namespace.
+    - This namespace focuses on high‑impact primitives. For advanced or
+      lower‑level APIs, import directly from the corresponding subpackages.
 """
 
 from .._030_data_portals import ready, get
