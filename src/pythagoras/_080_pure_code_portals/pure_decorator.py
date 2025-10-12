@@ -29,6 +29,17 @@ from .._080_pure_code_portals.pure_core_classes import (
 from persidict import KEEP_CURRENT, Joker
 
 class pure(protected):
+    """Decorator that marks a function as pure and enables result caching.
+
+    Pure functions are assumed to be deterministic and free of side effects:
+    given the same arguments they always produce the same result. When you
+    decorate a function with @pure(), Pythagoras caches execution results in
+    a persistent store, avoids re-executing the function for identical calls,
+    as well as tracks source-code changes to recomoute the function when necessary.
+
+    This decorator is a thin, typed wrapper over the generic `protected`
+    decorator configured for pure-function semantics.
+    """
 
     def __init__(self
                  , pre_validators: list[ValidatorFn] | None = None
@@ -37,6 +48,22 @@ class pure(protected):
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , portal: PureCodePortal | None = None
                  ):
+        """Initialize the pure decorator.
+
+        Args:
+            pre_validators: Optional list of validator functions that run
+                before execution.
+            post_validators: Optional list of validator functions that run
+                after execution to validate results or side conditions.
+            fixed_kwargs: Mapping of argument names to values that will be
+                always injected into the decorated function calls.
+            excessive_logging: Controls verbosity inside the portal; keep
+                KEEP_CURRENT to inherit from the active portal, True/False to
+                override.
+            portal: Optional PureCodePortal to bind the decorated function to.
+                If omitted, the portal(s) to use will be inferred
+                during the function call(s).
+        """
         protected.__init__(self=self
                            , portal=portal
                            , excessive_logging=excessive_logging
@@ -46,6 +73,15 @@ class pure(protected):
 
 
     def __call__(self, fn:Callable|str) -> PureFn:
+        """Wrap a function as a PureFn within a PureCodePortal.
+
+        Args:
+            fn: The target callable or its import path string.
+
+        Returns:
+            PureFn: A wrapped function instance that supports memoized
+            execution via run/swarm/execute and address-based retrieval.
+        """
         wrapper = PureFn(fn
                          , portal=self._portal
                          , pre_validators=self._pre_validators

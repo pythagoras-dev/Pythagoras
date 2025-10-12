@@ -1,3 +1,10 @@
+"""Pre-validators that help with recursive pure functions.
+
+This module provides utilities to short-circuit or schedule execution for
+recursive calls, e.g., Fibonacci-like functions. The pre-validator returns
+either a success flag (skip execution), a call signature to be executed first,
+or None to proceed as usual.
+"""
 from unittest import result
 
 import pythagoras as pth
@@ -14,6 +21,26 @@ def _recursion_pre_validator(
         , fn_addr:ValueAddr
         , param_name:str
         )-> PureFnCallSignature | ValidationSuccessFlag | None:
+    """Pre-validator to aid recursion by ensuring prerequisites are ready.
+
+    For a non-negative integer parameter specified by param_name, this
+    validator checks whether smaller sub-problems have already been computed.
+    It returns:
+    - VALIDATION_SUCCESSFUL if a base case is detected or all smaller results
+      are already available; or
+    - a PureFnCallSignature for the smallest missing sub-problem to compute
+      first; or
+    - None to proceed normally.
+
+    Args:
+        packed_kwargs: Packed arguments (KwArgs) of the current call.
+        fn_addr: ValueAddr pointing to the underlying PureFn.
+        param_name: Name of the recursive integer argument to inspect.
+
+    Returns:
+        PureFnCallSignature | ValidationSuccessFlag | None: Directive for the
+        protected execution pipeline.
+    """
     unpacked_kwargs = packed_kwargs.unpack()
     assert param_name in unpacked_kwargs
     fn = fn_addr.get()
@@ -49,6 +76,18 @@ def _recursion_pre_validator(
 def recursive_parameters(
         *args
         ) -> list[ComplexPreValidatorFn]:
+    """Build pre-validators for one or more recursive parameters.
+
+    Each provided name produces a pre-validator function that uses
+    _recursion_pre_validator to ensure prerequisite sub-problems are ready.
+
+    Args:
+        *args: One or more names of integer parameters that govern recursion.
+
+    Returns:
+        list[ComplexPreValidatorFn]: A list of pre-validators to plug into the
+        pure/protected decorator configuration.
+    """
     result = []
     for name in args:
         assert isinstance(name, str)

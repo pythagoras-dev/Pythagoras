@@ -51,6 +51,12 @@ CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
 EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
 
 class PureCodePortal(ProtectedCodePortal):
+    """Portal that manages execution and caching for pure functions.
+
+    The portal extends ProtectedCodePortal with two persistent dictionaries:
+    - execution_results: append-only, stores ValueAddr of function outputs
+    - execution_requests: mutable, tracks pending execution requests
+    """
 
     _execution_results: PersiDict | None
     _execution_requests: PersiDict | None
@@ -60,6 +66,14 @@ class PureCodePortal(ProtectedCodePortal):
             , p_consistency_checks: float | Joker = KEEP_CURRENT
             , excessive_logging: bool | Joker = KEEP_CURRENT
             ):
+        """Initialize a PureCodePortal instance.
+
+        Args:
+            root_dict: Backing persistent dictionary or path used to create it.
+            p_consistency_checks: Probability [0..1] to re-check cached
+                results for consistency. KEEP_CURRENT to inherit.
+            excessive_logging: Verbosity flag; KEEP_CURRENT to inherit.
+        """
         ProtectedCodePortal.__init__(self
             , root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
@@ -89,7 +103,13 @@ class PureCodePortal(ProtectedCodePortal):
 
 
     def describe(self) -> pd.DataFrame:
-        """Get a DataFrame describing the portal's current state"""
+        """Describe the portal state as a DataFrame.
+
+        Returns:
+            pandas.DataFrame: Concatenated report that includes base portal
+            parameters plus counts of cached execution results and queued
+            execution requests.
+        """
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
@@ -102,6 +122,7 @@ class PureCodePortal(ProtectedCodePortal):
         return result
 
     def _clear(self):
+        """Release references to backing dicts and clear base portal state."""
         self._execution_results = None
         self._execution_requests = None
         super()._clear()
@@ -113,6 +134,12 @@ class PureFnCallSignature(ProtectedFnCallSignature):
     _execution_results_addr_cache: PureFnExecutionResultAddr | None
 
     def __init__(self, fn: PureFn, arguments: dict):
+        """Create a signature object for a specific PureFn call.
+
+        Args:
+            fn: The pure function being called.
+            arguments: Keyword arguments for the call.
+        """
         assert isinstance(fn, PureFn)
         assert isinstance(arguments, dict)
         super().__init__(fn, arguments)
@@ -132,6 +159,12 @@ class PureFnCallSignature(ProtectedFnCallSignature):
 
 
 class PureFn(ProtectedFn):
+    """Wrapper around a callable that provides pure-function semantics.
+
+    A PureFn executes inside a PureCodePortal, caches results by call
+    signature, and exposes convenience APIs to request execution, run
+    immediately, and retrieve results via address objects.
+    """
 
     def __init__(self, fn: Callable | str
                  , pre_validators: list[AutonomousFn] | List[Callable] | None = None
@@ -139,6 +172,17 @@ class PureFn(ProtectedFn):
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None = None):
+        """Construct a PureFn.
+
+        Args:
+            fn: Target callable.
+            pre_validators: Optional list of pre-execution validators.
+            post_validators: Optional list of post-execution validators.
+            excessive_logging: Verbosity flag; KEEP_CURRENT to inherit.
+            fixed_kwargs: Mapping of argument names to fixed values injected
+                into each call.
+            portal: Optional PureCodePortal to bind this PureFn to.
+        """
         ProtectedFn.__init__(self
                              , fn=fn
                              , portal = portal
@@ -156,6 +200,14 @@ class PureFn(ProtectedFn):
 
 
     def get_signature(self, arguments: dict) -> PureFnCallSignature:
+        """Build a call signature for the given arguments.
+
+        Args:
+            arguments: Keyword arguments for a potential call.
+
+        Returns:
+            PureFnCallSignature: The signature object identifying the call.
+        """
         return PureFnCallSignature(self, arguments)
 
 
@@ -224,6 +276,16 @@ class PureFn(ProtectedFn):
             self
             , list_of_kwargs:list[dict]
             ) -> list[PureFnExecutionResultAddr]:
+        """Queue background execution for a batch of argument sets.
+
+        Args:
+            list_of_kwargs: A list of keyword-argument mappings. Each mapping
+                represents one call to the function.
+
+        Returns:
+            list[PureFnExecutionResultAddr]: Addresses for all requested
+            executions, in the same order as the input list.
+        """
         assert isinstance(list_of_kwargs, (list, tuple))
         for kwargs in list_of_kwargs:
             assert isinstance(kwargs, dict)
@@ -244,6 +306,17 @@ class PureFn(ProtectedFn):
             self
             , list_of_kwargs:list[dict]
             ) -> list[PureFnExecutionResultAddr]:
+        """Execute a batch of calls immediately and return their addresses.
+
+        Execution is performed in a shuffled order.
+
+        Args:
+            list_of_kwargs: A list of keyword-argument mappings for each call.
+
+        Returns:
+            list[PureFnExecutionResultAddr]: Addresses for the executed calls,
+            in the same order as the input list.
+        """
         with self.portal:
             addrs = self.swarm_list(list_of_kwargs)
             addrs_workspace = copy(addrs)
@@ -297,6 +370,12 @@ class PureFnExecutionResultAddr(HashAddr):
     _ready_cache: bool | None
 
     def __init__(self, fn: PureFn, arguments:dict[str, Any]):
+        """Create an address for a pure-function execution result.
+
+        Args:
+            fn: The PureFn whose execution result is addressed.
+            arguments: The keyword arguments for the call (packed dict).
+        """
         assert isinstance(fn, PureFn)
         with fn.portal as portal:
             self._kwargs_cache = KwArgs(**arguments)
@@ -339,6 +418,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def call_signature(self) -> PureFnCallSignature:
+        """The PureFnCallSignature for this address' call."""
         if (not hasattr(self, "_call_signature_cache")
             or self._call_signature_cache is None):
             self._call_signature_cache = self.get_ValueAddr().get()
