@@ -80,21 +80,6 @@ x = 10
     with pytest.raises(ValueError):
         check_if_fn_accepts_args(["a"], source_code)
 
-def test_multiple_functions_takes_first_one_only():
-    """
-    If there are multiple function definitions, the function currently takes the first one only.
-    We'll check that behavior.
-    """
-    source_code = """
-def first_fn(a, b):
-    pass
-
-def second_fn(a, b, c, **kwargs):
-    pass
-"""
-    # The first function is the one analyzed. It has a, b only.
-    assert check_if_fn_accepts_args(["a", "b"], source_code) is True
-    assert check_if_fn_accepts_args(["c"], source_code) is False  # c is in second_fn, but first_fn is used
 
 def test_empty_arg_names_list():
     """

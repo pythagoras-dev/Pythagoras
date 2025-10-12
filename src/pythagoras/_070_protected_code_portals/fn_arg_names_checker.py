@@ -20,6 +20,8 @@ def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) ->
     func_def_nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef)]
     if not func_def_nodes:
         raise ValueError("No function definition found in the provided source code.")
+    if not len(func_def_nodes) == 1:
+        raise ValueError("Multiple function definitions found in the provided source code.")
     func_def = func_def_nodes[0]
     args = func_def.args
 
