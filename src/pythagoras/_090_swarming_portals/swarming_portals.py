@@ -41,7 +41,7 @@ from multiprocessing import get_context
 from .._090_swarming_portals.output_suppressor import (
     OutputSuppressor)
 
-BACKGROUND_WORKERS_TXT = "Background workers"
+_BACKGROUND_WORKERS_TXT = "Background workers"
 
 
 class SwarmingPortal(PureCodePortal):
@@ -262,7 +262,7 @@ class SwarmingPortal(PureCodePortal):
         """
         all_params = [super().describe()]
         all_params.append(_describe_runtime_characteristic(
-            BACKGROUND_WORKERS_TXT, self.max_n_workers))
+            _BACKGROUND_WORKERS_TXT, self.max_n_workers))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)

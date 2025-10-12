@@ -47,8 +47,8 @@ ASupportingFunc:TypeAlias = str | AutonomousFn
 
 SupportingFuncs:TypeAlias = ASupportingFunc | List[ASupportingFunc] | None
 
-CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
-EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
+_CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
+_EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
 
 class PureCodePortal(ProtectedCodePortal):
     """Portal that manages execution and caching for pure functions.
@@ -113,9 +113,9 @@ class PureCodePortal(ProtectedCodePortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
-            CACHED_EXECUTION_RESULTS_TXT, len(self._execution_results)))
+            _CACHED_EXECUTION_RESULTS_TXT, len(self._execution_results)))
         all_params.append(_describe_persistent_characteristic(
-            EXECUTION_QUEUE_SIZE_TXT, len(self._execution_requests)))
+            _EXECUTION_QUEUE_SIZE_TXT, len(self._execution_requests)))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)

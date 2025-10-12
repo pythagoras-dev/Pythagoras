@@ -17,8 +17,8 @@ from .._010_basic_portals.basic_portal_core_classes import (
 from .._020_ordinary_code_portals import OrdinaryCodePortal ,OrdinaryFn
 from persidict import WriteOnceDict
 
-TOTAL_VALUES_TXT = "Values, total"
-PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
+_TOTAL_VALUES_TXT = "Values, total"
+_PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
 def get_active_data_portal() -> DataPortal:
@@ -211,9 +211,9 @@ class DataPortal(OrdinaryCodePortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
-            TOTAL_VALUES_TXT, len(self._value_store)))
+            _TOTAL_VALUES_TXT, len(self._value_store)))
         all_params.append(_describe_runtime_characteristic(
-            PROBABILITY_OF_CHECKS_TXT, self.p_consistency_checks))
+            _PROBABILITY_OF_CHECKS_TXT, self.p_consistency_checks))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)

@@ -797,9 +797,9 @@ class LoggingFnExecutionFrame(NotPicklableClass):
         LoggingFnExecutionFrame.call_stack.pop()
 
 
-EXCEPTIONS_TOTAL_TXT = "Exceptions, total"
-EXCEPTIONS_TODAY_TXT = "Exceptions, today"
-EXCESSIVE_LOGGING_TXT = "Excessive logging"
+_EXCEPTIONS_TOTAL_TXT = "Exceptions, total"
+_EXCEPTIONS_TODAY_TXT = "Exceptions, today"
+_EXCESSIVE_LOGGING_TXT = "Excessive logging"
 
 class LoggingCodePortal(DataPortal):
     """A portal that supports function-level logging for events and exceptions.
@@ -921,12 +921,12 @@ class LoggingCodePortal(DataPortal):
         """
         all_params = [super().describe()]
         all_params.append(_describe_persistent_characteristic(
-            EXCEPTIONS_TOTAL_TXT, len(self._crash_history)))
+            _EXCEPTIONS_TOTAL_TXT, len(self._crash_history)))
         all_params.append(_describe_persistent_characteristic(
-            EXCEPTIONS_TODAY_TXT
+            _EXCEPTIONS_TODAY_TXT
             , len(self._crash_history.get_subdict(current_date_gmt_string()))))
         all_params.append(_describe_runtime_characteristic(
-            EXCESSIVE_LOGGING_TXT, self.excessive_logging))
+            _EXCESSIVE_LOGGING_TXT, self.excessive_logging))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)

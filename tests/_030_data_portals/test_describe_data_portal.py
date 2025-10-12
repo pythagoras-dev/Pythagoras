@@ -2,8 +2,8 @@ from pythagoras import DataPortal
 from pythagoras import _PortalTester
 
 from pythagoras._010_basic_portals.basic_portal_core_classes import _get_description_value_by_key
-from pythagoras._030_data_portals.data_portal_core_classes import TOTAL_VALUES_TXT, \
-    PROBABILITY_OF_CHECKS_TXT
+from pythagoras._030_data_portals.data_portal_core_classes import _TOTAL_VALUES_TXT, \
+    _PROBABILITY_OF_CHECKS_TXT
 
 
 def test_portal(tmpdir):
@@ -13,9 +13,9 @@ def test_portal(tmpdir):
         description = portal.describe()
         assert description.shape == (5, 3)
         assert _get_description_value_by_key(description
-            , TOTAL_VALUES_TXT) == 0
+                                             , _TOTAL_VALUES_TXT) == 0
         assert _get_description_value_by_key(description
-            , PROBABILITY_OF_CHECKS_TXT) == 0
+                                             , _PROBABILITY_OF_CHECKS_TXT) == 0
 
 def test_portal_with_consistency_checks(tmpdir):
 
@@ -24,9 +24,9 @@ def test_portal_with_consistency_checks(tmpdir):
         description = portal.describe()
         assert description.shape == (5, 3)
         assert _get_description_value_by_key(description
-            , TOTAL_VALUES_TXT) == 0
+                                             , _TOTAL_VALUES_TXT) == 0
         assert _get_description_value_by_key(description
-            , PROBABILITY_OF_CHECKS_TXT) == 1
+                                             , _PROBABILITY_OF_CHECKS_TXT) == 1
 
 
 def test_stored_values(tmpdir):
@@ -40,9 +40,9 @@ def test_stored_values(tmpdir):
         description = t.portal.describe()
         assert description.shape == (5, 3)
         assert _get_description_value_by_key(description
-            , TOTAL_VALUES_TXT) == 2
+                                             , _TOTAL_VALUES_TXT) == 2
         assert _get_description_value_by_key(description
-            , PROBABILITY_OF_CHECKS_TXT) == 0.5
+                                             , _PROBABILITY_OF_CHECKS_TXT) == 0.5
 
 
 
