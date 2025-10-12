@@ -9,7 +9,8 @@ def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) ->
 
     This will return True if:
       - The function has a **kwargs parameter, or
-      - The function explicitly defines all of the names in `required_arg_names` as parameters.
+      - The function explicitly defines all of the names in `required_arg_names` as parameters
+        that can be passed by keyword.
 
     Otherwise, returns False.
     """
@@ -26,14 +27,8 @@ def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) ->
     if args.kwarg is not None:
         return True
 
-    # Collect all explicitly named parameters
-    param_names = set()
-    for arg in args.args:
-        param_names.add(arg.arg)
-    for kwarg in args.kwonlyargs:
-        param_names.add(kwarg.arg)
+    # Collect all explicitly named parameters (excluding positional-only)
+    # Note: args.posonlyargs are NOT included as they cannot be passed by keyword
+    param_names = {arg.arg for arg in args.args + args.kwonlyargs}
 
-    for name in required_arg_names:
-        if name not in param_names:
-            return False
-    return True
+    return set(required_arg_names).issubset(param_names)
