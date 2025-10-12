@@ -45,7 +45,7 @@ def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
             a_func, drop_pth_decorators=True)
 
 
-REGISTERED_FUNCTIONS_TXT = "Registered functions"
+_REGISTERED_FUNCTIONS_TXT = "Registered functions"
 
 class OrdinaryCodePortal(BasicPortal):
     """Portal that manages OrdinaryFn instances and their runtime context.
@@ -136,7 +136,7 @@ class OrdinaryCodePortal(BasicPortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_runtime_characteristic(
-            REGISTERED_FUNCTIONS_TXT, self.get_number_of_linked_functions()))
+            _REGISTERED_FUNCTIONS_TXT, self.get_number_of_linked_functions()))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)

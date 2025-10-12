@@ -65,8 +65,8 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
     return pd.DataFrame(d)
 
 
-BASE_DIRECTORY_TXT = "Base directory"
-BACKEND_TYPE_TXT = "Backend type"
+_BASE_DIRECTORY_TXT = "Base directory"
+_BACKEND_TYPE_TXT = "Backend type"
 
 
 def _get_description_value_by_key(dataframe:pd.DataFrame, key:str) -> Any:
@@ -386,9 +386,9 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         all_params = []
 
         all_params.append(_describe_persistent_characteristic(
-            BASE_DIRECTORY_TXT, self._root_dict.base_dir))
+            _BASE_DIRECTORY_TXT, self._root_dict.base_dir))
         all_params.append(_describe_persistent_characteristic(
-            BACKEND_TYPE_TXT, self._root_dict.__class__.__name__))
+            _BACKEND_TYPE_TXT, self._root_dict.__class__.__name__))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)

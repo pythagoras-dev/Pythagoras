@@ -3,7 +3,7 @@ from pythagoras._010_basic_portals import _PortalTester
 from pythagoras._010_basic_portals.basic_portal_core_classes import (
     _get_description_value_by_key)
 from pythagoras._020_ordinary_code_portals.ordinary_portal_core_classes import (
-    REGISTERED_FUNCTIONS_TXT)
+    _REGISTERED_FUNCTIONS_TXT)
 
 
 def f():
@@ -19,16 +19,16 @@ def test_ordinary_portal(tmpdir):
 
         description = portal.describe()
         assert _get_description_value_by_key(description
-            , REGISTERED_FUNCTIONS_TXT) == 0
+                                             , _REGISTERED_FUNCTIONS_TXT) == 0
 
         f_new = ordinary(portal = portal)(f)
         description = portal.describe()
         assert _get_description_value_by_key(description
-            ,REGISTERED_FUNCTIONS_TXT) == 1
+                                             , _REGISTERED_FUNCTIONS_TXT) == 1
 
         g_new = ordinary(portal=portal)(g)
         description = portal.describe()
         assert _get_description_value_by_key(description
-            ,REGISTERED_FUNCTIONS_TXT) == 2
+                                             , _REGISTERED_FUNCTIONS_TXT) == 2
 
 
