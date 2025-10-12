@@ -220,10 +220,18 @@ class PureFn(ProtectedFn):
 
 
     def swarm(self, **kwargs) -> PureFnExecutionResultAddr:
-        """ Request execution of the function with the given arguments.
+        """Request background function execution for the given arguments.
 
-        The function is executed in the background. The result can be
-        retrieved later using the returned address.
+        The function is not executed immediately; instead, an execution request
+        is recorded in the portal. The returned address can later be used to
+        check readiness or retrieve the value.
+
+        Args:
+            **kwargs: Keyword arguments to pass to the underlying function.
+
+        Returns:
+            PureFnExecutionResultAddr: Address that identifies the pending (or
+            already cached) execution result for these arguments.
         """
         with self.portal:
             result_address = self.get_address(**kwargs)
@@ -231,10 +239,16 @@ class PureFn(ProtectedFn):
             return result_address
 
     def run(self, **kwargs) -> PureFnExecutionResultAddr:
-        """ Execute the function with the given arguments.
+        """Execute immediately and return the result address.
 
-        The function is executed immediately. The result can be
-        retrieved later using the returned address.
+        The function is executed synchronously within the current process.
+
+        Args:
+            **kwargs: Keyword arguments to pass to the underlying function.
+
+        Returns:
+            PureFnExecutionResultAddr: Address of the computed value (which can
+            be used to fetch logs/metadata or the value again if needed).
         """
         with self.portal:
             result_address = self.get_address(**kwargs)
@@ -243,12 +257,18 @@ class PureFn(ProtectedFn):
 
 
     def execute(self, **kwargs) -> Any:
-        """ Execute the function with the given arguments.
+        """Execute the function with the given arguments and return the result.
 
-        The function is executed immediately, and the result is returned.
-        The result is memoized, so the function is actually executed
-        only the first time it's called; subsequent calls return the
-        cached result.
+        The function is executed immediately and its result is memoized by the
+        portal. Subsequent calls with identical arguments return the cached
+        value (optionally performing consistency checks depending on the
+        portal's p_consistency_checks setting).
+
+        Args:
+            **kwargs: Keyword arguments to pass to the underlying function.
+
+        Returns:
+            Any: The computed result value.
         """
 
         with self.portal as portal:
@@ -356,6 +376,13 @@ class PureFn(ProtectedFn):
 
     @property
     def portal(self) -> PureCodePortal:
+        """Active PureCodePortal used for this function execution.
+
+        Returns:
+            PureCodePortal: The portal that governs execution and persistence
+            for this PureFn (falls back to the current active portal if this
+            function isn't explicitly bound).
+        """
         return super().portal
 
 
@@ -622,10 +649,16 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def can_be_executed(self) -> PureFnCallSignature | ValidationSuccessFlag | None:
-        """Indicates if the function can be executed in the current session.
+        """Whether execution is currently feasible.
 
-        TODO: The function should be refactored once we start fully supporting
-        guards
+        This checks pre-validators/guards for the underlying pure function and
+        returns a directive for the protected execution pipeline.
+
+        Returns:
+            PureFnCallSignature | ValidationSuccessFlag | None: If a dependent
+            call must be executed first, returns its call signature; if checks
+            pass immediately, returns VALIDATION_SUCCESSFUL; otherwise None to
+            indicate that the execution is not possible.
         """
         with self.fn.portal:
             return self.fn.can_be_executed(self.kwargs)
