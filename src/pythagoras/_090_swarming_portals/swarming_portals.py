@@ -23,7 +23,7 @@ from parameterizable import (
     access_jsparams)
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from parameterizable.json_processor import _Markers
+from parameterizable import *
 
 from .. import VALIDATION_SUCCESSFUL
 from .._010_basic_portals import get_all_known_portals
@@ -213,7 +213,7 @@ class SwarmingPortal(PureCodePortal):
         super()._invalidate_cache()
 
 
-def _launch_many_background_workers(portal_init_jsparams:JsonSerializedParams) -> None:
+def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -> None:
     """Launch many background worker processes."""
 
 
@@ -263,7 +263,7 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedParams) -
             list_of_all_workers = new_list_of_all_workers
 
 
-def _background_worker(portal_init_jsparams:JsonSerializedParams) -> None:
+def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
     """Background worker that keeps processing random execution requests."""
     portal = parameterizable.loadjs(portal_init_jsparams)
     assert isinstance(portal, SwarmingPortal)
@@ -281,7 +281,7 @@ def _background_worker(portal_init_jsparams:JsonSerializedParams) -> None:
                 portal._randomly_delay_execution()
 
 
-def _process_random_execution_request(portal_init_jsparams:JsonSerializedParams):
+def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject):
     """Process one random execution request."""
     # portal = parameterizable.get_object_from_portable_params(
     #     portal_init_params)
