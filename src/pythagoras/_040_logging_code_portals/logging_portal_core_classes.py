@@ -944,9 +944,6 @@ class LoggingCodePortal(DataPortal):
         super()._clear()
 
 
-# register_parameterizable_class(LoggingCodePortal)
-
-
 def log_exception() -> None:
     """Log the currently handled exception to the active LoggingCodePortal.
 
