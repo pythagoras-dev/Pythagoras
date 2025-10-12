@@ -193,7 +193,15 @@ class PureFn(ProtectedFn):
 
 
     def get_address(self, **kwargs) -> PureFnExecutionResultAddr:
-        """Get the address of the result of the function with the given arguments."""
+        """Build an address object for a call with the given arguments.
+
+        Args:
+            **kwargs: Keyword arguments to pass to the function.
+
+        Returns:
+            PureFnExecutionResultAddr: Address referencing the (cached or
+            future) result corresponding to the provided arguments.
+        """
         with self.portal:
             packed_kwargs = KwArgs(**kwargs).pack()
             return PureFnExecutionResultAddr(self, packed_kwargs)
@@ -464,6 +472,15 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def _ready_in_nonactive_portals(self) -> bool:
+        """Try importing a ready result from non-active portals.
+
+        If another known portal already has the execution result, copy the
+        corresponding key/value into the active portal's stores.
+
+        Returns:
+            bool: True if the value was found in a non-active portal and
+            imported; False otherwise.
+        """
         for another_portal in get_nonactive_portals():
             with another_portal:
                 if self in another_portal._execution_results:
@@ -479,6 +496,12 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def ready(self) -> bool:
+        """Whether the execution result is already available.
+
+        Returns:
+            bool: True if the result is present in the active portal (or can
+            be imported from a known non-active portal); False otherwise.
+        """
         if hasattr(self, "_ready_cache"):
             assert self._ready_cache
             return True
@@ -493,7 +516,11 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def execute(self):
-        """Execute the function and store the result in the portal."""
+        """Execute the function and store the result in the portal.
+
+        Returns:
+            Any: The computed result of the underlying pure function call.
+        """
         if hasattr(self, "_result_cache"):
             return self._result_cache
         with self.fn.portal:
@@ -519,7 +546,13 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def execution_requested(self):
-        """Indicates if the function execution has been requested."""
+        """Whether execution for this call has been requested.
+
+        Returns:
+            bool: True if there's a pending execution request in the active
+            portal or any known non-active portal (also synchronizes the
+            request into the active portal); False otherwise.
+        """
         with self.fn.portal as active_portal:
             if self in active_portal._execution_requests:
                 return True
@@ -531,15 +564,22 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def get(self, timeout: int = None):
-        """Retrieve value, referenced by the address.
+        """Retrieve the value referenced by this address, waiting if needed.
 
-        If the value is not immediately available, backoff exponentially
-        till timeout is exceeded. If timeout is None, keep trying forever.
+        The method does not execute the function itself. If the value is not
+        immediately available, it requests execution and waits with
+        exponential backoff until the result arrives or the timeout elapses.
 
-        This method does not actually execute the function, but simply
-        retrieves the result of the function execution, if it is available.
-        If it is not available, the method waits for the result to become
-        available, or until the timeout is exceeded.
+        Args:
+            timeout: Optional maximum number of seconds to wait. If None,
+                tries/waits indefinitely.
+
+        Returns:
+            Any: The value produced by the pure function call.
+
+        Raises:
+            TimeoutError: If the timeout elapses before the value becomes
+                available.
         """
         assert timeout is None or timeout >= 0
         if hasattr(self, "_result_cache"):
