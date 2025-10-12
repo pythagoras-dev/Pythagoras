@@ -3,16 +3,21 @@ from typing import List, Set
 
 
 def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) -> bool:
-    """
-    Analyzes the source code (string) `fn` of a Python function and determines
-    if it can accept the arguments named in `required_arg_names`.
+    """Determine whether a function can accept specific keyword argument names.
 
-    This will return True if:
-      - The function has a **kwargs parameter, or
-      - The function explicitly defines all of the names in `required_arg_names` as parameters
-        that can be passed by keyword.
+    Analyzes the source code of a single Python function and checks whether
+    all required names could be passed as keyword arguments.
 
-    Otherwise, returns False.
+    Args:
+      required_arg_names: Iterable of parameter names that must be accepted.
+      fn: Source code string containing exactly one function definition.
+
+    Returns:
+      True if the function has **kwargs or explicitly defines all required names
+      as keyword-acceptable parameters; otherwise False.
+
+    Raises:
+      ValueError: If no function definition is found or if multiple functions are present.
     """
 
     tree = ast.parse(fn)
