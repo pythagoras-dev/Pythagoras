@@ -1,4 +1,6 @@
-import uuid, platform, getpass
+import getpass
+import platform
+import uuid
 from functools import cache
 
 from .hash_signatures import get_hash_signature
@@ -21,13 +23,13 @@ def get_node_signature() -> str:
     Returns:
         str: A short base32 signature string representing this node.
     """
-    mac = uuid.getnode()
-    system = platform.system()
-    release = platform.release()
-    version = platform.version()
-    machine = platform.machine()
-    processor = platform.processor()
-    user = getpass.getuser()
-    id_string = f"{mac}{system}{release}{version}"
-    id_string += f"{machine}{processor}{user}"
-    return get_hash_signature(id_string)
+    id_parts = [
+        str(uuid.getnode()),
+        platform.system(),
+        platform.release(),
+        platform.version(),
+        platform.machine(),
+        platform.processor(),
+        getpass.getuser(),
+    ]
+    return get_hash_signature("".join(id_parts))

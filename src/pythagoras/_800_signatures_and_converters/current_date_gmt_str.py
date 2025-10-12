@@ -12,7 +12,7 @@ def current_date_gmt_string() -> str:
     Produces an underscore-delimited UTC date string suitable for
     stable file names and log records.
 
-    The format is: "YYYY_MonAbbrev_dd_utc" (e.g., "2024_12Dec_11_utc").
+    The format is: "YYYY_MMMonAbbrev_dd_utc" (e.g., "2024_12Dec_11_utc").
 
     Returns:
         str: The formatted UTC date string, for the current moment.

@@ -38,7 +38,7 @@ def convert_int_to_base32(n: int) -> str:
         n (int): Non-negative integer to encode.
 
     Returns:
-        str: The base32 representation. An empty string for n == 0.
+        str: The base32 representation.
 
     Raises:
         ValueError: If n is negative.
