@@ -42,11 +42,14 @@ def _recursion_pre_validator(
         protected execution pipeline.
     """
     unpacked_kwargs = packed_kwargs.unpack()
-    assert param_name in unpacked_kwargs
+    if param_name not in unpacked_kwargs:
+        raise KeyError(f"Missing required parameter '{param_name}' in kwargs")
     fn = fn_addr.get()
     param_value = unpacked_kwargs[param_name]
-    assert isinstance(param_value, int)
-    assert param_value >= 0
+    if not isinstance(param_value, int):
+        raise TypeError(f"Parameter '{param_name}' must be int, got {type(param_value).__name__}")
+    if param_value < 0:
+        raise ValueError(f"Parameter '{param_name}' must be non-negative, got {param_value}")
     if param_value in {0,1}:
         return pth.VALIDATION_SUCCESSFUL
     

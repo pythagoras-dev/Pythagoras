@@ -289,21 +289,24 @@ def analyze_names_in_function(
     while lines[line_num].startswith("@"):
         line_num+=1
 
-    assert lines[line_num].startswith("def "),("This action can only"
-            + " be applied to conventional functions,"
-            + " not to instances of callable classes, "
-            + " not to lambda functions, "
-            + " not to async functions.")
+    if not lines[line_num].startswith("def "):
+        raise ValueError(
+            "This action can only be applied to conventional functions, "
+            "not to instances of callable classes, not to lambda functions, "
+            "not to async functions.")
     tree = ast.parse(normalized_source)
-    assert isinstance(tree, ast.Module), (f"Only one high lever"
-            + f" function definition is allowed to be processed."
-            + f" The following code is not allowed: {normalized_source}")
-    assert isinstance(tree.body[0], ast.FunctionDef), (f"Only one high lever"
-            + f" function definition is allowed to be processed."
-            + f" The following code is not allowed: {normalized_source}")
-    assert len(tree.body)==1, (f"Only one high lever"
-            + f" function definition is allowed to be processed."
-            + f" The following code is not allowed: {normalized_source}")
+    if not isinstance(tree, ast.Module):
+        raise ValueError(
+            f"Only one high level function definition is allowed to be processed. "
+            f"The following code is not allowed: {normalized_source}")
+    if not isinstance(tree.body[0], ast.FunctionDef):
+        raise ValueError(
+            f"Only one high level function definition is allowed to be processed. "
+            f"The following code is not allowed: {normalized_source}")
+    if len(tree.body) != 1:
+        raise ValueError(
+            f"Only one high level function definition is allowed to be processed. "
+            f"The following code is not allowed: {normalized_source}")
     analyzer = NamesUsageAnalyzer()
     analyzer.visit(tree)
     result = dict(tree=tree, analyzer=analyzer

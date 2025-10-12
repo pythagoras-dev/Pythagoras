@@ -729,13 +729,13 @@ class LoggingFnExecutionFrame(NotPicklableClass):
         Returns:
             LoggingFnExecutionFrame: This frame instance for use as a context var.
         """
-        assert not self.context_used, (
-            "An instance of PureFnExecutionFrame can be used only once.")
+        if self.context_used:
+            raise RuntimeError(f"An instance of PureFnExecutionFrame can be used only once.")
         self.context_used = True
-        assert self.exception_counter == 0, (
-            "An instance of PureFnExecutionFrame can be used only once.")
-        assert self.event_counter == 0, (
-            "An instance of PureFnExecutionFrame can be used only once.")
+        if self.exception_counter != 0:
+            raise RuntimeError(f"An instance of PureFnExecutionFrame can be used only once.")
+        if self.event_counter != 0:
+            raise RuntimeError(f"An instance of PureFnExecutionFrame can be used only once.")
         self.portal.__enter__()
         if isinstance(self.output_capturer, OutputCapturer):
             self.output_capturer.__enter__()

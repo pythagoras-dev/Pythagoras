@@ -69,7 +69,7 @@ def _get_normalized_function_source_impl(
             code = a_func
             a_func_name = get_function_name_from_source(code)
         else:
-            assert callable(a_func) or isinstance(a_func, str)
+            raise TypeError(f"a_func must be a callable or a string, got {type(a_func).__name__}")
 
         code_lines = code.splitlines()
 
@@ -86,7 +86,8 @@ def _get_normalized_function_source_impl(
         chars_to_remove = code_no_empty_lines[0][:n_chars_to_remove]
         code_clean_version = []
         for line in code_no_empty_lines:
-            assert line.startswith(chars_to_remove)
+            if not line.startswith(chars_to_remove):
+                raise ValueError(f"Inconsistent indentation detected while normalizing function {a_func_name}")
             cleaned_line = line[n_chars_to_remove:]
             code_clean_version.append(cleaned_line)
 
@@ -95,9 +96,10 @@ def _get_normalized_function_source_impl(
             a_func_name = get_function_name_from_source(code_clean_version)
         code_ast = ast.parse(code_clean_version)
 
-        assert isinstance(code_ast, ast.Module)
-        assert isinstance(code_ast.body[0], ast.FunctionDef), (
-            f"{type(code_ast.body[0])=}")
+        if not isinstance(code_ast, ast.Module):
+            raise TypeError(f"Expected AST Module for {a_func_name}, got {type(code_ast).__name__}")
+        if not isinstance(code_ast.body[0], ast.FunctionDef):
+            raise ValueError(f"Top-level node is not a FunctionDef for {a_func_name}; got {type(code_ast.body[0]).__name__}")
 
         # TODO: add support for multiple decorators???
         decorator_list = code_ast.body[0].decorator_list
@@ -125,7 +127,8 @@ def _get_normalized_function_source_impl(
                         break
                 except:
                     pass
-            assert pth_dec_counter == 1
+            if pth_dec_counter != 1:
+                raise ValueError(f"Unexpected decorator configuration for {a_func_name}: unable to drop Pythagoras decorator")
             code_ast.body[0].decorator_list = []
 
         # Remove docstrings.

@@ -306,7 +306,8 @@ class ProtectedFn(AutonomousFn):
         Raises:
             TypeError: If an unexpected validator_type is provided.
         """
-        assert validator_type in {PreValidatorFn, PostValidatorFn}
+        if validator_type not in {PreValidatorFn, PostValidatorFn}:
+            raise TypeError(f"validator_type must be PreValidatorFn or PostValidatorFn, got {validator_type}")
         if validators is None:
             return []
         if not isinstance(validators, list):
@@ -314,7 +315,8 @@ class ProtectedFn(AutonomousFn):
                     or isinstance(validators, ValidatorFn)
                     or isinstance(validators, str)):
                 validators = [validators]
-        assert isinstance(validators, list)
+        if not isinstance(validators, list):
+            raise TypeError(f"validators must be a list or compatible item(s); got type {type(validators).__name__}")
         validators = flatten_list(validators)
         new_validators = []
         for validator in validators:
