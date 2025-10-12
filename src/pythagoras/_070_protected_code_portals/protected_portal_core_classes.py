@@ -30,6 +30,24 @@ from .._060_autonomous_code_portals import *
 
 
 class ProtectedCodePortal(AutonomousCodePortal):
+    """Portal for protected code execution.
+
+    This portal specializes the AutonomousCodePortal to coordinate execution of
+    ProtectedFn instances. It carries configuration and storage
+    required by validators (e.g., retry throttling) and by protected function
+    orchestration.
+
+    Args:
+        root_dict (PersiDict | str | None): Optional persistent dictionary or a
+            path/identifier to initialize the portal's storage. If None, a
+            default in-memory storage may be used.
+        p_consistency_checks (float | Joker): Probability or flag controlling
+            internal consistency checks performed by the portal. Use
+            KEEP_CURRENT to inherit the current setting.
+        excessive_logging (bool | Joker): Enables verbose logging of portal and
+            function operations. Use KEEP_CURRENT to inherit the current
+            setting.
+    """
     
     def __init__(self
             , root_dict: PersiDict|str|None = None
@@ -42,6 +60,14 @@ class ProtectedCodePortal(AutonomousCodePortal):
 
 
 class ProtectedFn(AutonomousFn):
+    """Function wrapper that enforces pre/post validation around execution.
+
+    A ProtectedFn evaluates a sequence of pre-validators before executing the
+    underlying function and a sequence of post-validators after execution. If a
+    pre-validator returns a ProtectedFnCallSignature, that signature will be
+    executed first (allowing validators to perform prerequisite actions) before
+    re-attempting the validation/execution loop.
+    """
 
     _pre_validators_cache: list[ValidatorFn] | None
     _post_validators_cache: list[ValidatorFn] | None
@@ -57,6 +83,25 @@ class ProtectedFn(AutonomousFn):
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict[str,Any] | None = None
                  , portal: ProtectedCodePortal | None = None):
+        """Construct a ProtectedFn.
+
+        Args:
+            fn (Callable | str): The underlying Python function or its source
+                code string.
+            pre_validators (list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None):
+                Pre-execution validators. Callables are wrapped into
+                PreValidatorFn. Lists can be nested and will
+                be flattened.
+            post_validators (list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None):
+                Post-execution validators. Callables are wrapped into
+                PostValidatorFn. Lists can be nested and will be flattened.
+            excessive_logging (bool | Joker): Enable verbose logging or inherit
+                current setting with KEEP_CURRENT.
+            fixed_kwargs (dict[str, Any] | None): Keyword arguments to be fixed
+                (bound) for every execution of the function.
+            portal (ProtectedCodePortal | None): Portal instance to bind the
+                function to.
+        """
         super().__init__(fn=fn
             , portal = portal
             , fixed_kwargs=fixed_kwargs
@@ -114,6 +159,11 @@ class ProtectedFn(AutonomousFn):
 
     @property
     def pre_validators(self) -> list[AutonomousFn]:
+        """List of pre-validator functions for this protected function.
+
+        Returns:
+            list[AutonomousFn]: A cached list of PreValidatorFn instances.
+        """
         if not hasattr(self, "_pre_validators_cache"):
             self._pre_validators_cache = [
                 addr.get() for addr in self._pre_validators_addrs]
@@ -122,6 +172,11 @@ class ProtectedFn(AutonomousFn):
 
     @property
     def post_validators(self) -> list[AutonomousFn]:
+        """List of post-validator functions for this protected function.
+
+        Returns:
+            list[AutonomousFn]: A cached list of PostValidatorFn instances.
+        """
         if not hasattr(self, "_post_validators_cache"):
             self._post_validators_cache = [
                 addr.get() for addr in self._post_validators_addrs]
@@ -131,6 +186,21 @@ class ProtectedFn(AutonomousFn):
     def can_be_executed(self
             , kw_args: KwArgs
             ) -> ProtectedFnCallSignature|ValidationSuccessFlag|None:
+        """Run pre-validators to determine if execution can proceed.
+
+        The portal will shuffle the order of pre-validators. If any validator
+        returns a ProtectedFnCallSignature, that signature should be executed by
+        the caller prior to executing the protected function (this method simply
+        returns it). If any validator fails, None is returned. If all succeed,
+        VALIDATION_SUCCESSFUL is returned.
+
+        Args:
+            kw_args (KwArgs): Arguments intended for the wrapped function.
+
+        Returns:
+            ProtectedFnCallSignature | ValidationSuccessFlag | None: Either a
+            signature to execute first, the success flag, or None on failure.
+        """
         with self.portal as portal:
             kw_args = kw_args.pack()
             pre_validators = copy(self.pre_validators)
