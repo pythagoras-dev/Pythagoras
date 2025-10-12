@@ -19,8 +19,8 @@ def test_flattener_empty():
 
 
 def test_flattener_str():
-    model_list = ["a", "b", "c", "d"]
-    list_1 = [[[["a"], "b"], "c"], "d"]
+    model_list = ["aaa", "bbb", "ccc", "ddd"]
+    list_1 = [[[["aaa"], "bbb"], "ccc"], "ddd"]
     assert flatten_list(list_1) == model_list
 
 
