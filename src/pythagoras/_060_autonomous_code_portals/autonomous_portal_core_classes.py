@@ -1,14 +1,7 @@
 from __future__ import annotations
 
 import builtins
-from typing import Callable, Any
-
-from persidict import PersiDict, Joker, KEEP_CURRENT
-
-from .._010_basic_portals import PortalAwareClass
-from .._010_basic_portals.basic_portal_core_classes import _visit_portal
 from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
-from .._030_data_portals import DataPortal
 from .._040_logging_code_portals import KwArgs
 
 from .._060_autonomous_code_portals.names_usage_analyzer import (
@@ -17,12 +10,27 @@ from .._060_autonomous_code_portals.names_usage_analyzer import (
 from .._050_safe_code_portals.safe_portal_core_classes import *
 
 class AutonomousCodePortal(SafeCodePortal):
-    
+    """Portal configured for enforcing autonomy constraints.
+
+    This portal behaves like SafeCodePortal but is specialized for autonomous
+    functions. It controls logging and consistency checks for operations related
+    to AutonomousFn instances.
+    """
     def __init__(self
             , root_dict: PersiDict | str | None = None
             , p_consistency_checks: float | Joker = KEEP_CURRENT
             , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
+        """Create an autonomous code portal.
+
+        Args:
+            root_dict: Persistence root backing the portal state. Can be a
+                PersiDict instance, a path string, or None for defaults.
+            p_consistency_checks: Probability [0..1] to run extra consistency
+                checks on operations. KEEP_CURRENT uses the existing setting.
+            excessive_logging: Whether to enable verbose logging. KEEP_CURRENT
+                preserves the existing portal setting.
+        """
         SafeCodePortal.__init__(self
             , root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
@@ -30,10 +38,19 @@ class AutonomousCodePortal(SafeCodePortal):
 
 
 class AutonomousFnCallSignature(SafeFnCallSignature):
-    """A signature of a call to an autonomous function"""
+    """A signature of a call to an autonomous function.
+
+    This extends SafeFnCallSignature to reference AutonomousFn instances.
+    """
     _fn_cache: AutonomousFn | None
 
     def __init__(self, fn: AutonomousFn, arguments: dict):
+        """Create a call signature for an autonomous function.
+
+        Args:
+            fn: The autonomous function being called.
+            arguments: The call-time arguments mapping (already validated).
+        """
         assert isinstance(fn, AutonomousFn)
         assert isinstance(arguments, dict)
         super().__init__(fn, arguments)
@@ -45,7 +62,13 @@ class AutonomousFnCallSignature(SafeFnCallSignature):
 
 
 class AutonomousFn(SafeFn):
+    """A SafeFn wrapper that enforces function autonomy rules.
 
+    AutonomousFn performs static validation at construction time to ensure that
+    the wrapped function uses only built-ins or names imported inside its body,
+    has no yield statements, and does not reference nonlocal variables.
+    It also supports partial application via fixed keyword arguments.
+    """
     _fixed_kwargs_cache: KwArgs | None
     _fixed_kwargs_packed: KwArgs | None
 
@@ -53,6 +76,20 @@ class AutonomousFn(SafeFn):
                  , fixed_kwargs: dict[str,Any]|None = None
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: AutonomousCodePortal|None = None):
+        """Construct an AutonomousFn and validate autonomy constraints.
+
+        Args:
+            fn: The function object, a string with the function's source code,
+                or an existing SafeFn to wrap. If an AutonomousFn is provided,
+                fixed_kwargs are merged.
+            fixed_kwargs: Keyword arguments to pre-bind (partially apply).
+            excessive_logging: Verbose logging flag or KEEP_CURRENT.
+            portal: AutonomousCodePortal to use; may be None to defer.
+
+        Raises:
+            AssertionError: If static analysis detects violations of autonomy
+                (nonlocal/global unbound names, missing imports, or yield usage).
+        """
         super().__init__(fn=fn
             , portal = portal
             , excessive_logging = excessive_logging)
@@ -105,6 +142,11 @@ class AutonomousFn(SafeFn):
 
     @property
     def fixed_kwargs(self) -> KwArgs:
+        """KwArgs of pre-bound keyword arguments for this function.
+
+        Returns:
+            KwArgs: The fixed keyword arguments.
+        """
         if not hasattr(self, "_fixed_kwargs_cache"):
             with self.portal:
                 self._fixed_kwargs_cache = self._fixed_kwargs_packed.unpack()
@@ -112,6 +154,19 @@ class AutonomousFn(SafeFn):
 
 
     def execute(self, **kwargs) -> Any:
+        """Execute the function within the portal, applying fixed kwargs.
+
+        Any kwargs provided here must not overlap with pre-bound fixed kwargs.
+
+        Args:
+            **kwargs: Call-time keyword arguments.
+
+        Returns:
+            Any: Result of the wrapped function call.
+
+        Raises:
+            AssertionError: If provided kwargs overlap with fixed kwargs.
+        """
         with self.portal:
             overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
             assert len(overlapping_keys) == 0
@@ -120,16 +175,33 @@ class AutonomousFn(SafeFn):
 
 
     def get_signature(self, arguments:dict) -> AutonomousFnCallSignature:
+        """Build a call signature object for this function.
+
+        Args:
+            arguments: Mapping of argument names to values for this call.
+
+        Returns:
+            AutonomousFnCallSignature: The signature representing this call.
+        """
         return AutonomousFnCallSignature(fn=self, arguments=arguments)
 
 
     def fix_kwargs(self, **kwargs) -> AutonomousFn:
-        """Create a new function by pre-filling some arguments.
+        """Create a new autonomous function with some kwargs pre-filled.
 
-        This is called a partial application in functional programming
-        It allows creating specialized functions from general ones by
-        transforming a function with multiple parameters
-        into another function with fewer parameters by fixing some arguments.
+        This is partial application: it creates a function with fewer parameters
+        by fixing a subset of keyword arguments.
+
+        Args:
+            **kwargs: Keyword arguments to fix for the new function.
+
+        Returns:
+            AutonomousFn: A new wrapper that will always apply the provided
+            keyword arguments in addition to already fixed ones.
+
+        Raises:
+            AssertionError: If any of the provided kwargs overlap with already
+                fixed kwargs.
         """
 
         overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
@@ -140,6 +212,13 @@ class AutonomousFn(SafeFn):
 
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
+        """Hook called on the first visit to a data portal.
+
+        Ensures that fixed kwargs are materialized (packed) within the portal.
+
+        Args:
+            portal: The data portal being visited for the first time.
+        """
         super()._first_visit_to_portal(portal)
         with portal:
             _ = self.fixed_kwargs.pack()
@@ -160,6 +239,7 @@ class AutonomousFn(SafeFn):
 
     @property
     def portal(self) -> AutonomousCodePortal:
+        """Return the autonomous portal associated with this function."""
         return super().portal
 
 

@@ -43,11 +43,16 @@ from persidict import Joker, KEEP_CURRENT
 
 
 class autonomous(safe):
-    """Decorator for enforcing autonomicity requirements for functions.
+    """Decorator that turns a regular function into an autonomous one.
 
-    An autonomous function is only allowed to use the built-in objects
-    (functions, types, variables), as well as global objects,
-    accessible via import statements inside the function body.
+    An autonomous function is a self-contained function: it
+    can only use built-ins and any names it imports inside its own body. This
+    decorator wraps the target callable into an AutonomousFn and enforces both
+    static and runtime autonomy checks via the selected portal.
+
+    Notes:
+        - Only regular (non-async) functions are supported.
+        - Methods, closures, lambdas, and coroutines are not considered autonomous.
     """
     _fixed_args: dict|None
 
@@ -56,6 +61,19 @@ class autonomous(safe):
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , portal: AutonomousCodePortal | None = None
                  ):
+        """Initialize the decorator.
+
+        Args:
+            fixed_kwargs: Keyword arguments to pre-bind (partially apply) to the
+                decorated function. These will be merged into every call.
+            excessive_logging: If True, enables verbose logging within the
+                selected portal. KEEP_CURRENT leaves the portal's setting as-is.
+            portal: Portal instance to use for autonomy and safety checks.
+
+        Raises:
+            AssertionError: If portal is not an AutonomousCodePortal or None, or
+                if fixed_kwargs is not a dict or None.
+        """
         assert isinstance(portal, AutonomousCodePortal) or portal is None
         assert isinstance(fixed_kwargs, dict) or fixed_kwargs is None
         safe.__init__(self=self
@@ -65,6 +83,15 @@ class autonomous(safe):
 
 
     def __call__(self, fn: Callable|str) -> AutonomousFn:
+        """Wrap the function with autonomy enforcement.
+
+        Args:
+            fn: The function object to decorate.
+
+        Returns:
+            AutonomousFn: A wrapper that enforces autonomy at decoration and at
+            execution time, with any fixed keyword arguments pre-applied.
+        """
         wrapper = AutonomousFn(fn
             ,portal=self._portal
             ,fixed_kwargs=self._fixed_kwargs

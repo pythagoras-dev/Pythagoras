@@ -4,7 +4,23 @@ from typing import Callable, Union
 from .._020_ordinary_code_portals import get_normalized_function_source
 
 class NamesUsedInFunction:
+    """Container for name usage sets discovered in a function.
+
+    Attributes:
+        function: Name of the top-level function being analyzed.
+        explicitly_global_unbound_deep: Names explicitly marked as global in the
+            function or its nested functions, which are not locally bound.
+        explicitly_nonlocal_unbound_deep: Names explicitly marked as nonlocal in
+            the function or its nested functions, which are not locally bound.
+        local: Names bound locally in the top-level function (including args).
+        imported: Names explicitly imported within the function body.
+        unclassified_deep: Names used in the function and/or nested functions
+            that are neither imported nor explicitly marked global/nonlocal.
+        accessible: All names currently considered accessible within function
+            scope during analysis; a union built as nodes are visited.
+    """
     def __init__(self):
+        """Initialize all name sets to empty defaults."""
         self.function = None # name of the function
         self.explicitly_global_unbound_deep = set() # names, explicitly marked as global inside the function and/or called subfunctions, yet not bound to any object
         self.explicitly_nonlocal_unbound_deep = set() # names, explicitly marked as nonlocal inside the function and/or called subfunctions, yet not bound to any object
@@ -21,12 +37,23 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
     """
     # TODO: add support for structural pattern matching
     def __init__(self):
+        """Initialize the analyzer state and counters."""
         self.names = NamesUsedInFunction()
         self.imported_packages_deep = set()
         self.func_nesting_level = 0
         self.n_yelds = 0
 
     def visit_FunctionDef(self, node):
+        """Handle a function definition.
+
+        - For the top-level function: record its name, parameters as locals,
+          and traverse its body.
+        - For nested functions: analyze them with a fresh analyzer and merge
+          relevant sets into the current analyzer, adjusting for accessibility.
+
+        Args:
+            node: The ast.FunctionDef node.
+        """
         if self.func_nesting_level == 0:
             self.names.function = node.name
             self.func_nesting_level += 1
@@ -54,6 +81,15 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
             # self.n_yelds is not changing
 
     def visit_Name(self, node):
+        """Track variable usage and binding for a Name node.
+
+        - On load: if the name is not accessible, mark it unclassified and
+          accessible.
+        - On store: register it as a local and accessible.
+
+        Args:
+            node: The ast.Name node.
+        """
         if isinstance(node.ctx, ast.Load):
             if node.id not in self.names.accessible:
                 self.names.unclassified_deep |= {node.id}
@@ -65,23 +101,58 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Attribute(self, node):
+        """Visit an attribute access expression.
+
+        Currently no special handling is required; traversal continues.
+
+        Args:
+            node: The ast.Attribute node.
+        """
         self.generic_visit(node)
 
     def visit_Yield(self, node):
+        """Record usage of a yield expression.
+
+        Increments the number of yields found, which disqualifies autonomy.
+
+        Args:
+            node: The ast.Yield node.
+        """
         self.n_yelds += 1
         self.generic_visit(node)
 
     def visit_YieldFrom(self, node):
+        """Record usage of a 'yield from' expression.
+
+        Increments the number of yields found, which disqualifies autonomy.
+
+        Args:
+            node: The ast.YieldFrom node.
+        """
         self.n_yelds += 1
         self.generic_visit(node)
 
     def visit_Try(self, node):
+        """Track names bound in exception handlers within try/except.
+
+        Exception handler names become local and accessible.
+
+        Args:
+            node: The ast.Try node.
+        """
         for handler in node.handlers:
             self.names.local |= {handler.name}
             self.names.accessible |= {handler.name}
         self.generic_visit(node)
 
     def visit_comprehension(self, node):
+        """Handle variable binding within a comprehension clause.
+
+        Targets in comprehension generators become local and accessible.
+
+        Args:
+            node: The ast.comprehension node or a loop node with a similar API.
+        """
         if isinstance(node.target, (ast.Tuple, ast.List)):
             all_targets =node.target.elts
         else:
@@ -94,29 +165,59 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_For(self, node):
+        """Handle a for-loop comprehension-like binding.
+
+        Args:
+            node: The ast.For node.
+        """
         self.visit_comprehension(node)
 
     def visit_ListComp(self, node):
+        """Handle bindings within a list comprehension.
+
+        Args:
+            node: The ast.ListComp node.
+        """
         for gen in node.generators:
             self.visit_comprehension(gen)
         self.generic_visit(node)
 
     def visit_SetComp(self, node):
+        """Handle bindings within a set comprehension.
+
+        Args:
+            node: The ast.SetComp node.
+        """
         for gen in node.generators:
             self.visit_comprehension(gen)
         self.generic_visit(node)
 
     def visit_DictComp(self, node):
+        """Handle bindings within a dict comprehension.
+
+        Args:
+            node: The ast.DictComp node.
+        """
         for gen in node.generators:
             self.visit_comprehension(gen)
         self.generic_visit(node)
 
     def visit_GeneratorExp(self, node):
+        """Handle bindings within a generator expression.
+
+        Args:
+            node: The ast.GeneratorExp node.
+        """
         for gen in node.generators:
             self.visit_comprehension(gen)
         self.generic_visit(node)
 
     def visit_Import(self, node):
+        """Register imported names and top-level package usage.
+
+        Args:
+            node: The ast.Import node.
+        """
         for alias in node.names:
             name = alias.asname if alias.asname else alias.name
             self.names.imported |= {name}
@@ -125,6 +226,11 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_ImportFrom(self, node):
+        """Register names imported from a module and the module itself.
+
+        Args:
+            node: The ast.ImportFrom node.
+        """
         self.imported_packages_deep |= {node.module.split('.')[-1]}
         for alias in node.names:
             name = alias.asname if alias.asname else alias.name
@@ -133,12 +239,22 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         self.generic_visit(node)
 
     def visit_Nonlocal(self, node):
+        """Record names declared as nonlocal within the function.
+
+        Args:
+            node: The ast.Nonlocal node.
+        """
         nonlocals =  set(node.names)
         self.names.explicitly_nonlocal_unbound_deep |= nonlocals
         self.names.accessible |= nonlocals
         self.generic_visit(node)
 
     def visit_Global(self, node):
+        """Record names declared as global within the function.
+
+        Args:
+            node: The ast.Global node.
+        """
         globals = set(node.names)
         self.names.explicitly_global_unbound_deep |= globals
         self.names.accessible |= globals
@@ -147,11 +263,24 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
 def analyze_names_in_function(
         a_func: Union[Callable,str]
         ):
-    """Analyze names used in a function.
+    """Analyze names used in a single conventional function.
 
-    It returns an instance of NamesUsageAnalyzer class,
-    which contains all the data needed to analyze
-    names, used by the function.
+    The function source is normalized, decorators are skipped, and an AST is
+    parsed. Assertions ensure that exactly one top-level regular function
+    definition is present. The tree is visited with NamesUsageAnalyzer.
+
+    Args:
+        a_func: A function object or its source string to analyze.
+
+    Returns:
+        dict: A mapping with keys:
+            - tree (ast.Module): The parsed AST module with a single function.
+            - analyzer (NamesUsageAnalyzer): The populated analyzer instance.
+            - normalized_source (str): The normalized source code.
+
+    Raises:
+        AssertionError: If the input is not a single regular function (e.g., a
+            lambda, async function, callable class, or multiple definitions).
     """
 
     normalized_source = get_normalized_function_source(a_func)
