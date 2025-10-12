@@ -1,13 +1,13 @@
 import sys
-from typing import Any
+from typing import Any, Final
 
 import joblib.hashing
 
 from .base_16_32_convertors import convert_base16_to_base32
 
 
-hash_type: str = "sha256"
-max_signature_length: int = 22
+_HASH_TYPE: Final[str] = "sha256"
+_MAX_SIGNATURE_LENGTH: Final[int] = 22
 
 def get_base16_hash_signature(x:Any) -> str:
     """Compute a hexadecimal (base16) hash for an arbitrary Python object.
@@ -30,9 +30,9 @@ def get_base16_hash_signature(x:Any) -> str:
         - The digest is deterministic for the same object content.
     """
     if 'numpy' in sys.modules:
-        hasher = joblib.hashing.NumpyHasher(hash_name=hash_type)
+        hasher = joblib.hashing.NumpyHasher(hash_name=_HASH_TYPE)
     else:
-        hasher = joblib.hashing.Hasher(hash_name=hash_type)
+        hasher = joblib.hashing.Hasher(hash_name=_HASH_TYPE)
     hash_signature = hasher.hash(x)
     return str(hash_signature)
 
@@ -65,5 +65,5 @@ def get_hash_signature(x:Any) -> str:
     Returns:
         str: The truncated base32 digest string.
     """
-    return get_base32_hash_signature(x)[:max_signature_length]
+    return get_base32_hash_signature(x)[:_MAX_SIGNATURE_LENGTH]
 
