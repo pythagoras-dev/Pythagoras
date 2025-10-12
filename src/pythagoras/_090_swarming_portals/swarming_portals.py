@@ -212,8 +212,6 @@ class SwarmingPortal(PureCodePortal):
             del self._max_n_workers_cache
         super()._invalidate_cache()
 
-# parameterizable.register_parameterizable_class(SwarmingPortal)
-
 
 def _launch_many_background_workers(portal_init_jsparams:JsonSerializedParams) -> None:
     """Launch many background worker processes."""

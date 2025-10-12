@@ -157,6 +157,3 @@ class SafeFn(LoggingFn):
             and logging through the portal.
         """
         return SafeFnCallSignature(fn=self, arguments=arguments)
-
-
-# register_parameterizable_class(SafeCodePortal)
