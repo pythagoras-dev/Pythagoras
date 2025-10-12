@@ -4,6 +4,10 @@ A pure function is a protected function that has no side effects and
 always returns the same result if it is called multiple times
 with the same arguments.
 
+A pure function is an autonomous function, which means that it doesn't
+depend on external imports or definitions. It also means it can only be called
+with keyword arguments; positional arguments are not allowed.
+
 This subpackage defines a decorator which is used to inform Pythagoras that
 a function is intended to be pure: @pure().
 
@@ -17,7 +21,7 @@ changes in the source code of the function. If the source code of a pure
 function changes, the function is executed again on the next call.
 However, the previously cached results are still available
 for the old version of the function. Only changes in the function's
-source code are tracked.
+source code are tracked, but not in the packages it is using.
 """
 
 from .pure_core_classes import *

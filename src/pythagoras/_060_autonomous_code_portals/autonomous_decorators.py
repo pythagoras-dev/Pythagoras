@@ -23,6 +23,9 @@ Autonomous functions can have nested functions and classes.
 Only ordinary functions can be autonomous. Asynchronous functions, closures,
 class methods, and lambda functions cannot be autonomous.
 
+An autonomous function can only be called with keyword arguments.
+It can't be called with positional arguments.
+
 Autonomous functions support partial application of arguments:
 the process of pre-filling some arguments of a function,
 producing a new autonomous function that takes the remaining arguments.

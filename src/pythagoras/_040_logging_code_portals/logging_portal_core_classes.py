@@ -39,6 +39,9 @@ class LoggingFn(StorableFn):
     exceptions, and custom events. It also supports an excessive_logging mode
     that enables storing rich per-call artifacts.
 
+    A logging function can only be called with keyword arguments.
+    It can't be called with positional arguments.
+
     Attributes:
         _auxiliary_config_params_at_init (dict): Internal configuration store
             inherited from StorableFn. Includes the 'excessive_logging' flag
