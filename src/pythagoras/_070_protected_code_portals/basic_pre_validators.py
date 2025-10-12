@@ -55,10 +55,13 @@ def unused_cpu(cores: int) -> SimplePreValidatorFn:
         the system has at least ``cores`` free logical CPU cores.
 
     Raises:
-        AssertionError: If ``cores`` is not a positive integer.
+        TypeError: If ``cores`` is not an integer.
+        ValueError: If ``cores`` is not greater than 0.
     """
-    assert isinstance(cores, int)
-    assert cores > 0
+    if not isinstance(cores, int):
+        raise TypeError("cores must be an int")
+    if cores <= 0:
+        raise ValueError("cores must be > 0")
     return SimplePreValidatorFn(_at_least_X_CPU_cores_free_check).fix_kwargs(n=cores)
 
 
@@ -91,10 +94,13 @@ def unused_ram(Gb: int) -> SimplePreValidatorFn:
         the system has at least ``Gb`` GiB of RAM available.
 
     Raises:
-        AssertionError: If ``Gb`` is not a positive integer.
+        TypeError: If ``Gb`` is not an integer.
+        ValueError: If ``Gb`` is not greater than 0.
     """
-    assert isinstance(Gb, int)
-    assert Gb > 0
+    if not isinstance(Gb, int):
+        raise TypeError("Gb must be an int")
+    if Gb <= 0:
+        raise ValueError("Gb must be > 0")
     return SimplePreValidatorFn(_at_least_X_G_RAM_free_check).fix_kwargs(x=Gb)
 
 
@@ -120,7 +126,8 @@ def _check_python_package_and_install_if_needed(
           "installation_attempt") stored in portal._config_settings.
         - Installation is performed synchronously and may take time.
     """
-    assert isinstance(package_name, str)
+    if not isinstance(package_name, str):
+        raise TypeError("package_name must be a str")
     import importlib, time
     try:
         importlib.import_module(package_name)
@@ -152,11 +159,12 @@ def installed_packages(*args) -> list[SimplePreValidatorFn]:
         name, preserving the original order.
 
     Raises:
-        AssertionError: If any of the provided arguments is not a string.
+        TypeError: If any of the provided arguments is not a string.
     """
     validators = []
     for package_name in args:
-        assert isinstance(package_name, str)
+        if not isinstance(package_name, str):
+            raise TypeError("All package names must be strings")
         # TODO: check if the package is available on pypi.org
         new_validator = SimplePreValidatorFn(_check_python_package_and_install_if_needed)
         new_validator = new_validator.fix_kwargs(package_name=package_name)
