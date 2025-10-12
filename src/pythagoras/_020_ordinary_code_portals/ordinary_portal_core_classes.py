@@ -32,7 +32,7 @@ def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
         The normalized source code string.
 
     Raises:
-        NonCompliantFunction: If the function is not compliant with Pythagoras'
+        FunctionError: If the function is not compliant with Pythagoras'
             ordinarity rules or multiple decorators are present.
         AssertionError: If input type is invalid or integrity checks fail.
         SyntaxError: If the provided source cannot be parsed.
@@ -182,7 +182,7 @@ class OrdinaryFn(PortalAwareClass):
 
         Raises:
             TypeError: If fn is neither callable, a string, nor an OrdinaryFn.
-            NonCompliantFunction: If the provided function source is not
+            FunctionError: If the provided function source is not
                 compliant with Pythagoras ordinarity rules.
             SyntaxError: If the provided source cannot be parsed.
         """

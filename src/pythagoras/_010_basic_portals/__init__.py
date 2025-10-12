@@ -32,7 +32,6 @@ be subclassed to provide additional functionality.
 """
 
 from .post_init_metaclass import *
-from .exceptions import *
 from .basic_portal_core_classes import *
 from .portal_tester import _PortalTester
 from .long_infoname import *

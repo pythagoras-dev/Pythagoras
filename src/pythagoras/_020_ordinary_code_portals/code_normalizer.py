@@ -1,6 +1,3 @@
-import sys
-
-from .._010_basic_portals.exceptions import NonCompliantFunction
 import ast
 import inspect
 from typing import Callable
@@ -9,6 +6,7 @@ import autopep8
 from .function_processing import get_function_name_from_source
 from .._010_basic_portals.long_infoname import get_long_infoname
 from .function_processing import assert_ordinarity
+from .exceptions import FunctionError
 
 _pythagoras_decorator_names = {
     "ordinary"
@@ -52,7 +50,7 @@ def _get_normalized_function_source_impl(
             A normalized source code string for the function.
 
         Raises:
-            NonCompliantFunction: If the function has multiple decorators when
+            FunctionError: If the function has multiple decorators when
                 a callable or a string representing a single function is
                 expected; or if it fails ordinarity checks.
             AssertionError: If input is neither a callable nor a string, if
@@ -104,7 +102,7 @@ def _get_normalized_function_source_impl(
         # TODO: add support for multiple decorators???
         decorator_list = code_ast.body[0].decorator_list
         if len(decorator_list) > 1:
-            raise NonCompliantFunction(
+            raise FunctionError(
                 f"Function {a_func_name} can't have multiple decorators,"
                 + " only one decorator is allowed.")
 

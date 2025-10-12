@@ -1,7 +1,7 @@
 import types, inspect
 from typing import Callable
 
-from .._010_basic_portals.exceptions import NonCompliantFunction
+from .exceptions import FunctionError
 from .._010_basic_portals.long_infoname import get_long_infoname
 
 
@@ -93,7 +93,7 @@ def assert_ordinarity(a_func: Callable) -> None:
         a_func: The callable to validate.
 
     Raises:
-        NonCompliantFunction: If the callable violates any of the ordinarity
+        FunctionError: If the callable violates any of the ordinarity
             constraints described above (e.g., not a function, is a method,
             is a lambda/closure/async function, accepts *args, or has defaults).
     """
@@ -104,35 +104,35 @@ def assert_ordinarity(a_func: Callable) -> None:
     name = get_long_infoname(a_func)
 
     if not callable(a_func):
-        raise NonCompliantFunction(f"{name} must be callable.")
+        raise FunctionError(f"{name} must be callable.")
 
     if not inspect.isfunction(a_func):
-        raise NonCompliantFunction(f"The function {name} is not ordinary."
+        raise FunctionError(f"The function {name} is not ordinary."
             "It must be a function, not a method, "
             "a classmethod, or a lambda function.")
 
     if isinstance(a_func, types.MethodType):
-        raise NonCompliantFunction(f"The function {name} can't be "
+        raise FunctionError(f"The function {name} can't be "
             "an instance or a class method, only "
             "regular functions are allowed.")
 
     if hasattr(a_func, "__closure__") and a_func.__closure__ is not None:
-        raise NonCompliantFunction(f"The function {name} can't be a closure,"
+        raise FunctionError(f"The function {name} can't be a closure,"
             " only regular functions are allowed.")
 
     if a_func.__name__ == "<lambda>":
-        raise NonCompliantFunction(f"The function {name} can't be lambda,"
+        raise FunctionError(f"The function {name} can't be lambda,"
             " only regular functions are allowed.")
 
     if accepts_unlimited_positional_args(a_func):
-        raise NonCompliantFunction("Pythagoras only allows functions "
+        raise FunctionError("Pythagoras only allows functions "
             f"with named arguments, but {name} accepts "
             "unlimited (nameless) positional arguments.")
 
     if inspect.iscoroutinefunction(a_func):
-        raise NonCompliantFunction(f"The function {name} can't be "
+        raise FunctionError(f"The function {name} can't be "
             "an async function, only regular functions are allowed.")
 
     if count_parameters_with_defaults(a_func) > 0:
-        raise NonCompliantFunction(f"The function {name} can't have "
+        raise FunctionError(f"The function {name} can't have "
             "default values for its parameters.")

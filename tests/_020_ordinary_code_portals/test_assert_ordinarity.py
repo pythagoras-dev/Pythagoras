@@ -1,12 +1,12 @@
 import pytest
 
-from pythagoras import NonCompliantFunction
+from pythagoras import FunctionError
 from pythagoras._020_ordinary_code_portals.function_processing import assert_ordinarity
 
 
 
 def test_lambdas():
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(lambda x: x**2)
 
 
@@ -24,9 +24,9 @@ class DemoClass:
 
 def test_methods():
     demo_obj = DemoClass()
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(demo_obj.regular_method)
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(demo_obj.class_method)
 
     # TODO: decide how to handle static methods
@@ -49,18 +49,18 @@ def test_closure():
     def inner_function():
         return i
 
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(inner_function)
 
 def test_builtin_functions():
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(print)
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(len)
 
 def test_async_functions():
     async def async_function():
         pass
 
-    with pytest.raises(NonCompliantFunction):
+    with pytest.raises(FunctionError):
         assert_ordinarity(async_function)

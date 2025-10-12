@@ -28,4 +28,5 @@ from .ordinary_portal_core_classes import *
 from .function_processing import *
 from .ordinary_decorator import *
 from .code_normalizer import *
+from .exceptions import *
 
