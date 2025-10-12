@@ -35,7 +35,8 @@ class pure(protected):
     given the same arguments they always produce the same result. When you
     decorate a function with @pure(), Pythagoras caches execution results in
     a persistent store, avoids re-executing the function for identical calls,
-    as well as tracks source-code changes to recomoute the function when necessary.
+    as well as tracks source-code changes to recompute the function
+    when necessary.
 
     This decorator is a thin, typed wrapper over the generic `protected`
     decorator configured for pure-function semantics.
