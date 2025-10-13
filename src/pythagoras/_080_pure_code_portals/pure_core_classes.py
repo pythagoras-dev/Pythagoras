@@ -140,8 +140,10 @@ class PureFnCallSignature(ProtectedFnCallSignature):
             fn: The pure function being called.
             arguments: Keyword arguments for the call.
         """
-        assert isinstance(fn, PureFn)
-        assert isinstance(arguments, dict)
+        if not isinstance(fn, PureFn):
+            raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
+        if not isinstance(arguments, dict):
+            raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
     @property
@@ -314,9 +316,11 @@ class PureFn(ProtectedFn):
             list[PureFnExecutionResultAddr]: Addresses for all requested
             executions, in the same order as the input list.
         """
-        assert isinstance(list_of_kwargs, (list, tuple))
+        if not isinstance(list_of_kwargs, (list, tuple)):
+            raise TypeError(f"list_of_kwargs must be a list or tuple, got {type(list_of_kwargs).__name__}")
         for kwargs in list_of_kwargs:
-            assert isinstance(kwargs, dict)
+            if not isinstance(kwargs, dict):
+                raise TypeError(f"Each item in list_of_kwargs must be a dict, got {type(kwargs).__name__}")
         with self.portal:
             list_to_return = []
             list_to_swarm = []
@@ -411,7 +415,8 @@ class PureFnExecutionResultAddr(HashAddr):
             fn: The PureFn whose execution result is addressed.
             arguments: The keyword arguments for the call (packed dict).
         """
-        assert isinstance(fn, PureFn)
+        if not isinstance(fn, PureFn):
+            raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
         with fn.portal as portal:
             self._kwargs_cache = KwArgs(**arguments)
             self._fn_cache = fn
@@ -530,7 +535,8 @@ class PureFnExecutionResultAddr(HashAddr):
             be imported from a known non-active portal); False otherwise.
         """
         if hasattr(self, "_ready_cache"):
-            assert self._ready_cache
+            if not self._ready_cache:
+                raise RuntimeError(f"Internal inconsistency: _ready_cache is set but False for address {self}")
             return True
         with self.fn.portal:
             if self._ready_in_active_portal:
@@ -608,7 +614,8 @@ class PureFnExecutionResultAddr(HashAddr):
             TimeoutError: If the timeout elapses before the value becomes
                 available.
         """
-        assert timeout is None or timeout >= 0
+        if timeout is not None and timeout < 0:
+            raise ValueError(f"timeout must be None or non-negative, got {timeout}")
         if hasattr(self, "_result_cache"):
             return self._result_cache
 
