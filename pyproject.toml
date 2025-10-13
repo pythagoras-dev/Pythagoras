@@ -4,7 +4,7 @@ build-backend = "uv_build"
 
 [project]
 name = "pythagoras"
-version = "0.25.0"
+version = "0.25.1"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
@@ -36,12 +36,12 @@ dependencies = [
     "deepdiff",
     "numpy",
     "pytest",
-    "persidict==0.104.2",
+    "persidict",
     "boto3",
     "moto",
     "uv",
     "nvidia-ml-py",
-    "parameterizable==0.101.0",
+    "parameterizable",
 ]
 
 [project.urls]
