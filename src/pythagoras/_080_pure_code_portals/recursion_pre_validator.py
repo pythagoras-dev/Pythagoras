@@ -93,7 +93,8 @@ def recursive_parameters(
     """
     result = []
     for name in args:
-        assert isinstance(name, str)
+        if not isinstance(name, str):
+            raise TypeError(f"recursive parameter names must be strings, got {type(name).__name__}")
         validator =  ComplexPreValidatorFn(
             _recursion_pre_validator, fixed_kwargs=dict(param_name=name))
         result.append(validator)
