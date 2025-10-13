@@ -115,15 +115,17 @@ class SwarmingPortal(PureCodePortal):
             , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
-        assert isinstance(max_n_workers, (int, Joker))
+        if not isinstance(max_n_workers, (int, Joker)):
+            raise TypeError(f"max_n_workers must be int or Joker, got {type(max_n_workers).__name__}")
 
-        if parent_process_id is None or parent_process_start_time is None:
-            assert parent_process_id is None
-            assert parent_process_start_time is None
-            self._auxiliary_config_params_at_init["max_n_workers"
-                ] = max_n_workers
+        if (parent_process_id is None) != (parent_process_start_time is None):
+            raise RuntimeError(
+                f"parent_process_id and parent_process_start_time must both be None or both set; got id={parent_process_id}, start_time={parent_process_start_time}")
+        if parent_process_id is None:
+            self._auxiliary_config_params_at_init["max_n_workers"] = max_n_workers
         else:
-            assert max_n_workers == 0
+            if max_n_workers != 0:
+                raise ValueError(f"In child context, max_n_workers must be 0, got {max_n_workers}")
 
         compute_nodes_prototype = self._root_dict.get_subdict("compute_nodes")
         compute_nodes_shared_params = compute_nodes_prototype.get_params()
@@ -353,8 +355,8 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
         parent_process_start_time = get_current_process_start_time())
 
     portal = parameterizable.loadjs(portal_init_jsparams)
-    assert isinstance(portal, SwarmingPortal)
-
+    if not isinstance(portal, SwarmingPortal):
+        raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
     summary = build_execution_environment_summary()
     portal._compute_nodes.json[portal._execution_environment_address] = summary
 
@@ -402,7 +404,8 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
             reconstructing a SwarmingPortal in child context.
     """
     portal = parameterizable.loadjs(portal_init_jsparams)
-    assert isinstance(portal, SwarmingPortal)
+    if not isinstance(portal, SwarmingPortal):
+        raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
     with portal:
         ctx = get_context("spawn")
         with OutputSuppressor():
@@ -433,7 +436,8 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
     portal_init_jsparams = update_jsparams(
         portal_init_jsparams, max_n_workers=0)
     portal = parameterizable.loadjs(portal_init_jsparams)
-    assert isinstance(portal, SwarmingPortal)
+    if not isinstance(portal, SwarmingPortal):
+        raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
     with portal:
         call_signature:PureFnCallSignature|None = None
         while True:
