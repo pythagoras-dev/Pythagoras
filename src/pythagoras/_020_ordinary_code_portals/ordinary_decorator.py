@@ -20,7 +20,8 @@ class ordinary:
            portal: Optional OrdinaryCodePortal to link to the resulting
                OrdinaryFn wrappers.
        """
-       assert portal is None or isinstance(portal, OrdinaryCodePortal)
+       if not (portal is None or isinstance(portal, OrdinaryCodePortal)):
+           raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {type(portal).__name__}")
        self._portal=portal
 
 
