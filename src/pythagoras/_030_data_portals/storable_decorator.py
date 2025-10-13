@@ -18,7 +18,9 @@ class storable(ordinary):
             portal: The DataPortal to use as default when wrapping functions.
                 If None, the active portal at call time will be used.
         """
-        assert isinstance(portal, DataPortal) or portal is None
+        if not (isinstance(portal, DataPortal) or portal is None):
+            raise TypeError(f"portal must be a DataPortal or None, "
+                            f"got {type(portal).__name__}")
         ordinary.__init__(self=self, portal=portal)
 
     def __call__(self,fn:Callable)->StorableFn:
