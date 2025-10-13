@@ -74,11 +74,13 @@ class autonomous(safe):
             portal: Portal instance to use for autonomy and safety checks.
 
         Raises:
-            AssertionError: If portal is not an AutonomousCodePortal or None, or
+            TypeError: If portal is not an AutonomousCodePortal or None, or
                 if fixed_kwargs is not a dict or None.
         """
-        assert isinstance(portal, AutonomousCodePortal) or portal is None
-        assert isinstance(fixed_kwargs, dict) or fixed_kwargs is None
+        if not (isinstance(portal, AutonomousCodePortal) or portal is None):
+            raise TypeError(f"portal must be an AutonomousCodePortal or None, got {type(portal).__name__}")
+        if not (isinstance(fixed_kwargs, dict) or fixed_kwargs is None):
+            raise TypeError(f"fixed_kwargs must be a dict or None, got {type(fixed_kwargs).__name__}")
         safe.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging)
