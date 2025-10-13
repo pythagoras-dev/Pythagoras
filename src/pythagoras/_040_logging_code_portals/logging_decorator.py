@@ -27,8 +27,10 @@ class logging(storable):
             portal: Optional LoggingCodePortal to bind the wrapped function to.
                 If None, the active portal at execution time is used.
         """
-        assert isinstance(excessive_logging, (bool,Joker))
-        assert isinstance(portal, LoggingCodePortal) or portal is None
+        if not isinstance(excessive_logging, (bool, Joker)):
+            raise TypeError(f"excessive_logging must be bool or Joker, got {type(excessive_logging).__name__}")
+        if not (isinstance(portal, LoggingCodePortal) or portal is None):
+            raise TypeError(f"portal must be LoggingCodePortal or None, got {type(portal).__name__}")
         storable.__init__(self=self, portal=portal)
         self._excessive_logging = excessive_logging
 

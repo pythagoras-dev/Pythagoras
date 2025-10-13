@@ -31,7 +31,8 @@ def get_active_data_portal() -> DataPortal:
         AssertionError: If the active portal is not an instance of DataPortal.
     """
     portal = get_active_portal()
-    assert isinstance(portal, DataPortal)
+    if not isinstance(portal, DataPortal):
+        raise TypeError(f"Active portal must be DataPortal, got {type(portal).__name__}")
     return portal
 
 
@@ -46,7 +47,9 @@ def get_nonactive_data_portals() -> list[DataPortal]:
         AssertionError: If any returned portal is not an instance of DataPortal.
     """
     portals = get_nonactive_portals()
-    assert all(isinstance(p, DataPortal) for p in portals)
+    if not all(isinstance(p, DataPortal) for p in portals):
+        bad = [type(p).__name__ for p in portals if not isinstance(p, DataPortal)]
+        raise TypeError(f"Expected all nonactive portals to be DataPortal, got invalid types: {bad}")
     return portals
 
 
@@ -493,9 +496,8 @@ class ValueAddr(HashAddr):
                 , hash_signature=hash_signature)
             return
 
-        assert not isinstance(data, HashAddr), (
-                "get_ValueAddr is the only way to "
-                + "convert HashAddr into ValueAddr")
+        if isinstance(data, HashAddr):
+            raise TypeError("get_ValueAddr is the only way to convert HashAddr into ValueAddr")
 
         descriptor = self._build_descriptor(data)
         hash_signature = self._build_hash_signature(data)

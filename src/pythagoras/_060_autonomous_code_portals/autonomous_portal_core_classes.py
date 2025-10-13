@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import builtins
+
+from .. import FunctionError
 from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
 from .._040_logging_code_portals import KwArgs
 
@@ -51,8 +53,10 @@ class AutonomousFnCallSignature(SafeFnCallSignature):
             fn: The autonomous function being called.
             arguments: The call-time arguments mapping (already validated).
         """
-        assert isinstance(fn, AutonomousFn)
-        assert isinstance(arguments, dict)
+        if not isinstance(fn, AutonomousFn):
+            raise TypeError(f"fn must be AutonomousFn, got {type(fn).__name__}")
+        if not isinstance(arguments, dict):
+            raise TypeError(f"arguments must be dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
     @property
@@ -110,19 +114,20 @@ class AutonomousFn(SafeFn):
         analyzer = analyze_names_in_function(self.source_code)
         normalized_source = analyzer["normalized_source"]
         analyzer = analyzer["analyzer"]
-        assert self.source_code == normalized_source
+        if self.source_code != normalized_source:
+            raise RuntimeError("Normalized source does not match original source for autonomous function")
 
         nonlocal_names = analyzer.names.explicitly_nonlocal_unbound_deep
         all_decorators = _pythagoras_decorator_names
         # all_decorators = sys.modules["pythagoras"].all_decorators
         nonlocal_names -= set(all_decorators) #????????????
 
-        assert len(nonlocal_names) == 0, (f"Function {self.name}"
-            + f" is not autonomous, it uses external nonlocal"
-            + f" objects: {analyzer.names.explicitly_nonlocal_unbound_deep}")
+        if len(nonlocal_names) != 0:
+            raise FunctionError(
+                f"Function {self.name} is not autonomous, it uses external nonlocal objects: {analyzer.names.explicitly_nonlocal_unbound_deep}")
 
-        assert analyzer.n_yelds == 0, (f"Function {self.name}"
-            + f" is not autonomous, it uses yield statements")
+        if analyzer.n_yelds != 0:
+            raise FunctionError(f"Function {self.name} is not autonomous, it uses yield statements")
 
         import_required = analyzer.names.explicitly_global_unbound_deep
         import_required |= analyzer.names.unclassified_deep
@@ -134,10 +139,9 @@ class AutonomousFn(SafeFn):
         import_required -= pth_names
         import_required -= {fn_name}
 
-        assert len(import_required) == 0, (f"Function {self.name}"
-            + f" is not autonomous, it uses global"
-            + f" objects {import_required}"
-            + f" without importing them inside the function body")
+        if len(import_required) != 0:
+            raise FunctionError(
+                f"Function {self.name} is not autonomous, it uses global objects {import_required} without importing them inside the function body")
 
 
     @property
@@ -169,7 +173,8 @@ class AutonomousFn(SafeFn):
         """
         with self.portal:
             overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
-            assert len(overlapping_keys) == 0
+            if len(overlapping_keys) != 0:
+                raise ValueError(f"Overlapping kwargs with fixed kwargs: {sorted(overlapping_keys)}")
             kwargs.update(self.fixed_kwargs)
             return super().execute(**kwargs)
 
@@ -205,7 +210,8 @@ class AutonomousFn(SafeFn):
         """
 
         overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
-        assert len(overlapping_keys) == 0
+        if len(overlapping_keys) != 0:
+            raise ValueError(f"Overlapping kwargs with fixed kwargs: {sorted(overlapping_keys)}")
         new_fixed_kwargs = {**self.fixed_kwargs,**kwargs}
         new_fn = type(self)(fn=self, fixed_kwargs=new_fixed_kwargs)
         return new_fn

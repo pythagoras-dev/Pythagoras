@@ -200,7 +200,8 @@ def get_default_portal_base_dir() -> str:
     target_directory = home_directory / ".pythagoras" / ".default_portal"
     target_directory.mkdir(parents=True, exist_ok=True)
     target_directory_str = str(target_directory.resolve())
-    assert isinstance(target_directory_str, str)
+    if not isinstance(target_directory_str, str):
+        raise TypeError(f"Expected target_directory_str to be str, got {type(target_directory_str).__name__}")
     return target_directory_str
 
 
@@ -280,8 +281,10 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         global _all_links_from_objects_to_portals
         result = set()
         for obj_str_id, portal_str_id in _all_links_from_objects_to_portals.items():
-            assert isinstance(obj_str_id, str)
-            assert isinstance(portal_str_id, str)
+            if not isinstance(obj_str_id, str):
+                raise TypeError(f"Expected obj_str_id to be str, got {type(obj_str_id).__name__}")
+            if not isinstance(portal_str_id, str):
+                raise TypeError(f"Expected portal_str_id to be str, got {type(portal_str_id).__name__}")
             if portal_str_id == self._str_id:
                 if target_class is None:
                     result.add(obj_str_id)
@@ -411,10 +414,9 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Pop the portal from the stack of active ones"""
         global _active_portals_stack, _active_portals_counters_stack
-        assert _active_portals_stack[-1] == self, (
-            "Inconsistent state of the portal stack. "
-            + "Most probably, portal.__enter__() method was called explicitly "
-            + "within a 'with' statement with another portal.")
+        if _active_portals_stack[-1] != self:
+            raise RuntimeError(
+                "Inconsistent state of the portal stack. Most probably, portal.__enter__() method was called explicitly within a 'with' statement with another portal.")
         if _active_portals_counters_stack[-1] == 1:
             _active_portals_stack.pop()
             _active_portals_counters_stack.pop()
@@ -462,7 +464,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
             portal: The portal to link this object to, or None to use the
                 currently active portal for operations.
         """
-        assert portal is None or isinstance(portal, BasicPortal)
+        if not (portal is None or isinstance(portal, BasicPortal)):
+            raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal_at_init = portal
         # self._hash_id_cache = None
         self._visited_portals = set()
@@ -501,7 +504,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
             portal = self._linked_portal_at_init
         elif self._str_id in _all_links_from_objects_to_portals:
             portal_str_id = _all_links_from_objects_to_portals[self._str_id]
-            assert isinstance(portal_str_id, str)
+            if not isinstance(portal_str_id, str):
+                raise TypeError(f"Expected portal_str_id to be str, got {type(portal_str_id).__name__}")
             portal = _all_known_portals[portal_str_id]
         return portal
 
@@ -595,7 +599,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
         """Return True if the object has been registered in at least one of the portals."""
         global _all_activated_portal_aware_objects
         if len(self._visited_portals) >=1:
-            assert self._str_id in _all_activated_portal_aware_objects
+            if self._str_id not in _all_activated_portal_aware_objects:
+                raise RuntimeError(f"Object with id {self._str_id} is expected to be in the activated objects registry")
             return True
         return False
 
@@ -606,7 +611,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
         Empty the list of portals it has been registered into.
         """
         global _all_activated_portal_aware_objects
-        assert self.is_activated
+        if not self.is_activated:
+            raise RuntimeError(f"Object with id {self._str_id} is not activated")
         del _all_activated_portal_aware_objects[self._str_id]
         self._invalidate_cache()
         self._visited_portals = set()

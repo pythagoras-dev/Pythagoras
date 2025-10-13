@@ -280,7 +280,7 @@ class ProtectedFn(AutonomousFn):
                 elif validation_result is None:
                     assert False, (f"Pre-validators failed for function {self.name}")
                 result = super().execute(**kwargs)
-                assert self.validate_execution_result(kw_args, result)
+                assert (self.validate_execution_result(kw_args, result) is VALIDATION_SUCCESSFUL)
                 return result
 
 
