@@ -25,7 +25,7 @@ class _PortalTester:
 
         Raises:
             Exception: If another _PortalTester instance is already active.
-            AssertionError: If portal_class is not a subclass of BasicPortal.
+            TypeError: If portal_class is not a subclass of BasicPortal.
         """
         if _PortalTester._current_instance is not None:
             raise Exception("_PortalTester can't be nested")
