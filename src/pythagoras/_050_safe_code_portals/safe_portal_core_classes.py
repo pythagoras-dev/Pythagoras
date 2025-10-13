@@ -72,8 +72,10 @@ class SafeFnCallSignature(LoggingFnCallSignature):
             fn: The safe function object to be called.
             arguments: The keyword arguments to use for the call.
         """
-        assert isinstance(fn, SafeFn)
-        assert isinstance(arguments, dict)
+        if not isinstance(fn, SafeFn):
+            raise TypeError(f"fn must be a SafeFn instance, got {type(fn).__name__}")
+        if not isinstance(arguments, dict):
+            raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
     @property
