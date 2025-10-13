@@ -68,8 +68,10 @@ class protected(autonomous):
                 bind the wrapped function to. If None, a suitable portal will be
                 inferred when fuction is called.
         """
-        assert isinstance(portal, ProtectedCodePortal) or portal is None
-        assert isinstance(fixed_kwargs, dict) or fixed_kwargs is None
+        if not (isinstance(portal, ProtectedCodePortal) or portal is None):
+            raise TypeError(f"portal must be a ProtectedCodePortal or None, got {type(portal).__name__}")
+        if not (isinstance(fixed_kwargs, dict) or fixed_kwargs is None):
+            raise TypeError(f"fixed_kwargs must be a dict or None, got {type(fixed_kwargs).__name__}")
         autonomous.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging
