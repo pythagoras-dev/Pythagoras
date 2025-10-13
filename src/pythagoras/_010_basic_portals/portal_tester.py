@@ -32,7 +32,8 @@ class _PortalTester:
         _PortalTester._current_instance = self
 
         if portal_class is not None:
-            assert issubclass(portal_class, BasicPortal)
+            if not issubclass(portal_class, BasicPortal):
+                raise TypeError(f"portal_class must be a subclass of BasicPortal, got {portal_class}")
         self.portal_class = portal_class
         self.args = args
         self.kwargs = kwargs
