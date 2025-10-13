@@ -91,7 +91,7 @@ class AutonomousFn(SafeFn):
             portal: AutonomousCodePortal to use; may be None to defer.
 
         Raises:
-            AssertionError: If static analysis detects violations of autonomy
+            FunctionError: If static analysis detects violations of autonomy
                 (nonlocal/global unbound names, missing imports, or yield usage).
         """
         super().__init__(fn=fn
@@ -169,7 +169,7 @@ class AutonomousFn(SafeFn):
             Any: Result of the wrapped function call.
 
         Raises:
-            AssertionError: If provided kwargs overlap with fixed kwargs.
+            ValueError: If provided kwargs overlap with fixed kwargs.
         """
         with self.portal:
             overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
@@ -205,7 +205,7 @@ class AutonomousFn(SafeFn):
             keyword arguments in addition to already fixed ones.
 
         Raises:
-            AssertionError: If any of the provided kwargs overlap with already
+            ValueError: If any of the provided kwargs overlap with already
                 fixed kwargs.
         """
 

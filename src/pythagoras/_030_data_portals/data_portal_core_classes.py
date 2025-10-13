@@ -28,7 +28,7 @@ def get_active_data_portal() -> DataPortal:
         DataPortal: The portal that is active in the current context ("with" block).
 
     Raises:
-        AssertionError: If the active portal is not an instance of DataPortal.
+        TypeError: If the active portal is not an instance of DataPortal.
     """
     portal = get_active_portal()
     if not isinstance(portal, DataPortal):
@@ -44,7 +44,7 @@ def get_nonactive_data_portals() -> list[DataPortal]:
             the runtime but are not the current active portal stack.
 
     Raises:
-        AssertionError: If any returned portal is not an instance of DataPortal.
+        TypeError: If any returned portal is not an instance of DataPortal.
     """
     portals = get_nonactive_portals()
     if not all(isinstance(p, DataPortal) for p in portals):

@@ -53,9 +53,8 @@ def _get_normalized_function_source_impl(
             FunctionError: If the function has multiple decorators when
                 a callable or a string representing a single function is
                 expected; or if it fails ordinarity checks.
-            AssertionError: If input is neither a callable nor a string, if
-                parsing assumptions fail (e.g., unexpected AST node types), or
-                when internal integrity checks do not hold.
+            TypeError | ValueError: If input types or parsing assumptions fail
+                (e.g., unexpected AST node types), or when integrity checks do not hold.
             SyntaxError: If the provided source string cannot be parsed.
         """
 
