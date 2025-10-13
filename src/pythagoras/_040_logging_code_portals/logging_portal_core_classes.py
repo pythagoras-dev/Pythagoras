@@ -159,7 +159,8 @@ class   LoggingFnCallSignature:
     _addr_cache: ValueAddr | None
 
     def __init__(self, fn:LoggingFn, arguments:dict):
-        assert isinstance(fn, LoggingFn)
+        if not isinstance(fn, LoggingFn):
+            raise TypeError(f"fn must be an instance of LoggingFn, got {type(fn).__name__}")
         isinstance(arguments, dict)
         arguments = KwArgs(**arguments)
         with fn.portal:
