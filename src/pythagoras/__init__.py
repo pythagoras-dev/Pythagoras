@@ -32,4 +32,7 @@ from ._090_swarming_portals import *
 from ._100_top_level_API import *
 from ._800_signatures_and_converters import *
 
+from importlib import metadata as _md
+__version__ = _md.version("pythagoras")
+
 
