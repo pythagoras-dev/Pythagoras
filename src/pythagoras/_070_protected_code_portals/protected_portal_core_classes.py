@@ -396,8 +396,10 @@ class ProtectedFnCallSignature(AutonomousFnCallSignature):
             fn (ProtectedFn): The protected function to call.
             arguments (dict): Keyword arguments to be passed at execution time.
         """
-        assert isinstance(fn, ProtectedFn)
-        assert isinstance(arguments, dict)
+        if not isinstance(fn, ProtectedFn):
+            raise TypeError(f"fn must be a ProtectedFn instance, got {type(fn).__name__}")
+        if not isinstance(arguments, dict):
+            raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
     @property
@@ -448,8 +450,8 @@ class ValidatorFn(AutonomousFn):
         raise NotImplementedError("This method must be overridden")
 
 
-    def execute(self,**kwargs) \
-            -> ProtectedFnCallSignature | ValidationSuccessFlag | None:
+    def execute(self,**kwargs
+                ) -> ProtectedFnCallSignature | ValidationSuccessFlag | None:
         """Execute the validator after verifying keyword arguments.
 
         Args:
@@ -459,7 +461,10 @@ class ValidatorFn(AutonomousFn):
             ProtectedFnCallSignature | ValidationSuccessFlag | None: Depending
             on the validator type and outcome.
         """
-        assert set(kwargs) == self.get_allowed_kwargs_names()
+        expected = self.get_allowed_kwargs_names()
+        provided = set(kwargs)
+        if provided != expected:
+            raise ValueError(f"Invalid kwargs for {type(self).__name__}: expected {sorted(expected)}, got {sorted(provided)}")
         return super().execute(**kwargs)
 
 
