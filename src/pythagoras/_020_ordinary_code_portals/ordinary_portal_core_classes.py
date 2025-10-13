@@ -6,6 +6,7 @@ from typing import Callable, Any
 import pandas as pd
 from persidict import PersiDict
 
+from .exceptions import FunctionError
 from .._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_function_source_impl
 from .function_processing import get_function_name_from_source
@@ -34,7 +35,7 @@ def get_normalized_function_source(a_func: OrdinaryFn | Callable | str) -> str:
     Raises:
         FunctionError: If the function is not compliant with Pythagoras'
             ordinarity rules or multiple decorators are present.
-        AssertionError: If input type is invalid or integrity checks fail.
+        TypeError | ValueError: If input type is invalid or integrity checks fail.
         SyntaxError: If the provided source cannot be parsed.
     """
 
@@ -368,11 +369,12 @@ class OrdinaryFn(PortalAwareClass):
             Any: The result of executing the function.
 
         Raises:
-            AssertionError: If positional arguments are supplied.
+            TypeError: If positional arguments are supplied.
         """
-        assert len(args) == 0, (f"Function {self.name} can't"
-            + " be called with positional arguments,"
-            + " only keyword arguments are allowed.")
+        if len(args) != 0:
+            raise FunctionError(f"Function {self.name} can't be called"
+            f" with positional arguments, only keyword arguments are allowed."
+            f" Got {len(args)} positional args.")
         return self.execute(**kwargs)
 
 
