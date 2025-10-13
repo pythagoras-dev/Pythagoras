@@ -14,7 +14,7 @@ def test_empty_logging_portal(tmpdir):
     with _PortalTester():
         portal = LoggingCodePortal(tmpdir)
         description = portal.describe()
-        assert description.shape == (8, 3)
+        assert description.shape == (9, 3)
 
         assert _get_description_value_by_key(description
                                              , _EXCEPTIONS_TOTAL_TXT) == 0
@@ -50,7 +50,7 @@ def test_exceptions_very_basics(tmpdir):
         description = t.portal.describe()
         assert len(t.portal._crash_history) == 1
         assert len(t.portal._run_history.json) == 2
-        assert description.shape == (8, 3)
+        assert description.shape == (9, 3)
         assert _get_description_value_by_key(description
                                              , _EXCEPTIONS_TOTAL_TXT) == 1
         assert _get_description_value_by_key(description
@@ -81,7 +81,7 @@ def test_exceptions_basics_no_excessive_logging(tmpdir):
         description = t.portal.describe()
         assert len(t.portal._crash_history) == 1
         assert len(t.portal._run_history.json) == 0
-        assert description.shape == (8, 3)
+        assert description.shape == (9, 3)
         assert _get_description_value_by_key(description
                                              , _EXCEPTIONS_TOTAL_TXT) == 1
         assert _get_description_value_by_key(description
@@ -114,7 +114,7 @@ def test_exceptions_basics_portal_level_logging(tmpdir):
         description = t.portal.describe()
         assert len(t.portal._crash_history) == 1
         assert len(t.portal._run_history.json) == 2
-        assert description.shape == (8, 3)
+        assert description.shape == (9, 3)
         assert _get_description_value_by_key(description
                                              , _EXCEPTIONS_TOTAL_TXT) == 1
         assert _get_description_value_by_key(description

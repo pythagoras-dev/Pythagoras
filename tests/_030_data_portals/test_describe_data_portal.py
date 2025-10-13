@@ -11,7 +11,7 @@ def test_portal(tmpdir):
     with _PortalTester():
         portal = DataPortal(tmpdir)
         description = portal.describe()
-        assert description.shape == (5, 3)
+        assert description.shape == (6, 3)
         assert _get_description_value_by_key(description
                                              , _TOTAL_VALUES_TXT) == 0
         assert _get_description_value_by_key(description
@@ -22,7 +22,7 @@ def test_portal_with_consistency_checks(tmpdir):
     with _PortalTester():
         portal = DataPortal(tmpdir, p_consistency_checks = 1)
         description = portal.describe()
-        assert description.shape == (5, 3)
+        assert description.shape == (6, 3)
         assert _get_description_value_by_key(description
                                              , _TOTAL_VALUES_TXT) == 0
         assert _get_description_value_by_key(description
@@ -38,7 +38,7 @@ def test_stored_values(tmpdir):
         t.portal._value_store["a"] = 100
         t.portal._value_store["b"] = 200
         description = t.portal.describe()
-        assert description.shape == (5, 3)
+        assert description.shape == (6, 3)
         assert _get_description_value_by_key(description
                                              , _TOTAL_VALUES_TXT) == 2
         assert _get_description_value_by_key(description

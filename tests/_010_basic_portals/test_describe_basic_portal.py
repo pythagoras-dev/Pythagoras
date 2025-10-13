@@ -9,7 +9,7 @@ def test_portal(tmpdir):
     with _PortalTester():
         portal = BasicPortal(tmpdir)
         description = portal.describe()
-        assert description.shape == (2, 3)
+        assert description.shape == (3, 3)
 
         assert _get_description_value_by_key(description
                                              , _BASE_DIRECTORY_TXT) == str(tmpdir)

@@ -11,6 +11,7 @@ from __future__ import annotations
 import random
 import sys
 from abc import abstractmethod
+from importlib import metadata
 from pathlib import Path
 from typing import TypeVar, Type, Any, NewType
 import pandas as pd
@@ -67,6 +68,7 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
+_PYTHAGORAS_VERSION_TXT = "Pythagoras version"
 
 
 def _get_description_value_by_key(dataframe:pd.DataFrame, key:str) -> Any:
@@ -388,6 +390,8 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         """Get a DataFrame describing the portal's current state"""
         all_params = []
 
+        all_params.append(_describe_runtime_characteristic(
+            _PYTHAGORAS_VERSION_TXT, metadata.version("Pythagoras")))
         all_params.append(_describe_persistent_characteristic(
             _BASE_DIRECTORY_TXT, self._root_dict.base_dir))
         all_params.append(_describe_persistent_characteristic(

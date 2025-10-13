@@ -11,7 +11,7 @@ def test_portal(tmpdir):
     with _PortalTester():
         portal = PureCodePortal(tmpdir)
         description = portal.describe()
-        assert description.shape == (10, 3)
+        assert description.shape == (11, 3)
 
         assert _get_description_value_by_key(description
                                              , _CACHED_EXECUTION_RESULTS_TXT) == 0
