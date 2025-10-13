@@ -30,7 +30,8 @@ class safe(logging):
             portal: The SafeCodePortal to attach the resulting SafeFn to. If
                 None, the active portal (if any) may be used by lower layers.
         """
-        assert isinstance(portal, SafeCodePortal) or portal is None
+        if not (isinstance(portal, SafeCodePortal) or portal is None):
+            raise TypeError(f"portal must be a SafeCodePortal or None, got {type(portal).__name__}")
         logging.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging)
