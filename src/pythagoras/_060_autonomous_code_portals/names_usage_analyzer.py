@@ -279,7 +279,7 @@ def analyze_names_in_function(
             - normalized_source (str): The normalized source code.
 
     Raises:
-        AssertionError: If the input is not a single regular function (e.g., a
+        ValueError: If the input is not a single regular function (e.g., a
             lambda, async function, callable class, or multiple definitions).
     """
 
