@@ -144,6 +144,68 @@ assert is_even(n=10)
 assert is_odd(n=11)
 ```
 
+## Core Concepts
+
+* **Autonomous Function**: A self-contained function that does not depend on external
+  imports or definitions. All necessary imports must be done inside the function body.
+  These functions cannot use global objects (except built-ins), yield statements, or nonlocal variables.
+  They must be called with keyword arguments only to ensure clear parameter passing.
+  This design ensures complete isolation and portability, allowing the function to execute
+  independently on any machine in a distributed system. The autonomous nature makes these
+  functions ideal building blocks for parallel and distributed computing workflows, as they
+  carry all their dependencies with them and maintain clear interfaces through strict
+  parameter passing requirements.
+
+* **Pure Function**: A special type of autonomous function that has no side effects and always
+  returns the same result for the same arguments. This means the function's output depends solely
+  on its input parameters, without relying on any external state or modifying anything outside its scope.
+  Pythagoras caches the results of pure functions using content-based addressing, so if the function
+  is called multiple times with the same arguments, the function is executed only once, and the cached
+  result is returned for all subsequent executions. This caching mechanism (also known as memoization)
+  works seamlessly across different machines in a distributed system, enabling significant performance
+  improvements for computationally intensive workflows.
+
+* **Validator**: A function that checks if certain conditions are met before or after the execution
+  of a pure function. Pre-validators run before the function, and post-validators run after.
+  They can be passive (e.g., check for available RAM) or active (e.g., install a missing library).
+  For example, `unused_ram(Gb=5)` ensures 5GB of free memory before execution, while `installed_packages("numpy")`
+  verifies or installs required dependencies. Validators help ensure reliable execution across distributed
+  systems by validating requirements and system state. Multiple validators can be combined using the
+  standard decorator syntax to create comprehensive validation chains.
+
+* **Portal**: An application's "window" into the non-ephemeral world outside the current application
+  execution session. It's a connector that enables a link between a runtime-only ephemeral state and
+  a persistent state that can be saved and loaded across multiple runs of the application and across
+  multiple computers. Portals provide a unified interface for data persistence, caching, and state
+  management across distributed systems. They abstract away the complexities of storage backends
+  (local filesystem, cloud storage, etc.) and handle serialization/deserialization transparently.
+  This allows applications to seamlessly work with persistent data while maintaining isolation between
+  runtime and storage concerns.
+
+* **Value Address**: A globally unique address of an **immutable value**, derived from its content
+  (type and value). It consists of a human-readable descriptor (often based on the object's type
+  and shape/length) and a hash signature (SHA-256, encoded) split into parts for filesystem/storage
+  efficiency. Creating a ValueAddr(data) computes the content hash of data and stores the value
+  in the active DataPortal's storage (if not already stored), allowing that value to be retrieved later
+  via the address. These addresses are used extensively by the portal to identify stored results
+  and to reference inputs/outputs across distributed systems.
+
+* **Execution Result Address**: A special type of Value Address that represents the result of a pure
+  function execution. It combines the function's signature with its input parameters to create a unique
+  identifier. When a function is executed in swarm mode, it immediately returns an Execution Result Address. This address
+  acts as a "future" reference that can be used to check execution status and retrieve results 
+  once they become available. The address remains valid across application restarts and
+  can be shared between different machines in the distributed system.
+
+* **Swarming**: An asynchronous execution model where you do not know when your function will
+  be executed, what machine will execute it, and how many times it will be executed.
+  Pythagoras ensures that the function will be eventually executed at least once but does not
+  offer any further guarantees. This model enables maximum flexibility in distributed execution
+  by decoupling the function call from its actual execution. Functions can be queued, load-balanced,
+  retried on failure, and executed in parallel across multiple machines automatically. The trade-off
+  is reduced control over execution timing and location, in exchange for improved scalability,
+  fault tolerance, and resource utilization across the distributed system.
+
 ## How to get it?
 
 The source code is hosted on GitHub at: https://github.com/pythagoras-dev/pythagoras
