@@ -146,6 +146,17 @@ assert is_odd(n=11)
 
 ## Core Concepts
 
+ * **Portal**: An application's "window" into the non-ephemeral world outside the current application
+  execution session. It's a connector that enables a link between a runtime-only ephemeral state and
+  a persistent state that can be saved and loaded across multiple runs of the application and across
+  multiple computers. Portals provide a unified interface for data persistence, caching, and state
+  management across distributed systems. They abstract away the complexities of storage backends
+  (local filesystem, cloud storage, etc.) and handle serialization/deserialization transparently.
+  This allows applications to seamlessly work with persistent data while maintaining isolation between
+  runtime and storage concerns. A program can use multiple portals, each with its own storage backend, and
+  each portal can be used by multiple applications. A portal defines a context for the execution of
+  pure functions, which is used to cache and retrieve results. 
+
 * **Autonomous Function**: A self-contained function that does not depend on external
   imports or definitions. All necessary imports must be done inside the function body.
   These functions cannot use global objects (except built-ins), yield statements, or nonlocal variables.
@@ -168,25 +179,15 @@ assert is_odd(n=11)
 * **Validator**: A function that checks if certain conditions are met before or after the execution
   of a pure function. Pre-validators run before the function, and post-validators run after.
   They can be passive (e.g., check for available RAM) or active (e.g., install a missing library).
-  For example, `unused_ram(Gb=5)` ensures 5GB of free memory before execution, while `installed_packages("numpy")`
-  verifies or installs required dependencies. Validators help ensure reliable execution across distributed
-  systems by validating requirements and system state. Multiple validators can be combined using the
-  standard decorator syntax to create comprehensive validation chains.
+  Validators help ensure reliable execution across distributed systems by validating requirements 
+  and system state. Multiple validators can be combined using the standard decorator syntax 
+  to create comprehensive validation chains.
 
-* **Portal**: An application's "window" into the non-ephemeral world outside the current application
-  execution session. It's a connector that enables a link between a runtime-only ephemeral state and
-  a persistent state that can be saved and loaded across multiple runs of the application and across
-  multiple computers. Portals provide a unified interface for data persistence, caching, and state
-  management across distributed systems. They abstract away the complexities of storage backends
-  (local filesystem, cloud storage, etc.) and handle serialization/deserialization transparently.
-  This allows applications to seamlessly work with persistent data while maintaining isolation between
-  runtime and storage concerns.
-
-* **Value Address**: A globally unique address of an **immutable value**, derived from its content
+* **Value Address**: A globally unique address of an ***immutable value***, derived from its content
   (type and value). It consists of a human-readable descriptor (often based on the object's type
   and shape/length) and a hash signature (SHA-256, encoded) split into parts for filesystem/storage
   efficiency. Creating a ValueAddr(data) computes the content hash of data and stores the value
-  in the active DataPortal's storage (if not already stored), allowing that value to be retrieved later
+  in the active portal's storage (if not already stored), allowing that value to be retrieved later
   via the address. These addresses are used extensively by the portal to identify stored results
   and to reference inputs/outputs across distributed systems.
 
