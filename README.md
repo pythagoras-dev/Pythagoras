@@ -176,8 +176,8 @@ assert is_odd(n=11)
   works seamlessly across different machines in a distributed system, enabling significant performance
   improvements for computationally intensive workflows.
 
-* **Validator**: A function that checks if certain conditions are met before or after the execution
-  of a pure function. Pre-validators run before the function, and post-validators run after.
+* **Validator**: An autonomous function that checks if certain conditions are met before or after 
+  the execution of a pure function. Pre-validators run before the function, and post-validators run after.
   They can be passive (e.g., check for available RAM) or active (e.g., install a missing library).
   Validators help ensure reliable execution across distributed systems by validating requirements 
   and system state. Multiple validators can be combined using the standard decorator syntax 
