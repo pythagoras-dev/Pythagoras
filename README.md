@@ -1,5 +1,11 @@
 # Pythagoras
 
+[![PyPI version](https://img.shields.io/pypi/v/Pythagoras.svg)](https://pypi.org/project/Pythagoras/)
+[![Python versions](https://img.shields.io/pypi/pyversions/Pythagoras.svg)](https://pypi.org/project/Pythagoras/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Downloads](https://static.pepy.tech/badge/Pythagoras)](https://pepy.tech/project/Pythagoras)
+
+
 Planet-scale distributed computing in Python.
 
 **!!! RESEARCH PREVIEW !!!**
