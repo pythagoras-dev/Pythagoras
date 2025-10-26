@@ -41,6 +41,8 @@ preferred functional patterns, augmented by new capabilities.
 
 ## Videos
 
+* [15-minute Demo](https://pythagoras.link/15-min-demo)
+
 * [Data Phoenix Webinar, August 27, 2025](https://youtu.be/eb6_atu1RQI) ([slides](https://docs.google.com/presentation/d/1fGBqnp0aqVHPJ-BYGYnUll1_TJI_WObAbEVX89Z3-yA))
 
 
