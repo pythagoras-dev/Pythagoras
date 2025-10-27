@@ -33,6 +33,9 @@ from ._100_top_level_API import *
 from ._800_signatures_and_converters import *
 
 from importlib import metadata as _md
-__version__ = _md.version("pythagoras")
+try:
+    __version__ = _md.version("pythagoras")
+except _md.PackageNotFoundError:
+    __version__ = "unknown"
 
 
