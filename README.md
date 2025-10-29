@@ -1,9 +1,12 @@
 # Pythagoras
 
 [![PyPI version](https://img.shields.io/pypi/v/Pythagoras.svg)](https://pypi.org/project/Pythagoras/)
-[![Python versions](https://img.shields.io/pypi/pyversions/Pythagoras.svg)](https://pypi.org/project/Pythagoras/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Downloads](https://static.pepy.tech/badge/Pythagoras)](https://pepy.tech/project/Pythagoras)
+[![Python versions](https://img.shields.io/pypi/pyversions/Pythagoras.svg)](https://github.com/pythagoras-dev/Pythagoras)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Downloads](https://img.shields.io/pypi/dm/Pythagoras?color=blue)](https://pypistats.org/packages/Pythagoras)
+[![Code style: pep8](https://img.shields.io/badge/code_style-pep8-blue.svg)](https://peps.python.org/pep-0008/)
+[![Docstring Style: Google](https://img.shields.io/badge/docstrings_style-Google-blue)](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
+
 
 
 Planet-scale distributed computing in Python.
