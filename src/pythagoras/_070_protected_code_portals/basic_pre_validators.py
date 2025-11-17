@@ -170,3 +170,63 @@ def installed_packages(*args) -> list[SimplePreValidatorFn]:
         new_validator = new_validator.fix_kwargs(package_name=package_name)
         validators.append(new_validator)
     return validators
+
+
+def _environment_variable_availability_check(name: str) -> ValidationSuccessFlag | None:
+    """Pass if the given environment variable is set.
+
+    This validator checks whether an environment variable with the specified
+    name exists in the current process environment.
+
+    Args:
+        name: The name of the environment variable to check.
+
+    Returns:
+        VALIDATION_SUCCESSFUL if the environment variable is set
+        (regardless of its value); otherwise None.
+
+    Notes:
+        - Only the presence of the variable is checked, not its value.
+    """
+    import os
+    if name in os.environ:
+        return pth.VALIDATION_SUCCESSFUL
+    
+def required_environment_variables(*names) -> list[SimplePreValidatorFn]:
+    """Create validators ensuring each named environment variable is set.
+
+    For each provided environment variable name, this returns a
+    SimplePreValidatorFn that checks the variable exists in the process
+    environment.
+
+    Args:
+        *names: One or more environment variable names as strings.
+
+    Returns:
+        A list of pre-validators, one per environment variable name.
+
+    Raises:
+        TypeError: If any of the provided arguments is not a string.
+        ValueError: If any of the provided names is not a valid environment variable name.
+
+    Examples:
+        To require that both API_KEY and DATABASE_URL are set:
+
+        >>> validators = required_environment_variables("API_KEY", "DATABASE_URL")
+    """
+
+    for name in names:
+        if not isinstance(name, str):
+            raise TypeError("All environment variable names must be strings")
+        if len(name)==0:
+            raise ValueError("Environment variable name cannot be empty")
+        if not all(c.isalnum() or c == '_' for c in name):
+            raise ValueError(f"Environment variable name '{name}' "
+                f"can only contain letters, numbers, and underscores")
+
+    validators = []
+    for name in names:
+        new_validator = SimplePreValidatorFn(_environment_variable_availability_check)
+        new_validator = new_validator.fix_kwargs(name=name)
+        validators.append(new_validator)
+    return validators
