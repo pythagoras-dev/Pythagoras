@@ -18,6 +18,30 @@ _pythagoras_decorator_names = {
     , "pure"
 }
 
+
+def _is_pythagoras_decorator(decorator_node: ast.expr) -> bool:
+    """Check if a decorator AST node represents a Pythagoras decorator.
+    
+    Args:
+        decorator_node: An AST expression node representing a decorator.
+        
+    Returns:
+        True if the decorator is a known Pythagoras decorator, False otherwise.
+    """
+    # Handle simple decorator like @ordinary
+    if isinstance(decorator_node, ast.Name):
+        return decorator_node.id in _pythagoras_decorator_names
+    
+    # Handle attribute decorator like @pth.ordinary or @pythagoras.ordinary
+    if isinstance(decorator_node, ast.Attribute):
+        return decorator_node.attr in _pythagoras_decorator_names
+    
+    # Handle call decorator like @ordinary() - check the function being called
+    if isinstance(decorator_node, ast.Call):
+        return _is_pythagoras_decorator(decorator_node.func)
+    
+    return False
+
 def _get_normalized_function_source_impl(
         a_func: Callable | str,
         drop_pth_decorators: bool = False,
@@ -107,28 +131,16 @@ def _get_normalized_function_source_impl(
                 f"Function {a_func_name} can't have multiple decorators,"
                 + " only one decorator is allowed.")
 
-        # all_decorators = pth.all_decorators
-        # all_decorators = sys.modules['pythagoras'].all_decorators
-
-        if drop_pth_decorators and len(decorator_list):
-            decorator = decorator_list[0].func
-            pth_dec_counter = 0
-            for candidate in _pythagoras_decorator_names:
-                try:
-                    if decorator.id == candidate:
-                        pth_dec_counter += 1
-                        break
-                except:
-                    pass
-                try:
-                    if decorator.attr == candidate:
-                        pth_dec_counter += 1
-                        break
-                except:
-                    pass
-            if pth_dec_counter != 1:
-                raise ValueError(f"Unexpected decorator configuration for {a_func_name}: unable to drop Pythagoras decorator")
-            code_ast.body[0].decorator_list = []
+        # Remove Pythagoras decorators if requested
+        if drop_pth_decorators and decorator_list:
+            decorator_node = decorator_list[0]
+            if _is_pythagoras_decorator(decorator_node):
+                code_ast.body[0].decorator_list = []
+            else:
+                raise ValueError(
+                    f"Function {a_func_name} has a non-Pythagoras decorator "
+                    f"that cannot be dropped with drop_pth_decorators=True"
+                )
 
         # Remove docstrings and annotations.
         for node in ast.walk(code_ast):
