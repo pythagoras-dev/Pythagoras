@@ -42,6 +42,51 @@ def _is_pythagoras_decorator(decorator_node: ast.expr) -> bool:
     
     return False
 
+class _AnnotationRemover(ast.NodeTransformer):
+    """AST transformer that removes type annotations and converts AnnAssign to Assign."""
+    
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign | None:
+        """Convert annotated assignment to regular assignment."""
+        # AnnAssign: target with annotation and optional value
+        # Assign: list of targets and a value
+        if node.value is not None:
+            # Has a value: convert to regular assignment
+            new_node = ast.Assign(targets=[node.target], value=node.value)
+            # Copy location metadata (lineno, col_offset, etc.) from original node
+            return ast.copy_location(new_node, node)
+        else:
+            # No value: remove the statement entirely by returning None
+            # The parent will handle filtering out None values
+            return None
+    
+    def visit_arg(self, node: ast.arg) -> ast.arg:
+        """Remove annotation from function argument."""
+        node.annotation = None
+        return node
+    
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> ast.FunctionDef:
+        """Remove return annotation and process body."""
+        node.returns = None
+        self.generic_visit(node)
+        # Filter out None values from body (statements that were removed)
+        node.body = [stmt for stmt in node.body if stmt is not None]
+        # Ensure body is not empty - add pass if needed
+        if not node.body:
+            node.body = [ast.Pass()]
+        return node
+    
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> ast.AsyncFunctionDef:
+        """Remove return annotation and process body."""
+        node.returns = None
+        self.generic_visit(node)
+        # Filter out None values from body (statements that were removed)
+        node.body = [stmt for stmt in node.body if stmt is not None]
+        # Ensure body is not empty - add pass if needed
+        if not node.body:
+            node.body = [ast.Pass()]
+        return node
+
+
 def _get_normalized_function_source_impl(
         a_func: Callable | str,
         drop_pth_decorators: bool = False,
@@ -102,6 +147,10 @@ def _get_normalized_function_source_impl(
                 continue
             code_no_empty_lines.append(line)
 
+        # Validate that we have non-empty code
+        if not code_no_empty_lines:
+            raise ValueError(f"Cannot normalize empty code for function {a_func_name}")
+
         # Fix indent for functions that are defined within other functions;
         # most frequently it is used for tests.
         first_line_no_indent = code_no_empty_lines[0].lstrip()
@@ -121,7 +170,11 @@ def _get_normalized_function_source_impl(
 
         if not isinstance(code_ast, ast.Module):
             raise TypeError(f"Expected AST Module for {a_func_name}, got {type(code_ast).__name__}")
-        if not isinstance(code_ast.body[0], ast.FunctionDef):
+        
+        if not code_ast.body:
+            raise ValueError(f"Empty AST body for function {a_func_name}")
+        
+        if not isinstance(code_ast.body[0], (ast.FunctionDef)):
             raise ValueError(f"Top-level node is not a FunctionDef for {a_func_name}; got {type(code_ast.body[0]).__name__}")
 
         # TODO: add support for multiple decorators???
@@ -142,27 +195,19 @@ def _get_normalized_function_source_impl(
                     f"that cannot be dropped with drop_pth_decorators=True"
                 )
 
-        # Remove docstrings and annotations.
+        # Remove type annotations using NodeTransformer
+        annotation_remover = _AnnotationRemover()
+        code_ast = annotation_remover.visit(code_ast)
+        
+        # Fix missing locations after AST transformation
+        ast.fix_missing_locations(code_ast)
+        
+        # Remove docstrings
         for node in ast.walk(code_ast):
-
-            if isinstance(node, ast.AnnAssign):
-                # remove type annotation from variable declarations
-                node.annotation = None
-                continue
-
-            if isinstance(node, ast.arg):
-                # argument annotations in functions
-                node.annotation = None
-                continue
-
             if not isinstance(node
                     , (ast.FunctionDef, ast.ClassDef
                        , ast.AsyncFunctionDef, ast.Module)):
                 continue
-
-            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                # remove return annotation from function definitions
-                node.returns = None
 
             if not len(node.body):
                 continue
