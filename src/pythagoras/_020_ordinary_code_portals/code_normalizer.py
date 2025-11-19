@@ -130,7 +130,7 @@ def _get_normalized_function_source_impl(
                 raise ValueError(f"Unexpected decorator configuration for {a_func_name}: unable to drop Pythagoras decorator")
             code_ast.body[0].decorator_list = []
 
-        # Remove docstrings.
+        # Remove docstrings and annotations.
         for node in ast.walk(code_ast):
 
             if isinstance(node, ast.AnnAssign):
@@ -158,12 +158,24 @@ def _get_normalized_function_source_impl(
                 continue
             if not hasattr(node.body[0], 'value'):
                 continue
-            if not isinstance(node.body[0].value, ast.Str):
+            
+            # Check for docstring: ast.Constant (Python 3.8+) with string value
+            # or ast.Str (deprecated but kept for compatibility)
+            first_value = node.body[0].value
+            is_docstring = False
+            
+            if isinstance(first_value, ast.Constant) and isinstance(first_value.value, str):
+                is_docstring = True
+            elif isinstance(first_value, ast.Str):
+                # Deprecated in Python 3.8+ but kept for backwards compatibility
+                is_docstring = True
+            
+            if not is_docstring:
                 continue
+                
             node.body = node.body[1:]
             if len(node.body) < 1:
                 node.body.append(ast.Pass())
-            # TODO: compare with the source for ast.candidate_docstring()
 
         result = ast.unparse(code_ast)
         result = autopep8.fix_code(result)
