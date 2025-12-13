@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pythagoras"
-version = "0.26.1"
+version = "0.26.2"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
 description = "Planet-scale distributed computing in Python."
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
