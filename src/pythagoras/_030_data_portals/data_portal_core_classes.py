@@ -9,7 +9,7 @@ from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURR
 from persidict import KEEP_CURRENT, Joker
 
 from .._010_basic_portals import get_active_portal, get_nonactive_portals
-from .._800_signatures_and_converters import get_hash_signature
+from .._800_signatures_and_converters import get_hash_signature, get_node_signature
 
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic
@@ -85,8 +85,8 @@ class DataPortal(OrdinaryCodePortal):
     """
 
     _value_store: WriteOnceDict | None
-    _config_settings: PersiDict | None
-    _config_settings_cache: dict
+    _portal_config_settings: PersiDict | None
+    _portal_config_settings_cache: dict
 
     _auxiliary_config_params_at_init: dict[str, Any] | None
 
@@ -109,14 +109,14 @@ class DataPortal(OrdinaryCodePortal):
         OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
         self._auxiliary_config_params_at_init = dict()
-        self._config_settings_cache = dict()
+        self._portal_config_settings_cache = dict()
 
-        config_settings_prototype = self._root_dict.get_subdict("config_settings")
-        config_settings_params = config_settings_prototype.get_params()
-        config_settings_params.update(
+        portal_config_settings_prototype = self._root_dict.get_subdict("portal_cfg")
+        portal_config_settings_params = portal_config_settings_prototype.get_params()
+        portal_config_settings_params.update(
             digest_len=0, append_only=False, serialization_format="pkl")
-        config_settings = type(self._root_dict)(**config_settings_params)
-        self._config_settings = config_settings
+        portal_config_settings = type(self._root_dict)(**portal_config_settings_params)
+        self._portal_config_settings = portal_config_settings
 
         if not (isinstance(p_consistency_checks, Joker)
                 or 0 <= p_consistency_checks <= 1):
@@ -137,7 +137,7 @@ class DataPortal(OrdinaryCodePortal):
 
     def _persist_initial_config_params(self) -> None:
         for key, value in self._auxiliary_config_params_at_init.items():
-            self._set_config_setting(key, value)
+            self._set_portal_config_setting(key, value)
 
 
     def _post_init_hook(self) -> None:
@@ -172,23 +172,23 @@ class DataPortal(OrdinaryCodePortal):
         return names
 
 
-    def _get_config_setting(self, key: SafeStrTuple|str) -> Any:
+    def _get_portal_config_setting(self, key: SafeStrTuple | str) -> Any:
         """Get a configuration setting from the portal's config store"""
         if not isinstance(key, (str,SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
 
-        if key in self._config_settings_cache:
-            value = self._config_settings_cache[key]
-        elif key in self._config_settings:
-            value = self._config_settings[key]
-            self._config_settings_cache[key] = value
+        if key in self._portal_config_settings_cache:
+            value = self._portal_config_settings_cache[key]
+        elif key in self._portal_config_settings:
+            value = self._portal_config_settings[key]
+            self._portal_config_settings_cache[key] = value
         else:
             value = None
-            self._config_settings_cache[key] = None
+            self._portal_config_settings_cache[key] = None
         return value
 
 
-    def _set_config_setting(self, key: SafeStrTuple|str, value: Any) -> None:
+    def _set_portal_config_setting(self, key: SafeStrTuple | str, value: Any) -> None:
         """Set a configuration setting in the portal's config store"""
         if not isinstance(key, (str,SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
@@ -196,17 +196,17 @@ class DataPortal(OrdinaryCodePortal):
         if value is KEEP_CURRENT:
             return
 
-        self._config_settings[key] = value
-        self._config_settings_cache[key] = value
+        self._portal_config_settings[key] = value
+        self._portal_config_settings_cache[key] = value
 
         if value is DELETE_CURRENT:
-            del self._config_settings_cache[key]
+            del self._portal_config_settings_cache[key]
 
 
     def _invalidate_cache(self):
         """Invalidate the portal's cache"""
         super()._invalidate_cache()
-        self._config_settings_cache = dict()
+        self._portal_config_settings_cache = dict()
 
 
     def describe(self) -> pd.DataFrame:
@@ -225,7 +225,7 @@ class DataPortal(OrdinaryCodePortal):
 
     @property
     def p_consistency_checks(self) -> float|None:
-        p = self._get_config_setting("p_consistency_checks")
+        p = self._get_portal_config_setting("p_consistency_checks")
         if p is None:
             p = 0.0
         return p
@@ -234,7 +234,7 @@ class DataPortal(OrdinaryCodePortal):
     def _clear(self) -> None:
         """Clear the portal's state"""
         self._value_store = None
-        self._config_settings = None
+        self._portal_config_settings = None
         self._auxiliary_config_params_at_init = None
         self._invalidate_cache()
         super()._clear()
@@ -281,11 +281,11 @@ class StorableFn(OrdinaryFn):
         if not isinstance(key, (str,SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
 
-        portal_wide_value = portal._get_config_setting(key)
+        portal_wide_value = portal._get_portal_config_setting(key)
         if portal_wide_value is not None:
             return portal_wide_value
 
-        function_specific_value = portal._get_config_setting(
+        function_specific_value = portal._get_portal_config_setting(
             self.addr + key)
 
         return function_specific_value
@@ -297,7 +297,7 @@ class StorableFn(OrdinaryFn):
             , portal:DataPortal) -> None:
         if not isinstance(key, (SafeStrTuple, str)):
             raise TypeError("key must be a SafeStrTuple or a string")
-        portal._set_config_setting(ValueAddr(self) + key, value)
+        portal._set_portal_config_setting(ValueAddr(self) + key, value)
 
 
     @property

@@ -243,7 +243,7 @@ class SwarmingPortal(PureCodePortal):
             int: Effective maximum number of worker processes to use.
         """
         if not hasattr(self, "_max_n_workers_cache"):
-            n = self._get_config_setting("max_n_workers")
+            n = self._get_portal_config_setting("max_n_workers")
             if n in (None, KEEP_CURRENT):
                 n = 10
             n = min(n, get_unused_cpu_cores() + 2)
