@@ -13,6 +13,7 @@ def current_date_gmt_string() -> str:
     stable file names and log records.
 
     The format is: "YYYY_MMMonAbbrev_dd_utc" (e.g., "2024_12Dec_11_utc").
+    Note: Time components are not included; only the date is captured.
 
     Returns:
         str: The formatted UTC date string, for the current moment.
@@ -20,7 +21,6 @@ def current_date_gmt_string() -> str:
 
     utc_now = datetime.now(timezone.utc)
     month_abbrev = _MONTH_ABBREVIATIONS[utc_now.month - 1]
-    # locale-dependent month abbreviation
-    result =  (f"{utc_now.year}_{utc_now.month:02d}{month_abbrev}" +
+    result = (f"{utc_now.year}_{utc_now.month:02d}{month_abbrev}" +
               f"_{utc_now.day:02d}_utc")
     return result
