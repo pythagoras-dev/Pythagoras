@@ -1,7 +1,4 @@
-from typing import Final
-
-_BASE32_ALPHABET: Final[str] = '0123456789abcdefghijklmnopqrstuv'
-
+import string
 
 
 def convert_base16_to_base32(hexdigest: str) -> str:
@@ -12,14 +9,14 @@ def convert_base16_to_base32(hexdigest: str) -> str:
             empty string or "0" to represent zero.
 
     Returns:
-        str: The corresponding value encoded with the custom base32 alphabet
+        str: The corresponding value encoded with the base32 alphabet
         (digits 0-9 then letters a-v).
 
     Examples:
         >>> convert_base16_to_base32("ff")
         '7v'
     """
-
+    hexdigest = hexdigest.strip().lower()
     if not hexdigest:
         return "0"
 
@@ -55,8 +52,8 @@ def convert_int_to_base32(n: int) -> str:
 
 
     out: list[str] = []
-    alphabet = _BASE32_ALPHABET   # local lookup is a tiny bit faster
-    append = out.append           # same for the method binding
+    alphabet = string.digits + string.ascii_lowercase[:22]
+    append = out.append
     while n:
         append(alphabet[n & 31])  # grab the last 5 bits
         n >>= 5
@@ -70,7 +67,7 @@ def convert_base32_to_int(digest: str) -> int:
     """Convert a base32 string (0-9 a-v) to an integer.
 
     Args:
-        digest (str): String encoded with Pythagoras' base32 alphabet.
+        digest (str): String encoded with case-insensitive base32 alphabet.
 
     Returns:
         int: The decoded non-negative integer value.
@@ -79,8 +76,9 @@ def convert_base32_to_int(digest: str) -> int:
         ValueError: If digest contains a character outside the supported
             base32 alphabet (0-9 a-v).
     """
+    digest = digest.strip().lower()
     if not digest:
-        raise ValueError("Digest cannot be empty")
+        return 0
 
     try:
         return int(digest, 32)
