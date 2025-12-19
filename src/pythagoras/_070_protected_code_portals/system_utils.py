@@ -110,7 +110,7 @@ def get_current_process_start_time() -> int:
         int: Start time as a UNIX timestamp (seconds since epoch). Returns 0 on
         unexpected error.
     """
-    return get_process_start_time(get_current_process_id())
+    return int(get_process_start_time(get_current_process_id()))
 
 
 def get_unused_nvidia_gpus() -> float:
