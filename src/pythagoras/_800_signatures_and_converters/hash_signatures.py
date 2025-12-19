@@ -7,6 +7,9 @@ from .base_16_32_converters import convert_base16_to_base32
 
 
 _HASH_TYPE: Final[str] = "sha256"
+# 22 characters provides ~110 bits of entropy (5 bits per base32 char),
+# sufficient for collision resistance in typical use cases
+# Must be at least 7 to support HashAddr shard/subshard slicing.
 _MAX_SIGNATURE_LENGTH: Final[int] = 22
 
 def get_base16_hash_signature(x:Any) -> str:
@@ -29,9 +32,10 @@ def get_base16_hash_signature(x:Any) -> str:
           objects are picklable for stable results.
         - The digest is deterministic for the same object content.
     """
-    if 'numpy' in sys.modules:
+    try:
+        import numpy
         hasher = joblib.hashing.NumpyHasher(hash_name=_HASH_TYPE)
-    else:
+    except ImportError:
         hasher = joblib.hashing.Hasher(hash_name=_HASH_TYPE)
     hash_signature = hasher.hash(x)
     return str(hash_signature)
