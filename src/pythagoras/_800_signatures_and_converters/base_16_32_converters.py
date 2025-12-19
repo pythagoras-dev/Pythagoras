@@ -1,4 +1,9 @@
 import string
+from typing import Final
+
+# Reusable, module-level constants
+BASE32_ALPHABET: Final[str] = string.digits + string.ascii_lowercase[:22]
+BASE32_ALLOWED: Final[set[str]] = set(BASE32_ALPHABET)
 
 
 def convert_base16_to_base32(hexdigest: str) -> str:
@@ -31,57 +36,32 @@ def convert_base16_to_base32(hexdigest: str) -> str:
 
 
 def convert_int_to_base32(n: int) -> str:
-    """Convert a non-negative integer to base-32 alphabet (0-9 a-v).
-
-    Args:
-        n: Non-negative integer to encode.
-
-    Returns:
-        The base-32 representation.
-
-    Raises:
-        ValueError: If *n* is negative.
-        TypeError:  If *n* is not an ``int``.
-    """
+    """Convert a non-negative integer to base-32 alphabet (0-9 a-v)."""
     if not isinstance(n, int):
-        raise TypeError(f"n must be int, got {type(n).__name__}")
+        raise TypeError(f"n must be an int, got {type(n).__name__}")
     if n < 0:
         raise ValueError("n must be non-negative")
     if n == 0:
         return "0"
 
-
     out: list[str] = []
-    alphabet = string.digits + string.ascii_lowercase[:22]
-    append = out.append
     while n:
-        append(alphabet[n & 31])  # grab the last 5 bits
+        out.append(BASE32_ALPHABET[n & 31])  # last 5 bits
         n >>= 5
-
-    # Reverse once at the end to obtain the most-significant-first order.
     out.reverse()
     return "".join(out)
 
 
 def convert_base32_to_int(digest: str) -> int:
-    """Convert a base32 string (0-9 a-v) to an integer.
-
-    Args:
-        digest (str): String encoded with case-insensitive base32 alphabet.
-
-    Returns:
-        int: The decoded non-negative integer value.
-
-    Raises:
-        ValueError: If digest contains a character outside the supported
-            base32 alphabet (0-9 a-v).
-    """
+    """Convert a base-32 string (0-9 a-v) to an integer."""
     digest = digest.strip().lower()
     if not digest:
         return 0
-
-    try:
-        return int(digest, 32)
-    except ValueError as e:
-        raise ValueError(f"Invalid base32 digest: {digest}") from e
+    invalid = set(digest) - BASE32_ALLOWED
+    if invalid:
+        raise ValueError(
+            f"Invalid base32 digit(s): {''.join(sorted(invalid))!r}. "
+            f"Valid characters: {BASE32_ALPHABET}")
+    # int() is now safe
+    return int(digest, 32)
 
