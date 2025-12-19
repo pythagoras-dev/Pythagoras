@@ -15,7 +15,7 @@ Exports:
   random_signatures: Helpers to generate random, collision-resistant IDs.
 """
 
-from .base_16_32_convertors import *
+from .base_16_32_converters import *
 from .current_date_gmt_str import *
 from .hash_signatures import *
 from .node_signature import *

@@ -1,8 +1,7 @@
 from typing import Final
 
 _BASE32_ALPHABET: Final[str] = '0123456789abcdefghijklmnopqrstuv'
-_BASE32_ALPHABET_MAP: Final[dict[str, int]] = {
-    char:index for index,char in enumerate(_BASE32_ALPHABET)}
+
 
 
 def convert_base16_to_base32(hexdigest: str) -> str:
@@ -21,6 +20,9 @@ def convert_base16_to_base32(hexdigest: str) -> str:
         '7v'
     """
 
+    if not hexdigest:
+        return "0"
+
     try:
         num = int(hexdigest, 16)
     except ValueError as e:
@@ -32,32 +34,40 @@ def convert_base16_to_base32(hexdigest: str) -> str:
 
 
 def convert_int_to_base32(n: int) -> str:
-    """Convert a non-negative integer to Pythagoras' base32 string.
+    """Convert a non-negative integer to base-32 alphabet (0-9 a-v).
 
     Args:
-        n (int): Non-negative integer to encode.
+        n: Non-negative integer to encode.
 
     Returns:
-        str: The base32 representation.
+        The base-32 representation.
 
     Raises:
-        ValueError: If n is negative.
+        ValueError: If *n* is negative.
+        TypeError:  If *n* is not an ``int``.
     """
+    if not isinstance(n, int):
+        raise TypeError(f"n must be int, got {type(n).__name__}")
     if n < 0:
         raise ValueError("n must be non-negative")
-
     if n == 0:
         return "0"
 
-    base32_str = ''
-    while n > 0:
-        base32_str = _BASE32_ALPHABET[n & 31] + base32_str
+
+    out: list[str] = []
+    alphabet = _BASE32_ALPHABET   # local lookup is a tiny bit faster
+    append = out.append           # same for the method binding
+    while n:
+        append(alphabet[n & 31])  # grab the last 5 bits
         n >>= 5
 
-    return base32_str
+    # Reverse once at the end to obtain the most-significant-first order.
+    out.reverse()
+    return "".join(out)
 
-def convert_base_32_to_int(digest: str) -> int:
-    """Convert a base32 string (custom alphabet) to an integer.
+
+def convert_base32_to_int(digest: str) -> int:
+    """Convert a base32 string (0-9 a-v) to an integer.
 
     Args:
         digest (str): String encoded with Pythagoras' base32 alphabet.
@@ -66,18 +76,14 @@ def convert_base_32_to_int(digest: str) -> int:
         int: The decoded non-negative integer value.
 
     Raises:
-        KeyError: If digest contains a character outside the supported
-            base32 alphabet (0-9, a-v).
+        ValueError: If digest contains a character outside the supported
+            base32 alphabet (0-9 a-v).
     """
     if not digest:
         raise ValueError("Digest cannot be empty")
 
-    digest = digest.lower()
-    num = 0
     try:
-        for char in digest:
-            num = num * 32 + _BASE32_ALPHABET_MAP[char]
-    except KeyError as e:
-        raise ValueError(f"Invalid character '{e.args[0]}' in base32 digest: {digest}") from e
-    return num
+        return int(digest, 32)
+    except ValueError as e:
+        raise ValueError(f"Invalid base32 digest: {digest}") from e
 

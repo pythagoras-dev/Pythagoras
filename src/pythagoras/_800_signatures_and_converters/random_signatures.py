@@ -1,7 +1,7 @@
 import uuid
 from typing import Final
 
-from .base_16_32_convertors import convert_int_to_base32
+from .base_16_32_converters import convert_int_to_base32
 
 _MAX_SIGNATURE_LENGTH: Final[int] = 22
 

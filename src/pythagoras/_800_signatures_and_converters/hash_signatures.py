@@ -3,7 +3,7 @@ from typing import Any, Final
 
 import joblib.hashing
 
-from .base_16_32_convertors import convert_base16_to_base32
+from .base_16_32_converters import convert_base16_to_base32
 
 
 _HASH_TYPE: Final[str] = "sha256"
