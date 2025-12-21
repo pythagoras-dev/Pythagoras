@@ -1,3 +1,9 @@
+"""Converters between base16 (hex), base32, and integer representations.
+
+Uses a custom base32 alphabet: digits 0-9 followed by letters a-v (32 chars).
+This differs from RFC 4648 base32 but provides shorter, URL-safe signatures.
+"""
+
 from .constants_for_signatures_converters import PTH_BASE32_ALLOWED
 from .constants_for_signatures_converters import PTH_BASE32_ALPHABET
 

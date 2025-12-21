@@ -1,3 +1,5 @@
+"""Cryptographically secure random signature generation."""
+
 import secrets
 
 from .base_16_32_converters import convert_int_to_base32

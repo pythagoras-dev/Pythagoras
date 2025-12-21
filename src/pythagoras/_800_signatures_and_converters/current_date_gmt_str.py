@@ -1,3 +1,5 @@
+"""UTC date formatting for file names and log records."""
+
 from datetime import datetime, timezone
 from typing import Final
 

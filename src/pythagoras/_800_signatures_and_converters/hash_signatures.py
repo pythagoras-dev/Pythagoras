@@ -1,3 +1,9 @@
+"""Content-based hash signatures for arbitrary Python objects.
+
+Provides functions to compute deterministic hash signatures
+with output in base16 (hex) or base32 formats.
+"""
+
 from typing import Any
 
 import joblib.hashing

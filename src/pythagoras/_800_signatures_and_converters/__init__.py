@@ -8,7 +8,7 @@ The modules exposed here are intentionally lightweight and side-effect free
 so they can be used in hashing and address computations.
 
 Exports:
-  base_16_32_convertors: Base-16/32 encoding and decoding helpers.
+  base_16_32_converters: Base-16/32 encoding and decoding helpers.
   current_date_gmt_str: Utilities to format current date/time in GMT.
   hash_signatures: Functions to compute content hash/signature strings.
   node_signature: Functions to derive signatures for the current node.
