@@ -34,7 +34,7 @@ def get_base16_hash_signature(x:Any) -> str:
     hash_signature = hasher.hash(x)
     return str(hash_signature)
 
-def get_base32_hash_signature(x:Any) -> str:
+def get_base32_hash_signature(x: Any) -> str:
     """Compute a base32-encoded hash for an arbitrary Python object.
 
     Internally computes a hexadecimal digest first, then converts it to the
@@ -50,10 +50,11 @@ def get_base32_hash_signature(x:Any) -> str:
     base_32_hash = convert_base16_to_base32(base_16_hash)
     return base_32_hash
 
-def get_hash_signature(x:Any) -> str:
+
+def get_hash_signature(x: Any) -> str:
     """Compute a short, URL-safe hash signature for an object.
 
-    This is a convenience wrapper that returns the first max_signature_length
+    This is a convenience wrapper that returns the first PTH_MAX_SIGNATURE_LENGTH
     characters of the base32 digest, which is typically sufficient for
     collision-resistant identifiers in logs and filenames.
 

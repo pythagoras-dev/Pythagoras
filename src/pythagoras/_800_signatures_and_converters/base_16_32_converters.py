@@ -32,7 +32,14 @@ def convert_base16_to_base32(hexdigest: str) -> str:
 
 
 def convert_int_to_base32(n: int) -> str:
-    """Convert a non-negative integer to base-32 alphabet (0-9 a-v)."""
+    """Convert a non-negative integer to a base-32 string (0-9 a-v).
+
+    Args:
+        n (int): The integer to convert. Must be non-negative.
+
+    Returns:
+        str: The base-32 string representation of the integer.
+    """
     if not isinstance(n, int):
         raise TypeError(f"n must be an int, got {type(n).__name__}")
     if n < 0:
@@ -49,7 +56,17 @@ def convert_int_to_base32(n: int) -> str:
 
 
 def convert_base32_to_int(digest: str) -> int:
-    """Convert a base-32 string (0-9 a-v) to an integer."""
+    """Convert a base-32 string (0-9 a-v) to an integer.
+
+    Args:
+        digest (str): The base-32 string to convert. Case-insensitive.
+
+    Returns:
+        int: The integer value of the base-32 string.
+
+    Raises:
+        ValueError: If the string contains invalid characters.
+    """
     digest = digest.strip().lower()
     if not digest:
         return 0
