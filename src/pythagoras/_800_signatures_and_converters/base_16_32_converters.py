@@ -1,7 +1,11 @@
 """Converters between base16 (hex), base32, and integer representations.
 
-Uses a custom base32 alphabet: digits 0-9 followed by letters a-v (32 chars).
-This differs from RFC 4648 base32 but provides shorter, URL-safe signatures.
+Notes:
+- Uses a custom base32 alphabet: digits ``0-9`` followed by letters ``a-v``
+  (32 chars). This differs from RFC 4648 base32 and is chosen for compact,
+  URL‑safe identifiers.
+- Conversions are numeric: leading zeros are not preserved when converting
+  between textual bases; zero is represented as the single character ``"0"``.
 """
 
 from .constants_for_signatures_converters import PTH_BASE32_ALLOWED
@@ -18,6 +22,9 @@ def convert_base16_to_base32(hexdigest: str) -> str:
     Returns:
         str: The corresponding value encoded with the base32 alphabet
         (digits 0-9 then letters a-v).
+
+    Raises:
+        ValueError: If ``hexdigest`` is not a valid hexadecimal string.
 
     Examples:
         >>> convert_base16_to_base32("ff")
@@ -68,7 +75,8 @@ def convert_base32_to_int(digest: str) -> int:
         digest (str): The base-32 string to convert. Case-insensitive.
 
     Returns:
-        int: The integer value of the base-32 string.
+        int: The integer value of the base-32 string. Empty or
+        whitespace-only input yields ``0``.
 
     Raises:
         ValueError: If the string contains invalid characters.

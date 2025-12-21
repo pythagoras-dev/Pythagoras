@@ -1,5 +1,5 @@
 """
-Generate a **stable, privacy-preserving, globally unique identifier** for the
+Generate a stable, privacy-preserving, globally unique identifier for the
 machine (or container / VM) running this Python process.
 
 Why this exists
@@ -12,10 +12,10 @@ reliable:
 * OS fingerprints change after upgrades and add negligible entropy.
 
 Instead, this module builds an identifier from a hierarchy of signals that are
-both *stable* and *close to universally available*:
+both stable and widely available:
 
 1. Native operating-system machine ID
-   • `/etc/machine-id`, Windows *MachineGuid*, macOS *IOPlatformUUID*
+   • ``/etc/machine-id``, Windows ``MachineGuid``, macOS ``IOPlatformUUID``
 2. Cloud instance ID (AWS, GCP, Azure metadata services)
 3. Hardware UUID exposed via SMBIOS
 4. First globally-administered MAC address (falls back only if it is not
@@ -23,19 +23,19 @@ both *stable* and *close to universally available*:
 5. Persisted random UUID stored in system or user directory – guarantees
    determinism when everything else fails
 
-The selected signals are **NOT** returned directly. They are concatenated,
-normalised, salted with a version prefix, then hashed with SHA-256 and finally
-encoded using a lowercase Crockford-like Base-32 alphabet. We return a
-hash signature whose collision probability is extremely low across billions
-of nodes.
+The selected signals are not returned directly. A candidate is chosen, a
+version string is included as part of the payload, then the result is hashed
+with SHA‑256 and encoded using this project's base32 alphabet (``0-9`` then
+``a-v``). The output is an opaque signature with extremely low collision
+probability across large fleets.
 
 Public API
 ----------
 get_node_signature() → str
     Return the string identifier for the current node. The result is memoised
-    (`functools.cache`) for the lifetime of the Python process.
+    (``functools.cache``) for the lifetime of the Python process.
 
-Internal helpers beginning with an underscore are **not** part of the public
+Internal helpers beginning with an underscore are not part of the public
 contract and may change without notice.
 """
 
@@ -278,8 +278,9 @@ def get_node_signature() -> str:
     Algorithm:
         1. Iterate through signal sources in priority order.
         2. Select the first available (non-empty) signal.
-        3. Prefix with the scheme version "version 2:" (future-proofing).
-        4. Calculate hash signature.
+        3. Include the scheme version string (currently ``"version 2"``)
+           in the payload.
+        4. Calculate the base32 hash signature.
 
     Returns:
         str: A string representing the node signature.

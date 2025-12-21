@@ -1,4 +1,9 @@
-"""Cryptographically secure random signature generation."""
+"""Cryptographically secure random signature generation.
+
+We request ``PTH_MAX_SIGNATURE_LENGTH * 5`` random bits because each base32
+character encodes 5 bits. This yields a uniformly random string of the target
+length when encoded and truncated.
+"""
 
 import secrets
 

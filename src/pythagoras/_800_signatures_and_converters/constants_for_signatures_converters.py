@@ -1,5 +1,15 @@
-"""
-Constants and configuration parameters for signatures and converters.
+"""Constants used by signature and base-conversion utilities.
+
+This module centralises tunables that affect how identifiers are formed and
+encoded. Changing values here affects the entire subpackage.
+
+Key choices:
+- ``PTH_MAX_SIGNATURE_LENGTH``: Truncation length for short, human/URL-friendly
+  signatures. With base32 (5 bits/char), ``22`` chars ≈ 110 bits — ample for
+  practical collision resistance while staying compact.
+- ``PTH_BASE32_ALPHABET``: Project-specific alphabet (``0-9`` then ``a-v``),
+  intentionally different from RFC 4648; used consistently for encoding/decoding.
+- ``PTH_HASH_TYPE``: Hash algorithm name used by joblib hashing helpers.
 """
 from __future__ import annotations
 
@@ -17,17 +27,16 @@ PTH_BASE32_ALPHABET: Final[str] = string.digits + string.ascii_lowercase[:22]
 PTH_BASE32_ALLOWED: Final[set[str]] = set(PTH_BASE32_ALPHABET)
 
 PTH_METADATA_TIMEOUT: float = 2
-# Timeout (in seconds) for external metadata requests (e.g. cloud provider APIs).
+# Timeout (seconds) for metadata/OS calls where applicable.
 
 PTH_METADATA_READ_LIMIT: int = 4096
-# Maximum bytes to read from files or sockets to prevent memory issues
-# with pathological inputs.
+# Max bytes to read from files/sockets to avoid pathological memory use.
 
 PTH_APP_NAME: str = "pythagoras"
-# Application namespace used for creating system or user-level config directories.
+# Namespace used for system/user-level config directories.
 
 SMBIOS_UUID_PATH: str = "/sys/class/dmi/id/product_uuid"
-# Location of the hardware product UUID on Linux systems.
+# Hardware product UUID path on Linux systems.
 
 PTH_NODE_SIGNATURE_VERSION: str = "version 2"
-# Version string prepended to node signatures to support future algorithm evolution.
+# Version tag mixed into node-signature payload (enables future evolution).

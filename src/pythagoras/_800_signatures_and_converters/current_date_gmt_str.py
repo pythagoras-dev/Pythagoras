@@ -1,4 +1,9 @@
-"""UTC date formatting for file names and log records."""
+"""UTC date formatting for file names and log records.
+
+Format: ``YYYY_MMMonAbbrev_dd_utc`` — for example ``2024_12Dec_11_utc``.
+The month is represented by a zero-padded number immediately followed by the
+English three-letter abbreviation (``Jan``..``Dec``). Time-of-day is omitted.
+"""
 
 from datetime import datetime, timezone
 from typing import Final
@@ -14,8 +19,8 @@ def current_date_gmt_string() -> str:
     Produces an underscore-delimited UTC date string suitable for
     stable file names and log records.
 
-    The format is: "YYYY_MMMonAbbrev_dd_utc" (e.g., "2024_12Dec_11_utc").
-    Note: Time components are not included; only the date is captured.
+    The format is: ``YYYY_MMMonAbbrev_dd_utc`` (e.g., ``2024_12Dec_11_utc``).
+    Time components are intentionally not included; only the date is captured.
 
     Returns:
         str: The formatted UTC date string, for the current moment.

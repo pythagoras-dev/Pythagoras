@@ -1,7 +1,7 @@
 """Content-based hash signatures for arbitrary Python objects.
 
-Provides functions to compute deterministic hash signatures
-with output in base16 (hex) or base32 formats.
+Provides functions to compute deterministic, stable hash signatures with
+output in base16 (hex) or the project's base32 alphabet (``0-9`` then ``a-v``).
 """
 
 from typing import Any
@@ -12,25 +12,26 @@ from .base_16_32_converters import convert_base16_to_base32
 from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH, PTH_HASH_TYPE
 
 
-def get_base16_hash_signature(x:Any) -> str:
+def get_base16_hash_signature(x: Any) -> str:
     """Compute a hexadecimal (base16) hash for an arbitrary Python object.
 
-    This function delegates to joblib's hashing utilities. If NumPy is
-    imported in the current process, it uses NumpyHasher for efficient and
-    stable hashing of NumPy arrays; otherwise it uses the generic Hasher.
+    The implementation delegates to joblib's hashing utilities. If NumPy is
+    importable, ``NumpyHasher`` is used (it knows how to hash arrays and falls
+    back to generic behavior for other objects); otherwise the generic
+    ``Hasher`` is used.
 
     Args:
-        x (Any): The object to hash. Must be picklable by joblib unless a
-            specialized routine (e.g., for NumPy arrays) is available.
+        x (Any): The object to hash. In general, objects should be picklable
+            for stable results unless a specialised path exists (e.g., NumPy).
 
     Returns:
-        str: A hexadecimal string digest computed with the configured
-            algorithm (sha256 by default).
+        str: A hexadecimal digest computed with ``PTH_HASH_TYPE`` (``sha256``
+        by default).
 
     Notes:
-        - joblib relies on pickle for most Python objects; ensure that custom
-          objects are picklable for stable results.
         - The digest is deterministic for the same object content.
+        - joblib hashing operates on object content/structure, not memory
+          addresses.
     """
     try:
         import numpy
@@ -44,7 +45,7 @@ def get_base32_hash_signature(x: Any) -> str:
     """Compute a base32-encoded hash for an arbitrary Python object.
 
     Internally computes a hexadecimal digest first, then converts it to the
-    custom base32 alphabet used by Pythagoras.
+    project's base32 alphabet (``0-9`` then ``a-v``).
 
     Args:
         x (Any): The object to hash.
@@ -60,8 +61,8 @@ def get_base32_hash_signature(x: Any) -> str:
 def get_hash_signature(x: Any) -> str:
     """Compute a short, URL-safe hash signature for an object.
 
-    This is a convenience wrapper that returns the first PTH_MAX_SIGNATURE_LENGTH
-    characters of the base32 digest, which is typically sufficient for
+    Convenience wrapper returning the first ``PTH_MAX_SIGNATURE_LENGTH``
+    characters of the base32 digest — typically sufficient for
     collision-resistant identifiers in logs and filenames.
 
     Args:
