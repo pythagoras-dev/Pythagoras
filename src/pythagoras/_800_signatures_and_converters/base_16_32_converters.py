@@ -1,9 +1,5 @@
-import string
-from typing import Final
-
-# Reusable, module-level constants
-BASE32_ALPHABET: Final[str] = string.digits + string.ascii_lowercase[:22]
-BASE32_ALLOWED: Final[set[str]] = set(BASE32_ALPHABET)
+from .constants_for_signatures_converters import PTH_BASE32_ALLOWED
+from .constants_for_signatures_converters import PTH_BASE32_ALPHABET
 
 
 def convert_base16_to_base32(hexdigest: str) -> str:
@@ -46,7 +42,7 @@ def convert_int_to_base32(n: int) -> str:
 
     out: list[str] = []
     while n:
-        out.append(BASE32_ALPHABET[n & 31])  # last 5 bits
+        out.append(PTH_BASE32_ALPHABET[n & 31])  # last 5 bits
         n >>= 5
     out.reverse()
     return "".join(out)
@@ -57,11 +53,11 @@ def convert_base32_to_int(digest: str) -> int:
     digest = digest.strip().lower()
     if not digest:
         return 0
-    invalid = set(digest) - BASE32_ALLOWED
+    invalid = set(digest) - PTH_BASE32_ALLOWED
     if invalid:
         raise ValueError(
             f"Invalid base32 digit(s): {''.join(sorted(invalid))!r}. "
-            f"Valid characters: {BASE32_ALPHABET}")
+            f"Valid characters: {PTH_BASE32_ALPHABET}")
     # int() is now safe
     return int(digest, 32)
 

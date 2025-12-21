@@ -4,7 +4,8 @@ import tempfile
 from pythagoras._800_signatures_and_converters.node_signature import (
     get_node_signature, _is_non_trivial_id, _read_first, _run
 )
-from pythagoras._800_signatures_and_converters.base_16_32_converters import BASE32_ALPHABET
+from pythagoras._800_signatures_and_converters import PTH_BASE32_ALPHABET
+
 
 def test_get_node_signature_structure():
     """Test the structure of the node signature."""
@@ -12,7 +13,7 @@ def test_get_node_signature_structure():
     
     assert isinstance(sig, str)
     assert len(sig) > 8, "Signature should have at least 8 characters"
-    assert all(c in BASE32_ALPHABET for c in sig), f"Signature contains invalid characters: {sig}"
+    assert all(c in PTH_BASE32_ALPHABET for c in sig), f"Signature contains invalid characters: {sig}"
     assert sig != "signatureless_node_signatureless", "Node signature generation failed completely"
 
 def test_get_node_signature_determinism():

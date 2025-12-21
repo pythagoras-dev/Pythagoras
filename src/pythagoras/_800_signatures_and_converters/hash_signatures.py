@@ -1,16 +1,10 @@
-import sys
-from typing import Any, Final
+from typing import Any
 
 import joblib.hashing
 
 from .base_16_32_converters import convert_base16_to_base32
+from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH, PTH_HASH_TYPE
 
-
-_HASH_TYPE: Final[str] = "sha256"
-# 22 characters provides ~110 bits of entropy (5 bits per base32 char),
-# sufficient for collision resistance in typical use cases
-# Must be at least 7 to support HashAddr shard/subshard slicing.
-_MAX_SIGNATURE_LENGTH: Final[int] = 22
 
 def get_base16_hash_signature(x:Any) -> str:
     """Compute a hexadecimal (base16) hash for an arbitrary Python object.
@@ -34,9 +28,9 @@ def get_base16_hash_signature(x:Any) -> str:
     """
     try:
         import numpy
-        hasher = joblib.hashing.NumpyHasher(hash_name=_HASH_TYPE)
+        hasher = joblib.hashing.NumpyHasher(hash_name=PTH_HASH_TYPE)
     except ImportError:
-        hasher = joblib.hashing.Hasher(hash_name=_HASH_TYPE)
+        hasher = joblib.hashing.Hasher(hash_name=PTH_HASH_TYPE)
     hash_signature = hasher.hash(x)
     return str(hash_signature)
 
@@ -69,5 +63,5 @@ def get_hash_signature(x:Any) -> str:
     Returns:
         str: The truncated base32 digest string.
     """
-    return get_base32_hash_signature(x)[:_MAX_SIGNATURE_LENGTH]
+    return get_base32_hash_signature(x)[:PTH_MAX_SIGNATURE_LENGTH]
 

@@ -2,8 +2,7 @@ import uuid
 from typing import Final
 
 from .base_16_32_converters import convert_int_to_base32
-
-_MAX_SIGNATURE_LENGTH: Final[int] = 22
+from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH
 
 def get_random_signature() -> str:
     """Generate a short, random base32 signature string.
@@ -19,4 +18,4 @@ def get_random_signature() -> str:
     """
     random_int = uuid.uuid4().int
     random_str = convert_int_to_base32(random_int)
-    return random_str[:_MAX_SIGNATURE_LENGTH]
+    return random_str[:PTH_MAX_SIGNATURE_LENGTH]

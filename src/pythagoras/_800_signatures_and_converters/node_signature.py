@@ -44,17 +44,13 @@ import os, platform, subprocess, uuid
 from functools import cache
 from pathlib import Path
 import re
-from typing import Iterable, Callable
+from typing import Callable
 from urllib import request
 from urllib.error import URLError, HTTPError
 
+from .constants_for_signatures_converters import PTH_METADATA_TIMEOUT, PTH_METADATA_READ_LIMIT, PTH_APP_NAME
+from .constants_for_signatures_converters import SMBIOS_UUID_PATH, PTH_NODE_SIGNATURE_VERSION
 from .hash_signatures import get_hash_signature
-
-METADATA_TIMEOUT:float = 2
-READ_LIMIT:int = 4096  # defensive cap to avoid pathological responses
-APP_NAME:str = "pythagoras"
-SMBIOS_UUID_PATH:str = "/sys/class/dmi/id/product_uuid"
-SIGNATURE_VERSION:str = "version 2"
 
 
 # --- helpers ------------------------------------------------------
@@ -63,14 +59,14 @@ def _read_first(path: str) -> str | None:
     """Safely read the first `READ_LIMIT` bytes from a file."""
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as fh:
-            return fh.read(READ_LIMIT).strip() or None
+            return fh.read(PTH_METADATA_READ_LIMIT).strip() or None
     except Exception:
         return None
 
 def _run(cmd: list[str]) -> str | None:
     """Execute a command with timeout and return its stdout."""
     try:
-        result = subprocess.check_output(cmd, text=True, timeout=METADATA_TIMEOUT)
+        result = subprocess.check_output(cmd, text=True, timeout=PTH_METADATA_TIMEOUT)
         result = result.strip()
         return result or None
     except Exception:
@@ -146,10 +142,10 @@ def _http_get_metadata(url: str, headers: dict[str, str]) -> str | None:
     """Fetch metadata from a URL with specified headers and a timeout."""
     try:
         req = request.Request(url, headers=headers)
-        with request.urlopen(req, timeout=METADATA_TIMEOUT) as resp:
+        with request.urlopen(req, timeout=PTH_METADATA_TIMEOUT) as resp:
             if resp.status != 200:
                 return None
-            data = resp.read(READ_LIMIT)
+            data = resp.read(PTH_METADATA_READ_LIMIT)
             if not data:
                 return None
             return data.decode(errors="ignore").strip() or None
@@ -201,15 +197,15 @@ def _system_node_id_path() -> Path:
     """Determine the platform-specific path for a system-wide node ID file."""
     if platform.system() == "Windows":
         root = Path(os.environ.get("PROGRAMDATA", r"C:\ProgramData"))
-        return root / APP_NAME / "node-id"
+        return root / PTH_APP_NAME / "node-id"
     elif platform.system() == "Darwin":
-        return Path("/Library/Application Support") / APP_NAME / "node-id"
+        return Path("/Library/Application Support") / PTH_APP_NAME / "node-id"
     else:                                   # Linux / *BSD / etc.
-        return Path("/var/lib") / APP_NAME / "node-id"
+        return Path("/var/lib") / PTH_APP_NAME / "node-id"
 
 def _fallback_user_path() -> Path:
     """Determine the path for a user-specific node ID file."""
-    return Path.home() / f".{APP_NAME}" / "node-id"
+    return Path.home() / f".{PTH_APP_NAME}" / "node-id"
 
 
 def _persistent_random() -> str | None:
@@ -310,5 +306,5 @@ def get_node_signature() -> str:
     if not chosen_signal:
         return "signatureless_node_signatureless"
 
-    payload: list[str] = [SIGNATURE_VERSION, chosen_signal]
+    payload: list[str] = [PTH_NODE_SIGNATURE_VERSION, chosen_signal]
     return get_hash_signature(payload)
