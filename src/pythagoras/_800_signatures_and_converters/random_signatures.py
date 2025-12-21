@@ -1,5 +1,4 @@
-import uuid
-from typing import Final
+import secrets
 
 from .base_16_32_converters import convert_int_to_base32
 from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH
@@ -7,15 +6,15 @@ from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH
 def get_random_signature() -> str:
     """Generate a short, random base32 signature string.
 
-    The randomness is sourced from uuid.uuid4(), which uses a cryptographically
-    strong RNG provided by the OS. The resulting large integer is encoded with
-    Pythagoras' base32 alphabet and truncated to max_signature_length
-    characters.
+    The randomness is sourced from secrets.randbits(), which uses a
+    cryptographically strong RNG provided by the OS. The resulting large
+    integer is encoded with Pythagoras' base32 alphabet and truncated to
+    PTH_MAX_SIGNATURE_LENGTH characters.
 
     Returns:
         str: A random, URL-safe base32 string of length up to
-        max_signature_length.
+        PTH_MAX_SIGNATURE_LENGTH.
     """
-    random_int = uuid.uuid4().int
+    random_int = secrets.randbits(PTH_MAX_SIGNATURE_LENGTH * 5)
     random_str = convert_int_to_base32(random_int)
     return random_str[:PTH_MAX_SIGNATURE_LENGTH]
