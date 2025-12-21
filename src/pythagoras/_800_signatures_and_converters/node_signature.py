@@ -56,7 +56,7 @@ from .hash_signatures import get_hash_signature
 # --- helpers ------------------------------------------------------
 
 def _read_first(path: str) -> str | None:
-    """Safely read the first `READ_LIMIT` bytes from a file."""
+    """Safely read the first PTH_METADATA_READ_LIMIT bytes from a file."""
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as fh:
             return fh.read(PTH_METADATA_READ_LIMIT).strip() or None
@@ -227,7 +227,6 @@ def _persistent_random() -> str | None:
             # Atomic create-if-not-exists
             rid = uuid.uuid4().hex
             try:
-                # 'x' mode = exclusive creation, fails if file exists
                 with open(candidate, 'x') as f:
                     f.write(rid)
                 return rid

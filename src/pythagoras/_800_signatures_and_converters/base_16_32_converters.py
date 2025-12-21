@@ -55,7 +55,7 @@ def convert_int_to_base32(n: int) -> str:
 
     out: list[str] = []
     while n:
-        out.append(PTH_BASE32_ALPHABET[n & 31])  # last 5 bits
+        out.append(PTH_BASE32_ALPHABET[n & 31])
         n >>= 5
     out.reverse()
     return "".join(out)
@@ -81,6 +81,6 @@ def convert_base32_to_int(digest: str) -> int:
         raise ValueError(
             f"Invalid base32 digit(s): {''.join(sorted(invalid))!r}. "
             f"Valid characters: {PTH_BASE32_ALPHABET}")
-    # int() is now safe
+    
     return int(digest, 32)
 
