@@ -13,7 +13,7 @@ import sys
 from abc import abstractmethod
 from importlib import metadata
 from pathlib import Path
-from typing import TypeVar, Type, Any, NewType
+from typing import TypeVar, Type, Any, NewType, Callable
 import pandas as pd
 from parameterizable import NotPicklableClass
 from parameterizable import ParameterizableClass, sort_dict_by_keys
@@ -89,6 +89,46 @@ def get_most_recently_created_portal() -> BasicPortal | None:
     return _most_recently_created_portal
 
 
+_default_portal_instantiator: Callable[[], None] | None = None
+
+def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
+    """Register a callable that creates (and usually enters) the default portal.
+
+    The callable is executed lazily the first time ``get_active_portal()`` is
+    invoked while no portals exist.  It must:
+
+    1. Accept **no arguments**.
+    2. Create a portal instance.
+    3. Optionally call ``__enter__`` on that instance (typical for a global
+       default).
+    4. Return **None**.
+
+    Parameters
+    ----------
+    instantiator : Callable[[], None]
+        Zero-argument function that establishes the default portal.
+
+    Raises
+    ------
+    TypeError
+        If *instantiator* is not callable.
+    RuntimeError
+        If a default instantiator has already been registered.
+    """
+    global _default_portal_instantiator
+
+    if not callable(instantiator):
+        raise TypeError(
+            f"Default portal instantiator must be callable, got {type(instantiator)}"
+        )
+    if _default_portal_instantiator is not None:
+        raise RuntimeError(
+            "Default portal instantiator is already set; "
+            "resetting is not permitted."
+        )
+
+    _default_portal_instantiator = instantiator
+
 def get_active_portal() -> BasicPortal:
     """Get the currently active portal object.
 
@@ -103,12 +143,19 @@ def get_active_portal() -> BasicPortal:
     """
     _ensure_single_thread()
     global _most_recently_created_portal, _active_portals_stack
+    global _default_portal_instantiator
 
     if len(_active_portals_stack) > 0:
         return _active_portals_stack[-1]
 
     if _most_recently_created_portal is None:
-        sys.modules["pythagoras"]._instantiate_default_local_portal()
+        if _default_portal_instantiator is not None:
+            _default_portal_instantiator()
+        else:
+            raise RuntimeError(
+                "No portal is active and no default portal instantiator was set "
+                "using _set_default_portal_instantiator()")
+
 
     _active_portals_stack.append(_most_recently_created_portal)
     _active_portals_counters_stack.append(1)
