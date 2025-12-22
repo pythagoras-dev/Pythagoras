@@ -1,47 +1,52 @@
 """Enforcement of single-threaded access to Portals and related classes.
 
-This module contains functionality to ensure that Pythagoras portals
-and portal-aware objects are only accessed from the thread
-where they were initialized.
+This module guarantees that Pythagoras portals and portal-aware objects
+are only accessed from the thread where the portal system was first used.
 """
+
 from __future__ import annotations
 
+import inspect
 import threading
 
-_portal_thread_id: int | None = None
+# Native (OS-level) id of the thread that first accessed the portal layer
+_portal_native_id: int | None = None
+# Human-readable name of that thread, for diagnostics
+_portal_thread_name: str | None = None
 
 
 def _ensure_single_thread() -> None:
-    """Enforce single-threaded portal access.
+    """Raise RuntimeError if the current thread differs from the owner thread.
 
-    Pythagoras portals are designed for multi-PROCESS parallelism via
-    swarming, not multi-threaded parallelism. Each thread should have
-    its own portal instance if thread-based work is needed.
-
-    Raises:
-        RuntimeError: If the portal is accessed from a different thread
-            than the one where it was initialized.
+    Pythagoras supports multi-process (swarming) parallelism, not multi-thread
+    parallelism.  Each thread that truly needs a portal must create its *own*
+    portal instance and never touch portals initialized elsewhere.
     """
+    global _portal_native_id, _portal_thread_name
 
-    global _portal_thread_id
-    current_thread_id = threading.current_thread().ident
+    curr_native_id = threading.get_native_id()
+    curr_name = threading.current_thread().name
 
-    if _portal_thread_id is None:
-        _portal_thread_id = current_thread_id
-    elif _portal_thread_id != current_thread_id:
+    if _portal_native_id is None:
+        # First use – lock the portal layer to this thread
+        _portal_native_id = curr_native_id
+        _portal_thread_name = curr_name
+        return
+
+    if curr_native_id != _portal_native_id:
+        caller = inspect.stack()[1]
         raise RuntimeError(
-            f"Pythagoras portals are single-threaded by design.\n"
-            f"Portal system was initialized on thread {_portal_thread_id}, "
-            f"but is now accessed from thread {current_thread_id}.\n"
-            f"For parallelism, use swarming (multi-process) instead of threading.\n"
-            f"If you need thread-based work, create separate portals per thread.")
+            "Pythagoras portals are single-threaded by design.\n"
+            f"Owner thread : {_portal_native_id} ({_portal_thread_name})\n"
+            f"Current thread: {curr_native_id} ({curr_name}) at "
+            f"{caller.filename}:{caller.lineno}\n"
+            "For parallelism use swarming (multi-process) or create a "
+            "separate portal per thread."
+        )
 
 
 def _reset_single_thread_enforcer() -> None:
-    """Reset the single-thread enforcer for testing purposes only.
-
-    This function is intended for use in unit tests to reset the
-    thread tracking state. It should not be used in production code.
-    """
-    global _portal_thread_id
-    _portal_thread_id = None
+    """FOR UNIT TESTS ONLY – re-arm the guard for the current thread."""
+    global _portal_native_id, _portal_thread_name
+    _portal_native_id = None
+    _portal_thread_name = None
