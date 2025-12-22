@@ -20,6 +20,7 @@ from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .post_init_metaclass import PostInitMeta
+from .single_thread_enforcer import _ensure_single_thread
 from .._800_signatures_and_converters import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
@@ -30,32 +31,6 @@ from .portal_description_helpers import (
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
 _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
-
-
-import threading
-
-_portal_thread_id: int | None = None
-
-def _ensure_single_thread() -> None:
-    """Enforce single-threaded portal access.
-
-    Pythagoras portals are designed for multi-PROCESS parallelism via
-    swarming, not multi-threaded parallelism. Each thread should have
-    its own portal instance if thread-based work is needed.
-    """
-
-    global _portal_thread_id
-    current_thread_id = threading.current_thread().ident
-
-    if _portal_thread_id is None:
-        _portal_thread_id = current_thread_id
-    elif _portal_thread_id != current_thread_id:
-        raise RuntimeError(
-            f"Pythagoras portals are single-threaded by design.\n"
-            f"Portal system was initialized on thread {_portal_thread_id}, "
-            f"but is now accessed from thread {current_thread_id}.\n"
-            f"For parallelism, use swarming (multi-process) instead of threading.\n"
-            f"If you need thread-based work, create separate portals per thread.")
 
 
 PortalStrID = NewType("PortalStrID", str)
