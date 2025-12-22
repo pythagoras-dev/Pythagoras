@@ -169,7 +169,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
     be subclassed to provide additional functionality.
     """
 
-    _entropy_infuser = random.Random()
+    _entropy_infuser: random.Random | None
 
     _root_dict: PersiDict | None
     _str_id_cache: PortalStrID
@@ -188,6 +188,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
                 it will be converted to a FileDirDict using that path.
         """
         _ensure_single_thread()
+        self._entropy_infuser = random.Random()
         ParameterizableClass.__init__(self)
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
@@ -280,7 +281,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
             A Random instance shared across all BasicPortal instances for
             generating random values and entropy when needed.
         """
-        return BasicPortal._entropy_infuser
+        return self._entropy_infuser
 
 
     @property

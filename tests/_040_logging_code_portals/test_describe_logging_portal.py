@@ -1,8 +1,7 @@
 
 from pythagoras import _PortalTester
 import pythagoras as pth
-from pythagoras._010_basic_portals.basic_portal_core_classes import (
-     _get_description_value_by_key)
+from pythagoras._010_basic_portals.portal_description_helpers import _get_description_value_by_key
 from pythagoras._040_logging_code_portals.logging_portal_core_classes import (
     LoggingFnCallSignature, LoggingCodePortal
     , _EXCEPTIONS_TODAY_TXT, _EXCESSIVE_LOGGING_TXT

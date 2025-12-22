@@ -1,7 +1,8 @@
 from pythagoras import BasicPortal
 from pythagoras import _PortalTester
 from pythagoras._010_basic_portals.basic_portal_core_classes import (
-    _get_description_value_by_key, _BASE_DIRECTORY_TXT, _BACKEND_TYPE_TXT)
+    _BASE_DIRECTORY_TXT, _BACKEND_TYPE_TXT)
+from pythagoras._010_basic_portals.portal_description_helpers import _get_description_value_by_key
 
 
 def test_portal(tmpdir):
