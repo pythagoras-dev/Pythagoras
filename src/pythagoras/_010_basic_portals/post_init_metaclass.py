@@ -27,3 +27,4 @@ class PostInitMeta(ABCMeta):
         """
         instance = super().__call__(*args, **kwargs)
         instance._post_init_hook()
+        return instance
