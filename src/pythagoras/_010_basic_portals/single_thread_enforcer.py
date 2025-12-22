@@ -40,9 +40,7 @@ def _ensure_single_thread() -> None:
             f"Owner thread : {_portal_native_id} ({_portal_thread_name})\n"
             f"Current thread: {curr_native_id} ({curr_name}) at "
             f"{caller.filename}:{caller.lineno}\n"
-            "For parallelism use swarming (multi-process) or create a "
-            "separate portal per thread."
-        )
+            "For parallelism use swarming (multi-process).")
 
 
 def _reset_single_thread_enforcer() -> None:
