@@ -93,8 +93,8 @@ PortalStrID = NewType("PortalStrID", str)
 PObjectStrID = NewType("PObjectStrID", str)
 
 _all_known_portals: dict[PortalStrID, BasicPortal] = {}
-_active_portals_stack: list = []
-_active_portals_counters_stack: list = [int]
+_active_portals_stack: list[BasicPortal] = []
+_active_portals_counters_stack: list[int] = []
 _most_recently_created_portal: BasicPortal | None = None
 
 def get_number_of_known_portals() -> int:
@@ -290,7 +290,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
             if portal_str_id == self._str_id:
                 if target_class is None:
                     result.add(obj_str_id)
-                elif isinstance(target_class, type):
+                elif isinstance(_all_activated_portal_aware_objects[obj_str_id], target_class):
                     result.add(obj_str_id)
         return result
 
@@ -418,6 +418,9 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Pop the portal from the stack of active ones"""
         global _active_portals_stack, _active_portals_counters_stack
+        if len(_active_portals_stack) == 0:
+            raise RuntimeError(
+                "Portal stack is empty. Cannot exit portal context.")
         if _active_portals_stack[-1] != self:
             raise RuntimeError(
                 "Inconsistent state of the portal stack. Most probably, portal.__enter__() method was called explicitly within a 'with' statement with another portal.")

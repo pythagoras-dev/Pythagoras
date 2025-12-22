@@ -29,6 +29,12 @@ PortalAwareClass is a base class for classes that use a portal object
 as a context that helps to manage the class' state and behaviour.
 PortalAwareClass is also not intended to be used directly. It should
 be subclassed to provide additional functionality.
+
+Important Notes
+---------------
+**Thread Safety**: Work with portals is NOT thread-safe. Portal management uses
+global state that is not protected by locks. All portal operations
+must be performed from a single thread.
 """
 
 from .post_init_metaclass import *
