@@ -281,6 +281,11 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
             A Random instance shared across all BasicPortal instances for
             generating random values and entropy when needed.
         """
+        if self._entropy_infuser is None:
+            raise RuntimeError("Entropy infuser is None."
+                               "Most probably, it was cleared by calling portal._clear()"
+                               "You cant't use a portal after calling portal._clear()")
+
         return self._entropy_infuser
 
 
