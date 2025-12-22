@@ -515,8 +515,8 @@ class PortalAwareClass(metaclass = PostInitMeta):
         It's an internal hash used by Pythagoras and is different from .__hash__()
         """
         if not hasattr(self, "_str_id_cache"):
-            self._hash_id_cache = PObjectStrID(get_hash_signature(self))
-        return self._hash_id_cache
+            self._str_id_cache = PObjectStrID(get_hash_signature(self))
+        return self._str_id_cache
 
 
     @abstractmethod
