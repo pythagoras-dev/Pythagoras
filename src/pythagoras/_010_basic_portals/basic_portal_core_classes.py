@@ -290,12 +290,6 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
 
 
     @property
-    def base_url(self) -> str:
-        """Get the base URL of the portal"""
-        return self._root_dict.base_url
-
-
-    @property
     def is_active(self) -> bool:
         """Check if the portal is the current one.
 
