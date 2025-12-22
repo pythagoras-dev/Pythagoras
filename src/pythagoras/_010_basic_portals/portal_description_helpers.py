@@ -61,23 +61,29 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
 
 
 def _get_description_value_by_key(dataframe: pd.DataFrame, key: str) -> Any:
-    """Return the value for a characteristic identified by its name.
+    """Return the value associated with *key* in a portal‐description DataFrame.
 
-    This function expects a DataFrame produced by portal `describe()` logic
-    that follows the standard schema: columns `type`, `name`, `value`.
+    The DataFrame must follow the schema produced by portal ``describe()``
+    implementations: three columns ``["type", "name", "value"]``.
 
-    Args:
-        dataframe: A pandas DataFrame with exactly three columns in the
-            order `type`, `name`, `value`.
-        key: The characteristic name to look up in the `name` column.
+    Parameters
+    ----------
+    dataframe : pandas.DataFrame
+        Portal description table.
+    key : str
+        Characteristic name to retrieve.
 
-    Returns:
-        The corresponding entry from the `value` column if a row with
-        `name == key` exists; otherwise, None.
+    Returns
+    -------
+    Any
+        The value stored in the ``"value"`` column for the matching row.
+
+    Raises
+    ------
+    KeyError
+        If *key* is not present in the ``"name"`` column.
     """
-    # Filter rows where the second column (`name`) equals the key
-    result = dataframe.loc[dataframe.iloc[:, 1] == key]
-    if not result.empty:
-        # Return the third column (`value`) of the first matched row
-        return result.iloc[0, 2]
-    return None
+    mask = dataframe.iloc[:, 1] == key
+    if not mask.any():
+        raise KeyError(f"Key '{key}' not found in portal description.")
+    return dataframe.loc[mask].iloc[0, 2]
