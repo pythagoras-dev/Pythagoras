@@ -21,73 +21,15 @@ from parameterizable import ParameterizableClass, sort_dict_by_keys
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .post_init_metaclass import PostInitMeta
 from .._800_signatures_and_converters import get_hash_signature
-
-def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
-    """Create a DataFrame describing a persistent characteristic.
-
-    A helper function used by the describe() method of BasicPortal
-    and its subclasses. It creates a DataFrame with a single row
-    containing the type, name, and value of the characteristic.
-
-    Args:
-        name: The name of the characteristic.
-        value: The value of the characteristic.
-
-    Returns:
-        A pandas DataFrame with columns 'type', 'name', and 'value',
-        containing a single row with type="Disk".
-    """
-    d = dict(
-        type="Disk"
-        ,name = [name]
-        ,value = [value])
-    return pd.DataFrame(d)
-
-
-def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
-    """Create a DataFrame describing a runtime characteristic.
-
-    A helper function used by the describe() method of BasicPortal
-    and its subclasses. It creates a DataFrame with a single row
-    containing the type, name, and value of the characteristic.
-
-    Args:
-        name: The name of the characteristic.
-        value: The value of the characteristic.
-
-    Returns:
-        A pandas DataFrame with columns 'type', 'name', and 'value',
-        containing a single row with type="Runtime".
-    """
-    d = dict(
-        type = "Runtime"
-        ,name = [name]
-        ,value = [value])
-    return pd.DataFrame(d)
-
+from .portal_description_helpers import (
+    _describe_persistent_characteristic,
+    _describe_runtime_characteristic,
+    _get_description_value_by_key,
+)
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
 _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
-
-
-def _get_description_value_by_key(dataframe:pd.DataFrame, key:str) -> Any:
-    """Retrieve the value corresponding to a given key from a DataFrame.
-
-    Args:
-        dataframe: The input DataFrame with 4 columns.
-            It is supposed to be an output of portal.describe() method.
-        key: The key to search for in the third column of the DataFrame.
-
-    Returns:
-        The value from the fourth column corresponding to the key.
-        Returns None if the key is not found.
-    """
-    # Check if the key exists in the 3rd column
-    result = dataframe.loc[dataframe.iloc[:, 1] == key]
-    if not result.empty:
-        return result.iloc[0, 2]  # Return the value from the 4th column
-    return None  # Return None if the key does not exist
 
 
 import threading
