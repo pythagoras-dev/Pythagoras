@@ -1,18 +1,40 @@
 from abc import ABCMeta
+from typing import Any
 
 class PostInitMeta(ABCMeta):
-    """Ensures method ._post_init_hook() is always called after the constructor.
+    """Ensures method .__post_init__() is always called after the constructor.
     
-    This metaclass automatically calls the `_post_init_hook()` method on instances
-    after their construction is complete. This ensures that any post-initialization
-    logic is consistently executed for all instances of classes using this metaclass.
+    This metaclass automatically calls the `__post_init__()` method on instances
+    after their construction is complete, if such method is defined. 
+    It also ensures `__after_setstate__()` is called after `__setstate__()`.
     """
+
+    def __init__(cls, name, bases, dct):
+        super().__init__(name, bases, dct)
+
+        original_setstate = getattr(cls, '__setstate__', None)
+
+        # If the method is already wrapped by PostInitMeta (e.g. inherited), skip.
+        if getattr(original_setstate, '_is_post_init_wrapper', False):
+            return
+
+        def wrapper(self, state):
+            if original_setstate:
+                original_setstate(self, state)
+            else:
+                self.__dict__.update(state)
+
+            if hasattr(self, '__after_setstate__'):
+                self.__after_setstate__()
+
+        wrapper._is_post_init_wrapper = True
+        cls.__setstate__ = wrapper
     
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Create and initialize an instance, then call its post-init hook.
 
         This method overrides the default instance creation process to ensure
-        that `_post_init_hook()` is called after the regular constructor.
+        that `__post_init__()` is called after the regular constructor.
         It also includes validation logic for portal-aware objects.
 
         Args:
@@ -26,5 +48,6 @@ class PostInitMeta(ABCMeta):
             AssertionError: If portal-aware object validation fails.
         """
         instance = super().__call__(*args, **kwargs)
-        instance._post_init_hook()
+        if hasattr(instance, '__post_init__'):
+            instance.__post_init__()
         return instance

@@ -201,7 +201,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         self._root_dict = root_dict
 
 
-    def _post_init_hook(self) -> None:
+    def __post_init__(self) -> None:
         """Execute post-initialization tasks for the portal.
 
         This method is automatically called after all __init__() methods
@@ -428,7 +428,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
         self._visited_portals = set()
 
 
-    def _post_init_hook(self):
+    def __post_init__(self):
         """Execute post-initialization tasks for the portal-aware object.
 
         This method is automatically called after all object's __init__() methods

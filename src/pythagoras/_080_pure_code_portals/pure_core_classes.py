@@ -95,9 +95,9 @@ class PureCodePortal(ProtectedCodePortal):
         self._execution_requests = execution_requests
 
 
-    def _post_init_hook(self) -> None:
+    def __post_init__(self) -> None:
         """Hook to be called after all __init__ methods are done"""
-        super()._post_init_hook()
+        super().__post_init__()
         p = self.p_consistency_checks
         self._execution_results._p_consistency_checks = p
 

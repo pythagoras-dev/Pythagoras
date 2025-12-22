@@ -140,14 +140,14 @@ class DataPortal(OrdinaryCodePortal):
             self._set_portal_config_setting(key, value)
 
 
-    def _post_init_hook(self) -> None:
+    def __post_init__(self) -> None:
         """Finalize initialization after __init__ completes across the MRO.
 
         Ensures that auxiliary configuration parameters are persisted and that
         the value store is configured according to the portal's
         p_consistency_checks setting.
         """
-        super()._post_init_hook()
+        super().__post_init__()
         self._persist_initial_config_params()
         self._value_store.p_consistency_checks = self.p_consistency_checks
 
