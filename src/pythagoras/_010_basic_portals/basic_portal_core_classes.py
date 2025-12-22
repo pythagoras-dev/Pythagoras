@@ -24,9 +24,7 @@ from .single_thread_enforcer import _ensure_single_thread
 from .._800_signatures_and_converters import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
-    _describe_runtime_characteristic,
-    _get_description_value_by_key,
-)
+    _describe_runtime_characteristic)
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
