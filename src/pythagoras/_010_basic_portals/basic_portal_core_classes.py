@@ -89,6 +89,33 @@ def _get_description_value_by_key(dataframe:pd.DataFrame, key:str) -> Any:
         return result.iloc[0, 2]  # Return the value from the 4th column
     return None  # Return None if the key does not exist
 
+
+import threading
+
+_portal_thread_id: int | None = None
+
+def _ensure_single_thread() -> None:
+    """Enforce single-threaded portal access.
+
+    Pythagoras portals are designed for multi-PROCESS parallelism via
+    swarming, not multi-threaded parallelism. Each thread should have
+    its own portal instance if thread-based work is needed.
+    """
+
+    global _portal_thread_id
+    current_thread_id = threading.current_thread().ident
+
+    if _portal_thread_id is None:
+        _portal_thread_id = current_thread_id
+    elif _portal_thread_id != current_thread_id:
+        raise RuntimeError(
+            f"Pythagoras portals are single-threaded by design.\n"
+            f"Portal system was initialized on thread {_portal_thread_id}, "
+            f"but is now accessed from thread {current_thread_id}.\n"
+            f"For parallelism, use swarming (multi-process) instead of threading.\n"
+            f"If you need thread-based work, create separate portals per thread.")
+
+
 PortalStrID = NewType("PortalStrID", str)
 PObjectStrID = NewType("PObjectStrID", str)
 
@@ -159,6 +186,7 @@ def get_active_portal() -> BasicPortal:
     Returns:
         The currently active portal instance.
     """
+    _ensure_single_thread()
     global _most_recently_created_portal, _active_portals_stack
 
     if len(_active_portals_stack) > 0:
@@ -244,6 +272,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
                 or None to use the default location. If a string is provided,
                 it will be converted to a FileDirDict using that path.
         """
+        _ensure_single_thread()
         ParameterizableClass.__init__(self)
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
@@ -405,6 +434,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
 
     def __enter__(self):
         """Set the portal as the active one and add it to the stack"""
+        _ensure_single_thread()
         global _active_portals_stack, _active_portals_counters_stack
         if (len(_active_portals_stack) == 0 or
                 id(_active_portals_stack[-1]) != id(self)):
@@ -417,6 +447,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Pop the portal from the stack of active ones"""
+        _ensure_single_thread()
         global _active_portals_stack, _active_portals_counters_stack
         if len(_active_portals_stack) == 0:
             raise RuntimeError(
@@ -471,6 +502,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
             portal: The portal to link this object to, or None to use the
                 currently active portal for operations.
         """
+        _ensure_single_thread()
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal_at_init = portal
