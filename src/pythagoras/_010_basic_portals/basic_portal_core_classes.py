@@ -335,7 +335,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         all_params = []
 
         all_params.append(_describe_runtime_characteristic(
-            _PYTHAGORAS_VERSION_TXT, metadata.version("Pythagoras")))
+            _PYTHAGORAS_VERSION_TXT, metadata.version("pythagoras")))
         all_params.append(_describe_persistent_characteristic(
             _BASE_DIRECTORY_TXT, self._root_dict.base_dir))
         all_params.append(_describe_persistent_characteristic(
