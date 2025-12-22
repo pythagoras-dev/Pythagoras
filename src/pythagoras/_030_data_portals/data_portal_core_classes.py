@@ -232,7 +232,10 @@ class DataPortal(OrdinaryCodePortal):
 
 
     def _clear(self) -> None:
-        """Clear the portal's state"""
+        """Clear the portal's state.
+
+        The portal must not be used after this method is called.
+        """
         self._value_store = None
         self._portal_config_settings = None
         self._auxiliary_config_params_at_init = None

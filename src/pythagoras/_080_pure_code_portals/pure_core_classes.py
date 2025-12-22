@@ -122,7 +122,10 @@ class PureCodePortal(ProtectedCodePortal):
         return result
 
     def _clear(self):
-        """Release references to backing dicts and clear base portal state."""
+        """Release references to backing dicts and clear base portal state.
+
+        The portal must not be used after this method is called.
+        """
         self._execution_results = None
         self._execution_requests = None
         super()._clear()

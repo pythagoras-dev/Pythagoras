@@ -288,9 +288,7 @@ class SwarmingPortal(PureCodePortal):
     def _clear(self):
         """Release resources and clear internal state.
 
-        Side Effects:
-            Terminates the child process if present and clears references to
-            compute node metadata before delegating to the base implementation.
+        The portal must not be used after this method is called.
         """
         self._compute_nodes = None
         self._terminate_child_process()

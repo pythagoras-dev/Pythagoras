@@ -937,6 +937,8 @@ class LoggingCodePortal(DataPortal):
     def _clear(self) -> None:
         """Clear the portal's internal state and unregister handlers.
 
+        The portal must not be used after this method is called.
+
         Side Effects:
             - Drops references to crash/event/run histories.
             - Unregisters global uncaught exception handlers.

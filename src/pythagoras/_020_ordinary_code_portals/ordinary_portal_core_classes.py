@@ -69,7 +69,10 @@ class OrdinaryCodePortal(BasicPortal):
 
 
     def _clear(self) -> None:
-        """Clear the portal's state"""
+        """Clear the portal's state.
+
+        The portal must not be used after this method is called.
+        """
         super()._clear()
 
 

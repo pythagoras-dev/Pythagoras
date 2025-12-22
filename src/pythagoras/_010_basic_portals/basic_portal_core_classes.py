@@ -380,7 +380,10 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
 
 
     def _clear(self) -> None:
-        """Clear and invalidate the portal's state"""
+        """Clear and invalidate the portal's state.
+
+        The portal must not be used after this method is called.
+        """
         self._invalidate_cache()
         self._root_dict = None
         self._entropy_infuser = None
