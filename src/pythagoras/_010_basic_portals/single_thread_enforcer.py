@@ -35,3 +35,13 @@ def _ensure_single_thread() -> None:
             f"but is now accessed from thread {current_thread_id}.\n"
             f"For parallelism, use swarming (multi-process) instead of threading.\n"
             f"If you need thread-based work, create separate portals per thread.")
+
+
+def _reset_single_thread_enforcer() -> None:
+    """Reset the single-thread enforcer for testing purposes only.
+
+    This function is intended for use in unit tests to reset the
+    thread tracking state. It should not be used in production code.
+    """
+    global _portal_thread_id
+    _portal_thread_id = None

@@ -20,7 +20,7 @@ from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .post_init_metaclass import PostInitMeta
-from .single_thread_enforcer import _ensure_single_thread
+from .single_thread_enforcer import _ensure_single_thread, _reset_single_thread_enforcer
 from .._800_signatures_and_converters import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
@@ -596,6 +596,7 @@ def _clear_all_portals() -> None:
     _most_recently_created_portal = None
     _all_links_from_objects_to_portals.clear()
     _all_activated_portal_aware_objects.clear()
+    _reset_single_thread_enforcer()
 
 
 PortalType = TypeVar("PortalType")
