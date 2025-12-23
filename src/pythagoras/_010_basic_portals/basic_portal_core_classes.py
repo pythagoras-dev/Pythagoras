@@ -25,6 +25,7 @@ from .._800_signatures_and_converters import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)
+from .default_portal_base_dir import get_default_portal_base_dir
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
@@ -185,27 +186,6 @@ def get_nonactive_portals() -> list[BasicPortal]:
         if portal_str_id != active_portal_str_id:
             found_portals.append(portal)
     return found_portals
-
-
-def get_default_portal_base_dir() -> str:
-    """Get the base directory for the default local portal.
-
-    The default base directory is ~/.pythagoras/.default_portal
-
-    Pythagoras connects to the default local portal
-    when no other portal is specified in the
-    program which uses Pythagoras.
-
-    Returns:
-        The absolute path to the default portal's base directory as a string.
-    """
-    home_directory = Path.home()
-    target_directory = home_directory / ".pythagoras" / ".default_portal"
-    target_directory.mkdir(parents=True, exist_ok=True)
-    target_directory_str = str(target_directory.resolve())
-    if not isinstance(target_directory_str, str):
-        raise TypeError(f"Expected target_directory_str to be str, got {type(target_directory_str).__name__}")
-    return target_directory_str
 
 
 class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMeta):
