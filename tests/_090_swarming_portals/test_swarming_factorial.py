@@ -2,7 +2,7 @@ from pythagoras._010_basic_portals.portal_tester import _PortalTester
 from pythagoras._090_swarming_portals.swarming_portals import (
     SwarmingPortal)
 import pythagoras as pth
-import pytest
+import pytest, time
 
 
 def factorial(n: int) -> int:
@@ -21,6 +21,7 @@ def get_factorial_address(n:int, dir):
 
 @pytest.mark.parametrize("p",[0, 0.5, 1])
 def test_swarming_factorial(tmpdir,p):
+    tmpdir = "FACTORIAL_SWARMING_TEST_"+ str(int(time.time()))
     address = get_factorial_address(n=5, dir=tmpdir)
     with _PortalTester(SwarmingPortal
             , tmpdir
