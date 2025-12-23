@@ -2,7 +2,7 @@ import pytest
 
 from pythagoras import BasicPortal, _PortalTester
 from pythagoras._010_basic_portals.basic_portal_core_classes import (
-    get_active_portal
+    get_current_active_portal
     , get_number_of_known_portals
     , get_number_of_portals_in_active_stack
     , get_most_recently_created_portal
@@ -20,7 +20,7 @@ def test_portal_tester_no_params(tmpdir):
         portal2 = BasicPortal(tmpdir)
         portal2.__enter__()
         assert get_number_of_portals_in_active_stack() == 1
-        assert get_active_portal() == portal2
+        assert get_current_active_portal() == portal2
         assert get_most_recently_created_portal() == portal2
         assert get_depth_of_active_portal_stack() == 1
         portal2.__exit__(None, None, None)

@@ -8,7 +8,7 @@ from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
-from .._010_basic_portals import get_active_portal, get_nonactive_portals
+from .._010_basic_portals import get_current_active_portal, get_nonactive_portals
 from .._800_signatures_and_converters import get_hash_signature, get_node_signature
 
 from .._010_basic_portals.basic_portal_core_classes import (
@@ -30,7 +30,7 @@ def get_active_data_portal() -> DataPortal:
     Raises:
         TypeError: If the active portal is not an instance of DataPortal.
     """
-    portal = get_active_portal()
+    portal = get_current_active_portal()
     if not isinstance(portal, DataPortal):
         raise TypeError(f"Active portal must be DataPortal, got {type(portal).__name__}")
     return portal
@@ -125,6 +125,19 @@ class DataPortal(OrdinaryCodePortal):
 
         self._auxiliary_config_params_at_init["p_consistency_checks"
             ] = p_consistency_checks
+
+        node_config_prototype = self._root_dict.get_subdict("node_cfg")
+        node_config_prototype = (
+            node_config_prototype.get_subdict(get_node_signature()[:8])                              )
+        node_config_params = node_config_prototype.get_params()
+        node_config_params.update(
+            digest_len=0, append_only=False, serialization_format="pkl")
+        node_config_settings = type(self._root_dict)(**node_config_params)
+        self._node_config_settings = node_config_settings
+
+
+        #TODO: refactor
+        self._local_node_store = node_config_settings
 
         value_store_prototype = self._root_dict.get_subdict("value_store")
         value_store_params = value_store_prototype.get_params()
@@ -551,7 +564,7 @@ class ValueAddr(HashAddr):
             if self in portal._value_store:
                 value = portal._value_store[self]
                 get_active_data_portal()._value_store[self] = value
-                new_ids = {portal._str_id, get_active_portal()._str_id}
+                new_ids = {portal._str_id, get_current_active_portal()._str_id}
                 self._containing_portals |= new_ids
                 self._value_cache = value
                 return True
@@ -572,16 +585,16 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if get_active_portal()._str_id in self._containing_portals:
+            if get_current_active_portal()._str_id in self._containing_portals:
                 return self._value_cache
             else:
                 get_active_data_portal()._value_store[self] = self._value_cache
-                self._containing_portals |= {get_active_portal()._str_id}
+                self._containing_portals |= {get_current_active_portal()._str_id}
                 return self._value_cache
 
         value = get_active_data_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals |= {get_active_portal()._str_id}
+        self._containing_portals |= {get_current_active_portal()._str_id}
         return value
 
 
@@ -593,7 +606,7 @@ class ValueAddr(HashAddr):
                 value = portal._value_store[self]
                 get_active_data_portal()._value_store[self] = value
                 self._value_cache = value
-                new_ids = {portal._str_id, get_active_portal()._str_id}
+                new_ids = {portal._str_id, get_current_active_portal()._str_id}
                 self._containing_portals |= new_ids
                 return value
             except:

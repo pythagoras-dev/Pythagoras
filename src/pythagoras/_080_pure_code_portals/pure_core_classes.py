@@ -500,7 +500,7 @@ class PureFnExecutionResultAddr(HashAddr):
     @property
     def _ready_in_active_portal(self):
         """Indicates if the result of the function call is available."""
-        result = (self in get_active_portal()._execution_results)
+        result = (self in get_current_active_portal()._execution_results)
         if result:
             self._ready_cache = True
         return result

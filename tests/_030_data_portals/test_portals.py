@@ -1,5 +1,5 @@
 from pythagoras._010_basic_portals import (
-    get_active_portal
+    get_current_active_portal
     , get_number_of_known_portals
     , get_number_of_portals_in_active_stack
     , get_depth_of_active_portal_stack)
@@ -88,21 +88,21 @@ def test_find_portal_basic(tmpdir):
         portal3 = DataPortal(tmpdir3)
 
         with portal1:
-            assert portal1 is get_active_portal()
+            assert portal1 is get_current_active_portal()
             with portal2:
-                assert portal2 is get_active_portal()
+                assert portal2 is get_current_active_portal()
                 with portal3:
-                    assert portal3 is get_active_portal()
+                    assert portal3 is get_current_active_portal()
 
         with portal1:
-            assert portal1 == get_active_portal()
+            assert portal1 == get_current_active_portal()
             with portal2:
-                assert portal2 == get_active_portal()
+                assert portal2 == get_current_active_portal()
                 with portal2:
-                    assert portal2 == get_active_portal()
+                    assert portal2 == get_current_active_portal()
                     with portal3:
-                        assert portal3 == get_active_portal()
+                        assert portal3 == get_current_active_portal()
                         with portal1:
-                            assert portal1 == get_active_portal()
-                assert portal2 == get_active_portal()
-            assert portal1 == get_active_portal()
+                            assert portal1 == get_current_active_portal()
+                assert portal2 == get_current_active_portal()
+            assert portal1 == get_current_active_portal()
