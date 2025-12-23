@@ -40,4 +40,3 @@ must be performed from a single thread.
 from .post_init_metaclass import *
 from .basic_portal_core_classes import *
 from .portal_tester import _PortalTester
-from .long_infoname import *
