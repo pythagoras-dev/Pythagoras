@@ -45,6 +45,7 @@ def get_number_of_known_portals() -> int:
     Returns:
         The total count of all known portals in the system.
     """
+    _ensure_single_thread()
     global _all_known_portals
     return len(_all_known_portals)
 
@@ -55,6 +56,7 @@ def get_all_known_portals() -> list[BasicPortal]:
     Returns:
         A list containing all portal instances currently known to the system.
     """
+    _ensure_single_thread()
     global _all_known_portals
     return list(_all_known_portals.values())
 
@@ -65,6 +67,7 @@ def get_number_of_portals_in_active_stack() -> int:
     Returns:
         The count of unique portals currently in the active portal stack.
     """
+    _ensure_single_thread()
     global _active_portals_stack
     return len(set(_active_portals_stack))
 
@@ -75,6 +78,7 @@ def get_depth_of_active_portal_stack() -> int:
     Returns:
         The total depth (sum of all counters) of the active portal stack.
     """
+    _ensure_single_thread()
     global _active_portals_counters_stack
     return sum(_active_portals_counters_stack)
 
@@ -85,6 +89,7 @@ def get_most_recently_created_portal() -> BasicPortal | None:
     Returns:
         The most recently created portal instance, or None if no portals exist.
     """
+    _ensure_single_thread()
     global _most_recently_created_portal
     return _most_recently_created_portal
 
