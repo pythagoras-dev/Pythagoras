@@ -8,7 +8,7 @@ from typing import Any
 
 from persidict import replace_unsafe_chars
 
-
+#TODO: decide if it has to be moved to a different place (_020_ordinary_code_portals?)
 def get_long_infoname(x: Any, drop_unsafe_chars: bool = True) -> str:
     """Build a string with extended information about an object and its type.
 
