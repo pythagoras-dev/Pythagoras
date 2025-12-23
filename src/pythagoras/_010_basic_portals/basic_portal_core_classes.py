@@ -614,6 +614,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
 
         Empty the list of portals it has been registered into.
         """
+        _ensure_single_thread()
         global _all_activated_portal_aware_objects
         if not self.is_activated:
             raise RuntimeError(f"Object with id {self._str_id} is not activated")
