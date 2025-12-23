@@ -119,8 +119,7 @@ def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
 
     if not callable(instantiator):
         raise TypeError(
-            f"Default portal instantiator must be callable, got {type(instantiator)}"
-        )
+            f"Default portal instantiator must be callable, got {type(instantiator)}")
     if _default_portal_instantiator is not None:
         raise RuntimeError(
             "Default portal instantiator is already set; "
@@ -151,6 +150,13 @@ def get_active_portal() -> BasicPortal:
     if _most_recently_created_portal is None:
         if _default_portal_instantiator is not None:
             _default_portal_instantiator()
+            if _most_recently_created_portal is None:
+                raise RuntimeError("Default portal instantiator failed to create a portal")
+            elif not isinstance(_most_recently_created_portal, BasicPortal):
+                raise RuntimeError(
+                    f"Default portal instantiator created an object of type "
+                    f"{type(_most_recently_created_portal).__name__}, "
+                    f"expected BasicPortal")
         else:
             raise RuntimeError(
                 "No portal is active and no default portal instantiator was set "
@@ -414,9 +420,11 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         if len(_active_portals_stack) == 0:
             raise RuntimeError(
                 "Portal stack is empty. Cannot exit portal context.")
-        if _active_portals_stack[-1] != self:
+        if _active_portals_stack[-1] is not self:
             raise RuntimeError(
-                "Inconsistent state of the portal stack. Most probably, portal.__enter__() method was called explicitly within a 'with' statement with another portal.")
+                "Inconsistent state of the portal stack. "
+                "Most probably, portal.__enter__() method was called explicitly "
+                "within a 'with' statement with another portal.")
         if _active_portals_counters_stack[-1] == 1:
             _active_portals_stack.pop()
             _active_portals_counters_stack.pop()
