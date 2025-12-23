@@ -30,6 +30,11 @@ class PostInitMeta(ABCMeta):
         `_init_finished=True` to catch incorrect serialization.
         """
         super().__init__(name, bases, dct)
+        if is_dataclass(cls):
+            raise TypeError(
+                f"PostInitMeta cannot be used with dataclass class {cls.__name__} "
+                "because dataclasses already manage __post_init__ with different "
+                "object lifecycle assumptions.")
 
         original_setstate = getattr(cls, '__setstate__', None)
 
@@ -68,8 +73,13 @@ class PostInitMeta(ABCMeta):
                     raise RuntimeError(
                         f"Unsupported pickle state for {cls.__name__}: {state!r}")
 
-                if state_dict is not None and hasattr(self, "__dict__"):
-                    self.__dict__.update(state_dict)
+                if state_dict is not None:
+                    if hasattr(self, "__dict__"):
+                        self.__dict__.update(state_dict)
+                    else:
+                        raise RuntimeError(
+                            f"Cannot restore pickle state for {cls.__name__}: "
+                            f"instance has no __dict__ but state contains a dictionary.")
 
                 if state_slots is not None:
                     for key, value in state_slots.items():
