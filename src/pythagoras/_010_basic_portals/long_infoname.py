@@ -1,3 +1,9 @@
+"""Utility for generating extended object identifiers.
+
+Provides a function to build detailed identifier strings that include
+module, class, and object name information.
+"""
+
 from typing import Any
 
 from persidict import replace_unsafe_chars

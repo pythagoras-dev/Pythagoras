@@ -347,7 +347,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
                 and _active_portals_stack[-1]._str_id == self._str_id)
 
 
-    def get_params(self) -> dict:
+    def get_params(self) -> dict[str,Any]:
         """Get the portal's configuration parameters"""
         params = dict(root_dict=self._root_dict)
         sorted_params = sort_dict_by_keys(params)
@@ -651,10 +651,12 @@ PortalType = TypeVar("PortalType")
 ##################################################
 
 def _visit_portal(obj:Any, portal:BasicPortal) -> None:
+    """Register all PortalAwareClass instances nested within `obj` with `portal`."""
     return _visit_portal_impl(obj, portal=portal)
 
 
 def _visit_portal_impl(obj:Any, portal:BasicPortal, seen=None)->None:
+    """Recursively traverse `obj` and register any PortalAwareClass instances found."""
     if seen is None:
         seen = set()
 

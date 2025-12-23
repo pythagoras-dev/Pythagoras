@@ -1,3 +1,9 @@
+"""Context manager for portal unit testing.
+
+Provides `_PortalTester`, which ensures proper portal initialization
+and cleanup between tests. Not intended for application code.
+"""
+
 from __future__ import annotations
 from .basic_portal_core_classes import (
     BasicPortal, PortalType, _clear_all_portals)

@@ -1,3 +1,9 @@
+"""Metaclass providing a `__post_init__` hook for class initialization.
+
+Enables classes to define a `__post_init__` method that runs automatically
+after `__init__` completes, similar to dataclasses behavior.
+"""
+
 from abc import ABCMeta
 from typing import Any
 

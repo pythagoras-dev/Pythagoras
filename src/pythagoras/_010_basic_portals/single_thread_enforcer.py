@@ -7,12 +7,15 @@ are only accessed from the thread where the portal system was first used.
 from __future__ import annotations
 
 import inspect
+import os
 import threading
 
 # Native (OS-level) id of the thread that first accessed the portal layer
 _portal_native_id: int | None = None
 # Human-readable name of that thread, for diagnostics
 _portal_thread_name: str | None = None
+# Process id where the above thread was registered
+_owner_pid: int | None = None
 
 
 def _ensure_single_thread() -> None:
@@ -22,15 +25,23 @@ def _ensure_single_thread() -> None:
     parallelism.  Each thread that truly needs a portal must create its *own*
     portal instance and never touch portals initialized elsewhere.
     """
-    global _portal_native_id, _portal_thread_name
+    global _portal_native_id, _portal_thread_name, _owner_pid
 
+    curr_pid = os.getpid()
     curr_native_id = threading.get_native_id()
     curr_name = threading.current_thread().name
 
+    if _owner_pid is not None and curr_pid != _owner_pid:
+        # We are in a child process – abandon previous ownership
+        _portal_native_id = None
+        _portal_thread_name = None
+        _owner_pid = None
+
     if _portal_native_id is None:
-        # First use – lock the portal layer to this thread
+        # First use (or first use after fork) – lock the layer to this thread
         _portal_native_id = curr_native_id
         _portal_thread_name = curr_name
+        _owner_pid = curr_pid
         return
 
     if curr_native_id != _portal_native_id:
@@ -44,7 +55,8 @@ def _ensure_single_thread() -> None:
 
 
 def _reset_single_thread_enforcer() -> None:
-    """FOR UNIT TESTS ONLY – re-arm the guard for the current thread."""
-    global _portal_native_id, _portal_thread_name
+    """FOR UNIT TESTS ONLY – re-arm the guard for the current process/thread."""
+    global _portal_native_id, _portal_thread_name, _owner_pid
     _portal_native_id = None
     _portal_thread_name = None
+    _owner_pid = None
