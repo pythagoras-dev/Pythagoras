@@ -657,6 +657,8 @@ def _visit_portal(obj:Any, portal:BasicPortal) -> None:
 
 def _visit_portal_impl(obj:Any, portal:BasicPortal, seen=None)->None:
     """Recursively traverse `obj` and register any PortalAwareClass instances found."""
+    _ensure_single_thread()
+
     if seen is None:
         seen = set()
 
