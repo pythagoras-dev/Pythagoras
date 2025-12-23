@@ -26,7 +26,7 @@ while allowing to work with non-ephemeral storage.
 PersiDict-s are heavily used in Pythagoras.
 
 PortalAwareClass is a base class for classes that use a portal object
-as a context that helps to manage the class' state and behaviour.
+as a context that helps to manage the class' state and behavior.
 PortalAwareClass is also not intended to be used directly. It should
 be subclassed to provide additional functionality.
 
