@@ -6,6 +6,7 @@ pickle restoration.
 """
 import functools
 from abc import ABCMeta
+from dataclasses import is_dataclass
 from typing import Any, Type, TypeVar
 
 T = TypeVar('T')
@@ -90,6 +91,12 @@ class PostInitMeta(ABCMeta):
         added context. If `__new__` returns a different class instance, the hook
         is skipped.
         """
+        if is_dataclass(cls):
+            raise TypeError(
+                f"PostInitMeta cannot be used with dataclass class {cls.__name__} "
+                "because dataclasses already manage __post_init__ with different "
+                "object lifecycle assumptions.")
+
         instance = super().__call__(*args, **kwargs)
         if not isinstance(instance, cls):
             # Skip post-init if __new__ returns instance of different class
