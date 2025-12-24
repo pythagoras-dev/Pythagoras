@@ -10,10 +10,6 @@ However, being a 'window' is not the only thing a portal does. It also
 provides various supporting services that help manage the application's
 state and behavior.
 
-A Pythagoras-based application can have multiple portals.
-There is usually a current active portal, accessible via
-get_active_portal().
-
 BasicPortal is a base class for all portal objects.
 The class is not intended to be used directly.
 Instead, it should be subclassed to provide additional functionality.
@@ -29,6 +25,18 @@ PortalAwareClass is a base class for classes that use a portal object
 as a context that helps to manage the class' state and behavior.
 PortalAwareClass is also not intended to be used directly. It should
 be subclassed to provide additional functionality.
+
+A Pythagoras-based application can have multiple portals.
+A portal becomes active when it is used with a with-statement.
+The most recent portal in a stack of active portals is considered
+the current active portal. get_current_active_portal() function allows to access it.
+It is the portal used by code that is executed inside the with block.
+If there are PortalAwareClass-based objects accessed by the code,
+they will use the current active portal, unless they were explicitly linked
+to a specific portal at the time of creation.
+If there are no active portals at the time when a PortalAwareClass-based
+object needs one it, a default portal will be instantiated in the system and activated.
+
 
 Important Notes
 ---------------
