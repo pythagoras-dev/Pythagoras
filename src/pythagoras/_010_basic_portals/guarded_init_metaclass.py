@@ -1,7 +1,7 @@
-"""Metaclass enforcing `_init_finished` guard and wiring post-creation hooks.
+"""Metaclass enforcing strict initialization and unpickling lifecycles.
 
-Mirrors the dataclass `__post_init__` pattern, extending it with `__post_setstate__`
-for unpickling. Ensures objects are fully initialized before use.
+Ensures objects are fully initialized (`_init_finished=True`) only after `__init__`
+or `__setstate__` completes. Supports `__post_init__` and `__post_setstate__` hooks.
 """
 import functools
 from abc import ABCMeta
@@ -11,40 +11,39 @@ from typing import Any, Type, TypeVar
 T = TypeVar('T')
 
 class GuardedInitMeta(ABCMeta):
-    """Metaclass guarding initialization and wiring post-creation hooks.
+    """Enforces initialization consistency and executes lifecycle hooks.
 
-    Requires `_init_finished = False` in `__init__`. Automatically:
-    - Sets `_init_finished = True` after `__init__` / `__setstate__` completes
-    - Calls `__post_init__` / `__post_setstate__` (if defined) afterwards
+    Contract:
+    - Classes must set `_init_finished = False` at the start of `__init__`.
+    - `_init_finished` is set to `True` only after `__init__` (and optional
+      `__post_init__`) completes.
+    - `__setstate__` is wrapped to ensure `_init_finished=True` is set only after
+      state restoration (and optional `__post_setstate__`).
 
-    Rejects pickles containing `_init_finished=True` to catch incorrect serialization.
+    Prevents access to partially initialized objects and validates pickle integrity.
     """
 
     def __init__(cls, name, bases, dct):
-        """Install `__setstate__` wrapper to enforce the initialization guard."""
+        """Wraps `__setstate__` to inject lifecycle enforcement during unpickling."""
         super().__init__(name, bases, dct)
-        if is_dataclass(cls):
-            raise TypeError(
-                f"GuardedInitMeta cannot be used with dataclass class {cls.__name__} "
-                "because dataclasses already manage __post_init__ with different "
-                "object lifecycle assumptions.")
+        _raise_if_dataclass(cls)
 
         if '__setstate__' in dct:
             original_setstate = dct['__setstate__']
         elif getattr(cls, '__setstate__', None) is not None:
             inherited = getattr(cls, '__setstate__')
-            # Already wrapped by GuardedInitMeta - no need to wrap again
+            # Avoid re-wrapping if the inherited method is already wrapped by this metaclass.
             if getattr(inherited, "__guarded_init_meta_wrapped__", False):
                 return
-            # Inherited raw __setstate__ - must wrap to set _init_finished
+            # Inherited raw __setstate__; must wrap to enforce contract.
             original_setstate = inherited
         else:
-            # No __setstate__ - inject wrapper for default restore + flag
+            # No __setstate__ defined; inject wrapper using default restoration logic.
             original_setstate = None
 
         def setstate_wrapper(self, state):
-            """Restore state, set `_init_finished=True`, call `__post_setstate__`."""
-            # Validate before delegation - super().__setstate__() might set _init_finished
+            """Restore state, set `_init_finished=True`, and call `__post_setstate__`."""
+            # Prevent unpickling of objects that claim to be already initialized.
             candidate_dict = None
             if isinstance(state, dict):
                 candidate_dict = state
@@ -59,7 +58,7 @@ class GuardedInitMeta(ABCMeta):
             if original_setstate is not None:
                 original_setstate(self, state)
             else:
-                # Default restore: handle dict, slots, or both
+                # Default restoration: handle dict state, slots, or both.
                 state_dict: dict | None
                 state_slots: dict | None
 
@@ -97,14 +96,7 @@ class GuardedInitMeta(ABCMeta):
                     try:
                         post_setstate()
                     except Exception as e:
-                        # Re-raise with context; fall back to RuntimeError if needed
-                        try:
-                            new_exc = type(e)(f"Error in __post_setstate__: {e}")
-                        except Exception:
-                            raise RuntimeError(
-                                f"Error in __post_setstate__ (original error: {type(e).__name__}: {e})") from e
-
-                        raise new_exc from e
+                        _re_raise_with_context("__post_setstate__", e)
 
         if original_setstate:
             setstate_wrapper = functools.wraps(original_setstate)(setstate_wrapper)
@@ -114,17 +106,14 @@ class GuardedInitMeta(ABCMeta):
         setattr(cls, '__setstate__', setstate_wrapper)
 
     def __call__(cls: Type[T], *args: Any, **kwargs: Any) -> T:
-        """Create instance, enforce init contract, set flag, call `__post_init__`."""
-        if is_dataclass(cls):
-            raise TypeError(
-                f"GuardedInitMeta cannot be used with dataclass class {cls.__name__} "
-                "because dataclasses already manage __post_init__ with different "
-                "object lifecycle assumptions.")
+        """Create instance, enforce init contract, set flag, and call `__post_init__`."""
+        _raise_if_dataclass(cls)
 
         instance = super().__call__(*args, **kwargs)
         if not isinstance(instance, cls):
-            return instance  # __new__ returned different class - skip hook
+            return instance  # __new__ returned a different class; skip hooks.
 
+        # Verify that __init__ respected the contract (started by setting flag to False).
         if not hasattr(instance, '_init_finished') or instance._init_finished:
             raise RuntimeError(f"Class {cls.__name__} must set attribute "
                                "_init_finished to False in __init__")
@@ -139,12 +128,26 @@ class GuardedInitMeta(ABCMeta):
             try:
                 post_init()
             except Exception as e:
-                # Re-raise with context; fall back to RuntimeError if needed
-                try:
-                    new_exc = type(e)(f"Error in __post_init__: {e}")
-                except Exception:
-                    raise RuntimeError(f"Error in __post_init__ (original error: {type(e).__name__}: {e})") from e
-
-                raise new_exc from e
+                _re_raise_with_context("__post_init__", e)
 
         return instance
+
+
+def _re_raise_with_context(hook_name: str, exc: Exception) -> None:
+    """Re-raise *exc* adding context, preserving type if constructor allows."""
+    try:
+        raise type(exc)(f"Error in {hook_name}: {exc}") from exc
+    except Exception:  # pragma: no cover
+        # Fallback if the exception's constructor signature mismatches.
+        raise RuntimeError(
+            f"Error in {hook_name} (original error: {type(exc).__name__}: {exc})"
+        ) from exc
+
+
+def _raise_if_dataclass(cls: Type) -> None:
+    """Ensure `GuardedInitMeta` is not applied to a dataclass."""
+    if is_dataclass(cls):
+        raise TypeError(
+            f"GuardedInitMeta cannot be used with dataclass class {cls.__name__} "
+            "because dataclasses already manage __post_init__ with different "
+            "object lifecycle assumptions.")
