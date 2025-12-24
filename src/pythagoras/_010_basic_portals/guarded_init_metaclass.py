@@ -67,7 +67,8 @@ class GuardedInitMeta(ABCMeta):
                 elif isinstance(state, dict):
                     state_dict, state_slots = state, None
                 elif (isinstance(state, tuple) and len(state) == 2
-                      and isinstance(state[0], dict)):
+                      and (state[0] is None or isinstance(state[0], dict))
+                      and (state[1] is None or isinstance(state[1], dict))):
                     state_dict, state_slots = state
                 else:
                     raise RuntimeError(

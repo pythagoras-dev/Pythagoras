@@ -1,4 +1,3 @@
-
 import pytest
 import pickle
 from dataclasses import dataclass
@@ -45,6 +44,78 @@ class ErrorPostSetStateClass(metaclass=GuardedInitMeta):
 
     def __post_setstate__(self):
         raise ValueError("Restoration failed")
+
+# --- New Helper Classes ---
+
+class ParentWithSetState(metaclass=GuardedInitMeta):
+    def __init__(self):
+        self._init_finished = False
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('_init_finished', None)
+        return d
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        self.setstate_called = True
+
+class ChildInheritsSetState(ParentWithSetState):
+    pass
+
+class ClassDictOnly(metaclass=GuardedInitMeta):
+    def __init__(self, value):
+        self._init_finished = False
+        self.value = value
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('_init_finished', None)
+        return d
+
+class ClassSlotsOnly(metaclass=GuardedInitMeta):
+    __slots__ = ('value', '_init_finished')
+    def __init__(self, value):
+        self._init_finished = False
+        self.value = value
+    def __getstate__(self):
+        return (None, {'value': self.value})
+
+class ClassDictAndSlots(metaclass=GuardedInitMeta):
+    __slots__ = ('s_val', '_init_finished', '__dict__')
+    def __init__(self, d_val, s_val):
+        self._init_finished = False
+        self.d_val = d_val
+        self.s_val = s_val
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('_init_finished', None)
+        return (d, {'s_val': self.s_val})
+
+class FactoryClass(metaclass=GuardedInitMeta):
+    def __new__(cls):
+        return {"not": "instance"}
+    def __init__(self):
+        self._init_finished = False
+
+class BadPostInitClass(metaclass=GuardedInitMeta):
+    __post_init__ = 123
+    def __init__(self):
+        self._init_finished = False
+
+class BadPostSetStateClass(metaclass=GuardedInitMeta):
+    __post_setstate__ = "foo"
+    def __init__(self):
+        self._init_finished = False
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        d.pop('_init_finished', None)
+        return d
+
+class SlotsMismatchClass(metaclass=GuardedInitMeta):
+    __slots__ = ('x', '_init_finished')
+    def __init__(self):
+        self._init_finished = False
+    def __getstate__(self):
+        # Return a dict to trigger the mismatch error during setstate
+        return {'x': 1}
 
 # --- Tests ---
 
@@ -142,3 +213,65 @@ def test_post_setstate_error():
     
     with pytest.raises(ValueError, match="Error in __post_setstate__"):
         pickle.loads(data)
+
+# --- New Tests ---
+
+def test_inherited_setstate_wrapped_once():
+    """Verify inherited __setstate__ is wrapped only once and behaves correctly."""
+    obj = ChildInheritsSetState()
+    data = pickle.dumps(obj)
+    restored = pickle.loads(data)
+    
+    assert restored._init_finished is True
+    assert getattr(restored, 'setstate_called', False) is True
+    # Verify object identity of the method
+    assert ChildInheritsSetState.__setstate__ is ParentWithSetState.__setstate__
+
+@pytest.mark.parametrize("cls, init_args, check_fn", [
+    (ClassDictOnly, (10,), lambda o: o.value == 10),
+    (ClassSlotsOnly, (20,), lambda o: o.value == 20),
+    (ClassDictAndSlots, (30, 40), lambda o: o.d_val == 30 and o.s_val == 40),
+])
+def test_default_restore_paths(cls, init_args, check_fn):
+    """Cover default restore paths when no __setstate__ is present."""
+    obj = cls(*init_args)
+    assert obj._init_finished is True
+    
+    data = pickle.dumps(obj)
+    restored = pickle.loads(data)
+    
+    assert restored._init_finished is True
+    assert check_fn(restored)
+
+def test_new_returns_non_instance():
+    """Ensure lifecycle hooks are skipped when __new__ returns a non-instance."""
+    obj = FactoryClass()
+    assert isinstance(obj, dict)
+    assert not hasattr(obj, "_init_finished")
+
+def test_reject_non_callable_hooks():
+    """Reject non-callable hooks early."""
+    with pytest.raises(TypeError, match="__post_init__ must be callable"):
+        BadPostInitClass()
+
+    obj = BadPostSetStateClass()
+    data = pickle.dumps(obj)
+    with pytest.raises(TypeError, match="__post_setstate__ must be callable"):
+        pickle.loads(data)
+
+def test_slots_mismatch_guard():
+    """Slots mismatch guard raises RuntimeError."""
+    obj = SlotsMismatchClass()
+    data = pickle.dumps(obj)
+    with pytest.raises(RuntimeError, match="instance has no __dict__"):
+        pickle.loads(data)
+
+def test_dataclass_definition_rejection():
+    """Dataclass rejection at class-definition time."""
+    @dataclass
+    class BaseDataclass:
+        x: int
+
+    with pytest.raises(TypeError, match="GuardedInitMeta cannot be used with dataclass"):
+        class Child(BaseDataclass, metaclass=GuardedInitMeta):
+            pass
