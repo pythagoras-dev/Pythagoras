@@ -104,6 +104,24 @@ class PostInitMeta(ABCMeta):
             if isinstance(self, cls):
                 self._init_finished = True
 
+                post_setstate = getattr(self, "__post_setstate__", None)
+                if post_setstate:
+                    if not callable(post_setstate):
+                        raise TypeError(f"__post_setstate__ must be callable, "
+                                        f"got {self.__post_setstate__!r}")
+                    try:
+                        post_setstate()
+                    except Exception as e:
+                        # Re-raise with context; fall back to RuntimeError if exception type
+                        # doesn't accept a single string argument
+                        try:
+                            new_exc = type(e)(f"Error in __post_setstate__: {e}")
+                        except Exception:
+                            raise RuntimeError(
+                                f"Error in __post_setstate__ (original error: {type(e).__name__}: {e})") from e
+
+                        raise new_exc from e
+
         if original_setstate:
             setstate_wrapper = functools.wraps(original_setstate)(setstate_wrapper)
 
