@@ -242,11 +242,11 @@ class _PortalRegistry(NotPicklableClass):
             portal = self.known_portals[portal_str_id]
         return portal
 
-    def register_activation(self, obj: "PortalAwareClass") -> None:
+    def register_object(self, obj: "PortalAwareClass") -> None:
         """Register an object as activated."""
         self.known_objects[obj._str_id] = obj
 
-    def is_object_activated(self, obj: "PortalAwareClass") -> bool:
+    def is_object_registered(self, obj: "PortalAwareClass") -> bool:
         """Check if an object is currently activated."""
         return obj._str_id in self.known_objects
 
@@ -548,8 +548,9 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
         """Register an object in a portal that the object has not seen before."""
-        _PORTAL_REGISTRY.register_activation(self)
-        self._visited_portals.add(portal._str_id)
+        if not portal._str_id in self._visited_portals:
+            _PORTAL_REGISTRY.register_object(self)
+            self._visited_portals.add(portal._str_id)
 
 
     @property
@@ -608,7 +609,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
     def is_activated(self) -> bool:
         """Return True if the object has been registered in at least one of the portals."""
         if len(self._visited_portals) >=1:
-            if not _PORTAL_REGISTRY.is_object_activated(self):
+            if not _PORTAL_REGISTRY.is_object_registered(self):
                 raise RuntimeError(f"Object with id {self._str_id} is expected to be in the activated objects registry")
             return True
         return False
