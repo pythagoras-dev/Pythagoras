@@ -1,5 +1,6 @@
 import ast
 import inspect
+import textwrap
 from typing import Callable
 import autopep8
 
@@ -139,31 +140,20 @@ def _get_normalized_function_source_impl(
         else:
             raise TypeError(f"a_func must be a callable or a string, got {type(a_func).__name__}")
 
+        code = textwrap.dedent(code)
         code_lines = code.splitlines()
 
-        code_no_empty_lines = []
+        code_clean_version_lines = []
         for line in code_lines:
-            if set(line) <= set(" \t"):
+            if not line.strip():
                 continue
-            code_no_empty_lines.append(line)
+            code_clean_version_lines.append(line)
 
-        # Validate that we have non-empty code
-        if not code_no_empty_lines:
+        if not code_clean_version_lines:
             raise ValueError(f"Cannot normalize empty code for function {a_func_name}")
 
-        # Fix indent for functions that are defined within other functions;
-        # most frequently it is used for tests.
-        first_line_no_indent = code_no_empty_lines[0].lstrip()
-        n_chars_to_remove = len(code_no_empty_lines[0]) - len(first_line_no_indent)
-        chars_to_remove = code_no_empty_lines[0][:n_chars_to_remove]
-        code_clean_version = []
-        for line in code_no_empty_lines:
-            if not line.startswith(chars_to_remove):
-                raise ValueError(f"Inconsistent indentation detected while normalizing function {a_func_name}")
-            cleaned_line = line[n_chars_to_remove:]
-            code_clean_version.append(cleaned_line)
+        code_clean_version = "\n".join(code_clean_version_lines)
 
-        code_clean_version = "\n".join(code_clean_version)
         if a_func_name is None:
             a_func_name = get_function_name_from_source(code_clean_version)
         code_ast = ast.parse(code_clean_version)
