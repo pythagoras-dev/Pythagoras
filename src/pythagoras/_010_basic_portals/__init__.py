@@ -37,7 +37,7 @@ global state that is not protected by locks. All portal operations
 must be performed from a single thread.
 """
 
-from .post_init_metaclass import *
+from .guarded_init_metaclass import *
 from .basic_portal_core_classes import *
 from .default_portal_base_dir import get_default_portal_base_dir
 from .portal_tester import _PortalTester

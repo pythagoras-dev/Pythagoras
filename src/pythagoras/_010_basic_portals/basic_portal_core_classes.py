@@ -17,7 +17,7 @@ from parameterizable import NotPicklableClass
 from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
-from .post_init_metaclass import PostInitMeta
+from .guarded_init_metaclass import GuardedInitMeta
 from .single_thread_enforcer import _ensure_single_thread, _reset_single_thread_enforcer
 from .._800_signatures_and_converters import get_hash_signature
 from .portal_description_helpers import (
@@ -259,7 +259,7 @@ class _PortalRegistry:
 _PORTAL_REGISTRY = _PortalRegistry()
 
 
-class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMeta):
+class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -466,7 +466,7 @@ class BasicPortal(NotPicklableClass,ParameterizableClass, metaclass = PostInitMe
         self._init_finished = False
 
 
-class PortalAwareClass(metaclass = PostInitMeta):
+class PortalAwareClass(metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
     These objects either always work with a currently active portal,
