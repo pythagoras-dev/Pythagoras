@@ -174,6 +174,14 @@ class _PortalRegistry(NotPicklableClass):
     def active_portals_stack_depth(self) -> int:
         return sum(self.active_portals_stack_counters)
 
+    def register_object(self, obj: PortalAwareClass) -> None:
+        """Register an object as activated."""
+        self.known_objects[obj._str_id] = obj
+
+    def is_object_registered(self, obj: PortalAwareClass) -> bool:
+        """Check if an object is currently activated."""
+        return obj._str_id in self.known_objects
+
     def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
         """Record that *obj* (identified by *obj_id*) is linked to *portal*.
 
@@ -182,9 +190,8 @@ class _PortalRegistry(NotPicklableClass):
         """
         obj_id = obj._str_id
         portal_id = portal._str_id
-        self.links_from_objects_to_portals[obj_id] = portal_id
-        #TODO: should we do some registration / activation here?
         self.known_objects[obj_id] = obj
+        self.links_from_objects_to_portals[obj_id] = portal_id
 
 
     def count_linked_objects(self) -> int:
@@ -226,30 +233,6 @@ class _PortalRegistry(NotPicklableClass):
             obj = self.known_objects.get(obj_id)
             result.append(obj)
         return result
-
-    def fetch_linked_portal(self, obj: PortalAwareClass) -> BasicPortal | None:
-        """Get the portal linked to the object, handling lazy registration."""
-        portal = None
-        if (obj._linked_portal_at_init is not None
-                and obj._str_id not in self.links_from_objects_to_portals):
-            self.register_linked_object(
-                obj._str_id, obj._linked_portal_at_init, obj)
-            obj._visit_portal(obj._linked_portal_at_init)
-            portal = obj._linked_portal_at_init
-        elif obj._str_id in self.links_from_objects_to_portals:
-            portal_str_id = self.links_from_objects_to_portals[obj._str_id]
-            if not isinstance(portal_str_id, str):
-                raise TypeError(f"Expected portal_str_id to be str, got {type(portal_str_id).__name__}")
-            portal = self.known_portals[portal_str_id]
-        return portal
-
-    def register_object(self, obj: PortalAwareClass) -> None:
-        """Register an object as activated."""
-        self.known_objects[obj._str_id] = obj
-
-    def is_object_registered(self, obj: PortalAwareClass) -> bool:
-        """Check if an object is currently activated."""
-        return obj._str_id in self.known_objects
 
 
 # Singleton instance used by the rest of the module
@@ -461,6 +444,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         self._root_dict = None
         self._entropy_infuser = None
         self._init_finished = False
+        _PORTAL_REGISTRY.known_portals.pop(self._str_id, None)
 
 
 class PortalAwareClass(metaclass = GuardedInitMeta):
@@ -517,7 +501,11 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         this portal every time the object's methods are called.
         If it's None, the object will never try to change the active portal.
         """
-        return _PORTAL_REGISTRY.fetch_linked_portal(self)
+
+        linked_portal =  self._linked_portal_at_init
+        if linked_portal is not None:
+            self._visit_portal(linked_portal)
+        return linked_portal
 
 
     @property
@@ -549,12 +537,21 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
         """Register an object in a portal that the object has not seen before."""
+        if not self._init_finished:
+            raise RuntimeError("Object is not fully initialized yet, "
+                               "_first_visit_to_portal() can't be called.")
         if portal._str_id in self._visited_portals:
             raise RuntimeError(
                 f"Object with id {self._str_id} has already been visited "
-                "and registered in portal {portal._str_id}")
-        _PORTAL_REGISTRY.register_object(self)
+                f"and registered in portal {portal._str_id}")
+
         self._visited_portals.add(portal._str_id)
+
+        if self._linked_portal_at_init is not None:
+            _PORTAL_REGISTRY.register_linked_object(
+                self._linked_portal_at_init, self)
+        else:
+            _PORTAL_REGISTRY.register_object(self)
 
 
     @property
