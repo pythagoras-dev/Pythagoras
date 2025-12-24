@@ -154,11 +154,16 @@ class GuardedInitMeta(ABCMeta):
 
 
 def _re_raise_with_context(hook_name: str, exc: Exception) -> None:
-    """Re-raise an exception with added context, preserving type if possible."""
+    """Re-raise an exception with added context, preserving type if possible.
+
+    Attempts to instantiate a new exception of the same type with an augmented
+    message. If the exception constructor is incompatible (e.g., does not accept
+    a single string), a RuntimeError is raised instead.
+    """
     try:
         new_exc = type(exc)(f"Error in {hook_name}: {exc}")
-    except Exception:  # pragma: no cover
-        # Fallback if constructor signature mismatch.
+    except Exception:
+        # Fallback if exception constructor does not work with one string argument.
         raise RuntimeError(
             f"Error in {hook_name} (original error: {type(exc).__name__}: {exc})"
         ) from exc
@@ -167,7 +172,16 @@ def _re_raise_with_context(hook_name: str, exc: Exception) -> None:
 
 
 def _raise_if_dataclass(cls: Type) -> None:
-    """Forbid application to dataclasses (incompatible lifecycle)."""
+    """Forbid application to dataclasses (incompatible lifecycle).
+
+    This check is performed in two places:
+    1. In `GuardedInitMeta.__init__`: Detects if the class inherits from an
+       existing dataclass. This allows failing early at class definition time.
+    2. In `GuardedInitMeta.__call__`: Detects if the class itself was decorated
+       with `@dataclass`. Since the decorator runs after the metaclass
+       `__init__`, the first check misses this case, so we must catch it
+       during instantiation.
+    """
     if is_dataclass(cls):
         raise TypeError(
             f"GuardedInitMeta cannot be used with dataclass class {cls.__name__} "
