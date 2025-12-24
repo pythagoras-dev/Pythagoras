@@ -92,6 +92,13 @@ class _PortalRegistry(NotPicklableClass):
 
     def unregister_portal(self, portal: BasicPortal) -> None:
         """Remove *portal* from the registry."""
+        portal_id_to_remove = portal._str_id
+        all_links = list(self.links_from_objects_to_portals.items())
+        for obj_id, portal_id in all_links:
+            if portal_id == portal_id_to_remove:
+                obj = self.known_objects[obj_id]
+                obj._clear()
+
         self.known_portals.pop(portal._str_id, None)
         if self.most_recently_created_portal is portal:
             self.most_recently_created_portal = None
@@ -456,15 +463,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         if not self._init_finished:
             return  # Already cleared or never initialized
 
-        this_portal_id = self._str_id
-        links_from_objects_to_portals = list(_PORTAL_REGISTRY.links_from_objects_to_portals.items())
-
-        for obj_id, portal_id in links_from_objects_to_portals:
-            if portal_id == this_portal_id:
-                object = _PORTAL_REGISTRY.known_objects[obj_id]
-                object._clear()
-
-        _PORTAL_REGISTRY.known_portals.pop(self._str_id, None)
+        _PORTAL_REGISTRY.unregister_portal(self)
 
         self._invalidate_cache()
         self._root_dict = None
