@@ -490,6 +490,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
                 current active portals for operations.
         """
         _ensure_single_thread()
+        self._init_finished = False
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal_at_init = portal
