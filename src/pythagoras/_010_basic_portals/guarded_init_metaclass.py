@@ -45,8 +45,8 @@ def _restore_dict_state(instance: Any, state_dict: dict, cls_name: str) -> None:
             f"instance has no __dict__ but state contains a dictionary.")
 
 
-def _restore_slots_state(instance: Any, state_slots: dict) -> None:
-    """Restore slot values using `setattr`."""
+def _restore_slots_state(instance: Any, state_slots: dict[str,Any]) -> None:
+    """Restore slot values using `setattr`. Assumes slots are valid attributes."""
     for key, value in state_slots.items():
         setattr(instance, key, value)
 
