@@ -496,6 +496,7 @@ class PortalAwareClass(metaclass = PostInitMeta):
         self._linked_portal_at_init = portal
         # self._hash_id_cache = None
         self._visited_portals = set()
+        self._init_finished = False
 
 
     def __post_init__(self):
