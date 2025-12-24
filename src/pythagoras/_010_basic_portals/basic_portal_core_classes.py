@@ -649,7 +649,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         """
         if not self._init_finished:
             return  # Already cleared or never initialized
-        _PORTAL_REGISTRY.unregister_portal(self)
+        _PORTAL_REGISTRY.unregister_object(self)
         self._invalidate_cache()
         self._visited_portals = set()
         self._init_finished = False
