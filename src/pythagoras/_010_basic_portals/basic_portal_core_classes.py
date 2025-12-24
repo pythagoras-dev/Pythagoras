@@ -562,6 +562,9 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
         It's an internal hash used by Pythagoras and is different from .__hash__()
         """
+        if not self._init_finished:
+            raise RuntimeError("Object is not fully initialized yet, "
+                               "_str_id is not available.")
         if not hasattr(self, "_str_id_cache"):
             self._str_id_cache = PAwareObjectStrID(get_hash_signature(self))
         return self._str_id_cache
