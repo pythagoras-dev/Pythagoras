@@ -59,16 +59,16 @@ class _PortalRegistry(NotPicklableClass):
 
     def __init__(self) -> None:
         _ensure_single_thread()
-        self.known_portals: dict[PortalStrID, "BasicPortal"] = {}
-        self.active_stack: list["BasicPortal"] = []
+        self.known_portals: dict[PortalStrID, BasicPortal] = {}
+        self.active_stack: list[BasicPortal] = []
         self.active_counters: list[int] = []
-        self.most_recently_created: "BasicPortal | None" = None
-        self.links_obj2portal: dict[PAwareObjectStrID, PortalStrID] = {}
-        self.activated_objects: dict[PAwareObjectStrID, "PortalAwareClass"] = {}
+        self.most_recently_created: BasicPortal | None = None
+        self.links_from_objects_to_portals: dict[PAwareObjectStrID, PortalStrID] = {}
+        self.activated_objects: dict[PAwareObjectStrID, PortalAwareClass] = {}
         self.default_portal_instantiator: Callable[[], None] | None = None
 
 
-    def register_default_instantiator(self, instantiator: Callable[[], None]) -> None:
+    def register_default_portal_instantiator(self, instantiator: Callable[[], None]) -> None:
         """Register a callable that creates (and usually enters) the default portal."""
         _ensure_single_thread()
         if not callable(instantiator):
@@ -96,7 +96,7 @@ class _PortalRegistry(NotPicklableClass):
     def all_portals(self) -> list["BasicPortal"]:
         return list(self.known_portals.values())
 
-    def push_active(self, portal: "BasicPortal") -> None:
+    def push_new_active_portal(self, portal: "BasicPortal") -> None:
         """Put *portal* on top of the active-stack, handling re-entrancy."""
         _ensure_single_thread()
         if not portal._str_id in self.known_portals:
@@ -110,7 +110,7 @@ class _PortalRegistry(NotPicklableClass):
         if len(self.active_stack) != len(self.active_counters):
             raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
 
-    def pop_active(self, portal: "BasicPortal") -> None:
+    def pop_active_portal(self, portal: "BasicPortal") -> None:
         """Remove the current active portal, keeping the stack consistent."""
         _ensure_single_thread()
         if not portal._str_id in self.known_portals:
@@ -129,7 +129,7 @@ class _PortalRegistry(NotPicklableClass):
             raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
 
 
-    def current_active(self) -> "BasicPortal":
+    def current_active_portal(self) -> "BasicPortal":
         """Get the currently active portal object.
 
         The active portal is the one that was most recently entered
@@ -168,30 +168,26 @@ class _PortalRegistry(NotPicklableClass):
         return (len(self.active_stack) > 0
                 and self.active_stack[-1]._str_id == portal._str_id)
 
-    def unique_active_count(self) -> int:
+    def unique_active_portals_count(self) -> int:
         return len(set(self.active_stack))
 
-    def active_stack_depth(self) -> int:
+    def active_portals_stack_depth(self) -> int:
         return sum(self.active_counters)
 
-    def link_object(self, portal: "BasicPortal", obj:PortalAwareClass) -> None:
+    def register_linked_object(self, portal: "BasicPortal", obj:PortalAwareClass) -> None:
         """Record that *obj* (identified by *obj_id*) is linked to *portal*.
 
         An object being linked to a portal means that it will use that portal
         for all its operations unless explicitly told otherwise.
         """
         obj_id = obj._str_id
-        self.links_obj2portal[obj_id] = portal._str_id
+        self.links_from_objects_to_portals[obj_id] = portal._str_id
         #TODO: should we do some registration / activation here?
         self.activated_objects[obj_id] = obj #TOFIX
 
-    def unlink_object(self, obj_id: PAwareObjectStrID) -> None:
-        """Remove any association between the object and its portal."""
-        self.links_obj2portal.pop(obj_id, None)
-        self.activated_objects.pop(obj_id, None) #TOFIX
 
     def count_linked_objects(self) -> int:
-        return len(self.links_obj2portal)
+        return len(self.links_from_objects_to_portals)
 
     def clear(self) -> None:
         """Erase every stored entry – mainly for unit-test clean-up."""
@@ -199,16 +195,16 @@ class _PortalRegistry(NotPicklableClass):
         self.active_stack.clear()
         self.active_counters.clear()
         self.most_recently_created = None
-        self.links_obj2portal.clear()
+        self.links_from_objects_to_portals.clear()
         self.activated_objects.clear()
         self.default_portal_instantiator = None
 
 
-    def linked_object_ids(self
-            , portal: "BasicPortal"
+    def linked_objects_ids(self
+            , portal: BasicPortal
             , target_class: type | None = None) -> set[PAwareObjectStrID]:
         """Get IDs of objects linked to the specified portal, optionally filtered by class."""
-        obj_ids = (o for o, p in self.links_obj2portal.items() if p == portal._str_id)
+        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal._str_id)
 
         if target_class is None:
             return set(obj_ids)
@@ -223,7 +219,7 @@ class _PortalRegistry(NotPicklableClass):
             , portal: "BasicPortal"
             , target_class: type | None = None) -> list["PortalAwareClass"]:
         """Get objects linked to the specified portal, optionally filtered by class."""
-        obj_ids = self.linked_object_ids(portal, target_class)
+        obj_ids = self.linked_objects_ids(portal, target_class)
         result = []
         for obj_id in obj_ids:
             obj = self.activated_objects.get(obj_id)
@@ -234,13 +230,13 @@ class _PortalRegistry(NotPicklableClass):
         """Get the portal linked to the object, handling lazy registration."""
         portal = None
         if (obj._linked_portal_at_init is not None
-                and obj._str_id not in self.links_obj2portal):
-            self.link_object(
+                and obj._str_id not in self.links_from_objects_to_portals):
+            self.register_linked_object(
                 obj._str_id, obj._linked_portal_at_init, obj)
             obj._visit_portal(obj._linked_portal_at_init)
             portal = obj._linked_portal_at_init
-        elif obj._str_id in self.links_obj2portal:
-            portal_str_id = self.links_obj2portal[obj._str_id]
+        elif obj._str_id in self.links_from_objects_to_portals:
+            portal_str_id = self.links_from_objects_to_portals[obj._str_id]
             if not isinstance(portal_str_id, str):
                 raise TypeError(f"Expected portal_str_id to be str, got {type(portal_str_id).__name__}")
             portal = self.known_portals[portal_str_id]
@@ -334,7 +330,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
             A set of string IDs representing objects linked to this portal,
             optionally filtered by the specified target class.
         """
-        return _PORTAL_REGISTRY.linked_object_ids(self, target_class)
+        return _PORTAL_REGISTRY.linked_objects_ids(self, target_class)
 
 
     def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
@@ -445,14 +441,14 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
     def __enter__(self):
         """Set the portal as the active one and add it to the stack"""
-        _PORTAL_REGISTRY.push_active(self)
+        _PORTAL_REGISTRY.push_new_active_portal(self)
         return self
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         """Pop the portal from the stack of active ones"""
         _ensure_single_thread()
-        _PORTAL_REGISTRY.pop_active(self)
+        _PORTAL_REGISTRY.pop_active_portal(self)
 
 
     def _clear(self) -> None:
@@ -507,7 +503,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         during initialization, establishing the connection between the object and portal.
         """
         if self._linked_portal_at_init is not None:
-            _PORTAL_REGISTRY.link_object(
+            _PORTAL_REGISTRY.register_linked_object(
                 self._linked_portal_at_init, self)
             self._first_visit_to_portal(self._linked_portal_at_init)
 
@@ -626,8 +622,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         _ensure_single_thread()
         if not self.is_activated:
             raise RuntimeError(f"Object with id {self._str_id} is not activated")
-        
-        _PORTAL_REGISTRY.unlink_object(self._str_id)
+
         self._invalidate_cache()
         self._visited_portals = set()
 
@@ -675,7 +670,7 @@ def get_number_of_portals_in_active_stack() -> int:
     Returns:
         The count of unique portals currently in the active portal stack.
     """
-    return _PORTAL_REGISTRY.unique_active_count()
+    return _PORTAL_REGISTRY.unique_active_portals_count()
 
 
 def get_depth_of_active_portal_stack() -> int:
@@ -684,7 +679,7 @@ def get_depth_of_active_portal_stack() -> int:
     Returns:
         The total depth (sum of all counters) of the active portal stack.
     """
-    return _PORTAL_REGISTRY.active_stack_depth()
+    return _PORTAL_REGISTRY.active_portals_stack_depth()
 
 
 def get_most_recently_created_portal() -> BasicPortal | None:
@@ -720,7 +715,7 @@ def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
     RuntimeError
         If a default instantiator has already been registered.
     """
-    _PORTAL_REGISTRY.register_default_instantiator(instantiator)
+    _PORTAL_REGISTRY.register_default_portal_instantiator(instantiator)
 
 
 def get_current_active_portal() -> BasicPortal:
@@ -735,7 +730,7 @@ def get_current_active_portal() -> BasicPortal:
     Returns:
         The current active portal.
     """
-    return _PORTAL_REGISTRY.current_active()
+    return _PORTAL_REGISTRY.current_active_portal()
 
 
 def get_nonactive_portals() -> list[BasicPortal]:
