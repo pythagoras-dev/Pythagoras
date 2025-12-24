@@ -37,7 +37,7 @@ PAwareObjectStrID = NewType("PAwareObjectStrID", str)
 class _PortalRegistry(NotPicklableClass):
     """
     A container for every piece of mutable “portal bookkeeping”
-    needed by Pythagoras.
+    needed by Pythagoras. It maintains the current state of Pythagoras.
 
     Stored data
     -----------
@@ -516,6 +516,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
             _PORTAL_REGISTRY.register_linked_object(
                 self._linked_portal_at_init, self)
             self._first_visit_to_portal(self._linked_portal_at_init)
+
 
 
     @property
