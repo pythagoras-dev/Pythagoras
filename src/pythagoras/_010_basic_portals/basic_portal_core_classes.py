@@ -28,6 +28,7 @@ from .default_portal_base_dir import get_default_portal_base_dir
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
 _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
+MAX_NESTED_PORTALS = 128
 
 
 PortalStrID = NewType("PortalStrID", str)
@@ -112,6 +113,8 @@ class _PortalRegistry(NotPicklableClass):
     def push_new_active_portal(self, portal: BasicPortal) -> None:
         """Put *portal* on top of the active-stack, handling re-entrancy."""
         _ensure_single_thread()
+        if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
+            raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
         if not portal._str_id in self.known_portals:
             raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
         if self.active_portals_stack and self.active_portals_stack[-1] is portal:
