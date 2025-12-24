@@ -84,7 +84,7 @@ class _PortalRegistry(NotPicklableClass):
         self.default_portal_instantiator = instantiator
 
 
-    def register_portal(self, portal: "BasicPortal") -> None:
+    def register_portal(self, portal: BasicPortal) -> None:
         """Add *portal* to the registry and remember it as the most recent one."""
         _ensure_single_thread()
         self.known_portals[portal._str_id] = portal
@@ -93,10 +93,10 @@ class _PortalRegistry(NotPicklableClass):
     def count_known_portals(self) -> int:
         return len(self.known_portals)
 
-    def all_portals(self) -> list["BasicPortal"]:
+    def all_portals(self) -> list[BasicPortal]:
         return list(self.known_portals.values())
 
-    def push_new_active_portal(self, portal: "BasicPortal") -> None:
+    def push_new_active_portal(self, portal: BasicPortal) -> None:
         """Put *portal* on top of the active-stack, handling re-entrancy."""
         _ensure_single_thread()
         if not portal._str_id in self.known_portals:
@@ -110,7 +110,7 @@ class _PortalRegistry(NotPicklableClass):
         if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
             raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
 
-    def pop_active_portal(self, portal: "BasicPortal") -> None:
+    def pop_active_portal(self, portal: BasicPortal) -> None:
         """Remove the current active portal, keeping the stack consistent."""
         _ensure_single_thread()
         if not portal._str_id in self.known_portals:
@@ -129,7 +129,7 @@ class _PortalRegistry(NotPicklableClass):
             raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
 
 
-    def current_active_portal(self) -> "BasicPortal":
+    def current_active_portal(self) -> BasicPortal:
         """Get the currently active portal object.
 
         The active portal is the one that was most recently entered
@@ -163,7 +163,7 @@ class _PortalRegistry(NotPicklableClass):
         self.active_portals_stack_counters.append(1)
         return self.most_recently_created_portal
 
-    def is_current_active_portal(self, portal: "BasicPortal") -> bool:
+    def is_current_active_portal(self, portal: BasicPortal) -> bool:
         """Check if *portal* is the currently active one."""
         return (len(self.active_portals_stack) > 0
                 and self.active_portals_stack[-1]._str_id == portal._str_id)
@@ -174,7 +174,7 @@ class _PortalRegistry(NotPicklableClass):
     def active_portals_stack_depth(self) -> int:
         return sum(self.active_portals_stack_counters)
 
-    def register_linked_object(self, portal: "BasicPortal", obj:PortalAwareClass) -> None:
+    def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
         """Record that *obj* (identified by *obj_id*) is linked to *portal*.
 
         An object being linked to a portal means that it will use that portal
@@ -216,8 +216,8 @@ class _PortalRegistry(NotPicklableClass):
         return result
 
     def linked_objects(self
-            , portal: "BasicPortal"
-            , target_class: type | None = None) -> list["PortalAwareClass"]:
+            , portal: BasicPortal
+            , target_class: type | None = None) -> list[PortalAwareClass]:
         """Get objects linked to the specified portal, optionally filtered by class."""
         obj_ids = self.linked_objects_ids(portal, target_class)
         result = []
@@ -226,7 +226,7 @@ class _PortalRegistry(NotPicklableClass):
             result.append(obj)
         return result
 
-    def fetch_linked_portal(self, obj: "PortalAwareClass") -> "BasicPortal | None":
+    def fetch_linked_portal(self, obj: PortalAwareClass) -> BasicPortal | None:
         """Get the portal linked to the object, handling lazy registration."""
         portal = None
         if (obj._linked_portal_at_init is not None
@@ -242,11 +242,11 @@ class _PortalRegistry(NotPicklableClass):
             portal = self.known_portals[portal_str_id]
         return portal
 
-    def register_object(self, obj: "PortalAwareClass") -> None:
+    def register_object(self, obj: PortalAwareClass) -> None:
         """Register an object as activated."""
         self.known_objects[obj._str_id] = obj
 
-    def is_object_registered(self, obj: "PortalAwareClass") -> bool:
+    def is_object_registered(self, obj: PortalAwareClass) -> bool:
         """Check if an object is currently activated."""
         return obj._str_id in self.known_objects
 
