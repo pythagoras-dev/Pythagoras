@@ -34,7 +34,7 @@ PortalStrID = NewType("PortalStrID", str)
 PAwareObjectStrID = NewType("PAwareObjectStrID", str)
 
 
-class _PortalRegistry:
+class _PortalRegistry(NotPicklableClass):
     """
     A container for every piece of mutable “portal bookkeeping”
     needed by Pythagoras.
@@ -474,7 +474,6 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
     time their methods are called.
     """
 
-    # _linked_portal: BasicPortal | None
     _linked_portal_at_init: BasicPortal|None
     _hash_id_cache: PAwareObjectStrID
     _visited_portals: set[str] | None
