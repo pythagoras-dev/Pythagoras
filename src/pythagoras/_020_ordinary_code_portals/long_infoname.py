@@ -5,10 +5,11 @@ module, class, and object name information.
 """
 
 from typing import Any
+import functools
 
 from persidict import replace_unsafe_chars
 
-#TODO: decide if it has to be moved to a different place (_020_ordinary_code_portals?)
+
 def get_long_infoname(x: Any, drop_unsafe_chars: bool = True) -> str:
     """Build a string with extended information about an object and its type.
 
@@ -27,17 +28,44 @@ def get_long_infoname(x: Any, drop_unsafe_chars: bool = True) -> str:
         characters are replaced with underscores if drop_unsafe_chars is True.
     """
 
-    name = str(type(x).__module__)
+    if isinstance(x, (functools.partial, functools.partialmethod)):
+        name = get_long_infoname(x.func, drop_unsafe_chars=drop_unsafe_chars)
+        name += "_" + type(x).__name__
+        if drop_unsafe_chars:
+            name = replace_unsafe_chars(name, replace_with="_")
+        return name
 
-    if hasattr(type(x), "__qualname__"):
-        name += "." + str(type(x).__qualname__)
-    else:
-        name += "." + str(type(x).__name__)
+    def _safe_getattr(obj, name):
+        try:
+            return getattr(obj, name, None)
+        except Exception:
+            return None
 
-    if hasattr(x, "__qualname__"):
-        name += "_" + str(x.__qualname__)
-    elif hasattr(x, "__name__"):
-        name += "_" + str(x.__name__)
+    type_x = type(x)
+
+    module = _safe_getattr(x, "__module__")
+    if module is None:
+        module = _safe_getattr(type_x, "__module__")
+
+    type_name = _safe_getattr(type_x, "__qualname__")
+    if type_name is None:
+        type_name = _safe_getattr(type_x, "__name__")
+
+    obj_name = _safe_getattr(x, "__qualname__")
+    if obj_name is None:
+        obj_name = _safe_getattr(x, "__name__")
+
+    name = ""
+    if module:
+        name += str(module)
+
+    if type_name:
+        if name:
+            name += "."
+        name += str(type_name)
+
+    if obj_name:
+        name += "_" + str(obj_name)
 
     if drop_unsafe_chars:
         name = replace_unsafe_chars(name, replace_with="_")
