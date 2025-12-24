@@ -136,12 +136,14 @@ class GuardedInitMeta(ABCMeta):
 def _re_raise_with_context(hook_name: str, exc: Exception) -> None:
     """Re-raise *exc* adding context, preserving type if constructor allows."""
     try:
-        raise type(exc)(f"Error in {hook_name}: {exc}") from exc
+        new_exc = type(exc)(f"Error in {hook_name}: {exc}")
     except Exception:  # pragma: no cover
         # Fallback if the exception's constructor signature mismatches.
         raise RuntimeError(
             f"Error in {hook_name} (original error: {type(exc).__name__}: {exc})"
         ) from exc
+    
+    raise new_exc from exc
 
 
 def _raise_if_dataclass(cls: Type) -> None:
