@@ -3,19 +3,25 @@
 Provides a function to build detailed identifier strings that include
 module, class, and object name information.
 """
-
-from typing import Any
+import types
+from typing import Any, Union
 import functools
 
 from persidict import replace_unsafe_chars
+
+
+def _safe_getattr(obj: Any, name:str):
+    try:
+        return getattr(obj, name, None)
+    except Exception:
+        return None
 
 
 def get_long_infoname(x: Any, drop_unsafe_chars: bool = True) -> str:
     """Build a string with extended information about an object and its type.
 
     Creates a detailed identifier string that includes the module, class name,
-    and object name (if available) of the given object. This is useful for
-    creating unique identifiers for objects in the Pythagoras system.
+    and object name (if available) of the given object.
 
     Args:
         x: The object for which to generate the information string.
@@ -27,47 +33,29 @@ def get_long_infoname(x: Any, drop_unsafe_chars: bool = True) -> str:
         its module, class name, and object name (when available). Unsafe
         characters are replaced with underscores if drop_unsafe_chars is True.
     """
+    if x is None:
+        return "builtins.NoneType"
+    if isinstance(x, (int, str, float, bool, bytes)):
+        return "builtins." + type(x).__name__
 
     if isinstance(x, (functools.partial, functools.partialmethod)):
-        name = get_long_infoname(x.func, drop_unsafe_chars=drop_unsafe_chars)
-        name += "_" + type(x).__name__
-        if drop_unsafe_chars:
-            name = replace_unsafe_chars(name, replace_with="_")
-        return name
-
-    def _safe_getattr(obj, name):
-        try:
-            return getattr(obj, name, None)
-        except Exception:
-            return None
+        base = get_long_infoname(x.func, drop_unsafe_chars=False)
+        name = f"{base}_{type(x).__name__}"
+        return replace_unsafe_chars(name, replace_with="_") if drop_unsafe_chars else name
 
     type_x = type(x)
 
-    module = _safe_getattr(x, "__module__")
-    if module is None:
-        module = _safe_getattr(type_x, "__module__")
+    module = _safe_getattr(x, "__module__") or _safe_getattr(type_x, "__module__")
+    type_name = _safe_getattr(type_x, "__qualname__") or _safe_getattr(type_x, "__name__")
+    obj_name = _safe_getattr(x, "__qualname__") or _safe_getattr(x, "__name__")
 
-    type_name = _safe_getattr(type_x, "__qualname__")
-    if type_name is None:
-        type_name = _safe_getattr(type_x, "__name__")
-
-    obj_name = _safe_getattr(x, "__qualname__")
-    if obj_name is None:
-        obj_name = _safe_getattr(x, "__name__")
-
-    name = ""
-    if module:
-        name += str(module)
-
-    if type_name:
-        if name:
-            name += "."
-        name += str(type_name)
-
-    if obj_name:
-        name += "_" + str(obj_name)
+    parts = [part for part in [module, type_name, obj_name] if part]
+    if not parts:
+        long_name = repr(type_x)
+    else:
+        long_name = ".".join(parts)
 
     if drop_unsafe_chars:
-        name = replace_unsafe_chars(name, replace_with="_")
+        long_name = replace_unsafe_chars(long_name, replace_with="_")
 
-    return name
+    return long_name
