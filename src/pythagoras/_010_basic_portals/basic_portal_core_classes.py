@@ -181,9 +181,10 @@ class _PortalRegistry(NotPicklableClass):
         for all its operations unless explicitly told otherwise.
         """
         obj_id = obj._str_id
-        self.links_from_objects_to_portals[obj_id] = portal._str_id
+        portal_id = portal._str_id
+        self.links_from_objects_to_portals[obj_id] = portal_id
         #TODO: should we do some registration / activation here?
-        self.known_objects[obj_id] = obj #TOFIX
+        self.known_objects[obj_id] = obj
 
 
     def count_linked_objects(self) -> int:
@@ -548,9 +549,12 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
         """Register an object in a portal that the object has not seen before."""
-        if not portal._str_id in self._visited_portals:
-            _PORTAL_REGISTRY.register_object(self)
-            self._visited_portals.add(portal._str_id)
+        if portal._str_id in self._visited_portals:
+            raise RuntimeError(
+                f"Object with id {self._str_id} has already been visited "
+                "and registered in portal {portal._str_id}")
+        _PORTAL_REGISTRY.register_object(self)
+        self._visited_portals.add(portal._str_id)
 
 
     @property
