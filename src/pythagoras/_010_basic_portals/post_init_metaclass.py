@@ -36,7 +36,23 @@ class PostInitMeta(ABCMeta):
                 "because dataclasses already manage __post_init__ with different "
                 "object lifecycle assumptions.")
 
-        original_setstate = getattr(cls, '__setstate__', None)
+        # Check if class explicitly defines __setstate__
+        if '__setstate__' in dct:
+            original_setstate = dct['__setstate__']
+        # If not defined, check if it inherits one
+        elif getattr(cls, '__setstate__', None) is not None:
+            inherited = getattr(cls, '__setstate__')
+            # If the inherited method is already wrapped by PostInitMeta,
+            # it guarantees _init_finished will be set. We can skip wrapping.
+            if getattr(inherited, "_post_init_meta_wrapped", False):
+                return
+            # Otherwise, we are inheriting a raw/foreign __setstate__.
+            # We must wrap it to ensure _init_finished gets set.
+            original_setstate = inherited
+        else:
+            # No definition and no inheritance.
+            # We must inject a wrapper to handle default restore and flag.
+            original_setstate = None
 
         def setstate_wrapper(self, state):
             # Check for illegal state before delegation to avoid seeing the
@@ -53,7 +69,7 @@ class PostInitMeta(ABCMeta):
                 raise RuntimeError(
                     f"{cls.__name__} must not be pickled with _init_finished=True")
 
-            if original_setstate:
+            if original_setstate is not None:
                 original_setstate(self, state)
             else:
                 # --------------------------------------------------------------
@@ -85,11 +101,13 @@ class PostInitMeta(ABCMeta):
                     for key, value in state_slots.items():
                         setattr(self, key, value)
 
-            self._init_finished = True
+            if isinstance(self, cls):
+                self._init_finished = True
 
         if original_setstate:
             setstate_wrapper = functools.wraps(original_setstate)(setstate_wrapper)
 
+        setstate_wrapper._post_init_meta_wrapped = True
         setstate_wrapper.__name__ = '__setstate__'
         setattr(cls, '__setstate__', setstate_wrapper)
 
