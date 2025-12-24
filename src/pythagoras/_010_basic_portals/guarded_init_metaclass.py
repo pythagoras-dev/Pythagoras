@@ -80,7 +80,7 @@ class GuardedInitMeta(ABCMeta):
         super().__init__(name, bases, dct)
         _raise_if_dataclass(cls)
 
-        n_guarded_bases = sum(1 for base in bases if type(base) is GuardedInitMeta)
+        n_guarded_bases = sum(1 for base in bases if isinstance(base, GuardedInitMeta))
         if n_guarded_bases > 1:
             raise TypeError(f"Class {name} has {n_guarded_bases} GuardedInitMeta bases, "
                             "but only 1 is allowed.")
