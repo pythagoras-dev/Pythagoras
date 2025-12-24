@@ -11,7 +11,7 @@ from __future__ import annotations
 import random
 from abc import abstractmethod
 from importlib import metadata
-from typing import TypeVar, Any, NewType, Callable
+from typing import TypeVar, Any, NewType, Callable, Mapping, Iterable
 import pandas as pd
 from parameterizable import NotPicklableClass
 from parameterizable import ParameterizableClass, sort_dict_by_keys
@@ -43,10 +43,10 @@ class _PortalRegistry(NotPicklableClass):
     -----------
     known_portals : dict[PortalStrID, BasicPortal]
         All portals that have been instantiated in the system.
-    active_stack : list[BasicPortal]
+    active_portals_stack : list[BasicPortal]
         Stack that mirrors nested ``with portal:`` blocks.
-    active_counters : list[int]
-        Re-entrancy counters that align one-to-one with *active_stack*.
+    active_portals_stack_counters : list[int]
+        Re-entrancy counters that align one-to-one with *active_portals_stack*.
     most_recently_created : BasicPortal | None
         Last portal created in the system.
     links_obj2portal : dict[PObjectStrID, PortalStrID]
@@ -139,7 +139,7 @@ class _PortalRegistry(NotPicklableClass):
             self.active_portals_stack_counters[-1] -= 1
 
         if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
-            raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
+            raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
 
 
     def current_active_portal(self) -> BasicPortal:
@@ -376,7 +376,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         if self._entropy_infuser is None:
             raise RuntimeError("Entropy infuser is None."
                                "Most probably, it was cleared by calling portal._clear()"
-                               "You cant't use a portal after calling portal._clear()")
+                               "You can't use a portal after calling portal._clear()")
 
         return self._entropy_infuser
 
@@ -481,7 +481,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
     """
 
     _linked_portal_at_init: BasicPortal|None
-    _hash_id_cache: PAwareObjectStrID
+    _str_id_cache: PAwareObjectStrID
     _visited_portals: set[str] | None
 
     def __init__(self, portal:BasicPortal|None=None):
@@ -656,14 +656,21 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
 def _clear_all_portals() -> None:
     """Remove all information about all the portals from the system."""
-    
-    for obj in list(_PORTAL_REGISTRY.known_objects.values()):
+
+    # Take snapshots before clearing to avoid iteration issues
+    objects_to_clear = list(_PORTAL_REGISTRY.known_objects.values())
+    portals_to_clear = list(_PORTAL_REGISTRY.known_portals.values())
+
+    # Clean up objects first (while registry is still intact)
+    for obj in objects_to_clear:
         obj._clear()
 
-    for portal in list(_PORTAL_REGISTRY.known_portals.values()):
+    for portal in portals_to_clear:
         portal._clear()
-    
+
+    # Clear remaining registry state (should be mostly empty now)
     _PORTAL_REGISTRY.clear()
+
     _reset_single_thread_enforcer()
 
 
@@ -784,7 +791,7 @@ def _visit_portal(obj:Any, portal:BasicPortal) -> None:
     return _visit_portal_impl(obj, portal=portal)
 
 
-def _visit_portal_impl(obj:Any, portal:BasicPortal, seen=None)->None:
+def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = None) -> None:
     """Recursively traverse `obj` and register any PortalAwareClass instances found."""
     _ensure_single_thread()
 
@@ -794,10 +801,8 @@ def _visit_portal_impl(obj:Any, portal:BasicPortal, seen=None)->None:
     if id(obj) in seen:
         return
 
-    if isinstance(obj, (str, range, bytearray, bytes)):
-        return
-
-    if isinstance(obj, SafeStrTuple):
+    # Treat strings, bytes, and other specific types as leaf nodes
+    if isinstance(obj, (str, range, bytearray, bytes, SafeStrTuple)):
         return
 
     seen.add(id(obj))
@@ -806,19 +811,15 @@ def _visit_portal_impl(obj:Any, portal:BasicPortal, seen=None)->None:
         obj._visit_portal(portal)
         return
 
-    if isinstance(obj, (list, tuple)):
+    # Handle Mappings (dictionaries, etc.) by visiting both keys and values
+    if isinstance(obj, Mapping):
+        for key, value in obj.items():
+            _visit_portal_impl(key, portal, seen)
+            _visit_portal_impl(value, portal, seen)
+        return
+
+    # Handle generic Iterables (lists, tuples, sets, etc.)
+    if isinstance(obj, Iterable):
         for item in obj:
             _visit_portal_impl(item, portal, seen)
         return
-
-    if isinstance(obj, dict):
-        for item in obj.values():
-            _visit_portal_impl(item, portal, seen)
-        return
-
-    # TODO: decide how to deal with Sequences/Mappings
-    # if isinstance(obj, collections.abc.Sequence):
-    #     raise TypeError("Unsupported Sequence type: " + str(type(obj)))
-    #
-    # if isinstance(obj, collections.abc.Mapping):
-    #     raise TypeError("Unsupported Mapping type: " + str(type(obj)))
