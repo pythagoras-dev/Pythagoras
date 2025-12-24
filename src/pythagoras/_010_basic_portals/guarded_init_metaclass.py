@@ -70,7 +70,7 @@ class GuardedInitMeta(ABCMeta):
     Contract:
     - `__init__` must set `self._init_finished = False` immediately.
     - The metaclass sets `self._init_finished = True` only after `__init__`
-      retunr (before `__post_init__`, if any).
+      return (before `__post_init__`, if any).
     - `__setstate__` is wrapped to ensure `_init_finished` becomes `True`
       only after full state restoration (and before `__post_setstate__`, if any).
     """
@@ -80,7 +80,7 @@ class GuardedInitMeta(ABCMeta):
         super().__init__(name, bases, dct)
         _raise_if_dataclass(cls)
 
-        n_guarded_bases = sum(1 for base in bases if isinstance(base, GuardedInitMeta))
+        n_guarded_bases = sum(1 for base in bases if type(base) is GuardedInitMeta)
         if n_guarded_bases > 1:
             raise TypeError(f"Class {name} has {n_guarded_bases} GuardedInitMeta bases, "
                             "but only 1 is allowed.")
