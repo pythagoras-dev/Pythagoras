@@ -249,11 +249,10 @@ class DataPortal(OrdinaryCodePortal):
 
         The portal must not be used after this method is called.
         """
+        super()._clear()
+        self._auxiliary_config_params_at_init = None
         self._value_store = None
         self._portal_config_settings = None
-        self._auxiliary_config_params_at_init = None
-        self._invalidate_cache()
-        super()._clear()
 
 
 class StorableFn(OrdinaryFn):

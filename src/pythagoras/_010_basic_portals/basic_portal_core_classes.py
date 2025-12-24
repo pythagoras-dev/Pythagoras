@@ -90,6 +90,12 @@ class _PortalRegistry(NotPicklableClass):
         self.known_portals[portal._str_id] = portal
         self.most_recently_created_portal = portal
 
+    def unregister_portal(self, portal: BasicPortal) -> None:
+        """Remove *portal* from the registry."""
+        self.known_portals.pop(portal._str_id, None)
+        if self.most_recently_created_portal is portal:
+            self.most_recently_created_portal = None
+
     def count_known_portals(self) -> int:
         return len(self.known_portals)
 
@@ -192,6 +198,13 @@ class _PortalRegistry(NotPicklableClass):
         portal_id = portal._str_id
         self.known_objects[obj_id] = obj
         self.links_from_objects_to_portals[obj_id] = portal_id
+
+
+    def unregister_object(self,obj:PortalAwareClass) -> None:
+        """Unregister an object from the registry."""
+        obj_id = obj._str_id
+        self.known_objects.pop(obj_id, None)
+        self.links_from_objects_to_portals.pop(obj_id, None)
 
 
     def count_linked_objects(self) -> int:
@@ -440,11 +453,24 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
         The portal must not be used after this method is called.
         """
+        if not self._init_finished:
+            return  # Already cleared or never initialized
+
+        this_portal_id = self._str_id
+        links_from_objects_to_portals = list(_PORTAL_REGISTRY.links_from_objects_to_portals.items())
+
+        for obj_id, portal_id in links_from_objects_to_portals:
+            if portal_id == this_portal_id:
+                object = _PORTAL_REGISTRY.known_objects[obj_id]
+                object._clear()
+
+        _PORTAL_REGISTRY.known_portals.pop(self._str_id, None)
+
         self._invalidate_cache()
         self._root_dict = None
         self._entropy_infuser = None
         self._init_finished = False
-        _PORTAL_REGISTRY.known_portals.pop(self._str_id, None)
+
 
 
 class PortalAwareClass(metaclass = GuardedInitMeta):
@@ -477,7 +503,6 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         self._linked_portal_at_init = portal
         # self._hash_id_cache = None
         self._visited_portals = set()
-        self._init_finished = False
 
 
     def __post_init__(self):
@@ -602,12 +627,12 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         its cached value will be stored in an attribute named _ATTR_cache
         This method should delete all such attributes.
         """
-        if hasattr(self, "_hash_id_cache"):
-            del self._hash_id_cache
+        if hasattr(self, "_str_id_cache"):
+            del self._str_id_cache
 
 
     @property
-    def is_activated(self) -> bool:
+    def is_registered(self) -> bool:
         """Return True if the object has been registered in at least one of the portals."""
         if len(self._visited_portals) >=1:
             if not _PORTAL_REGISTRY.is_object_registered(self):
@@ -616,26 +641,26 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         return False
 
 
-    def _deactivate(self):
-        """Mark the object as not activated.
+    def _clear(self):
+        """Mark the object as not registered.
 
         Empty the list of portals it has been registered into.
         """
-        _ensure_single_thread()
-        if not self.is_activated:
-            raise RuntimeError(f"Object with id {self._str_id} is not activated")
-
+        if not self._init_finished:
+            return  # Already cleared or never initialized
+        _PORTAL_REGISTRY.unregister_portal(self)
         self._invalidate_cache()
         self._visited_portals = set()
+        self._init_finished = False
 
 
 def _clear_all_portals() -> None:
     """Remove all information about all the portals from the system."""
     
     for obj in list(_PORTAL_REGISTRY.known_objects.values()):
-        obj._deactivate()
+        obj._clear()
 
-    for portal in _PORTAL_REGISTRY.known_portals.values():
+    for portal in list(_PORTAL_REGISTRY.known_portals.values()):
         portal._clear()
     
     _PORTAL_REGISTRY.clear()
