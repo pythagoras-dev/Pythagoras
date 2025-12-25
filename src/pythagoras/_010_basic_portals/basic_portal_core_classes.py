@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import random
 from abc import abstractmethod
+from functools import cached_property
 from importlib import metadata
 from typing import TypeVar, Any, NewType, Callable, Mapping, Iterable
 import pandas as pd
@@ -411,7 +412,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         return sorted_params
 
 
-    @property
+    @cached_property
     def _str_id(self) -> PortalStrID:
         """Get the portal's persistent hash.
 
@@ -422,10 +423,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         if not self._init_finished:
             raise RuntimeError("Portal is not fully initialized yet, "
                                "_str_id is not available.")
-        if not hasattr(self,"_str_id_cache"):
-            self._str_id_cache = PortalStrID(
-                get_hash_signature(self.get_essential_jsparams()))
-        return self._str_id_cache
+        return PortalStrID(get_hash_signature(self.get_essential_jsparams()))
 
 
     def _invalidate_cache(self) -> None:
@@ -435,8 +433,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         its cached value will be stored in an attribute named _ATTR_cache
         This method should delete all such attributes.
         """
-        if hasattr(self, "_str_id_cache"):
-            del self._str_id_cache
+        pass
 
 
     def describe(self) -> pd.DataFrame:
@@ -494,7 +491,6 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
     """
 
     _linked_portal_at_init: BasicPortal|None
-    _str_id_cache: PAwareObjectStrID
     _visited_portals: set[str] | None
 
     def __init__(self, portal:BasicPortal|None=None):
@@ -513,7 +509,6 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal_at_init = portal
-        # self._hash_id_cache = None
         self._visited_portals = set()
 
 
@@ -592,7 +587,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
             _PORTAL_REGISTRY.register_object(self)
 
 
-    @property
+    @cached_property
     def _str_id(self) -> PAwareObjectStrID:
         """Return the hash ID of the portal-aware object.
 
@@ -601,9 +596,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
                                "_str_id is not available.")
-        if not hasattr(self, "_str_id_cache"):
-            self._str_id_cache = PAwareObjectStrID(get_hash_signature(self))
-        return self._str_id_cache
+        return PAwareObjectStrID(get_hash_signature(self))
 
 
     @abstractmethod
@@ -640,8 +633,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         its cached value will be stored in an attribute named _ATTR_cache.
         This method should delete all such attributes.
         """
-        if hasattr(self, "_str_id_cache"):
-            del self._str_id_cache
+        pass
 
 
     @property
