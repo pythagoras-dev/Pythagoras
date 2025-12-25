@@ -1,7 +1,7 @@
 """Metaclass enforcing strict initialization and lifecycle hooks.
 
 Ensures `_init_finished` becomes `True` only after `__init__` or `__setstate__`
-complete (but before their respective post-hooks) .
+complete (but before their respective post-hooks).
 """
 import functools
 from abc import ABCMeta

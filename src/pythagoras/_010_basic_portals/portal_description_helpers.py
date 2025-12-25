@@ -66,22 +66,15 @@ def _get_description_value_by_key(dataframe: pd.DataFrame, key: str) -> Any:
     The DataFrame must follow the schema produced by portal ``describe()``
     implementations: three columns ``["type", "name", "value"]``.
 
-    Parameters
-    ----------
-    dataframe : pandas.DataFrame
-        Portal description table.
-    key : str
-        Characteristic name to retrieve.
+    Args:
+        dataframe: Portal description table.
+        key: Characteristic name to retrieve.
 
-    Returns
-    -------
-    Any
+    Returns:
         The value stored in the ``"value"`` column for the matching row.
 
-    Raises
-    ------
-    KeyError
-        If *key* is not present in the ``"name"`` column.
+    Raises:
+        KeyError: If *key* is not present in the ``"name"`` column.
     """
     mask = dataframe.iloc[:, 1] == key
     if not mask.any():

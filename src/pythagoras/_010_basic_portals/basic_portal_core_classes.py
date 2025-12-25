@@ -92,7 +92,7 @@ class _PortalRegistry(NotPicklableClass):
         self.most_recently_created_portal = portal
 
     def unregister_portal(self, portal: BasicPortal) -> None:
-        """Remove *portal* from the registry."""
+        """Remove *portal* from the registry and reset any objects linked to it."""
         portal_id_to_remove = portal._str_id
         all_links = list(self.links_from_objects_to_portals.items())
         for obj_id, portal_id in all_links:
@@ -105,9 +105,11 @@ class _PortalRegistry(NotPicklableClass):
             self.most_recently_created_portal = None
 
     def count_known_portals(self) -> int:
+        """Get the number of portals registered in the system."""
         return len(self.known_portals)
 
     def all_portals(self) -> list[BasicPortal]:
+        """Get a list of all portals registered in the system."""
         return list(self.known_portals.values())
 
     def push_new_active_portal(self, portal: BasicPortal) -> None:
@@ -127,7 +129,11 @@ class _PortalRegistry(NotPicklableClass):
             raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
 
     def pop_active_portal(self, portal: BasicPortal) -> None:
-        """Remove the current active portal, keeping the stack consistent."""
+        """Remove the current active portal, keeping the stack consistent.
+
+        Raises:
+            RuntimeError: If *portal* is not the current top of the stack.
+        """
         _ensure_single_thread()
         if not portal._str_id in self.known_portals:
             raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
@@ -185,9 +191,11 @@ class _PortalRegistry(NotPicklableClass):
                 and self.active_portals_stack[-1]._str_id == portal._str_id)
 
     def unique_active_portals_count(self) -> int:
+        """Count unique portals currently in the active stack."""
         return len(set(self.active_portals_stack))
 
     def active_portals_stack_depth(self) -> int:
+        """Calculate the total depth of the active portal stack."""
         return sum(self.active_portals_stack_counters)
 
     def register_object(self, obj: PortalAwareClass) -> None:
@@ -218,6 +226,7 @@ class _PortalRegistry(NotPicklableClass):
 
 
     def count_linked_objects(self) -> int:
+        """Count the number of objects linked to portals."""
         return len(self.links_from_objects_to_portals)
 
     def clear(self) -> None:
@@ -305,7 +314,8 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         self._entropy_infuser = random.Random()
         ParameterizableClass.__init__(self)
         if root_dict is None:
-            root_dict = get_default_portal_base_dir() #TODO: check this logic
+            # If no root_dict provided, default to the standard local directory.
+            root_dict = get_default_portal_base_dir()
         if not isinstance(root_dict, PersiDict):
             root_dict = str(root_dict)
             root_dict = FileDirDict(base_dir = root_dict)
@@ -370,16 +380,16 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
     @property
     def entropy_infuser(self) -> random.Random:
-        """Get the shared random number generator for the portal system.
+        """Get the random number generator associated with this portal.
 
         Returns:
-            A Random instance shared across all BasicPortal instances for
-            generating random values and entropy when needed.
+            A Random instance used for generating random values and entropy
+            within this portal's context.
         """
         if self._entropy_infuser is None:
-            raise RuntimeError("Entropy infuser is None."
-                               "Most probably, it was cleared by calling portal._clear()"
-                               "You can't use a portal after calling portal._clear()")
+            raise RuntimeError("Entropy infuser is None. "
+                               "Most probably, it was cleared by calling portal._clear(). "
+                               "You can't use a portal after calling portal._clear().")
 
         return self._entropy_infuser
 
@@ -564,7 +574,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
 
     def _first_visit_to_portal(self, portal: BasicPortal) -> None:
-        """Register an object in a portal that the object has not seen before."""
+        """Mark the portal as visited and ensure the object is registered in the global registry."""
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
                                "_first_visit_to_portal() can't be called.")
@@ -598,10 +608,10 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
     @abstractmethod
     def __getstate__(self):
-        """This method is called when the object is pickled.
+        """Prepare the object's state for pickling.
 
-        Make sure NOT to include portal info the object's state
-        while pickling it.
+        This method must be overridden in subclasses to ensure that portal
+        information is NOT included in the pickled state.
         """
         raise NotImplementedError(
             "PortalAwareClass objects are not picklable. "
@@ -740,17 +750,12 @@ def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
        default).
     4. Return **None**.
 
-    Parameters
-    ----------
-    instantiator : Callable[[], None]
-        Zero-argument function that establishes the default portal.
+    Args:
+        instantiator: Zero-argument function that establishes the default portal.
 
-    Raises
-    ------
-    TypeError
-        If *instantiator* is not callable.
-    RuntimeError
-        If a default instantiator has already been registered.
+    Raises:
+        TypeError: If *instantiator* is not callable.
+        RuntimeError: If a default instantiator has already been registered.
     """
     _PORTAL_REGISTRY.register_default_portal_instantiator(instantiator)
 
@@ -762,7 +767,7 @@ def get_current_active_portal() -> BasicPortal:
     using the 'with' statement. If no portal is currently active,
     it finds the most recently created portal and makes it active (and current).
     If there are currently no portals exist in the system,
-    it creates and the default portal, makes it active an current.
+    it creates the default portal, and makes it active and current.
 
     Returns:
         The current active portal.

@@ -12,10 +12,9 @@ from .basic_portal_core_classes import (
 class _PortalTester:
     """A context manager for testing portal objects.
 
-    The class is used to test the portal objects.
-    It ensures that all portal objects are properly initialized and cleared
-    between tests. This class is not supposed to be used in application code,
-    it only exists for unit tests.
+    Ensures that all portal objects are properly initialized and cleared
+    between tests. Intended for internal unit tests only, not for
+    application code.
     """
     _current_instance:_PortalTester|None = None
     _portal:BasicPortal|None = None

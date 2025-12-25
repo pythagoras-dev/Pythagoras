@@ -21,9 +21,10 @@ _owner_pid: int | None = None
 def _ensure_single_thread() -> None:
     """Raise RuntimeError if the current thread differs from the owner thread.
 
-    Pythagoras supports multi-process (swarming) parallelism, not multi-thread
-    parallelism.  Each thread that truly needs a portal must create its *own*
-    portal instance and never touch portals initialized elsewhere.
+    Pythagoras supports multi-process (swarming) parallelism, but not
+    multi-thread parallelism within a single process. Portals and related
+    objects must be accessed exclusively from the thread that first initialized
+    the portal system in the current process.
     """
     global _portal_native_id, _portal_thread_name, _owner_pid
 

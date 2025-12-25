@@ -9,6 +9,7 @@ def get_default_portal_base_dir() -> str:
     """Get the base directory for the default local portal.
 
     The default base directory is ~/.pythagoras/.default_portal
+    This function creates the directory if it does not exist.
 
     Pythagoras connects to the default local portal
     when no other portal is specified in the
@@ -20,7 +21,4 @@ def get_default_portal_base_dir() -> str:
     home_directory = Path.home()
     target_directory = home_directory / ".pythagoras" / ".default_portal"
     target_directory.mkdir(parents=True, exist_ok=True)
-    target_directory_str = str(target_directory.resolve())
-    if not isinstance(target_directory_str, str):
-        raise TypeError(f"Expected target_directory_str to be str, got {type(target_directory_str).__name__}")
-    return target_directory_str
+    return str(target_directory.resolve())
