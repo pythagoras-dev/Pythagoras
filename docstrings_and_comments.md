@@ -35,7 +35,7 @@ Google-style docstrings are clean, readable, and well-supported by documentation
 #### Basic structure
 
 ```python
-def function_name(arg1, arg2):
+def function_name(arg1: int, arg2: str) -> int:
     """One-line summary that fits on one line.
 
     Optional longer description that provides more context about what
@@ -77,22 +77,26 @@ import sys
 #### Class docstrings
 
 ```python
-class PersistentDict:
-    """A dictionary that persists data to disk.
+class WeightedVotingEnsembleAggregator:
+    """Aggregates responses from multiple LLM machines using weighted voting.
 
-    This class provides a dict-like interface where all changes are
-    automatically saved to the filesystem. It supports standard dict
-    operations and ensures data durability across program restarts.
-
-    Args:
-        base_dir: Directory where the dictionary data will be stored.
-        file_name: Optional name for the storage file. Defaults to a
-            generated name based on the instance.
+    This class implements a talker that queries multiple language machines
+    and combines their responses using configurable weights. It supports
+    both simple majority voting and confidence-weighted aggregation.
 
     Attributes:
         base_dir: The directory path where data is persisted.
         file_name: The name of the backing storage file.
+        machines: The sequence of language machines in the ensemble.
+        weights: The weight assigned to each model's response.
     """
+
+    def __init__(
+        self,
+        models: Sequence[LLModel],
+        weights: Sequence[float] | None = None,
+    ) -> None:
+        """Initialize the ensemble aggregator."""
 ```
 
 **Note:** The `Args:` section in a class docstring describes `__init__` parameters.
@@ -100,22 +104,23 @@ class PersistentDict:
 #### Method and function docstrings
 
 ```python
-def load_from_disk(self, path):
-    """Load dictionary contents from a file on disk.
+def score_response(self, thinking_state: Thoughts, response: str) -> float:
+    """Score a model response based on quality metrics.
 
-    Reads and deserializes data from the specified path, replacing
-    the current in-memory state. If the file does not exist, raises
-    FileNotFoundError rather than initializing an empty dict.
+    Evaluates the response using configured scoring criteria including
+    relevance, coherence, and aspect compliance. Returns a normalized
+    score between 0.0 and 1.0, where higher values indicate better quality.
 
     Args:
-        path: Path to the file containing serialized dictionary data.
+        thinking_state: The input thoughts containing message and aspects.
+        response: The model-generated response to evaluate.
 
     Returns:
-        The number of entries loaded.
+        Normalized quality score between 0.0 and 1.0.
 
     Raises:
-        FileNotFoundError: If the file does not exist.
-        ValueError: If the file content is not valid serialized data.
+        ValueError: If thinking_state.message is empty.
+        RuntimeError: If the scoring model is not initialized.
     """
 ```
 
@@ -125,7 +130,7 @@ For `@property` decorated methods, write the docstring as if it's an attribute:
 
 ```python
 @property
-def is_empty(self):
+def is_empty(self) -> bool:
     """True if the dictionary contains no items, False otherwise."""
     return len(self) == 0
 ```
@@ -136,11 +141,12 @@ Use sections in this order (omit any that don't apply):
 
 1. Summary (one line)
 2. Extended description (optional)
-3. `Args:`
-4. `Returns:` or `Yields:` (for generators)
-5. `Raises:`
-6. `Example:` or `Examples:` (optional but encouraged for non-obvious usage)
-7. `Note:` or `Warning:` (if needed)
+3. `Args:` (for functions/methods)
+4. `Attributes:` (for classes)
+5. `Returns:` or `Yields:` (for generators)
+6. `Raises:`
+7. `Example:` or `Examples:` (optional but encouraged for non-obvious usage)
+8. `Note:` or `Warning:` (if needed)
 
 ### Type hints vs. docstrings
 
@@ -188,41 +194,57 @@ Docstrings should explain:
 
 ✅ **Good:**
 ```python
-def normalize_path(self, path: str) -> str:
-    """Convert path to canonical form for cross-platform compatibility.
+def aggregate_responses(self, responses: list[str]) -> str:
+    """Select the best response from multiple LLM outputs.
 
-    Ensures consistent path handling on Windows, macOS, and Linux by
-    resolving relative references and standardizing separators.
+    Combines responses using weighted voting and semantic similarity
+    to choose the most representative answer. This reduces the impact
+    of outlier responses and improves overall quality.
 
     Args:
-        path: A filesystem path that may contain relative components.
+        responses: List of response strings from different machines.
 
     Returns:
-        Absolute path with OS-appropriate separators.
+        The selected best response.
     """
 ```
 
 ❌ **Bad (too focused on HOW):**
 ```python
-def normalize_path(self, path: str) -> str:
-    """Convert path to canonical form.
+def aggregate_responses(self, responses: list[str]) -> str:
+    """Select the best response from multiple LLM outputs.
 
-    First calls os.path.abspath, then os.path.normpath, then replaces
-    backslashes with forward slashes on Windows.
+    First computes embeddings for each response, then calculates pairwise
+    cosine similarities, builds a similarity matrix, and picks the response
+    with the highest average similarity to others.
 
     Args:
-        path: A filesystem path.
+        responses: List of response strings from different machines.
 
     Returns:
-        Normalized path.
+        The selected best response.
     """
 ```
+
+### Do not use reStructuredText cross-reference roles in docstrings
+
+While reStructuredText (reST) roles like `:class:`, `:meth:`, etc. are supported by some documentation tools, they:
+
+- Make docstrings harder to read in source code and IDEs
+- Create tool dependencies (requiring specific doc generators)
+- Can break when class/method names change
+- Don't add significant value over clear prose descriptions
+
+Instead, use plain text references and let documentation tools handle cross-linking.
 
 ---
 
 ## Comments
 
-Comments should clarify **intent**, **reasoning**, and **non-obvious behavior**. Avoid stating the obvious.
+Comments should clarify **intent**, **reasoning**, and **non-obvious behavior**. 
+
+Avoid stating the obvious, be precise and concise. Comments should add value by explaining things that are not immediately clear 
+from the code itself. If the code is self-explanatory, adding a comment just creates noise and maintenance overhead. 
 
 ### Inline comments
 
@@ -259,13 +281,14 @@ for item in items:
 Use block comments for explaining complex algorithms, edge cases, or design decisions:
 
 ```python
-# S3 has eventual consistency for overwrites and deletes. To avoid
-# serving stale data, we use a local cache with TTL-based invalidation.
-# Cache entries expire after CACHE_TTL seconds, forcing a fresh read
-# from S3. This trades off latency for consistency guarantees.
-if self._is_cache_stale(key):
-    value = self._fetch_from_s3(key)
-    self._update_cache(key, value)
+# LLM APIs may return non-deterministic results even with fixed seeds due to
+# infrastructure variations. To ensure reproducible experiments, we cache
+# responses keyed by (model, seed, prompt). Cache entries are stored
+# per time_scale bucket to support temporal versioning. This trades off
+# storage space for deterministic behavior across runs.
+if self._should_use_cache(thinking_state):
+    response = self._get_cached_response(thinking_state)
+    return response
 ```
 
 ### TODOs, FIXMEs, and NOTEs
@@ -288,18 +311,18 @@ Include a GitHub issue reference if applicable:
 When implementation is tricky, explain HOW:
 
 ```python
-def _generate_unique_id(self):
-    """Generate a unique identifier for this dictionary instance.
-
-    Uses a combination of timestamp, process ID, and random bytes to
-    ensure uniqueness across concurrent processes and machine restarts.
+def parse_expression(self, tokens: list[str]) -> AST:
+    """Parse a mathematical expression into an abstract syntax tree.
+    
+    Uses the Shunting Yard algorithm to handle operator precedence and 
+    associativity rules during the parsing process.
     """
-    # Combine timestamp (microseconds) with PID and random entropy to avoid
-    # collisions even when many processes start simultaneously.
-    ts = int(time.time() * 1e6)
-    pid = os.getpid()
-    rand = secrets.token_hex(4)
-    return f"{ts}_{pid}_{rand}"
+    # Use two stacks to implement Shunting Yard:
+    # - operator_stack holds operators waiting to be processed
+    # - output_queue builds the AST by combining operands with operators
+    operator_stack = []
+    output_queue = []
+    ...  # Implementation details
 ```
 
 ### Avoid commented-out code
@@ -308,13 +331,13 @@ Don't leave large blocks of commented-out code in the repository. Use version co
 
 ✅ **Good:**
 ```python
-def process_data(self, data):
+def process_data(self, data: list) -> list:
     return self._new_algorithm(data)
 ```
 
 ❌ **Bad:**
 ```python
-def process_data(self, data):
+def process_data(self, data: list) -> list:
     # Old approach:
     # result = []
     # for item in data:
@@ -330,13 +353,28 @@ If you must temporarily disable code during development, use a clear comment exp
 # self._validate_integrity()
 ```
 
+### Avoid using inline commands in comments 
+
+Inline commands in comments (like `# pylint: disable=invalid-name` or `# type: ignore`) should be avoided because they:
+
+1. Make code harder to maintain by hiding configuration in scattered comments
+2. Create implicit dependencies on specific tools
+3. May break when tools are updated or replaced
+4. Often indicate underlying code quality issues that should be fixed properly
+
+Instead:
+
+- Use configuration files (pyproject.toml, setup.cfg, etc.) for tool settings
+- Fix the underlying code issues rather than suppressing warnings
+- If suppressions are absolutely necessary, document WHY in the comment
+
 ---
 
 ## Best practices from the Python community
 
 1. **PEP 257 – Docstring Conventions**: All docstrings should be triple-quoted (`"""`), even one-liners. One-liners should have both quotes on the same line:
    ```python
-   def get_name(self):
+   def get_name(self) -> str:
        """Return the name of this instance."""
    ```
 
@@ -356,65 +394,71 @@ If you must temporarily disable code during development, use a clear comment exp
 
 ❌ **Bad:**
 ```python
-def calculate(x, y):
-    # This function calculates something
-    return x * 2 + y
+def combine(responses, weights):
+    # This function combines responses
+    return weighted_average(responses, weights)
 ```
 
 ✅ **Good:**
 ```python
-def calculate_score(attempts: int, bonus: int) -> int:
-    """Calculate the final score based on attempts and bonus points.
+def combine_model_responses(responses: list[str], weights: list[float]) -> str:
+    """Combine multiple model responses using weighted selection.
 
-    The score is computed as double the attempts plus any bonus points.
-    This formula rewards efficiency (fewer attempts) while allowing
-    bonuses to significantly impact the outcome.
+    Selects the response with the highest weighted score based on model
+    confidence and historical performance. This approach balances between
+    trusting high-performing machines and maintaining ensemble diversity.
 
     Args:
-        attempts: Number of attempts taken to complete the task.
-        bonus: Additional points awarded for special achievements.
+        responses: List of response strings from different machines.
+        weights: Confidence weights for each model, summing to 1.0.
 
     Returns:
-        The calculated score.
+        The selected response string.
     """
-    return attempts * 2 + bonus
+    ...  # Implementation omitted; focus on WHAT/WHY in the docstring
 ```
 
 ### Example 2: Inline comment
 
 ❌ **Bad:**
 ```python
-result = value + 10  # Add 10 to value
+score = base_score + 0.1  # Add 0.1 to base_score
 ```
 
 ✅ **Good:**
 ```python
-# Add buffer size to account for header overhead
-result = value + HEADER_SIZE
+# Boost score for responses that include citations
+score = base_score + CITATION_BONUS
 ```
 
 ### Example 3: Class with complex behavior
 
 ✅ **Good:**
 ```python
-class WriteOnceDict(dict):
-    """A dictionary that prevents modification of existing keys.
+class CachedModelWrapper:
+    """Wraps an LLM with response caching for deterministic behavior.
 
-    This class enforces write-once semantics: once a key is set, any
-    attempt to modify or delete it raises an error. This is useful for
-    configurations that must remain immutable after initialization.
+    This class ensures reproducible results by caching model responses
+    keyed by (prompt, seed, rounded_timestamp, storage). Cached responses are
+    returned for identical inputs, eliminating API non-determinism.
 
-    Args:
-        initial_data: Optional mapping or iterable of key-value pairs
-            to initialize the dictionary.
+    Attributes:
+        model: The underlying LLModel to wrap with caching functionality.
+        rounded_timestamp: Optional time-based cache bucketing. 
+            If None, caching is done without time consideration.
+        seed: Optional seed value for deterministic response generation. 
+            If None, the model's default behavior is used.
+        storage: Optional storage backend for caching responses. 
+            If None, an in-memory cache is used.
 
     Raises:
-        ValueError: If attempting to modify or delete an existing key.
+        ValueError: If time_scale is provided without timestamp support.
 
     Example:
-        >>> d = WriteOnceDict({'a': 1})
-        >>> d['b'] = 2  # OK
-        >>> d['a'] = 3  # Raises ValueError
+        >>> model = CachedModelWrapper(base_model)
+        >>> resp1 = model.respond("Hello")  # Calls API
+        >>> resp2 = model.respond("Hello")  # Returns cached
+        >>> assert resp1 == resp2  # Guaranteed equal
     """
 ```
 
@@ -425,5 +469,5 @@ class WriteOnceDict(dict):
 - **Always use Google-style docstrings** for public APIs.
 - **Explain WHAT and WHY**, not HOW (unless non-obvious).
 - **Use type hints** in signatures; don't duplicate them in docstrings.
-- **Write comments that add value**, not noise.
+- **Write comments that add value**, not noise. Be precise and concise.
 - **Be consistent** with the existing codebase.
