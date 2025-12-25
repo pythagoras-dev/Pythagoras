@@ -213,9 +213,6 @@ def _get_normalized_function_source_impl(
             
             if isinstance(first_value, ast.Constant) and isinstance(first_value.value, str):
                 is_docstring = True
-            elif isinstance(first_value, ast.Str):
-                # Deprecated in Python 3.8+ but kept for backwards compatibility
-                is_docstring = True
             
             if not is_docstring:
                 continue
