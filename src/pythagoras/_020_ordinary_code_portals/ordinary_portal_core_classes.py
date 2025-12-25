@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from copy import deepcopy
+from functools import cached_property
 from typing import Callable, Any
 
 import pandas as pd
@@ -159,14 +160,6 @@ class OrdinaryFn(PortalAwareClass):
     """
     _source_code:str
 
-    _name_cache: str
-    _compiled_code_cache:Any
-    _hash_signature_cache:str
-    _virtual_file_name_cache:str
-    _kwargs_var_name_cache:str
-    _result_var_name_cache:str
-    _tmp_fn_name_cache:str
-
     def __init__(self
                  , fn: Callable | str
                  , portal: OrdinaryCodePortal | None = None
@@ -187,6 +180,7 @@ class OrdinaryFn(PortalAwareClass):
         PortalAwareClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
             self.__setstate__(deepcopy(fn.__getstate__()))
+            self._init_finished = False
             if self._linked_portal_at_init is None:
                 self._linked_portal_at_init = fn._linked_portal_at_init
             #TODO: check this logic
@@ -221,19 +215,17 @@ class OrdinaryFn(PortalAwareClass):
         return self._source_code
 
 
-    @property
+    @cached_property
     def name(self) -> str:
         """Get the name of the function.
 
         Returns:
             str: The function identifier parsed from the source code.
         """
-        if not hasattr(self, "_name_cache") or self._name_cache is None:
-            self._name_cache = get_function_name_from_source(self.source_code)
-        return self._name_cache
+        return get_function_name_from_source(self.source_code)
 
 
-    @property
+    @cached_property
     def hash_signature(self) -> str:
         """Get the hash signature of the function.
 
@@ -241,12 +233,13 @@ class OrdinaryFn(PortalAwareClass):
             str: A stable, content-derived signature used to uniquely identify
             the function's normalized source and selected metadata.
         """
-        if not hasattr(self, "_hash_signature_cache"):
-            self._hash_signature_cache = get_hash_signature(self)
-        return self._hash_signature_cache
+        if not self._init_finished:
+            raise RuntimeError("Function is not fully initialized yet, "
+                               "hash_signature is not available.")
+        return get_hash_signature(self)
 
 
-    @property
+    @cached_property
     def _virtual_file_name(self):
         """Return a synthetic filename used when compiling the function.
 
@@ -254,91 +247,61 @@ class OrdinaryFn(PortalAwareClass):
             str: A stable file name derived from the function name and hash
             signature, ending with ".py".
         """
-        if not hasattr(self, "_virtual_file_name_cache") or self._virtual_file_name_cache is None:
-            self._virtual_file_name_cache = self.name + "_" + self.hash_signature + ".py"
-        return self._virtual_file_name_cache
+        return self.name + "_" + self.hash_signature + ".py"
 
 
-    @property
+    @cached_property
     def _kwargs_var_name(self):
         """Return the internal name used to store call kwargs during exec.
 
         Returns:
             str: A stable variable name unique to this function instance.
         """
-        if not hasattr(self, "_kwargs_var_name_cache") or self._kwargs_var_name_cache is None:
-            self._kwargs_var_name_cache = "kwargs_" + self.name
-            self._kwargs_var_name_cache += "_" + self.hash_signature
-        return self._kwargs_var_name_cache
+        var_name = "kwargs_" + self.name
+        var_name += "_" + self.hash_signature
+        return var_name
 
 
-    @property
+    @cached_property
     def _result_var_name(self):
         """Return the internal name used to store the call result.
 
         Returns:
             str: A stable variable name unique to this function instance.
         """
-        if not hasattr(self, "_result_var_name_cache") or self._result_var_name_cache is None:
-            self._result_var_name_cache = "result_" + self.name
-            self._result_var_name_cache += "_" + self.hash_signature
-        return self._result_var_name_cache
+        var_name = "result_" + self.name
+        var_name += "_" + self.hash_signature
+        return var_name
 
 
-    @property
+    @cached_property
     def _tmp_fn_name(self):
         """Return the internal temporary function name used during exec.
 
         Returns:
             str: A stable function name unique to this function instance.
         """
-        if not hasattr(self, "_tmp_fn_name_cache") or self._tmp_fn_name_cache is None:
-            self._tmp_fn_name_cache = "func_" + self.name
-            self._tmp_fn_name_cache += "_" + self.hash_signature
-        return self._tmp_fn_name_cache
+        fn_name = "func_" + self.name
+        fn_name += "_" + self.hash_signature
+        return fn_name
 
 
-    @property
+    @cached_property
     def _compiled_code(self):
         """Return cached code object used to execute the function call.
 
         Returns:
             Any: A Python code object suitable for exec.
         """
-        if not hasattr(self, "_compiled_code_cache") or (
-                self._compiled_code_cache is None):
-            source_to_execute = self.source_code
-            source_to_execute = source_to_execute.replace(
-                " " + self.name + "(", " " + self._tmp_fn_name + "(", 1)
-            source_to_execute += f"\n\n{self._result_var_name} = "
-            source_to_execute += f"{self._tmp_fn_name}(**{self._kwargs_var_name})"
-            self._compiled_code_cache = self._compile(
-                source_to_execute, self._virtual_file_name, "exec")
-        return self._compiled_code_cache
 
-
-    def _invalidate_cache(self):
-        """Invalidate all cached, derived attributes for this function.
-
-        Any property backed by a "_..._cache" attribute is deleted so that it
-        will be recomputed on next access. Also calls the superclass
-        implementation to clear any portal-related caches.
-        """
-        if hasattr(self, "_compiled_code_cache"):
-            del self._compiled_code_cache
-        if hasattr(self, "_tmp_fn_name_cache"):
-            del self._tmp_fn_name_cache
-        if hasattr(self, "_result_var_name_cache"):
-            del self._result_var_name_cache
-        if hasattr(self, "_kwargs_var_name_cache"):
-            del self._kwargs_var_name_cache
-        if hasattr(self, "_virtual_file_name_cache"):
-            del self._virtual_file_name_cache
-        if hasattr(self, "_hash_signature_cache"):
-            del self._hash_signature_cache
-        if hasattr(self, "_name_cache"):
-            del self._name_cache
-        super()._invalidate_cache()
+        source_to_execute = self.source_code
+        source_to_execute = source_to_execute.replace(
+            " " + self.name + "(", " " + self._tmp_fn_name + "(", 1)
+        source_to_execute += f"\n\n{self._result_var_name} = "
+        source_to_execute += f"{self._tmp_fn_name}(**{self._kwargs_var_name})"
+        compiled_code = self._compile(
+            source_to_execute, self._virtual_file_name, "exec")
+        return compiled_code
 
 
     @classmethod
