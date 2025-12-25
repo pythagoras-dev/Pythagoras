@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 from copy import deepcopy
 from functools import cached_property
 from typing import Callable, Any
@@ -288,20 +289,37 @@ class OrdinaryFn(PortalAwareClass):
 
     @cached_property
     def _compiled_code(self):
-        """Return cached code object used to execute the function call.
-
-        Returns:
-            Any: A Python code object suitable for exec.
+        """Return a code object that executes the wrapped function call.
         """
+        # 1. Parse the stored source
+        tree = ast.parse(self.source_code,
+            filename=self._virtual_file_name,
+            mode="exec")
 
-        source_to_execute = self.source_code
-        source_to_execute = source_to_execute.replace(
-            " " + self.name + "(", " " + self._tmp_fn_name + "(", 1)
-        source_to_execute += f"\n\n{self._result_var_name} = "
-        source_to_execute += f"{self._tmp_fn_name}(**{self._kwargs_var_name})"
-        compiled_code = self._compile(
+        # 2. Rename the target function
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and node.name == self.name:
+                node.name = self._tmp_fn_name
+                break
+        else:  # defensive: should not happen
+            raise RuntimeError(
+                f"Function definition {self.name!r} not found "
+                "while building _compiled_code.")
+
+        # 3. Append the call-and-store trailer
+        trailer_src = (
+            f"{self._result_var_name} = "
+            f"{self._tmp_fn_name}(**{self._kwargs_var_name})")
+        trailer_ast = ast.parse(trailer_src,
+            filename=self._virtual_file_name,
+            mode="exec",)
+        tree.body.extend(trailer_ast.body)
+
+        # Fix locations after AST edits, compile the code
+        ast.fix_missing_locations(tree)
+        source_to_execute = ast.unparse(tree)
+        return self._compile(
             source_to_execute, self._virtual_file_name, "exec")
-        return compiled_code
 
 
     @classmethod
