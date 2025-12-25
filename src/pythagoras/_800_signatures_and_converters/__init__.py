@@ -21,3 +21,4 @@ from .current_date_gmt_str import *
 from .hash_signatures import *
 from .node_signature import *
 from .random_signatures import *
+from .long_infoname import *

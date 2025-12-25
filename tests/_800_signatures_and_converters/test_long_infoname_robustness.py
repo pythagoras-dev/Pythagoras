@@ -2,7 +2,7 @@
 import sys
 import types
 import pytest
-from pythagoras._020_ordinary_code_portals.long_infoname import get_long_infoname
+from pythagoras._800_signatures_and_converters.long_infoname import get_long_infoname
 
 def test_none_module_in_type():
     # Simulate an object whose type has None as __module__

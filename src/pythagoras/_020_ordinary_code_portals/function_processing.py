@@ -2,7 +2,7 @@ import types, inspect
 from typing import Callable
 
 from .exceptions import FunctionError
-from .._020_ordinary_code_portals import get_long_infoname
+from .._800_signatures_and_converters import get_long_infoname
 
 
 def get_function_name_from_source(function_source_code: str) -> str:

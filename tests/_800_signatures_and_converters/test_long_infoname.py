@@ -1,4 +1,4 @@
-from pythagoras._020_ordinary_code_portals.long_infoname import get_long_infoname
+from pythagoras._800_signatures_and_converters.long_infoname import get_long_infoname
 from persidict import FileDirDict
 
 

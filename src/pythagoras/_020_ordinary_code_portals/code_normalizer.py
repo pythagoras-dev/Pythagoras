@@ -5,7 +5,7 @@ from typing import Callable
 import autopep8
 
 from .function_processing import get_function_name_from_source
-from .._020_ordinary_code_portals.long_infoname import get_long_infoname
+from .._800_signatures_and_converters.long_infoname import get_long_infoname
 from .function_processing import assert_ordinarity
 from .exceptions import FunctionError
 
