@@ -370,44 +370,81 @@ Instead:
 
 ## Type Hints
 
-Type hints are mandatory for all public APIs in `Pythagoras`. They improve readability, IDE support, and enable static analysis.
+Type hints are mandatory for all public APIs in `Pythagoras`. They improve code readability, enable IDE autocomplete and refactoring, and allow static type checkers to catch bugs before runtime.
 
-### Modern syntax
+### When to use type hints
 
-Since `Pythagoras` requires Python 3.11+, use modern type hinting features:
+**Always provide type hints for:**
+- All function and method parameters
+- All function and method return values
+- Class attributes (using annotations)
+- Module-level constants
 
-1.  **Union types**: Use the `|` operator.
-    - ✅ `str | int`
-    - ❌ `Union[str, int]`
+**Type hints in docstrings:**
+- Never duplicate type information in docstrings—types belong in signatures only
+- Use docstring parameter descriptions to explain constraints, valid ranges, or semantic meaning
 
-2.  **Optional types**: Use `| None`.
-    - ✅ `str | None`
-    - ❌ `Optional[str]`
+### Modern Python syntax
 
-3.  **Built-in generics**: Use standard collections.
-    - ✅ `list[str]`, `dict[str, int]`, `tuple[int, ...]`
-    - ❌ `List[str]`, `Dict[str, int]`, `Tuple[int, ...]`
+Use modern type hint syntax available in Python 3.10+:
 
-### Input vs. Output types (Postel's Law)
+**Union types** with `|`:
+```python
+def process(value: str | int) -> str:
+    """Process a string or integer value."""
+    return str(value)
+```
 
-Follow the robustness principle: **"Be conservative in what you do, be liberal in what you accept from others."**
+**Optional types** with `| None`:
+```python
+def find_user(user_id: int) -> User | None:
+    """Return user if found, None otherwise."""
+    ...
+```
 
-- **Arguments (Inputs)**: Use abstract base classes (`collections.abc`) to accept the widest range of valid types.
-    - Prefer `Sequence[T]` or `Iterable[T]` over `list[T]` when you only need to iterate.
-    - Prefer `Mapping[K, V]` over `dict[K, V]` when you only need lookups.
-    - Prefer `Callable[...]` for functions.
+**Built-in generic collections** (no imports needed):
+```python
+def merge_data(items: list[str], mapping: dict[str, int]) -> tuple[str, ...]:
+    """Merge items using the provided mapping."""
+    ...
+```
 
-- **Return values (Outputs)**: Use concrete types to provide maximum functionality to the caller.
-    - Return `list`, `dict`, `set`, etc., so the caller knows exactly what they are getting.
+❌ **Avoid legacy syntax:**
+- `Union[str, int]` → use `str | int`
+- `Optional[str]` → use `str | None`
+- `List[str]`, `Dict[str, int]` → use `list[str]`, `dict[str, int]`
+
+### Accept flexible inputs, return concrete types
+
+Follow the robustness principle: accept broad types as inputs, return specific types as outputs.
+
+**For function parameters**, use abstract types from `collections.abc` to accept any compatible input:
+- `Sequence[T]` accepts lists, tuples, and other sequences
+- `Iterable[T]` accepts any iterable (lists, sets, generators, etc.)
+- `Mapping[K, V]` accepts dicts and other mappings
+- `Callable[[ArgTypes], ReturnType]` accepts any callable
+
+**For return values**, use concrete types so callers know exactly what they get:
+- Return `list[T]`, not `Sequence[T]`
+- Return `dict[K, V]`, not `Mapping[K, V]`
+- Return `set[T]`, not `Set[T]`
 
 **Example:**
 ```python
-from collections.abc import Sequence
+from collections.abc import Sequence, Mapping
 
-def process_items(items: Sequence[str]) -> list[str]:
-    """Process a sequence of items.
-
-    Accepts any sequence (list, tuple, etc.) but always returns a list.
+def format_items(
+    items: Sequence[str],
+    config: Mapping[str, bool] | None = None,
+) -> list[str]:
+    """Format items according to configuration.
+    
+    Args:
+        items: Items to format (accepts list, tuple, etc.).
+        config: Optional formatting configuration.
+        
+    Returns:
+        List of formatted strings.
     """
     return [item.upper() for item in items]
 ```
