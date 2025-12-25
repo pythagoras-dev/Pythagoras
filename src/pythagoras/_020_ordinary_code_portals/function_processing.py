@@ -1,3 +1,5 @@
+import ast
+import textwrap
 import types, inspect
 from typing import Callable
 
@@ -8,16 +10,6 @@ from .._800_signatures_and_converters import get_long_infoname
 def get_function_name_from_source(function_source_code: str) -> str:
     """Extract the function name from a source code snippet.
 
-    This parser scans the source code line-by-line and returns the name
-    from the first line that starts with "def ". It assumes a standard
-    function definition like:
-
-    def my_func(arg1, arg2):
-        ...
-
-    It does not currently detect async functions defined with "async def",
-    and it will raise an error if no valid definition is found.
-
     Args:
         function_source_code: The source code containing a function definition.
 
@@ -25,16 +17,24 @@ def get_function_name_from_source(function_source_code: str) -> str:
         The function name as it appears before the opening parenthesis.
 
     Raises:
-        ValueError: If no function definition line is found in the input.
+        ValueError: If no function definition line is found in the input,
+             or if there are many of them
     """
-    lines = function_source_code.split('\n')
-    for line in lines:
-        stripped_line = line.strip()
-        if stripped_line.startswith('def '):
-            func_name_end = stripped_line.find('(')
-            func_name = stripped_line[3:func_name_end]
-            return func_name.strip()
-    raise ValueError(f"Can't find function name in {function_source_code=}")
+    module_ast = ast.parse(textwrap.dedent(function_source_code))
+
+    names = []
+
+    for node in module_ast.body:
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            names.append(node.name)
+
+    if not len(names):
+        raise ValueError("No function definition found in the provided source.")
+    elif len(names) > 1:
+        raise ValueError("Multiple function definitions found in the provided source.")
+    else:
+        return names[0]
+
 
 
 def accepts_unlimited_positional_args(func: Callable) -> bool:
