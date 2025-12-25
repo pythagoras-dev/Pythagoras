@@ -199,11 +199,11 @@ class _PortalRegistry(NotPicklableClass):
         return sum(self.active_portals_stack_counters)
 
     def register_object(self, obj: PortalAwareClass) -> None:
-        """Register an object as activated."""
+        """Register an object in the global registry."""
         self.known_objects[obj._str_id] = obj
 
     def is_object_registered(self, obj: PortalAwareClass) -> bool:
-        """Check if an object is currently activated."""
+        """Check if an object is currently registered."""
         return obj._str_id in self.known_objects
 
     def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
@@ -405,7 +405,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     def get_params(self) -> dict[str,Any]:
-        """Get the portal's configuration parameters"""
+        """Get the portal's configuration parameters."""
         params = dict(root_dict=self._root_dict)
         sorted_params = sort_dict_by_keys(params)
         return sorted_params
@@ -417,7 +417,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
         It's an internal hash used by Pythagoras and is different from .__hash__()
 
-        The method should only be called after the portal has been fully initialized.
+        This property should only be accessed after the portal has been fully initialized.
         """
         if not self._init_finished:
             raise RuntimeError("Portal is not fully initialized yet, "
@@ -440,7 +440,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     def describe(self) -> pd.DataFrame:
-        """Get a DataFrame describing the portal's current state"""
+        """Get a DataFrame describing the portal's current state."""
         all_params = []
 
         all_params.append(_describe_runtime_characteristic(
@@ -533,7 +533,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
     @property
     def _linked_portal(self) -> BasicPortal | None:
-        """Get the portal's preferred (linked) portal.
+        """Get the object's preferred (linked) portal.
 
         If the linked portal is not None, the object will activate
         this portal every time the object's methods are called.
@@ -637,7 +637,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         """Invalidate the object's attribute cache.
 
         If the object's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
+        its cached value will be stored in an attribute named _ATTR_cache.
         This method should delete all such attributes.
         """
         if hasattr(self, "_str_id_cache"):
