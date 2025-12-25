@@ -13,6 +13,7 @@ Exports:
   hash_signatures: Functions to compute content hash/signature strings.
   node_signature: Functions to derive signatures for the current node.
   random_signatures: Helpers to generate random, collision-resistant IDs.
+  long_infoname: Utility for generating extended object identifiers.
 """
 
 from .constants_for_signatures_converters import *

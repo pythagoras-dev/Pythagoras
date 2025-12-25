@@ -19,7 +19,7 @@ def get_random_signature() -> str:
     PTH_MAX_SIGNATURE_LENGTH characters.
 
     Returns:
-        str: A random, URL-safe base32 string of length up to
+        A random, URL-safe base32 string of length up to
         PTH_MAX_SIGNATURE_LENGTH.
     """
     random_int = secrets.randbits(PTH_MAX_SIGNATURE_LENGTH * 5)

@@ -174,8 +174,8 @@ def _cloud_instance_id() -> str | None:
     return None
 
 def _local_cloud_id() -> str | None:
-    """
-    Fast check for cloud-init instance ID.
+    """Fast check for cloud-init instance ID.
+
     This resolves identity for cloned VMs where /etc/machine-id might be stale.
     """
     return _read_first("/var/lib/cloud/data/instance-id")
@@ -283,7 +283,7 @@ def get_node_signature() -> str:
         4. Calculate the base32 hash signature.
 
     Returns:
-        str: A string representing the node signature.
+        A string representing the node signature.
 
     Note:
         The result is cached for the lifetime of the Python process.

@@ -11,6 +11,12 @@ from persidict import replace_unsafe_chars
 
 
 def _safe_getattr(obj: Any, name:str):
+    """Safely retrieve an attribute, returning None if any error occurs.
+
+    This function catches all Exceptions during attribute access to handle
+    properties or descriptors that might raise errors (e.g., during inspection
+    of partially initialized objects).
+    """
     try:
         return getattr(obj, name, None)
     except Exception:

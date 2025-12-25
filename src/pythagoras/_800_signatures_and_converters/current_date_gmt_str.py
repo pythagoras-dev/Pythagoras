@@ -23,7 +23,7 @@ def current_date_gmt_string() -> str:
     Time components are intentionally not included; only the date is captured.
 
     Returns:
-        str: The formatted UTC date string, for the current moment.
+        The formatted UTC date string, for the current moment.
     """
 
     utc_now = datetime.now(timezone.utc)

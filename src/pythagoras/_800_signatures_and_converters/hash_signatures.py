@@ -21,11 +21,10 @@ def get_base16_hash_signature(x: Any) -> str:
     ``Hasher`` is used.
 
     Args:
-        x (Any): The object to hash. In general, objects should be picklable
-            for stable results unless a specialised path exists (e.g., NumPy).
+        x: The object to hash. The object must be picklable.
 
     Returns:
-        str: A hexadecimal digest computed with ``PTH_HASH_TYPE`` (``sha256``
+        A hexadecimal digest computed with ``PTH_HASH_TYPE`` (``sha256``
         by default).
 
     Notes:
@@ -48,10 +47,10 @@ def get_base32_hash_signature(x: Any) -> str:
     project's base32 alphabet (``0-9`` then ``a-v``).
 
     Args:
-        x (Any): The object to hash.
+        x: The object to hash.
 
     Returns:
-        str: The full-length base32 digest string (not truncated).
+        The full-length base32 digest string (not truncated).
     """
     base_16_hash = get_base16_hash_signature(x)
     base_32_hash = convert_base16_to_base32(base_16_hash)
@@ -66,10 +65,10 @@ def get_hash_signature(x: Any) -> str:
     collision-resistant identifiers in logs and filenames.
 
     Args:
-        x (Any): The object to hash.
+        x: The object to hash.
 
     Returns:
-        str: The truncated base32 digest string.
+        The truncated base32 digest string.
     """
     return get_base32_hash_signature(x)[:PTH_MAX_SIGNATURE_LENGTH]
 
