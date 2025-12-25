@@ -114,7 +114,7 @@ def a4(x:int)->float:
 
 def test_type_annotations():
     global a4
-    old_a4 = get_normalized_function_source(a3)
+    old_a4 = get_normalized_function_source(a4)
     del a4
     def a4(x):
         if x > 0:
@@ -125,6 +125,6 @@ def test_type_annotations():
         else:
             return 0
 
-    new_a4 = get_normalized_function_source(a3)
+    new_a4 = get_normalized_function_source(a4)
     assert old_a4 == new_a4
     assert new_a4 == autopep8.fix_code(new_a4)

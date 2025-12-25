@@ -1,3 +1,5 @@
+import pytest
+
 from pythagoras._020_ordinary_code_portals.function_processing import (
     get_function_name_from_source)
 
@@ -26,3 +28,27 @@ def test_get_function_name_from_source_with_decorators():
 
     name = get_function_name_from_source(getsource(sample_function))
     assert name == "sample_function"
+
+
+def test_no_function_definition():
+    """Test that ValueError is raised when no function is found."""
+    source_without_function = """
+x = 10
+y = 20
+result = x + y
+"""
+    with pytest.raises(ValueError, match="No function definition found"):
+        get_function_name_from_source(source_without_function)
+
+
+def test_multiple_function_definitions():
+    """Test that ValueError is raised when multiple functions are found."""
+    source_with_multiple = """
+def first_function():
+    pass
+
+def second_function():
+    pass
+"""
+    with pytest.raises(ValueError, match="Multiple function definitions found"):
+        get_function_name_from_source(source_with_multiple)

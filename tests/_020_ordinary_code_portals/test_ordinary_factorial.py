@@ -1,5 +1,5 @@
 from pythagoras._010_basic_portals.portal_tester import _PortalTester
-from pythagoras._020_ordinary_code_portals import *
+from pythagoras._020_ordinary_code_portals import OrdinaryCodePortal, ordinary
 
 
 def factorial(n:int) -> int:

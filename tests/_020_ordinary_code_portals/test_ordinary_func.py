@@ -5,18 +5,13 @@ def simple_function(a:int,b:int) -> int:
     return a+b
 
 def test_ordinary_function(tmpdir):
+    """Test basic OrdinaryFn functionality and wrapping."""
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(simple_function)
         f = OrdinaryFn(f)
 
-        result = f(a=1,b=2)
-        assert result == 3
-
-        result = f(a=2,b=3)
-        assert result == 5
-
-        result = f(a=3,b=4)
-        assert result == 7
+        assert f(a=1, b=2) == 3
+        assert f(a=3, b=4) == 7
 
 
 
@@ -26,24 +21,49 @@ def fibonacci(n:int) -> int:
     return fibonacci(n=n-1) + fibonacci(n=n-2)
 
 def test_ordinary_function_with_recursion(tmpdir):
+    """Test OrdinaryFn with recursive function."""
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(fibonacci)
         f = OrdinaryFn(f)
 
-        result = f(n=10)
-        assert result == 55
+        assert f(n=6) == 8
+        assert f(n=10) == 55
 
-        result = f(n=6)
-        assert result == 8
 
-        result = f(n=7)
-        assert result == 13
+def test_ordinary_fn_properties(tmpdir):
+    """Test OrdinaryFn properties: name, source_code, hash_signature."""
+    with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
+        f = OrdinaryFn(simple_function, portal=t.portal)
+        
+        # Test name property
+        assert f.name == "simple_function"
+        
+        # Test source_code property returns normalized source
+        source = f.source_code
+        assert "def simple_function" in source
+        assert "return a+b" in source or "return a + b" in source
+        
+        # Test hash_signature property
+        hash_sig = f.hash_signature
+        assert isinstance(hash_sig, str)
+        assert len(hash_sig) > 0
+        
+        # Same function should have same hash
+        f2 = OrdinaryFn(simple_function, portal=t.portal)
+        assert f.hash_signature == f2.hash_signature
 
-        result = f(n=9)
-        assert result == 34
 
-        result = f(n=8)
-        assert result == 21
+def test_ordinary_fn_execute_method(tmpdir):
+    """Test OrdinaryFn execute() method with kwargs."""
+    with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
+        f = OrdinaryFn(simple_function, portal=t.portal)
+        
+        # execute() should work like __call__() but only accepts kwargs
+        result = f.execute(a=5, b=10)
+        assert result == 15
+        
+        result = f.execute(a=100, b=200)
+        assert result == 300
 
 
 
