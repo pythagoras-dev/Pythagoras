@@ -85,8 +85,6 @@ class WeightedVotingEnsembleAggregator:
     both simple majority voting and confidence-weighted aggregation.
 
     Attributes:
-        base_dir: The directory path where data is persisted.
-        file_name: The name of the backing storage file.
         machines: The sequence of language machines in the ensemble.
         weights: The weight assigned to each model's response.
     """
