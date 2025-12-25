@@ -83,6 +83,8 @@ class OrdinaryCodePortal(BasicPortal):
         """
         if target_class is None:
             target_class = OrdinaryFn
+        if isinstance(target_class, OrdinaryFn):
+            target_class = target_class.__class__
         if not issubclass(target_class, OrdinaryFn):
             raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
         return self._get_linked_objects_ids(target_class=target_class)
