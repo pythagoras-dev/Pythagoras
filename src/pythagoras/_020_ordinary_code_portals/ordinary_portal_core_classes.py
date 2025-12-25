@@ -68,14 +68,6 @@ class OrdinaryCodePortal(BasicPortal):
         super().__init__(root_dict = root_dict)
 
 
-    def _clear(self) -> None:
-        """Clear the portal's state.
-
-        The portal must not be used after this method is called.
-        """
-        super()._clear()
-
-
     def _get_linked_functions_ids(self, target_class: type | None=None) -> set[str]:
         """Return the set of IDs for functions linked to this portal.
 
