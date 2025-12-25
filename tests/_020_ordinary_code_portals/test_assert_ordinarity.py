@@ -64,3 +64,24 @@ def test_async_functions():
 
     with pytest.raises(FunctionError):
         assert_ordinarity(async_function)
+
+def test_default_args():
+    def func_with_defaults(a=1):
+        pass
+
+    with pytest.raises(FunctionError):
+        assert_ordinarity(func_with_defaults)
+
+def test_var_args():
+    def func_with_var_args(*args):
+        pass
+
+    with pytest.raises(FunctionError):
+        assert_ordinarity(func_with_var_args)
+
+def test_var_kwargs_allowed():
+    """**kwargs are allowed in ordinary functions."""
+    def func_with_kwargs(**kwargs):
+        pass
+    
+    assert_ordinarity(func_with_kwargs)
