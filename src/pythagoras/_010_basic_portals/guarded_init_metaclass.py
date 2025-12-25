@@ -21,7 +21,15 @@ def _validate_pickle_state_integrity(state: Any, cls_name: str) -> None:
 
 
 def _parse_pickle_state(state: Any, cls_name: str) -> tuple[dict | None, dict | None]:
-    """Extract `__dict__` and `__slots__` state from the pickle data."""
+    """Extract `__dict__` and `__slots__` state from the pickle data.
+    
+    Args:
+        state: The state object passed to __setstate__.
+        cls_name: Name of the class for error reporting.
+        
+    Returns:
+        A tuple (dict_state, slots_state). Each element is a dictionary or None.
+    """
     if state is None:
         return None, None
     elif isinstance(state, dict):
@@ -159,6 +167,14 @@ def _re_raise_with_context(hook_name: str, exc: Exception) -> None:
     Attempts to instantiate a new exception of the same type with an augmented
     message. If the exception constructor is incompatible (e.g., does not accept
     a single string), a RuntimeError is raised instead.
+
+    Args:
+        hook_name: The name of the hook where the error occurred (e.g. "__post_init__").
+        exc: The original exception caught during hook execution.
+
+    Raises:
+        RuntimeError: If the exception type is not compatible with string instantiation.
+        Exception: The new exception with augmented message (or the original type).
     """
     try:
         new_exc = type(exc)(f"Error in {hook_name}: {exc}")

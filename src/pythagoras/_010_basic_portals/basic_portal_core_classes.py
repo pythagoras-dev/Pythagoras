@@ -453,13 +453,23 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     def __enter__(self):
-        """Set the portal as the active one and add it to the stack"""
+        """Set the portal as the active one and add it to the stack.
+
+        Returns:
+            The portal instance itself (self).
+        """
         _PORTAL_REGISTRY.push_new_active_portal(self)
         return self
 
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Pop the portal from the stack of active ones"""
+        """Pop the portal from the stack of active ones.
+
+        Args:
+            exc_type: Exception type if an exception occurred, None otherwise.
+            exc_val: Exception value if an exception occurred, None otherwise.
+            exc_tb: Exception traceback if an exception occurred, None otherwise.
+        """
         _ensure_single_thread()
         _PORTAL_REGISTRY.pop_active_portal(self)
 
@@ -788,12 +798,23 @@ def get_number_of_linked_portal_aware_objects() -> int:
 
 
 def _visit_portal(obj:Any, portal:BasicPortal) -> None:
-    """Register all PortalAwareClass instances nested within `obj` with `portal`."""
+    """Register all PortalAwareClass instances nested within `obj` with `portal`.
+
+    Args:
+        obj: The object structure to traverse (can be nested).
+        portal: The portal to register found objects with.
+    """
     return _visit_portal_impl(obj, portal=portal)
 
 
 def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = None) -> None:
-    """Recursively traverse `obj` and register any PortalAwareClass instances found."""
+    """Recursively traverse `obj` and register any PortalAwareClass instances found.
+
+    Args:
+        obj: The object to check.
+        portal: The portal to register with.
+        seen: A set of object IDs already visited (to handle cycles).
+    """
     _ensure_single_thread()
 
     if seen is None:

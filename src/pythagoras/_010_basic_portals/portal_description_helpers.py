@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """Helpers for building and querying portal descriptions.
 
 This module provides small utilities used by portal `describe()` methods
@@ -14,6 +12,7 @@ DataFrame schema contract used throughout the project:
 
 These helpers do not mutate portal state; they only format/lookup data.
 """
+from __future__ import annotations
 
 from typing import Any
 
