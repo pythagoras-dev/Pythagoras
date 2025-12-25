@@ -368,6 +368,73 @@ Instead:
 
 ---
 
+## Type Hints
+
+Type hints are mandatory for all public APIs in `Pythagoras`. They improve readability, IDE support, and enable static analysis.
+
+### Modern syntax
+
+Since `Pythagoras` requires Python 3.11+, use modern type hinting features:
+
+1.  **Union types**: Use the `|` operator.
+    - ✅ `str | int`
+    - ❌ `Union[str, int]`
+
+2.  **Optional types**: Use `| None`.
+    - ✅ `str | None`
+    - ❌ `Optional[str]`
+
+3.  **Built-in generics**: Use standard collections.
+    - ✅ `list[str]`, `dict[str, int]`, `tuple[int, ...]`
+    - ❌ `List[str]`, `Dict[str, int]`, `Tuple[int, ...]`
+
+### Input vs. Output types (Postel's Law)
+
+Follow the robustness principle: **"Be conservative in what you do, be liberal in what you accept from others."**
+
+- **Arguments (Inputs)**: Use abstract base classes (`collections.abc`) to accept the widest range of valid types.
+    - Prefer `Sequence[T]` or `Iterable[T]` over `list[T]` when you only need to iterate.
+    - Prefer `Mapping[K, V]` over `dict[K, V]` when you only need lookups.
+    - Prefer `Callable[...]` for functions.
+
+- **Return values (Outputs)**: Use concrete types to provide maximum functionality to the caller.
+    - Return `list`, `dict`, `set`, etc., so the caller knows exactly what they are getting.
+
+**Example:**
+```python
+from collections.abc import Sequence
+
+def process_items(items: Sequence[str]) -> list[str]:
+    """Process a sequence of items.
+
+    Accepts any sequence (list, tuple, etc.) but always returns a list.
+    """
+    return [item.upper() for item in items]
+```
+
+### Avoiding `Any`
+
+Avoid `Any` whenever possible, as it effectively disables type checking.
+
+- Use `object` if the value can be anything and you don't need to access its attributes.
+- Use `TypeVar` (generics) if the type is unknown but should be consistent/preserved.
+- Use `Protocol` (structural subtyping) if you need specific methods/attributes but don't care about the inheritance hierarchy.
+
+### Type Aliases
+
+Use type aliases to simplify complex signatures and give semantic meaning to types:
+
+```python
+UserId = int
+SessionToken = str
+AuthContext = tuple[UserId, SessionToken]
+
+def validate_session(context: AuthContext) -> bool:
+    ...
+```
+
+---
+
 ## Best practices from the Python community
 
 1. **PEP 257 – Docstring Conventions**: All docstrings should be triple-quoted (`"""`), even one-liners. One-liners should have both quotes on the same line:
@@ -466,6 +533,7 @@ class CachedModelWrapper:
 
 - **Always use Google-style docstrings** for public APIs.
 - **Explain WHAT and WHY**, not HOW (unless non-obvious).
-- **Use type hints** in signatures; don't duplicate them in docstrings.
+- **Use modern type hints** (e.g. `str | None`) in signatures; don't duplicate them in docstrings.
+- **Follow Postel's Law** for types: generic inputs (`Sequence`), concrete outputs (`list`).
 - **Write comments that add value**, not noise. Be precise and concise.
 - **Be consistent** with the existing codebase.
