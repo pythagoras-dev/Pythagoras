@@ -56,9 +56,9 @@ class _AnnotationRemover(ast.NodeTransformer):
             # Copy location metadata (lineno, col_offset, etc.) from original node
             return ast.copy_location(new_node, node)
         else:
-            # No value: remove the statement entirely by returning None
-            # The parent will handle filtering out None values
-            return None
+            # `x: int`  ->  `x`   (bare name expression)
+            bare_name_expr = ast.Expr(value=node.target)
+            return ast.copy_location(bare_name_expr, node)
     
     def visit_arg(self, node: ast.arg) -> ast.arg:
         """Remove annotation from function argument."""
