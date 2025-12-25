@@ -364,12 +364,21 @@ class OrdinaryFn(PortalAwareClass):
             including globals(), the OrdinaryFn itself under its function name
             and under "self", and the pythagoras package as "pth".
         """
+        # import pythagoras as pth
+        # names= dict(globals())
+        # names[self.name] = self
+        # names["self"] = self
+        # names["pth"] = pth
+        # return names
+        import builtins
         import pythagoras as pth
-        names= dict(globals())
-        names[self.name] = self
-        names["self"] = self
-        names["pth"] = pth
-        return names
+
+        return {
+            "__builtins__": builtins,
+            self.name: self,  # original symbol
+            "self": self,  # common alias
+            "pth": pth,  # project root module
+        }
 
 
     def execute(self,**kwargs):
@@ -387,7 +396,7 @@ class OrdinaryFn(PortalAwareClass):
         with self.portal:
             names_dict = self._available_names()
             names_dict[self._kwargs_var_name] = kwargs
-            exec(self._compiled_code, names_dict, names_dict)
+            exec(self._compiled_code, names_dict)
             result = names_dict[self._result_var_name]
             return result
 
