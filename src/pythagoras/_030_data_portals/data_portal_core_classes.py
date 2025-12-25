@@ -21,7 +21,7 @@ _TOTAL_VALUES_TXT = "Values, total"
 _PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
-def get_active_data_portal() -> DataPortal:
+def get_current_active_data_portal() -> DataPortal:
     """Return the currently active DataPortal.
 
     Returns:
@@ -523,7 +523,7 @@ class ValueAddr(HashAddr):
         self._value_cache = data
 
         if store:
-            portal = get_active_data_portal()
+            portal = get_current_active_data_portal()
             portal._value_store[self] = data
             self._containing_portals.add(portal._str_id)
 
@@ -547,7 +547,7 @@ class ValueAddr(HashAddr):
 
     @property
     def _ready_in_active_portal(self) -> bool:
-        portal = get_active_data_portal()
+        portal = get_current_active_data_portal()
         portal_id = portal._str_id
         if portal_id in self._containing_portals:
             return True
@@ -562,7 +562,7 @@ class ValueAddr(HashAddr):
         for portal in get_nonactive_data_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
-                get_active_data_portal()._value_store[self] = value
+                get_current_active_data_portal()._value_store[self] = value
                 new_ids = {portal._str_id, get_current_active_portal()._str_id}
                 self._containing_portals |= new_ids
                 self._value_cache = value
@@ -587,11 +587,11 @@ class ValueAddr(HashAddr):
             if get_current_active_portal()._str_id in self._containing_portals:
                 return self._value_cache
             else:
-                get_active_data_portal()._value_store[self] = self._value_cache
+                get_current_active_data_portal()._value_store[self] = self._value_cache
                 self._containing_portals |= {get_current_active_portal()._str_id}
                 return self._value_cache
 
-        value = get_active_data_portal()._value_store[self]
+        value = get_current_active_data_portal()._value_store[self]
         self._value_cache = value
         self._containing_portals |= {get_current_active_portal()._str_id}
         return value
@@ -603,7 +603,7 @@ class ValueAddr(HashAddr):
         for portal in get_nonactive_data_portals():
             try:
                 value = portal._value_store[self]
-                get_active_data_portal()._value_store[self] = value
+                get_current_active_data_portal()._value_store[self] = value
                 self._value_cache = value
                 new_ids = {portal._str_id, get_current_active_portal()._str_id}
                 self._containing_portals |= new_ids
