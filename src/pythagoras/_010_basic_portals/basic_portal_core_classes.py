@@ -32,8 +32,8 @@ _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
 MAX_NESTED_PORTALS = 999
 
 
-PortalStrID = NewType("PortalStrID", str)
-PAwareObjectStrID = NewType("PAwareObjectStrID", str)
+PortalStrFingerprint = NewType("PortalStrFingerprint", str)
+PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
 class _PortalRegistry(NotPicklableClass):
@@ -43,7 +43,7 @@ class _PortalRegistry(NotPicklableClass):
 
     Stored data
     -----------
-    known_portals : dict[PortalStrID, BasicPortal]
+    known_portals : dict[PortalStrFingerprint, BasicPortal]
         All portals that have been instantiated in the system.
     active_portals_stack : list[BasicPortal]
         Stack that mirrors nested ``with portal:`` blocks.
@@ -51,9 +51,9 @@ class _PortalRegistry(NotPicklableClass):
         Re-entrancy counters that align one-to-one with *active_portals_stack*.
     most_recently_created : BasicPortal | None
         Last portal created in the system.
-    links_obj2portal : dict[PObjectStrID, PortalStrID]
+    links_obj2portal : dict[PAwareObjectStrFingerprint, PortalStrFingerprint]
         Mapping from object identifier to the str-id of its linked portal.
-    activated_objects : dict[PObjectStrID, PortalAwareClass]
+    activated_objects : dict[PAwareObjectStrFingerprint, PortalAwareClass]
         Reverse lookup from object identifier to the actual object instance.
     default_portal_instantiator : Callable[[], None] | None
         A callable that creates a default portal when none exists.
@@ -61,12 +61,12 @@ class _PortalRegistry(NotPicklableClass):
 
     def __init__(self) -> None:
         _ensure_single_thread()
-        self.known_portals: dict[PortalStrID, BasicPortal] = {}
+        self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
         self.active_portals_stack: list[BasicPortal] = []
         self.active_portals_stack_counters: list[int] = []
         self.most_recently_created_portal: BasicPortal | None = None
-        self.links_from_objects_to_portals: dict[PAwareObjectStrID, PortalStrID] = {}
-        self.known_objects: dict[PAwareObjectStrID, PortalAwareClass] = {}
+        self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, PortalStrFingerprint] = {}
+        self.known_objects: dict[PAwareObjectStrFingerprint, PortalAwareClass] = {}
         self.default_portal_instantiator: Callable[[], None] | None = None
 
 
@@ -89,19 +89,19 @@ class _PortalRegistry(NotPicklableClass):
     def register_portal(self, portal: BasicPortal) -> None:
         """Add *portal* to the registry and remember it as the most recent one."""
         _ensure_single_thread()
-        self.known_portals[portal._str_id] = portal
+        self.known_portals[portal.fingerprint] = portal
         self.most_recently_created_portal = portal
 
     def unregister_portal(self, portal: BasicPortal) -> None:
         """Remove *portal* from the registry and reset any objects linked to it."""
-        portal_id_to_remove = portal._str_id
+        portal_id_to_remove = portal.fingerprint
         all_links = list(self.links_from_objects_to_portals.items())
         for obj_id, portal_id in all_links:
             if portal_id == portal_id_to_remove:
                 obj = self.known_objects[obj_id]
                 obj._clear()
 
-        self.known_portals.pop(portal._str_id, None)
+        self.known_portals.pop(portal.fingerprint, None)
         if self.most_recently_created_portal is portal:
             self.most_recently_created_portal = None
 
@@ -118,7 +118,7 @@ class _PortalRegistry(NotPicklableClass):
         _ensure_single_thread()
         if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
             raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
-        if not portal._str_id in self.known_portals:
+        if not portal.fingerprint in self.known_portals:
             raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
         if self.active_portals_stack and self.active_portals_stack[-1] is portal:
             self.active_portals_stack_counters[-1] += 1
@@ -136,7 +136,7 @@ class _PortalRegistry(NotPicklableClass):
             RuntimeError: If *portal* is not the current top of the stack.
         """
         _ensure_single_thread()
-        if not portal._str_id in self.known_portals:
+        if not portal.fingerprint in self.known_portals:
             raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
 
         if not self.active_portals_stack or self.active_portals_stack[-1] is not portal:
@@ -189,7 +189,7 @@ class _PortalRegistry(NotPicklableClass):
     def is_current_active_portal(self, portal: BasicPortal) -> bool:
         """Check if *portal* is the currently active one."""
         return (len(self.active_portals_stack) > 0
-                and self.active_portals_stack[-1]._str_id == portal._str_id)
+                and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
 
     def unique_active_portals_count(self) -> int:
         """Count unique portals currently in the active stack."""
@@ -201,11 +201,11 @@ class _PortalRegistry(NotPicklableClass):
 
     def register_object(self, obj: PortalAwareClass) -> None:
         """Register an object in the global registry."""
-        self.known_objects[obj._str_id] = obj
+        self.known_objects[obj.fingerprint] = obj
 
     def is_object_registered(self, obj: PortalAwareClass) -> bool:
         """Check if an object is currently registered."""
-        return obj._str_id in self.known_objects
+        return obj.fingerprint in self.known_objects
 
     def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
         """Record that *obj* (identified by *obj_id*) is linked to *portal*.
@@ -213,15 +213,15 @@ class _PortalRegistry(NotPicklableClass):
         An object being linked to a portal means that it will use that portal
         for all its operations unless explicitly told otherwise.
         """
-        obj_id = obj._str_id
-        portal_id = portal._str_id
+        obj_id = obj.fingerprint
+        portal_id = portal.fingerprint
         self.known_objects[obj_id] = obj
         self.links_from_objects_to_portals[obj_id] = portal_id
 
 
     def unregister_object(self,obj:PortalAwareClass) -> None:
         """Unregister an object from the registry."""
-        obj_id = obj._str_id
+        obj_id = obj.fingerprint
         self.known_objects.pop(obj_id, None)
         self.links_from_objects_to_portals.pop(obj_id, None)
 
@@ -243,9 +243,9 @@ class _PortalRegistry(NotPicklableClass):
 
     def linked_objects_ids(self
             , portal: BasicPortal
-            , target_class: type | None = None) -> set[PAwareObjectStrID]:
+            , target_class: type | None = None) -> set[PAwareObjectStrFingerprint]:
         """Get IDs of objects linked to the specified portal, optionally filtered by class."""
-        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal._str_id)
+        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal.fingerprint)
 
         if target_class is None:
             return set(obj_ids)
@@ -294,7 +294,6 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
     _entropy_infuser: random.Random | None
 
     _root_dict: PersiDict | None
-    _str_id_cache: PortalStrID
     _init_finished:bool
 
 
@@ -337,7 +336,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     def _get_linked_objects_ids(self
-            , target_class: type | None = None) -> set[PAwareObjectStrID]:
+            , target_class: type | None = None) -> set[PAwareObjectStrFingerprint]:
         """Get the set of string IDs of objects linked to this portal.
 
         Args:
@@ -413,8 +412,8 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     @cached_property
-    def _str_id(self) -> PortalStrID:
-        """Get the portal's persistent hash.
+    def fingerprint(self) -> PortalStrFingerprint:
+        """Get the portal's persistent hash fingerprint.
 
         It's an internal hash used by Pythagoras and is different from .__hash__()
 
@@ -422,8 +421,8 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         """
         if not self._init_finished:
             raise RuntimeError("Portal is not fully initialized yet, "
-                               "_str_id is not available.")
-        return PortalStrID(get_hash_signature(self.get_essential_jsparams()))
+                               "fingerprint is not available.")
+        return PortalStrFingerprint(get_hash_signature(self.get_essential_jsparams()))
 
 
     def _invalidate_cache(self) -> None:
@@ -564,7 +563,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         Args:
             portal: The BasicPortal instance to visit.
         """
-        if portal._str_id not in self._visited_portals:
+        if portal.fingerprint not in self._visited_portals:
             self._first_visit_to_portal(portal)
 
 
@@ -573,12 +572,12 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
                                "_first_visit_to_portal() can't be called.")
-        if portal._str_id in self._visited_portals:
+        if portal.fingerprint in self._visited_portals:
             raise RuntimeError(
-                f"Object with id {self._str_id} has already been visited "
-                f"and registered in portal {portal._str_id}")
+                f"Object with id {self.fingerprint} has already been visited "
+                f"and registered in portal {portal.fingerprint}")
 
-        self._visited_portals.add(portal._str_id)
+        self._visited_portals.add(portal.fingerprint)
 
         if self._linked_portal_at_init is not None:
             _PORTAL_REGISTRY.register_linked_object(
@@ -588,15 +587,17 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
 
     @cached_property
-    def _str_id(self) -> PAwareObjectStrID:
-        """Return the hash ID of the portal-aware object.
+    def fingerprint(self) -> PAwareObjectStrFingerprint:
+        """Return the hash fingerprint of the portal-aware object.
 
         It's an internal hash used by Pythagoras and is different from .__hash__()
+
+        This property should only be accessed after the portal has been fully initialized.
         """
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
-                               "_str_id is not available.")
-        return PAwareObjectStrID(get_hash_signature(self))
+                               "fingerprint is not available.")
+        return PAwareObjectStrFingerprint(get_hash_signature(self))
 
 
     @abstractmethod
@@ -641,7 +642,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         """Return True if the object has been registered in at least one of the portals."""
         if len(self._visited_portals) >=1:
             if not _PORTAL_REGISTRY.is_object_registered(self):
-                raise RuntimeError(f"Object with id {self._str_id} is expected to be in the activated objects registry")
+                raise RuntimeError(f"Object with id {self.fingerprint} is expected to be in the activated objects registry")
             return True
         return False
 
@@ -774,10 +775,10 @@ def get_nonactive_portals() -> list[BasicPortal]:
         A list of portal instances that are not currently in the active portal stack.
     """
     _ensure_single_thread()
-    active_ids = {p._str_id for p in _PORTAL_REGISTRY.active_portals_stack}
+    active_ids = {p.fingerprint for p in _PORTAL_REGISTRY.active_portals_stack}
     return [
         p for p in _PORTAL_REGISTRY.known_portals.values()
-        if p._str_id not in active_ids
+        if p.fingerprint not in active_ids
     ]
 
 

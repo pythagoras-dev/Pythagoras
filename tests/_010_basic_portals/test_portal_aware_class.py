@@ -51,11 +51,11 @@ def test_portal_aware_str_id_works_after_init():
     with _PortalTester(BasicPortal) as t:
         obj = SimplePortalAware(42)
         # After init, _str_id should work
-        str_id = obj._str_id
+        str_id = obj.fingerprint
         assert str_id is not None
         assert isinstance(str_id, str)
         # Should be consistent
-        assert obj._str_id == str_id
+        assert obj.fingerprint == str_id
 
 
 def test_portal_aware_registration_tracking():

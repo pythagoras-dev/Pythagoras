@@ -423,7 +423,7 @@ class OrdinaryFn(PortalAwareClass):
         self._source_code = state["source_code"]
 
 
-    def __hash_signature_descriptor__(self) -> str:
+    def __hash_addr_descriptor__(self) -> str:
         """Return a short descriptor string used in hashing.
 
         Returns:

@@ -282,7 +282,7 @@ class   LoggingFnCallSignature:
         return self.fn.excessive_logging
 
 
-    def __hash_signature_descriptor__(self) -> str:
+    def __hash_addr_descriptor__(self) -> str:
         """Descriptor string contributing to the address hash.
 
         Returns:

@@ -397,9 +397,9 @@ class HashAddr(SafeStrTuple):
     def _build_descriptor(x: Any) -> str:
         """Create a short human-readable summary of an object."""
 
-        if (hasattr(x, "__hash_signature_descriptor__")
-                and callable(x.__hash_signature_descriptor__)):
-            descriptor = x.__hash_signature_descriptor__()
+        if (hasattr(x, "__hash_addr_descriptor__")
+                and callable(x.__hash_addr_descriptor__)):
+            descriptor = x.__hash_addr_descriptor__()
         else:
             descriptor = x.__class__.__name__.lower()
             if (hasattr(x, "shape") and hasattr(x.shape, "__iter__")
@@ -525,7 +525,7 @@ class ValueAddr(HashAddr):
         if store:
             portal = get_current_active_data_portal()
             portal._value_store[self] = data
-            self._containing_portals.add(portal._str_id)
+            self._containing_portals.add(portal.fingerprint)
 
 
     def _invalidate_cache(self):
@@ -548,7 +548,7 @@ class ValueAddr(HashAddr):
     @property
     def _ready_in_active_portal(self) -> bool:
         portal = get_current_active_data_portal()
-        portal_id = portal._str_id
+        portal_id = portal.fingerprint
         if portal_id in self._containing_portals:
             return True
         result = self in portal._value_store
@@ -563,7 +563,7 @@ class ValueAddr(HashAddr):
             if self in portal._value_store:
                 value = portal._value_store[self]
                 get_current_active_data_portal()._value_store[self] = value
-                new_ids = {portal._str_id, get_current_active_portal()._str_id}
+                new_ids = {portal.fingerprint, get_current_active_portal().fingerprint}
                 self._containing_portals |= new_ids
                 self._value_cache = value
                 return True
@@ -584,16 +584,16 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if get_current_active_portal()._str_id in self._containing_portals:
+            if get_current_active_portal().fingerprint in self._containing_portals:
                 return self._value_cache
             else:
                 get_current_active_data_portal()._value_store[self] = self._value_cache
-                self._containing_portals |= {get_current_active_portal()._str_id}
+                self._containing_portals |= {get_current_active_portal().fingerprint}
                 return self._value_cache
 
         value = get_current_active_data_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals |= {get_current_active_portal()._str_id}
+        self._containing_portals |= {get_current_active_portal().fingerprint}
         return value
 
 
@@ -605,7 +605,7 @@ class ValueAddr(HashAddr):
                 value = portal._value_store[self]
                 get_current_active_data_portal()._value_store[self] = value
                 self._value_cache = value
-                new_ids = {portal._str_id, get_current_active_portal()._str_id}
+                new_ids = {portal.fingerprint, get_current_active_portal().fingerprint}
                 self._containing_portals |= new_ids
                 return value
             except:
