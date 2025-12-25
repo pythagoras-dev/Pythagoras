@@ -5,7 +5,11 @@ Your help is greatly appreciated. These guidelines will help you get started.
 
 ## Getting Started
 
-1.  **Fork and Clone:**
+1. **Learn the Conventions:**
+   Familiarize yourself with the project's [docstrings and comments](docstrings_and_comments.md) guidelines.
+
+
+2. **Fork and Clone:**
     ```bash
     git clone https://github.com/your-username/Pythagoras.git
     cd parameterizable
@@ -47,16 +51,17 @@ Please provide a clear description, steps to reproduce, and your Python version.
 
 Use these prefixes for your commit messages:
 
-| Prefix | Description                      |
-| :----- | :------------------------------- |
-| `ENH:` | Enhancement, new functionality   |
-| `BUG:` | Bug fix                          |
-| `DOC:` | Additions/updates to documentation |
-| `TST:` | Additions/updates to tests       |
-| `BLD:` | Build process/script updates     |
-| `PERF:`| Performance improvement          |
-| `TYP:` | Type annotations                 |
-| `CLN:` | Code cleanup                     |
+| Prefix  | Description                        |
+|:--------|:-----------------------------------|
+| `ENH:`  | Enhancement, new functionality     |
+| `BUG:`  | Bug fix                            |
+| `DOC:`  | Additions/updates to documentation |
+| `TST:`  | Additions/updates to tests         |
+| `BLD:`  | Build process/script updates       |
+| `PERF:` | Performance improvement            |
+| `REF:`  | Refactoring                        |
+| `TYP:`  | Type annotations                   |
+| `CLN:`  | Code cleanup                       |
 
 *Example: `ENH: Add support for nested parameter validation`*
 
