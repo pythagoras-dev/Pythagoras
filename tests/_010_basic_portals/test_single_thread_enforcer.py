@@ -82,3 +82,29 @@ def test_reset_allows_new_owner():
         _ensure_single_thread()
     
     assert "Pythagoras portals are single-threaded by design" in str(excinfo.value)
+
+def test_pid_change_resets_ownership():
+    """Test that PID change (simulating fork) resets ownership."""
+    import os
+    
+    # Main thread claims ownership
+    _ensure_single_thread()
+    original_native_id = ste._portal_native_id
+    original_pid = ste._owner_pid
+    
+    assert original_native_id == threading.get_native_id()
+    assert original_pid == os.getpid()
+    
+    # Simulate a PID change (as would happen after fork)
+    # We can't actually fork in pytest easily, so we manually change the PID
+    fake_new_pid = original_pid + 99999
+    ste._owner_pid = fake_new_pid
+    
+    # Now when we call _ensure_single_thread, it should detect PID mismatch
+    # and reset ownership, allowing the current thread to claim it
+    _ensure_single_thread()
+    
+    # Ownership should be reset to current thread and PID
+    assert ste._portal_native_id == threading.get_native_id()
+    assert ste._owner_pid == os.getpid()
+    assert ste._owner_pid != fake_new_pid

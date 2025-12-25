@@ -1,0 +1,121 @@
+"""Tests for BasicPortal linked objects functionality."""
+import pytest
+from pythagoras import BasicPortal, PortalAwareClass, _PortalTester
+
+
+class TypeA(PortalAwareClass):
+    """Test class of type A."""
+    
+    def __init__(self, value, portal=None):
+        super().__init__(portal)
+        self.value = value
+    
+    def __getstate__(self):
+        return {"value": self.value}
+    
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.value = state["value"]
+
+
+class TypeB(PortalAwareClass):
+    """Test class of type B."""
+    
+    def __init__(self, value, portal=None):
+        super().__init__(portal)
+        self.value = value
+    
+    def __getstate__(self):
+        return {"value": self.value}
+    
+    def __setstate__(self, state):
+        super().__setstate__(state)
+        self.value = state["value"]
+
+
+def test_get_linked_objects_no_filter(tmpdir):
+    """Test getting all linked objects without type filtering."""
+    with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
+        portal = t.portal
+        
+        obj_a1 = TypeA(1, portal)
+        obj_a2 = TypeA(2, portal)
+        obj_b1 = TypeB(3, portal)
+        
+        linked = portal.get_linked_objects()
+        assert len(linked) == 3
+        assert obj_a1 in linked
+        assert obj_a2 in linked
+        assert obj_b1 in linked
+
+
+def test_get_linked_objects_with_type_filter(tmpdir):
+    """Test getting linked objects filtered by type."""
+    with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
+        portal = t.portal
+        
+        obj_a1 = TypeA(1, portal)
+        obj_a2 = TypeA(2, portal)
+        obj_b1 = TypeB(3, portal)
+        
+        linked_a = portal.get_linked_objects(target_class=TypeA)
+        assert len(linked_a) == 2
+        assert obj_a1 in linked_a
+        assert obj_a2 in linked_a
+        assert obj_b1 not in linked_a
+        
+        linked_b = portal.get_linked_objects(target_class=TypeB)
+        assert len(linked_b) == 1
+        assert obj_b1 in linked_b
+
+
+def test_get_number_of_linked_objects_no_filter(tmpdir):
+    """Test counting all linked objects without type filtering."""
+    with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
+        portal = t.portal
+        
+        assert portal.get_number_of_linked_objects() == 0
+        
+        TypeA(1, portal)
+        assert portal.get_number_of_linked_objects() == 1
+        
+        TypeA(2, portal)
+        assert portal.get_number_of_linked_objects() == 2
+        
+        TypeB(3, portal)
+        assert portal.get_number_of_linked_objects() == 3
+
+
+def test_get_number_of_linked_objects_with_type_filter(tmpdir):
+    """Test counting linked objects filtered by type."""
+    with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
+        portal = t.portal
+        
+        TypeA(1, portal)
+        TypeA(2, portal)
+        TypeB(3, portal)
+        
+        assert portal.get_number_of_linked_objects(target_class=TypeA) == 2
+        assert portal.get_number_of_linked_objects(target_class=TypeB) == 1
+
+
+def test_entropy_infuser_property(tmpdir):
+    """Test that entropy_infuser property returns a random.Random instance."""
+    with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
+        portal = t.portal
+        
+        infuser = portal.entropy_infuser
+        assert infuser is not None
+        
+        # Should be a Random instance
+        import random
+        assert isinstance(infuser, random.Random)
+        
+        # Should be consistent (same instance)
+        assert portal.entropy_infuser is infuser
+        
+        # Should be able to generate random numbers
+        val1 = infuser.random()
+        val2 = infuser.random()
+        assert 0 <= val1 <= 1
+        assert 0 <= val2 <= 1
