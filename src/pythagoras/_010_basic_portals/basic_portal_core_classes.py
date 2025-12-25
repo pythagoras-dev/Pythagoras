@@ -29,7 +29,7 @@ from .default_portal_base_dir import get_default_portal_base_dir
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
 _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
-MAX_NESTED_PORTALS = 128
+MAX_NESTED_PORTALS = 999
 
 
 PortalStrID = NewType("PortalStrID", str)
