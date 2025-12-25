@@ -1,7 +1,7 @@
 import types, inspect
 from typing import Callable
 
-from .exceptions import FunctionError
+from .function_error_exception import FunctionError
 from .._800_signatures_and_converters import get_long_infoname
 
 

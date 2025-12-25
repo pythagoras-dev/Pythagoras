@@ -6,7 +6,7 @@ from typing import Callable, Any
 import pandas as pd
 from persidict import PersiDict
 
-from .exceptions import FunctionError
+from .function_error_exception import FunctionError
 from .._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_function_source_impl
 from .function_processing import get_function_name_from_source
