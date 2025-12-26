@@ -6,7 +6,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Serverless:** An execution model where the system dynamically manages the allocation of machine resources in the cloud / distributed environment. Pythagoras implements a serverless-like experience using shared storage to coordinate distributed workers.
 
-- **Idempotency:** A property of functions where calling them multiple times with the same arguments produces the same result. Pure functions in Pythagoras are idempotent.
+- **Pure Functions:** Functions that are deterministic (always produce the same output for the same input) and have no side effects. Pythagoras relies on pure functions to safely cache results and distribute execution across many compute nodes.
 
 - **Content-Addressable Storage (CAS):** A storage mechanism where data is retrieved based on its content (hash) rather than its location. Pythagoras uses CAS for code, arguments, and results.
 
@@ -14,7 +14,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ## 2. Portals
 
-- **Portal:** A long-lived object encapsulating a working environment, storage, and execution policies. Different portal types add capabilities progressively (basic → ordinary → data → logging → safe → autonomous → protected → pure → swarming).
+- **Portal:** A persistent gateway connecting your local code to the distributed Pythagoras environment. It acts as a remote operating system for your Python functions. It manages resources, schedules execution, handles I/O (via storage), and enforces security policies. Just as a process lives in an OS, a Pythagoras function lives in a Portal, relying on it for all interactions with the outside world. Different portal types add capabilities progressively (basic → ordinary → data → logging → safe → autonomous → protected → pure → swarming).
 
 ### 2.1. Portal Classes
 
