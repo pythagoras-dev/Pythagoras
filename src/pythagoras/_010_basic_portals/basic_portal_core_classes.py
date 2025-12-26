@@ -211,6 +211,24 @@ class _PortalRegistry(NotPicklableClass):
             if p.fingerprint not in active_ids
         ]
 
+    def noncurrent_portals(self) -> list[BasicPortal]:
+        """Get a list of all known portals that are not the current portal.
+
+        The current portal is the one at the top of the active stack.
+        If the stack is empty, all known portals are returned.
+
+        Returns:
+            A list of all known portal instances but the current one..
+        """
+        current_id = None
+        if len(self.active_portals_stack) > 0:
+            current_id = self.active_portals_stack[-1].fingerprint
+
+        noncurrent =  [p for p in self.known_portals.values()
+            if p.fingerprint != current_id]
+
+        return noncurrent
+
     def register_object(self, obj: PortalAwareClass) -> None:
         """Register an object in the global registry."""
         self.known_objects[obj.fingerprint] = obj
@@ -810,6 +828,16 @@ def get_nonactive_portals() -> list[BasicPortal]:
     """
     _ensure_single_thread()
     return _PORTAL_REGISTRY.nonactive_portals()
+
+
+def get_noncurrent_portals() -> list[BasicPortal]:
+    """Get a list of all portals that are not the current portal.
+
+    Returns:
+        A list of portal instances that are not currently the active/current portal.
+    """
+    _ensure_single_thread()
+    return _PORTAL_REGISTRY.noncurrent_portals()
 
 
 def get_number_of_linked_portal_aware_objects() -> int:
