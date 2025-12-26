@@ -269,7 +269,7 @@ PortalType = TypeVar("PortalType", bound=BasicPortal)
 def _validate_target_class(target_portal_type: PortalType) -> None:
     if not (isinstance(target_portal_type, type) and issubclass(target_portal_type, BasicPortal)):
         raise TypeError(
-            "target_class must be BasicPortal or one of its (grand)children")
+            "target_portal_type must be BasicPortal or one of its (grand)children")
 
 class _PortalRegistry(NotPicklableClass):
     """
@@ -389,7 +389,7 @@ class _PortalRegistry(NotPicklableClass):
             raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
 
 
-    def current_portal(self, target_class: type = BasicPortal) -> BasicPortal:
+    def current_portal(self, target_portal_type: type[PortalType] = BasicPortal) -> BasicPortal:
         """Get the current portal object.
 
         The current portal is the one that was most recently entered
@@ -401,14 +401,14 @@ class _PortalRegistry(NotPicklableClass):
         Returns:
             The current portal instance.
         """
-        _validate_target_class(target_class)
+        _validate_target_class(target_portal_type)
         if self.active_portals_stack:
             for portal in reversed(self.active_portals_stack):
-                if isinstance(portal, target_class):
+                if isinstance(portal, target_portal_type):
                     return portal
 
             # If we are here, stack is not empty but no matching portal found.
-            raise RuntimeError(f"No active portal of type {target_class.__name__} found.")
+            raise RuntimeError(f"No active portal of type {target_portal_type.__name__} found.")
 
         if self.most_recently_created_portal is None:
             if self.default_portal_instantiator is not None:
@@ -425,8 +425,8 @@ class _PortalRegistry(NotPicklableClass):
                     "No portal is active and no default portal instantiator was set "
                     "using _set_default_portal_instantiator()")
 
-        if not isinstance(self.most_recently_created_portal, target_class):
-            raise RuntimeError(f"No active portal of type {target_class.__name__} found.")
+        if not isinstance(self.most_recently_created_portal, target_portal_type):
+            raise RuntimeError(f"No active portal of type {target_portal_type.__name__} found.")
 
         self.active_portals_stack.append(self.most_recently_created_portal)
         self.active_portals_stack_counters.append(1)
@@ -437,36 +437,36 @@ class _PortalRegistry(NotPicklableClass):
         return (len(self.active_portals_stack) > 0
                 and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
 
-    def unique_active_portals_count(self, target_class: type = BasicPortal) -> int:
+    def unique_active_portals_count(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
         """Count unique portals currently in the active stack."""
-        _validate_target_class(target_class)
-        return len({p for p in self.active_portals_stack if isinstance(p, target_class)})
+        _validate_target_class(target_portal_type)
+        return len({p for p in self.active_portals_stack if isinstance(p, target_portal_type)})
 
-    def active_portals_stack_depth(self, target_class: type = BasicPortal) -> int:
+    def active_portals_stack_depth(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
         """Calculate the total depth of the active portal stack."""
-        _validate_target_class(target_class)
+        _validate_target_class(target_portal_type)
         
         total_depth = 0
         for portal, count in zip(self.active_portals_stack, self.active_portals_stack_counters):
-            if isinstance(portal, target_class):
+            if isinstance(portal, target_portal_type):
                 total_depth += count
         return total_depth
 
-    def nonactive_portals(self, target_class: type = BasicPortal) -> list[BasicPortal]:
+    def nonactive_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
         """Get a list of all portals that are not in the active stack.
 
         Returns:
             A list of portal instances that are not currently in the active portal stack.
         """
         active_ids = {p.fingerprint for p in self.active_portals_stack}
-        candidates = self.all_portals(target_class)
+        candidates = self.all_portals(target_portal_type)
 
         return [
             p for p in candidates
             if p.fingerprint not in active_ids
         ]
 
-    def noncurrent_portals(self, target_class: type = BasicPortal) -> list[BasicPortal]:
+    def noncurrent_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
         """Get a list of all known portals that are not the current portal.
 
         The current portal is the one at the top of the active stack.
@@ -479,7 +479,7 @@ class _PortalRegistry(NotPicklableClass):
         if len(self.active_portals_stack) > 0:
             current_id = self.active_portals_stack[-1].fingerprint
 
-        candidates = self.all_portals(target_class)
+        candidates = self.all_portals(target_portal_type)
 
         noncurrent =  [p for p in candidates
             if p.fingerprint != current_id]
