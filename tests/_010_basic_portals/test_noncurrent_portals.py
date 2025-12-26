@@ -1,7 +1,4 @@
-from pythagoras._010_basic_portals import _PortalTester
-from pythagoras._010_basic_portals.basic_portal_core_classes import (
-    BasicPortal, get_noncurrent_portals
-)
+from pythagoras import _PortalTester, BasicPortal, get_noncurrent_portals
 import pytest
 
 

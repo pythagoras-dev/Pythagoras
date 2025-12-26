@@ -1,12 +1,13 @@
 import pytest
 
-from pythagoras import BasicPortal, _PortalTester
-from pythagoras._010_basic_portals.basic_portal_core_classes import (
-    get_current_portal
-    , get_number_of_known_portals
-    , get_number_of_active_portals
-    , get_most_recently_created_portal
-    , get_depth_of_active_portal_stack)
+from pythagoras import (
+    BasicPortal, _PortalTester,
+    get_current_portal,
+    get_number_of_known_portals,
+    get_number_of_active_portals,
+    get_most_recently_created_portal,
+    get_depth_of_active_portal_stack
+)
 
 
 def test_portal_tester_no_params(tmpdir):

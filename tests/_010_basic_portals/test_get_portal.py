@@ -1,6 +1,4 @@
-from pythagoras import BasicPortal, _PortalTester
-from pythagoras._010_basic_portals.basic_portal_core_classes import (
-    get_current_portal)
+from pythagoras import BasicPortal, _PortalTester, get_current_portal
 
 
 def test_portal_nested(tmpdir):

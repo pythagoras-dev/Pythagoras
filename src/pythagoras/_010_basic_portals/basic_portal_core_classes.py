@@ -649,7 +649,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         """
         portal_to_use = self._linked_portal
         if portal_to_use is None:
-            portal_to_use = get_current_portal()
+            portal_to_use = _PORTAL_REGISTRY.current_portal()
         self._visit_portal(portal_to_use)
         return portal_to_use
 
@@ -786,60 +786,6 @@ PortalType = TypeVar("PortalType")
 ##################################################
 
 
-def get_number_of_known_portals(target_class: type | None = None) -> int:
-    """Get the number of portals currently in the system.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            only portals that are instances of this class (or subclass)
-            are counted.
-
-    Returns:
-        The total count of all known portals in the system.
-    """
-    return _PORTAL_REGISTRY.count_known_portals(target_class)
-
-
-def get_all_known_portals(target_class: type | None = None) -> list[BasicPortal]:
-    """Get a list of all known portals.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            only portals that are instances of this class (or subclass)
-            are included.
-
-    Returns:
-        A list containing all portal instances currently known to the system.
-    """
-    return _PORTAL_REGISTRY.all_portals(target_class)
-
-
-def get_number_of_active_portals(target_class: type | None = None) -> int:
-    """Get the number of unique portals in the active stack.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            only portals that are instances of this class (or subclass)
-            are counted.
-
-    Returns:
-        The count of unique portals currently in the active portal stack.
-    """
-    return _PORTAL_REGISTRY.unique_active_portals_count(target_class)
-
-
-def get_depth_of_active_portal_stack(target_class: type | None = None) -> int:
-    """Get the depth of the active portal stack.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            only portals that are instances of this class (or subclass)
-            are included in the depth calculation.
-
-    Returns:
-        The total depth (sum of all counters) of the active portal stack.
-    """
-    return _PORTAL_REGISTRY.active_portals_stack_depth(target_class)
 
 
 def get_most_recently_created_portal() -> BasicPortal | None:
@@ -873,53 +819,6 @@ def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
     _PORTAL_REGISTRY.register_default_portal_instantiator(instantiator)
 
 
-def get_current_portal(target_class: type | None = None) -> BasicPortal:
-    """Get the current portal object.
-
-    The current portal is the one that was most recently entered
-    using the 'with' statement. If no portal is currently active,
-    it finds the most recently created portal and makes it active (and current).
-    If there are currently no portals exist in the system,
-    it creates the default portal, and makes it active and current.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            it finds the most recently entered portal of this class (or subclass).
-
-    Returns:
-        The current active portal.
-    """
-    return _PORTAL_REGISTRY.current_portal(target_class)
-
-
-def get_nonactive_portals(target_class: type | None = None) -> list[BasicPortal]:
-    """Get a list of all portals that are not in the active stack.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            only portals that are instances of this class (or subclass)
-            are included.
-
-    Returns:
-        A list of portal instances that are not currently in the active portal stack.
-    """
-    _ensure_single_thread()
-    return _PORTAL_REGISTRY.nonactive_portals(target_class)
-
-
-def get_noncurrent_portals(target_class: type | None = None) -> list[BasicPortal]:
-    """Get a list of all portals that are not the current portal.
-
-    Args:
-        target_class: Optional class to filter portals. If provided,
-            only portals that are instances of this class (or subclass)
-            are included.
-
-    Returns:
-        A list of portal instances that are not currently the active/current portal.
-    """
-    _ensure_single_thread()
-    return _PORTAL_REGISTRY.noncurrent_portals(target_class)
 
 
 def get_number_of_linked_portal_aware_objects() -> int:

@@ -1,7 +1,6 @@
 from pythagoras._010_basic_portals import *
 from pythagoras._010_basic_portals import _PortalTester
-from pythagoras._010_basic_portals.basic_portal_core_classes import (
-    _clear_all_portals, get_nonactive_portals)
+from pythagoras._010_basic_portals.basic_portal_core_classes import _clear_all_portals
 
 
 def test_portal(tmpdir):
