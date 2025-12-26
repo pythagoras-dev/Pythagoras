@@ -6,7 +6,7 @@ Your help is greatly appreciated. These guidelines will help you get started.
 ## Getting Started
 
 1. **Learn the Conventions:**
-   Familiarize yourself with the project's [docstrings and comments](docstrings_comments.md), [type hints](type_hints.md), and [unit testing](unit_tests.md) guidelines.
+   Familiarize yourself with the project's [Glossary](GLOSSARY.md), [docstrings and comments](docstrings_comments.md), [type hints](type_hints.md), and [unit testing](unit_tests.md) guidelines.
 
 
 2. **Fork and Clone:**

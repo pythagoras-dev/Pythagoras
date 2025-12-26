@@ -23,6 +23,8 @@ data science, machine learning, and AI workflows.
 Pythagoras excels at complex, long-running, resource-demanding computations. 
 It’s not recommended for real-time, latency-sensitive workflows.
 
+For a comprehensive list of terms and definitions, see the [Glossary](GLOSSARY.md).
+
 ## Tutorials
 
 Pythagoras elevates two popular techniques — memoization and parallelization — 
