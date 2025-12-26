@@ -619,7 +619,7 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _ready_in_nocurrent_portals(self) -> bool:
+    def _ready_in_noncurrent_portals(self) -> bool:
         for portal in get_noncurrent_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
@@ -636,7 +636,7 @@ class ValueAddr(HashAddr):
         """Check if address points to a value that is ready to be retrieved."""
         if self._ready_in_current_portal:
             return True
-        if self._ready_in_nocurrent_portals:
+        if self._ready_in_noncurrent_portals:
             return True
         return False
 
