@@ -21,10 +21,13 @@ _PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
 def get_number_of_known_data_portals() -> int:
-    """Get the number of DataPortals currently in the system.
+    """Get the number of known DataPortals.
 
     Returns:
-        The total count of all known DataPortals in the system.
+        The total count of all known portals in the system.
+
+    Raises:
+        TypeError: If any known portal is not an instance of DataPortal.
     """
     return get_number_of_known_portals(DataPortal)
 
@@ -33,7 +36,10 @@ def get_all_known_data_portals() -> list[DataPortal]:
     """Get a list of all known DataPortals.
 
     Returns:
-        A list containing all DataPortal instances currently known to the system.
+        A list containing all portal instances currently known to the system.
+
+    Raises:
+        TypeError: If any known portal is not an instance of DataPortal.
     """
     return get_all_known_portals(DataPortal)
 
@@ -42,7 +48,10 @@ def get_number_of_active_data_portals() -> int:
     """Get the number of unique DataPortals in the active stack.
 
     Returns:
-        The count of unique DataPortals currently in the active portal stack.
+        The count of unique portals currently in the active portal stack.
+
+    Raises:
+        TypeError: If any active portal is not an instance of DataPortal.
     """
     return get_number_of_active_portals(DataPortal)
 
@@ -51,13 +60,16 @@ def get_depth_of_active_data_portal_stack() -> int:
     """Get the depth of the active DataPortal stack.
 
     Returns:
-        The total depth (sum of all counters) of the active DataPortal stack.
+        The total depth (sum of all counters) of the active portal stack.
+
+    Raises:
+        TypeError: If any active portal is not an instance of DataPortal.
     """
     return get_depth_of_active_portal_stack(DataPortal)
 
 
 def get_current_data_portal() -> DataPortal:
-    """Get the current portal object, raise if it's not DataPortal.
+    """Get the current portal object.
 
     The current portal is the one that was most recently entered
     using the 'with' statement. If no portal is currently active,
@@ -70,7 +82,6 @@ def get_current_data_portal() -> DataPortal:
 
     Raises:
         TypeError: If the current portal is not a DataPortal.
-
     """
     portal = get_current_portal()
     if not isinstance(portal, DataPortal):
@@ -83,7 +94,10 @@ def get_nonactive_data_portals() -> list[DataPortal]:
     """Get a list of all DataPortals that are not in the active stack.
 
     Returns:
-        A list of DataPortal instances that are not currently in the active portal stack.
+        A list of portal instances that are not currently in the active portal stack.
+
+    Raises:
+        TypeError: If any non-active portal is not an instance of DataPortal.
     """
     return get_nonactive_portals(DataPortal)
 
@@ -92,7 +106,10 @@ def get_noncurrent_data_portals() -> list[DataPortal]:
     """Get a list of all DataPortals that are not the current portal.
 
     Returns:
-        A list of DataPortal instances that are not currently the active/current portal.
+        A list of all known portal instances but the current one.
+
+    Raises:
+        TypeError: If any non-current portal is not an instance of DataPortal.
     """
     return get_noncurrent_portals(DataPortal)
 
