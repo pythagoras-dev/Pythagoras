@@ -16,6 +16,8 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Portal:** A long-lived object encapsulating a working environment, storage, and execution policies. Different portal types add capabilities progressively (basic → ordinary → data → logging → safe → autonomous → protected → pure → swarming).
 
+#### Portal Classes
+
 - **BasicPortal:** The foundational portal class that manages lifecycle and registration of portal-aware objects.
 
 - **OrdinaryCodePortal:** Extends BasicPortal to work with decorated ordinary functions (no persistence/logging yet).
@@ -33,6 +35,8 @@ This glossary defines the key terms used in the Pythagoras project and API.
 - **PureCodePortal:** Extends ProtectedCodePortal to support pure functions with deterministic caching keyed by code and arguments.
 
 - **SwarmingPortal:** Extends PureCodePortal to provide asynchronous, distributed execution ("swarming") across processes or machines.
+
+#### Portal-related Concepts
 
 - **Known Portals:** The set of all portal objects that have been instantiated and registered in the system.
 
