@@ -624,7 +624,7 @@ class ValueAddr(HashAddr):
             if self in portal._value_store:
                 value = portal._value_store[self]
                 get_current_data_portal()._value_store[self] = value
-                new_ids = {portal.fingerprint, get_current_portal().fingerprint}
+                new_ids = {portal.fingerprint, get_current_data_portal().fingerprint}
                 self._containing_portals |= new_ids
                 self._value_cache = value
                 return True
@@ -645,16 +645,16 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if get_current_portal().fingerprint in self._containing_portals:
+            if get_current_data_portal().fingerprint in self._containing_portals:
                 return self._value_cache
             else:
                 get_current_data_portal()._value_store[self] = self._value_cache
-                self._containing_portals |= {get_current_portal().fingerprint}
+                self._containing_portals |= {get_current_data_portal().fingerprint}
                 return self._value_cache
 
         value = get_current_data_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals |= {get_current_portal().fingerprint}
+        self._containing_portals |= {get_current_data_portal().fingerprint}
         return value
 
 
@@ -666,7 +666,7 @@ class ValueAddr(HashAddr):
                 value = portal._value_store[self]
                 get_current_data_portal()._value_store[self] = value
                 self._value_cache = value
-                new_ids = {portal.fingerprint, get_current_portal().fingerprint}
+                new_ids = {portal.fingerprint, get_current_data_portal().fingerprint}
                 self._containing_portals |= new_ids
                 return value
             except:
