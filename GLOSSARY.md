@@ -2,9 +2,9 @@
 
 This glossary defines the key terms used in the Pythagoras project and API.
 
-### Core Concepts
+## 1. Core Concepts
 
-- **Serverless:** An execution model where the system dynamically manages the allocation of machine resources. Pythagoras implements a serverless-like experience using shared storage to coordinate distributed workers.
+- **Serverless:** An execution model where the system dynamically manages the allocation of machine resources in the cloud / distributed environment. Pythagoras implements a serverless-like experience using shared storage to coordinate distributed workers.
 
 - **Idempotency:** A property of functions where calling them multiple times with the same arguments produces the same result. Pure functions in Pythagoras are idempotent.
 
@@ -12,11 +12,11 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Swarming:** An asynchronous execution model where pure-function calls are enqueued and may be executed later by any available worker. Guarantees at least once eventual execution but not ordering or single execution.
 
-### Portals
+## 2. Portals
 
 - **Portal:** A long-lived object encapsulating a working environment, storage, and execution policies. Different portal types add capabilities progressively (basic → ordinary → data → logging → safe → autonomous → protected → pure → swarming).
 
-#### Portal Classes
+### 2.1. Portal Classes
 
 - **BasicPortal:** The foundational portal class that manages lifecycle and registration of portal-aware objects.
 
@@ -36,7 +36,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **SwarmingPortal:** Extends PureCodePortal to provide asynchronous, distributed execution ("swarming") across processes or machines.
 
-#### Portal-related Concepts
+### 2.2. Portal-related Concepts
 
 - **Known Portals:** The set of all portal objects that have been instantiated and registered in the system.
 
@@ -46,7 +46,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Default Portal:** A specific portal configuration (typically a SwarmingPortal at ~/.pythagoras/.default_portal) that is automatically instantiated and used if no other portal is known or specified at the moment when a portal is needed by the code under execution.
 
-### Functions & Execution
+## 3. Functions & Execution
 
 - **PortalAwareObject:** An object that requires access to a Portal to function. It may be permanently linked to a specific portal instance or dynamically use the currently active portal. Examples include all function wrappers (e.g., `PureFn`, `OrdinaryFn`).
 
@@ -76,9 +76,13 @@ This glossary defines the key terms used in the Pythagoras project and API.
   - post validators: Checks after running a function.
   - recursive_parameters: A helper indicating which parameters are recursive in mutual recursion scenarios.
 
-### Data & Storage
+## 4. Data & Storage
 
-- **PersiDict:** A persistent dictionary abstraction used by portals to store parameters, execution results, requests, logs, and other data on disk or remote storage.
+### 4.1. PersiDicts
+
+- **PersiDict:** A persistent dictionary abstraction used by portals to store parameters, execution results, requests, logs, and other data on disk or remote storage. It is an external library created specifically as a storage abstraction layer for Pythagoras.
+
+### 4.2. Addresses
 
 - **HashAddr:** A base address type that represents a hash-keyed location in persistent storage.
 
@@ -86,7 +90,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **PureFnExecutionResultAddr:** An address that uniquely identifies cached results of a PureFn call based on function identity, code, and packed arguments.
 
-### API & Utilities
+## 5. API & Utilities
 
 - **ready(address):** A top-level API function to check if the result at a given address is available.
 
@@ -98,7 +102,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **fix_kwargs(...):** A method on function wrappers (e.g., PureFn) that partially applies named arguments, returning a new callable with those parameters fixed.
 
-### Notes
+## 6. Notes
 
 - Only named arguments are allowed for decorated functions to ensure canonical argument packing and deterministic addressing.
-- Source code changes in pure functions are tracked; changing code invalidates cache for the new version while preserving older results.
+- Source code changes in pure functions are tracked; changing code requires fresh execution for the new version, while preserving results from older versions.
