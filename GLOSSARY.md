@@ -80,7 +80,11 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ### 4.1. PersiDicts
 
-- **PersiDict:** A persistent dictionary abstraction used by portals to store parameters, execution results, requests, logs, and other data on disk or remote storage. It is an external library created specifically as a storage abstraction layer for Pythagoras.
+- **PersiDict:**  An abstract base class for persistent, key–value storage backed by systems like local disk, S3 or MemoryDB (durable, Redis-compatible in-memory database service on AWS). It exposes a standard `MutableMapping` (dict-like) API, so Pythagoras can remain storage-agnostic. The implementation lives in the external `persidict` library, built as Pythagoras’s storage abstraction layer.
+
+- **FileDirDict:** A concrete implementation of `PersiDict` that stores data in a local file system directory. Each key corresponds to a file path, and the value is the file content.
+
+- **BasicS3Dict:** A concrete implementation of `PersiDict` that stores data in an AWS S3 bucket. It maps keys to S3 objects, enabling distributed access to shared state.
 
 ### 4.2. Addresses
 
