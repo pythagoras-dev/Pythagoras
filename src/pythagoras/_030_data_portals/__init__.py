@@ -19,7 +19,7 @@ A hash string contains the object's hash signature.
 Under the hood, the hash signature is further split into 3 strings:
 a shard, a subshard and a hash tail.
 This is done to address limitations of some file systems
-and to optimize work sith cloud storage (e.g. S3).
+and to optimize work with cloud storage (e.g. S3).
 
 Typically, a DataPortal is implemented as
 a shared directory on a file system (e.g., Amazon EFS),
