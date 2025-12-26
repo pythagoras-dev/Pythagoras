@@ -1,9 +1,9 @@
 """This module provides foundational functionality for work with portals.
 
-This module specifically handles portal stack management and provides access to the current
-portal. It keeps track of all portals created in the system and manages
-the stack of entered ('active') portals. It also provides a way to
-clear all portals and their state.
+The module specifically handles portal stack management and provides
+access to the current portal. It keeps track of all portals
+created in the system and managem the stack of entered ('active') portals.
+It also provides a way to clear all portals and their state.
 """
 
 from __future__ import annotations
@@ -152,17 +152,17 @@ class _PortalRegistry(NotPicklableClass):
             raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
 
 
-    def current_active_portal(self) -> BasicPortal:
-        """Get the currently active portal object.
+    def current_portal(self) -> BasicPortal:
+        """Get the current portal object.
 
-        The active portal is the one that was most recently entered
-        using the 'with' statement. If no portal is currently active,
-        it finds the most recently created portal and makes it current active.
-        If there are currently no portals exist in the system,
-        it creates and returns the default portal.
+        The current portal is the one that was most recently entered
+        using the 'with' statement. If no portal was entered yet,
+        it finds the most recently created portal and makes it current.
+        If no portals exist in the system, it creates and returns
+        the default portal.
 
         Returns:
-            The currently active portal instance.
+            The current portal instance.
         """
         if self.active_portals_stack:
             return self.active_portals_stack[-1]
@@ -186,8 +186,8 @@ class _PortalRegistry(NotPicklableClass):
         self.active_portals_stack_counters.append(1)
         return self.most_recently_created_portal
 
-    def is_current_active_portal(self, portal: BasicPortal) -> bool:
-        """Check if *portal* is the currently active one."""
+    def is_current_portal(self, portal: BasicPortal) -> bool:
+        """Check if *portal* is the current one."""
         return (len(self.active_portals_stack) > 0
                 and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
 
@@ -241,9 +241,10 @@ class _PortalRegistry(NotPicklableClass):
         self.default_portal_instantiator = None
 
 
-    def linked_objects_ids(self
+    def linked_objects_fingerprints(self
             , portal: BasicPortal
-            , target_class: type | None = None) -> set[PAwareObjectStrFingerprint]:
+            , target_class: type | None = None
+            ) -> set[PAwareObjectStrFingerprint]:
         """Get IDs of objects linked to the specified portal, optionally filtered by class."""
         obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal.fingerprint)
 
@@ -258,9 +259,10 @@ class _PortalRegistry(NotPicklableClass):
 
     def linked_objects(self
             , portal: BasicPortal
-            , target_class: type | None = None) -> list[PortalAwareClass]:
+            , target_class: type | None = None
+            ) -> list[PortalAwareClass]:
         """Get objects linked to the specified portal, optionally filtered by class."""
-        obj_ids = self.linked_objects_ids(portal, target_class)
+        obj_ids = self.linked_objects_fingerprints(portal, target_class)
         result = []
         for obj_id in obj_ids:
             obj = self.known_objects.get(obj_id)
@@ -282,8 +284,8 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
     across multiple runs of the application, and across multiple computers.
 
     A Pythagoras-based application can have multiple portals,
-    and there is usually a currently active one, accessible via
-    get_current_active_portal().
+    and there is usually a current active one, accessible via
+    get_current_portal().
 
     BasicPortal is a base class for all portal objects.
 
@@ -328,7 +330,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
     def __post_init__(self) -> None:
         """Execute post-initialization tasks for the portal.
 
-        This method is automatically called after all __init__() methods
+        This method is automatically called after all __init__() methods are
         complete. It registers the portal in the global registry and updates
         the most recently created portal reference.
         """
@@ -347,7 +349,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
             A set of string IDs representing objects linked to this portal,
             optionally filtered by the specified target class.
         """
-        return _PORTAL_REGISTRY.linked_objects_ids(self, target_class)
+        return _PORTAL_REGISTRY.linked_objects_fingerprints(self, target_class)
 
 
     def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
@@ -395,13 +397,23 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     @property
-    def is_current_active(self) -> bool:
+    def is_current(self) -> bool:
         """Check if the portal is the current one.
 
         The 'current active' portal is the innermost portal
         in the stack of portal's 'with' statements.
         """
-        return _PORTAL_REGISTRY.is_current_active_portal(self)
+        return _PORTAL_REGISTRY.is_current_portal(self)
+    
+    @property
+    def is_active(self) -> bool:
+        """Check if the portal is currently active.
+        A portal is considered 'active' if it is present
+        in the stack of portal's 'with' statements.
+        """
+        active_fingerprints = {p.fingerprint for p
+                               in _PORTAL_REGISTRY.active_portals_stack}
+        return self.fingerprint in active_fingerprints
 
 
     def get_params(self) -> dict[str,Any]:
@@ -453,7 +465,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 
     def __enter__(self):
-        """Set the portal as the active one and add it to the stack.
+        """Set the portal as the current one and add it to the active stack.
 
         Returns:
             The portal instance itself (self).
@@ -494,7 +506,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 class PortalAwareClass(metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
-    These objects either always work with a currently active portal,
+    These objects either always work with a current portal,
     or they have a preferred (linked) portal which they activate every
     time their methods are called.
     """
@@ -559,7 +571,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         """
         portal_to_use = self._linked_portal
         if portal_to_use is None:
-            portal_to_use = get_current_active_portal()
+            portal_to_use = get_current_portal()
         self._visit_portal(portal_to_use)
         return portal_to_use
 
@@ -623,7 +635,7 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
 
 
     @abstractmethod
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]):
         """This method is called when the object is unpickled.
 
         Restores the object's state from unpickling and resets portal-related
@@ -714,7 +726,7 @@ def get_all_known_portals() -> list[BasicPortal]:
     return _PORTAL_REGISTRY.all_portals()
 
 
-def get_number_of_portals_in_active_stack() -> int:
+def get_number_of_active_portals() -> int:
     """Get the number of unique portals in the active stack.
 
     Returns:
@@ -763,10 +775,10 @@ def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
     _PORTAL_REGISTRY.register_default_portal_instantiator(instantiator)
 
 
-def get_current_active_portal() -> BasicPortal:
-    """Get the current active portal object.
+def get_current_portal() -> BasicPortal:
+    """Get the current portal object.
 
-    The current active portal is the one that was most recently entered
+    The current portal is the one that was most recently entered
     using the 'with' statement. If no portal is currently active,
     it finds the most recently created portal and makes it active (and current).
     If there are currently no portals exist in the system,
@@ -775,7 +787,7 @@ def get_current_active_portal() -> BasicPortal:
     Returns:
         The current active portal.
     """
-    return _PORTAL_REGISTRY.current_active_portal()
+    return _PORTAL_REGISTRY.current_portal()
 
 
 def get_nonactive_portals() -> list[BasicPortal]:

@@ -1,9 +1,9 @@
 from persidict import PersiDict
 
 from pythagoras._010_basic_portals import (
-    get_number_of_portals_in_active_stack
+    get_number_of_active_portals
     , get_depth_of_active_portal_stack
-    , get_current_active_portal
+    , get_current_portal
     , _PortalTester)
 from pythagoras._040_logging_code_portals import (
     LoggingCodePortal)
@@ -11,9 +11,9 @@ from pythagoras._040_logging_code_portals import (
 def test_empty_logging_code_portal(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         assert isinstance(p.portal._root_dict, PersiDict)
-        assert get_number_of_portals_in_active_stack() == 1
+        assert get_number_of_active_portals() == 1
         assert get_depth_of_active_portal_stack() == 1
-        assert get_current_active_portal() is p.portal
+        assert get_current_portal() is p.portal
 
         assert p.portal.get_number_of_linked_functions() == 0
 

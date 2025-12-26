@@ -6,7 +6,7 @@ from typing import Any
 import pytest
 
 from pythagoras._010_basic_portals import (
-    get_current_active_portal, _PortalTester)
+    get_current_portal, _PortalTester)
 from pythagoras._030_data_portals import *
 
 #

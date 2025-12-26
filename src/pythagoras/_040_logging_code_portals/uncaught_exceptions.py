@@ -3,7 +3,7 @@ from __future__ import annotations
 import sys
 import traceback
 
-from .._010_basic_portals import get_current_active_portal
+from .._010_basic_portals import get_current_portal
 from .._040_logging_code_portals.exception_processing_tracking import (
     _exception_needs_to_be_processed, _mark_exception_as_processed)
 from .._800_signatures_and_converters.current_date_gmt_str import (
@@ -32,7 +32,7 @@ def pth_excepthook(exc_type, exc_value, trace_back) -> None:
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
         _mark_exception_as_processed(exc_type, exc_value, trace_back)
-        portal = get_current_active_portal()
+        portal = get_current_portal()
         portal._crash_history[current_date_gmt_string()
             , exception_id] = event_body
 
@@ -57,7 +57,7 @@ def pth_excepthandler(_, exc_type, exc_value
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
         _mark_exception_as_processed(exc_type, exc_value, trace_back)
-        portal = get_current_active_portal()
+        portal = get_current_portal()
         portal._crash_history[current_date_gmt_string()
             , exception_id] = event_body
     traceback.print_exception(exc_type, exc_value, trace_back)

@@ -8,7 +8,7 @@ from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
-from .._010_basic_portals import get_current_active_portal, get_nonactive_portals
+from .._010_basic_portals import get_current_portal, get_nonactive_portals
 from .._800_signatures_and_converters import get_hash_signature, get_node_signature
 
 from .._010_basic_portals.basic_portal_core_classes import (
@@ -30,7 +30,7 @@ def get_current_active_data_portal() -> DataPortal:
     Raises:
         TypeError: If the active portal is not an instance of DataPortal.
     """
-    portal = get_current_active_portal()
+    portal = get_current_portal()
     if not isinstance(portal, DataPortal):
         raise TypeError(f"Active portal must be DataPortal, got {type(portal).__name__}")
     return portal
@@ -546,7 +546,7 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _ready_in_active_portal(self) -> bool:
+    def _ready_in_current_active_portal(self) -> bool:
         portal = get_current_active_data_portal()
         portal_id = portal.fingerprint
         if portal_id in self._containing_portals:
@@ -563,7 +563,7 @@ class ValueAddr(HashAddr):
             if self in portal._value_store:
                 value = portal._value_store[self]
                 get_current_active_data_portal()._value_store[self] = value
-                new_ids = {portal.fingerprint, get_current_active_portal().fingerprint}
+                new_ids = {portal.fingerprint, get_current_portal().fingerprint}
                 self._containing_portals |= new_ids
                 self._value_cache = value
                 return True
@@ -573,7 +573,7 @@ class ValueAddr(HashAddr):
     @property
     def ready(self) -> bool:
         """Check if address points to a value that is ready to be retrieved."""
-        if self._ready_in_active_portal:
+        if self._ready_in_current_active_portal:
             return True
         if self._ready_in_nonactive_portals:
             return True
@@ -584,16 +584,16 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
-            if get_current_active_portal().fingerprint in self._containing_portals:
+            if get_current_portal().fingerprint in self._containing_portals:
                 return self._value_cache
             else:
                 get_current_active_data_portal()._value_store[self] = self._value_cache
-                self._containing_portals |= {get_current_active_portal().fingerprint}
+                self._containing_portals |= {get_current_portal().fingerprint}
                 return self._value_cache
 
         value = get_current_active_data_portal()._value_store[self]
         self._value_cache = value
-        self._containing_portals |= {get_current_active_portal().fingerprint}
+        self._containing_portals |= {get_current_portal().fingerprint}
         return value
 
 
@@ -605,7 +605,7 @@ class ValueAddr(HashAddr):
                 value = portal._value_store[self]
                 get_current_active_data_portal()._value_store[self] = value
                 self._value_cache = value
-                new_ids = {portal.fingerprint, get_current_active_portal().fingerprint}
+                new_ids = {portal.fingerprint, get_current_portal().fingerprint}
                 self._containing_portals |= new_ids
                 return value
             except:

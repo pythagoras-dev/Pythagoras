@@ -4,7 +4,7 @@ from typing import Any
 import pytest
 
 from pythagoras._010_basic_portals import (
-    get_current_active_portal, _PortalTester)
+    get_current_portal, _PortalTester)
 from pythagoras._030_data_portals import *
 
 
@@ -20,14 +20,14 @@ def test_value_address_basic(tmpdir,p):
     with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p) as t:
         portal = t.portal
         for v in values_to_test:
-            assert len(get_current_active_portal()._value_store) == counter
+            assert len(get_current_portal()._value_store) == counter
             assert ValueAddr(v).get() == v
             assert ValueAddr(v).get() == v
             counter += 1
-            assert len(get_current_active_portal()._value_store) == counter
+            assert len(get_current_portal()._value_store) == counter
 
     with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
-        assert len(get_current_active_portal()._value_store) == counter
+        assert len(get_current_portal()._value_store) == counter
 
 
 @pytest.mark.parametrize("p",[1,0.5,0])
@@ -61,14 +61,14 @@ def test_nested_value_addrs(tmpdir,p):
 
     with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
         for v in values_to_test:
-            assert len(get_current_active_portal()._value_store) == counter
+            assert len(get_current_portal()._value_store) == counter
             assert ValueAddr([ValueAddr(v)]).get()[0].get() == v
             assert ValueAddr([ValueAddr(v)]).get()[0].get() == v
             counter += 2
-            assert len(get_current_active_portal()._value_store) == counter
+            assert len(get_current_portal()._value_store) == counter
 
     with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
-        assert len(get_current_active_portal()._value_store) == counter
+        assert len(get_current_portal()._value_store) == counter
 
 
 @pytest.mark.parametrize("p",[0,0.5,1])
