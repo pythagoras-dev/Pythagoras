@@ -1,10 +1,10 @@
 import os
 import sys
 import tempfile
-from pythagoras._800_signatures_and_converters.node_signature import (
+from pythagoras._800_foundational_utilities.node_signature import (
     get_node_signature, _is_non_trivial_id, _read_first, _run
 )
-from pythagoras._800_signatures_and_converters import PTH_BASE32_ALPHABET
+from pythagoras._800_foundational_utilities import PTH_BASE32_ALPHABET
 
 
 def test_get_node_signature_structure():

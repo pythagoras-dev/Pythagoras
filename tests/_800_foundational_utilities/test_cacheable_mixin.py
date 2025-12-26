@@ -1,5 +1,5 @@
 from functools import cached_property
-from pythagoras._800_signatures_and_converters.cacheable_mixin import CacheableMixin
+from pythagoras._800_foundational_utilities.cacheable_mixin import CacheableMixin
 import pytest
 
 class A(CacheableMixin):

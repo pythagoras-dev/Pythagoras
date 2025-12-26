@@ -11,7 +11,7 @@ import types, inspect
 from typing import Callable
 
 from .function_error_exception import FunctionError
-from .._800_signatures_and_converters import get_long_infoname
+from .._800_foundational_utilities import get_long_infoname
 
 
 def get_function_name_from_source(function_source_code: str) -> str:

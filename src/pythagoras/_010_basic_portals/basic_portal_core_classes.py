@@ -20,7 +20,7 @@ from parameterizable import ParameterizableClass, sort_dict_by_keys
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .guarded_init_metaclass import GuardedInitMeta
 from .single_thread_enforcer import _ensure_single_thread, _reset_single_thread_enforcer
-from .._800_signatures_and_converters import get_hash_signature
+from .._800_foundational_utilities import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)

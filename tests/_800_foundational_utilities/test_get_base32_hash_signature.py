@@ -1,8 +1,4 @@
-from pythagoras._800_signatures_and_converters.hash_signatures import (
-    get_base16_hash_signature,
-    get_base32_hash_signature,
-)
-
+from pythagoras import get_base16_hash_signature, get_base32_hash_signature
 
 def test_get_base32_hash_signature_basics():
     """Test basic determinism and uniqueness of base32 hash signatures."""

@@ -1,7 +1,4 @@
-from pythagoras._800_signatures_and_converters.hash_signatures import (
-    get_base32_hash_signature,
-    get_hash_signature,
-)
+from pythagoras import get_base32_hash_signature, get_hash_signature
 
 
 def test_get_hash_signature_basics():

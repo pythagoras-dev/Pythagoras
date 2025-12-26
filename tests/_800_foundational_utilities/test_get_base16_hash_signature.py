@@ -1,7 +1,5 @@
 import pytest
-from pythagoras._800_signatures_and_converters.hash_signatures import (
-    get_base16_hash_signature,
-)
+from pythagoras import get_base16_hash_signature
 
 
 class SimpleObj:

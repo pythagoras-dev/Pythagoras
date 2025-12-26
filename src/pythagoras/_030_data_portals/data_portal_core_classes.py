@@ -8,7 +8,7 @@ from persidict import KEEP_CURRENT, Joker
 
 from .._010_basic_portals import *
 # from .._010_basic_portals.basic_portal_accessors import *
-from .._800_signatures_and_converters import get_hash_signature, get_node_signature
+from .._800_foundational_utilities import get_hash_signature, get_node_signature
 
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic
