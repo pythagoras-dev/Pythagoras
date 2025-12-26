@@ -90,7 +90,6 @@ def get_nonactive_portals(target_class: type | None = None) -> list[BasicPortal]
     Returns:
         A list of portal instances that are not currently in the active portal stack.
     """
-    _ensure_single_thread()
     return _PORTAL_REGISTRY.nonactive_portals(target_class)
 
 
@@ -105,5 +104,4 @@ def get_noncurrent_portals(target_class: type | None = None) -> list[BasicPortal
     Returns:
         A list of portal instances that are not currently the active/current portal.
     """
-    _ensure_single_thread()
     return _PORTAL_REGISTRY.noncurrent_portals(target_class)
