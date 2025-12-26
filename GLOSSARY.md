@@ -4,13 +4,15 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ## 1. Core Concepts
 
-- **Serverless:** An execution model where the system dynamically manages the allocation of machine resources in the cloud / distributed environment. Pythagoras implements a serverless-like experience using shared storage to coordinate distributed workers.
-
 - **Pure Functions:** Functions that are deterministic (always produce the same output for the same input) and have no side effects. Pythagoras relies on pure functions to safely cache results and distribute execution across many compute nodes.
+
+- **Compute Once, Reuse Forever:** A core design principle where the result of every successful execution of a pure function is permanently stored. Future calls with the same inputs retrieve the stored result instantly, eliminating redundant computation.
 
 - **Content-Addressable Storage (CAS):** A storage mechanism where data is retrieved based on its content (hash) rather than its location. Pythagoras uses CAS for code, arguments, and results.
 
 - **Swarming:** An asynchronous execution model where pure-function calls are enqueued and may be executed later by any available worker. Guarantees at least once eventual execution but not ordering or single execution.
+
+- **Serverless:** An execution model where the system dynamically manages the allocation of machine resources in the cloud / distributed environment. Pythagoras implements a serverless-like experience using shared storage to coordinate distributed workers.
 
 ## 2. Portals
 
