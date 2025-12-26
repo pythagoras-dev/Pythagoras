@@ -199,6 +199,18 @@ class _PortalRegistry(NotPicklableClass):
         """Calculate the total depth of the active portal stack."""
         return sum(self.active_portals_stack_counters)
 
+    def nonactive_portals(self) -> list[BasicPortal]:
+        """Get a list of all portals that are not in the active stack.
+
+        Returns:
+            A list of portal instances that are not currently in the active portal stack.
+        """
+        active_ids = {p.fingerprint for p in self.active_portals_stack}
+        return [
+            p for p in self.known_portals.values()
+            if p.fingerprint not in active_ids
+        ]
+
     def register_object(self, obj: PortalAwareClass) -> None:
         """Register an object in the global registry."""
         self.known_objects[obj.fingerprint] = obj
@@ -797,11 +809,7 @@ def get_nonactive_portals() -> list[BasicPortal]:
         A list of portal instances that are not currently in the active portal stack.
     """
     _ensure_single_thread()
-    active_ids = {p.fingerprint for p in _PORTAL_REGISTRY.active_portals_stack}
-    return [
-        p for p in _PORTAL_REGISTRY.known_portals.values()
-        if p.fingerprint not in active_ids
-    ]
+    return _PORTAL_REGISTRY.nonactive_portals()
 
 
 def get_number_of_linked_portal_aware_objects() -> int:
