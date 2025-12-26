@@ -36,322 +36,6 @@ PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
-def _validate_target_class(target_class: type | None) -> None:
-    if target_class is not None:
-        if not (isinstance(target_class, type) and issubclass(target_class, BasicPortal)):
-            raise TypeError(
-                "target_class must be BasicPortal or one of its (grand)children")
-
-
-class _PortalRegistry(NotPicklableClass):
-    """
-    A container for every piece of mutable “portal bookkeeping”
-    needed by Pythagoras. It maintains the current state of Pythagoras.
-
-    Stored data
-    -----------
-    known_portals : dict[PortalStrFingerprint, BasicPortal]
-        All portals that have been instantiated in the system.
-    active_portals_stack : list[BasicPortal]
-        Stack that mirrors nested ``with portal:`` blocks.
-    active_portals_stack_counters : list[int]
-        Re-entrancy counters that align one-to-one with *active_portals_stack*.
-    most_recently_created : BasicPortal | None
-        Last portal created in the system.
-    links_obj2portal : dict[PAwareObjectStrFingerprint, PortalStrFingerprint]
-        Mapping from object identifier to the str-id of its linked portal.
-    activated_objects : dict[PAwareObjectStrFingerprint, PortalAwareClass]
-        Reverse lookup from object identifier to the actual object instance.
-    default_portal_instantiator : Callable[[], None] | None
-        A callable that creates a default portal when none exists.
-    """
-
-    def __init__(self) -> None:
-        _ensure_single_thread()
-        self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
-        self.active_portals_stack: list[BasicPortal] = []
-        self.active_portals_stack_counters: list[int] = []
-        self.most_recently_created_portal: BasicPortal | None = None
-        self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, PortalStrFingerprint] = {}
-        self.known_objects: dict[PAwareObjectStrFingerprint, PortalAwareClass] = {}
-        self.default_portal_instantiator: Callable[[], None] | None = None
-
-
-
-
-    def register_default_portal_instantiator(self, instantiator: Callable[[], None]) -> None:
-        """Register a callable that creates (and usually enters) the default portal."""
-        _ensure_single_thread()
-        if not callable(instantiator):
-            raise TypeError(
-                f"Default portal instantiator must be callable, got {type(instantiator)}")
-
-        if self.default_portal_instantiator is not None:
-            raise RuntimeError(
-                "Default portal instantiator is already set; "
-                "resetting is not permitted."
-            )
-
-        self.default_portal_instantiator = instantiator
-
-
-    def register_portal(self, portal: BasicPortal) -> None:
-        """Add *portal* to the registry and remember it as the most recent one."""
-        _ensure_single_thread()
-        self.known_portals[portal.fingerprint] = portal
-        self.most_recently_created_portal = portal
-
-    def unregister_portal(self, portal: BasicPortal) -> None:
-        """Remove *portal* from the registry and reset any objects linked to it."""
-        portal_id_to_remove = portal.fingerprint
-        all_links = list(self.links_from_objects_to_portals.items())
-        for obj_id, portal_id in all_links:
-            if portal_id == portal_id_to_remove:
-                obj = self.known_objects[obj_id]
-                obj._clear()
-
-        self.known_portals.pop(portal.fingerprint, None)
-        if self.most_recently_created_portal is portal:
-            self.most_recently_created_portal = None
-
-    def count_known_portals(self, target_class: type | None = None) -> int:
-        """Get the number of portals registered in the system."""
-        _validate_target_class(target_class)
-        if target_class is None:
-            return len(self.known_portals)
-        return len([p for p in self.known_portals.values() if isinstance(p, target_class)])
-
-    def all_portals(self, target_class: type | None = None) -> list[BasicPortal]:
-        """Get a list of all portals registered in the system."""
-        _validate_target_class(target_class)
-        if target_class is None:
-            return list(self.known_portals.values())
-        return [p for p in self.known_portals.values() if isinstance(p, target_class)]
-
-    def push_new_active_portal(self, portal: BasicPortal) -> None:
-        """Put *portal* on top of the active-stack, handling re-entrancy."""
-        _ensure_single_thread()
-        if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
-            raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
-        if not portal.fingerprint in self.known_portals:
-            raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
-        if self.active_portals_stack and self.active_portals_stack[-1] is portal:
-            self.active_portals_stack_counters[-1] += 1
-        else:
-            self.active_portals_stack.append(portal)
-            self.active_portals_stack_counters.append(1)
-
-        if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
-            raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
-
-    def pop_active_portal(self, portal: BasicPortal) -> None:
-        """Remove the current active portal, keeping the stack consistent.
-
-        Raises:
-            RuntimeError: If *portal* is not the current top of the stack.
-        """
-        _ensure_single_thread()
-        if not portal.fingerprint in self.known_portals:
-            raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
-
-        if not self.active_portals_stack or self.active_portals_stack[-1] is not portal:
-            raise RuntimeError("Attempt to pop an unexpected portal from the stack")
-
-        if self.active_portals_stack_counters[-1] == 1:
-            self.active_portals_stack.pop()
-            self.active_portals_stack_counters.pop()
-        else:
-            self.active_portals_stack_counters[-1] -= 1
-
-        if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
-            raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
-
-
-    def current_portal(self, target_class: type | None = None) -> BasicPortal:
-        """Get the current portal object.
-
-        The current portal is the one that was most recently entered
-        using the 'with' statement. If no portal was entered yet,
-        it finds the most recently created portal and makes it current.
-        If no portals exist in the system, it creates and returns
-        the default portal.
-
-        Returns:
-            The current portal instance.
-        """
-        _validate_target_class(target_class)
-        if self.active_portals_stack:
-            if target_class is None:
-                return self.active_portals_stack[-1]
-
-            for portal in reversed(self.active_portals_stack):
-                if isinstance(portal, target_class):
-                    return portal
-
-            # If we are here, stack is not empty but no matching portal found.
-            raise RuntimeError(f"No active portal of type {target_class.__name__} found.")
-
-        if self.most_recently_created_portal is None:
-            if self.default_portal_instantiator is not None:
-                self.default_portal_instantiator()
-                if self.most_recently_created_portal is None:
-                    raise RuntimeError("Default portal instantiator failed to create a portal")
-                elif not isinstance(self.most_recently_created_portal, BasicPortal):
-                    raise RuntimeError(
-                        f"Default portal instantiator created an object of type "
-                        f"{type(self.most_recently_created_portal).__name__}, "
-                        f"expected BasicPortal")
-            else:
-                raise RuntimeError(
-                    "No portal is active and no default portal instantiator was set "
-                    "using _set_default_portal_instantiator()")
-
-        if target_class is not None and not isinstance(self.most_recently_created_portal, target_class):
-            raise RuntimeError(f"No active portal of type {target_class.__name__} found.")
-
-        self.active_portals_stack.append(self.most_recently_created_portal)
-        self.active_portals_stack_counters.append(1)
-        return self.most_recently_created_portal
-
-    def is_current_portal(self, portal: BasicPortal) -> bool:
-        """Check if *portal* is the current one."""
-        return (len(self.active_portals_stack) > 0
-                and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
-
-    def unique_active_portals_count(self, target_class: type | None = None) -> int:
-        """Count unique portals currently in the active stack."""
-        _validate_target_class(target_class)
-        if target_class is None:
-            return len(set(self.active_portals_stack))
-        return len({p for p in self.active_portals_stack if isinstance(p, target_class)})
-
-    def active_portals_stack_depth(self, target_class: type | None = None) -> int:
-        """Calculate the total depth of the active portal stack."""
-        _validate_target_class(target_class)
-        if target_class is None:
-            return sum(self.active_portals_stack_counters)
-        
-        total_depth = 0
-        for portal, count in zip(self.active_portals_stack, self.active_portals_stack_counters):
-            if isinstance(portal, target_class):
-                total_depth += count
-        return total_depth
-
-    def nonactive_portals(self, target_class: type | None = None) -> list[BasicPortal]:
-        """Get a list of all portals that are not in the active stack.
-
-        Returns:
-            A list of portal instances that are not currently in the active portal stack.
-        """
-        _validate_target_class(target_class)
-        active_ids = {p.fingerprint for p in self.active_portals_stack}
-        candidates = self.known_portals.values()
-        if target_class is not None:
-             candidates = [p for p in candidates if isinstance(p, target_class)]
-             
-        return [
-            p for p in candidates
-            if p.fingerprint not in active_ids
-        ]
-
-    def noncurrent_portals(self, target_class: type | None = None) -> list[BasicPortal]:
-        """Get a list of all known portals that are not the current portal.
-
-        The current portal is the one at the top of the active stack.
-        If the stack is empty, all known portals are returned.
-
-        Returns:
-            A list of all known portal instances but the current one..
-        """
-        _validate_target_class(target_class)
-        current_id = None
-        if len(self.active_portals_stack) > 0:
-            current_id = self.active_portals_stack[-1].fingerprint
-
-        candidates = self.known_portals.values()
-        if target_class is not None:
-            candidates = [p for p in candidates if isinstance(p, target_class)]
-
-        noncurrent =  [p for p in candidates
-            if p.fingerprint != current_id]
-
-        return noncurrent
-
-    def register_object(self, obj: PortalAwareClass) -> None:
-        """Register an object in the global registry."""
-        self.known_objects[obj.fingerprint] = obj
-
-    def is_object_registered(self, obj: PortalAwareClass) -> bool:
-        """Check if an object is currently registered."""
-        return obj.fingerprint in self.known_objects
-
-    def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
-        """Record that *obj* (identified by *obj_id*) is linked to *portal*.
-
-        An object being linked to a portal means that it will use that portal
-        for all its operations unless explicitly told otherwise.
-        """
-        obj_id = obj.fingerprint
-        portal_id = portal.fingerprint
-        self.known_objects[obj_id] = obj
-        self.links_from_objects_to_portals[obj_id] = portal_id
-
-
-    def unregister_object(self,obj:PortalAwareClass) -> None:
-        """Unregister an object from the registry."""
-        obj_id = obj.fingerprint
-        self.known_objects.pop(obj_id, None)
-        self.links_from_objects_to_portals.pop(obj_id, None)
-
-
-    def count_linked_objects(self) -> int:
-        """Count the number of objects linked to portals."""
-        return len(self.links_from_objects_to_portals)
-
-    def clear(self) -> None:
-        """Erase every stored entry – mainly for unit-test clean-up."""
-        self.known_portals.clear()
-        self.active_portals_stack.clear()
-        self.active_portals_stack_counters.clear()
-        self.most_recently_created_portal = None
-        self.links_from_objects_to_portals.clear()
-        self.known_objects.clear()
-        self.default_portal_instantiator = None
-
-
-    def linked_objects_fingerprints(self
-            , portal: BasicPortal
-            , target_class: type | None = None
-            ) -> set[PAwareObjectStrFingerprint]:
-        """Get IDs of objects linked to the specified portal, optionally filtered by class."""
-        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal.fingerprint)
-
-        if target_class is None:
-            return set(obj_ids)
-
-        result = set()
-        for obj_id in obj_ids:
-            if isinstance(self.known_objects[obj_id], target_class):
-                result.add(obj_id)
-        return result
-
-    def linked_objects(self
-            , portal: BasicPortal
-            , target_class: type | None = None
-            ) -> list[PortalAwareClass]:
-        """Get objects linked to the specified portal, optionally filtered by class."""
-        obj_ids = self.linked_objects_fingerprints(portal, target_class)
-        result = []
-        for obj_id in obj_ids:
-            obj = self.known_objects.get(obj_id)
-            result.append(obj)
-        return result
-
-
-# Singleton instance used by the rest of the module
-_PORTAL_REGISTRY = _PortalRegistry()
-
-
 class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
@@ -579,6 +263,305 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         self._entropy_infuser = None
         self._init_finished = False
 
+
+def _validate_target_class(target_class: type) -> None:
+    if not (isinstance(target_class, type) and issubclass(target_class, BasicPortal)):
+        raise TypeError(
+            "target_class must be BasicPortal or one of its (grand)children")
+
+
+class _PortalRegistry(NotPicklableClass):
+    """
+    A container for every piece of mutable “portal bookkeeping”
+    needed by Pythagoras. It maintains the current state of Pythagoras.
+
+    Stored data
+    -----------
+    known_portals : dict[PortalStrFingerprint, BasicPortal]
+        All portals that have been instantiated in the system.
+    active_portals_stack : list[BasicPortal]
+        Stack that mirrors nested ``with portal:`` blocks.
+    active_portals_stack_counters : list[int]
+        Re-entrancy counters that align one-to-one with *active_portals_stack*.
+    most_recently_created : BasicPortal | None
+        Last portal created in the system.
+    links_obj2portal : dict[PAwareObjectStrFingerprint, PortalStrFingerprint]
+        Mapping from object identifier to the str-id of its linked portal.
+    activated_objects : dict[PAwareObjectStrFingerprint, PortalAwareClass]
+        Reverse lookup from object identifier to the actual object instance.
+    default_portal_instantiator : Callable[[], None] | None
+        A callable that creates a default portal when none exists.
+    """
+
+    def __init__(self) -> None:
+        _ensure_single_thread()
+        self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
+        self.active_portals_stack: list[BasicPortal] = []
+        self.active_portals_stack_counters: list[int] = []
+        self.most_recently_created_portal: BasicPortal | None = None
+        self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, PortalStrFingerprint] = {}
+        self.known_objects: dict[PAwareObjectStrFingerprint, PortalAwareClass] = {}
+        self.default_portal_instantiator: Callable[[], None] | None = None
+
+
+
+
+    def register_default_portal_instantiator(self, instantiator: Callable[[], None]) -> None:
+        """Register a callable that creates (and usually enters) the default portal."""
+        _ensure_single_thread()
+        if not callable(instantiator):
+            raise TypeError(
+                f"Default portal instantiator must be callable, got {type(instantiator)}")
+
+        if self.default_portal_instantiator is not None:
+            raise RuntimeError(
+                "Default portal instantiator is already set; "
+                "resetting is not permitted."
+            )
+
+        self.default_portal_instantiator = instantiator
+
+
+    def register_portal(self, portal: BasicPortal) -> None:
+        """Add *portal* to the registry and remember it as the most recent one."""
+        _ensure_single_thread()
+        self.known_portals[portal.fingerprint] = portal
+        self.most_recently_created_portal = portal
+
+    def unregister_portal(self, portal: BasicPortal) -> None:
+        """Remove *portal* from the registry and reset any objects linked to it."""
+        portal_id_to_remove = portal.fingerprint
+        all_links = list(self.links_from_objects_to_portals.items())
+        for obj_id, portal_id in all_links:
+            if portal_id == portal_id_to_remove:
+                obj = self.known_objects[obj_id]
+                obj._clear()
+
+        self.known_portals.pop(portal.fingerprint, None)
+        if self.most_recently_created_portal is portal:
+            self.most_recently_created_portal = None
+
+    def count_known_portals(self, target_class: type = BasicPortal) -> int:
+        """Get the number of portals registered in the system."""
+        _validate_target_class(target_class)
+        return len([p for p in self.known_portals.values() if isinstance(p, target_class)])
+
+    def all_portals(self, target_class: type = BasicPortal) -> list[BasicPortal]:
+        """Get a list of all portals registered in the system."""
+        _validate_target_class(target_class)
+        return [p for p in self.known_portals.values() if isinstance(p, target_class)]
+
+    def push_new_active_portal(self, portal: BasicPortal) -> None:
+        """Put *portal* on top of the active-stack, handling re-entrancy."""
+        _ensure_single_thread()
+        if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
+            raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
+        if not portal.fingerprint in self.known_portals:
+            raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
+        if self.active_portals_stack and self.active_portals_stack[-1] is portal:
+            self.active_portals_stack_counters[-1] += 1
+        else:
+            self.active_portals_stack.append(portal)
+            self.active_portals_stack_counters.append(1)
+
+        if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
+            raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
+
+    def pop_active_portal(self, portal: BasicPortal) -> None:
+        """Remove the current active portal, keeping the stack consistent.
+
+        Raises:
+            RuntimeError: If *portal* is not the current top of the stack.
+        """
+        _ensure_single_thread()
+        if not portal.fingerprint in self.known_portals:
+            raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
+
+        if not self.active_portals_stack or self.active_portals_stack[-1] is not portal:
+            raise RuntimeError("Attempt to pop an unexpected portal from the stack")
+
+        if self.active_portals_stack_counters[-1] == 1:
+            self.active_portals_stack.pop()
+            self.active_portals_stack_counters.pop()
+        else:
+            self.active_portals_stack_counters[-1] -= 1
+
+        if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
+            raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
+
+
+    def current_portal(self, target_class: type = BasicPortal) -> BasicPortal:
+        """Get the current portal object.
+
+        The current portal is the one that was most recently entered
+        using the 'with' statement. If no portal was entered yet,
+        it finds the most recently created portal and makes it current.
+        If no portals exist in the system, it creates and returns
+        the default portal.
+
+        Returns:
+            The current portal instance.
+        """
+        _validate_target_class(target_class)
+        if self.active_portals_stack:
+            for portal in reversed(self.active_portals_stack):
+                if isinstance(portal, target_class):
+                    return portal
+
+            # If we are here, stack is not empty but no matching portal found.
+            raise RuntimeError(f"No active portal of type {target_class.__name__} found.")
+
+        if self.most_recently_created_portal is None:
+            if self.default_portal_instantiator is not None:
+                self.default_portal_instantiator()
+                if self.most_recently_created_portal is None:
+                    raise RuntimeError("Default portal instantiator failed to create a portal")
+                elif not isinstance(self.most_recently_created_portal, BasicPortal):
+                    raise RuntimeError(
+                        f"Default portal instantiator created an object of type "
+                        f"{type(self.most_recently_created_portal).__name__}, "
+                        f"expected BasicPortal")
+            else:
+                raise RuntimeError(
+                    "No portal is active and no default portal instantiator was set "
+                    "using _set_default_portal_instantiator()")
+
+        if not isinstance(self.most_recently_created_portal, target_class):
+            raise RuntimeError(f"No active portal of type {target_class.__name__} found.")
+
+        self.active_portals_stack.append(self.most_recently_created_portal)
+        self.active_portals_stack_counters.append(1)
+        return self.most_recently_created_portal
+
+    def is_current_portal(self, portal: BasicPortal) -> bool:
+        """Check if *portal* is the current one."""
+        return (len(self.active_portals_stack) > 0
+                and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
+
+    def unique_active_portals_count(self, target_class: type = BasicPortal) -> int:
+        """Count unique portals currently in the active stack."""
+        _validate_target_class(target_class)
+        return len({p for p in self.active_portals_stack if isinstance(p, target_class)})
+
+    def active_portals_stack_depth(self, target_class: type = BasicPortal) -> int:
+        """Calculate the total depth of the active portal stack."""
+        _validate_target_class(target_class)
+        
+        total_depth = 0
+        for portal, count in zip(self.active_portals_stack, self.active_portals_stack_counters):
+            if isinstance(portal, target_class):
+                total_depth += count
+        return total_depth
+
+    def nonactive_portals(self, target_class: type = BasicPortal) -> list[BasicPortal]:
+        """Get a list of all portals that are not in the active stack.
+
+        Returns:
+            A list of portal instances that are not currently in the active portal stack.
+        """
+        _validate_target_class(target_class)
+        active_ids = {p.fingerprint for p in self.active_portals_stack}
+        candidates = [p for p in self.known_portals.values() if isinstance(p, target_class)]
+             
+        return [
+            p for p in candidates
+            if p.fingerprint not in active_ids
+        ]
+
+    def noncurrent_portals(self, target_class: type = BasicPortal) -> list[BasicPortal]:
+        """Get a list of all known portals that are not the current portal.
+
+        The current portal is the one at the top of the active stack.
+        If the stack is empty, all known portals are returned.
+
+        Returns:
+            A list of all known portal instances but the current one..
+        """
+        _validate_target_class(target_class)
+        current_id = None
+        if len(self.active_portals_stack) > 0:
+            current_id = self.active_portals_stack[-1].fingerprint
+
+        candidates = [p for p in self.known_portals.values() if isinstance(p, target_class)]
+
+        noncurrent =  [p for p in candidates
+            if p.fingerprint != current_id]
+
+        return noncurrent
+
+    def register_object(self, obj: PortalAwareClass) -> None:
+        """Register an object in the global registry."""
+        self.known_objects[obj.fingerprint] = obj
+
+    def is_object_registered(self, obj: PortalAwareClass) -> bool:
+        """Check if an object is currently registered."""
+        return obj.fingerprint in self.known_objects
+
+    def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
+        """Record that *obj* (identified by *obj_id*) is linked to *portal*.
+
+        An object being linked to a portal means that it will use that portal
+        for all its operations unless explicitly told otherwise.
+        """
+        obj_id = obj.fingerprint
+        portal_id = portal.fingerprint
+        self.known_objects[obj_id] = obj
+        self.links_from_objects_to_portals[obj_id] = portal_id
+
+
+    def unregister_object(self,obj:PortalAwareClass) -> None:
+        """Unregister an object from the registry."""
+        obj_id = obj.fingerprint
+        self.known_objects.pop(obj_id, None)
+        self.links_from_objects_to_portals.pop(obj_id, None)
+
+
+    def count_linked_objects(self) -> int:
+        """Count the number of objects linked to portals."""
+        return len(self.links_from_objects_to_portals)
+
+    def clear(self) -> None:
+        """Erase every stored entry – mainly for unit-test clean-up."""
+        self.known_portals.clear()
+        self.active_portals_stack.clear()
+        self.active_portals_stack_counters.clear()
+        self.most_recently_created_portal = None
+        self.links_from_objects_to_portals.clear()
+        self.known_objects.clear()
+        self.default_portal_instantiator = None
+
+
+    def linked_objects_fingerprints(self
+            , portal: BasicPortal
+            , target_class: type | None = None
+            ) -> set[PAwareObjectStrFingerprint]:
+        """Get IDs of objects linked to the specified portal, optionally filtered by class."""
+        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal.fingerprint)
+
+        if target_class is None:
+            return set(obj_ids)
+
+        result = set()
+        for obj_id in obj_ids:
+            if isinstance(self.known_objects[obj_id], target_class):
+                result.add(obj_id)
+        return result
+
+    def linked_objects(self
+            , portal: BasicPortal
+            , target_class: type | None = None
+            ) -> list[PortalAwareClass]:
+        """Get objects linked to the specified portal, optionally filtered by class."""
+        obj_ids = self.linked_objects_fingerprints(portal, target_class)
+        result = []
+        for obj_id in obj_ids:
+            obj = self.known_objects.get(obj_id)
+            result.append(obj)
+        return result
+
+
+# Singleton instance used by the rest of the module
+_PORTAL_REGISTRY = _PortalRegistry()
 
 
 class PortalAwareClass(metaclass = GuardedInitMeta):
