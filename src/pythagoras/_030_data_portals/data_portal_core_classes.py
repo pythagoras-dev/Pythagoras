@@ -620,7 +620,7 @@ class ValueAddr(HashAddr):
 
     @property
     def _ready_in_noncurrent_portals(self) -> bool:
-        for portal in get_noncurrent_portals():
+        for portal in get_noncurrent_data_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
                 get_current_data_portal()._value_store[self] = value
