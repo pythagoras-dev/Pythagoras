@@ -3,9 +3,12 @@
 This module provides CacheableMixin, which adds functionality to track and
 invalidate functools.cached_property attributes in a class hierarchy.
 
-Note: the CacheableMixin class is not thread-safe.
-     Also, the CacheableMixin is not supposed to be used with
-     dynamically modified classes.
+The CacheableMixin class is not thread-safe. Also, the CacheableMixin
+is not supposed to be used with dynamically modified classes.
+
+The module relies on using knowledge of functools.cached_property internals;
+any refactoring should start with understanding the functools.cached_property
+implementation details.
 """
 from functools import cached_property, cache
 
