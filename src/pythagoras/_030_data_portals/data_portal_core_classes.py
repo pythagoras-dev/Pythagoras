@@ -3,12 +3,11 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Optional, Callable, Any, Type
 
-import pandas as pd
-from parameterizable import sort_dict_by_keys
 from persidict import PersiDict, SafeStrTuple, replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
-from .._010_basic_portals import get_current_portal, get_nonactive_portals
+from .._010_basic_portals import *
+# from .._010_basic_portals.basic_portal_accessors import *
 from .._800_signatures_and_converters import get_hash_signature, get_node_signature
 
 from .._010_basic_portals.basic_portal_core_classes import (
@@ -21,36 +20,81 @@ _TOTAL_VALUES_TXT = "Values, total"
 _PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
-def get_current_data_portal() -> DataPortal:
-    """Return the currently active DataPortal.
+def get_number_of_known_data_portals() -> int:
+    """Get the number of DataPortals currently in the system.
 
     Returns:
-        DataPortal: The portal that is active in the current context ("with" block).
+        The total count of all known DataPortals in the system.
+    """
+    return get_number_of_known_portals(DataPortal)
+
+
+def get_all_known_data_portals() -> list[DataPortal]:
+    """Get a list of all known DataPortals.
+
+    Returns:
+        A list containing all DataPortal instances currently known to the system.
+    """
+    return get_all_known_portals(DataPortal)
+
+
+def get_number_of_active_data_portals() -> int:
+    """Get the number of unique DataPortals in the active stack.
+
+    Returns:
+        The count of unique DataPortals currently in the active portal stack.
+    """
+    return get_number_of_active_portals(DataPortal)
+
+
+def get_depth_of_active_data_portal_stack() -> int:
+    """Get the depth of the active DataPortal stack.
+
+    Returns:
+        The total depth (sum of all counters) of the active DataPortal stack.
+    """
+    return get_depth_of_active_portal_stack(DataPortal)
+
+
+def get_current_data_portal() -> DataPortal:
+    """Get the current portal object, raise if it's not DataPortal.
+
+    The current portal is the one that was most recently entered
+    using the 'with' statement. If no portal is currently active,
+    it finds the most recently created portal and makes it active (and current).
+    If currently no portals exist in the system,
+    it creates the default portal, and makes it active and current.
+
+    Returns:
+        The current active DataPortal.
 
     Raises:
-        TypeError: If the active portal is not an instance of DataPortal.
+        TypeError: If the current portal is not a DataPortal.
+
     """
     portal = get_current_portal()
     if not isinstance(portal, DataPortal):
-        raise TypeError(f"Active portal must be DataPortal, got {type(portal).__name__}")
+        raise TypeError(f"The current portal is {type(portal).__name__}, "
+                           f"but a DataPortal was expected.")
     return portal
 
 
 def get_nonactive_data_portals() -> list[DataPortal]:
-    """Return all known DataPortals that are not currently active.
+    """Get a list of all DataPortals that are not in the active stack.
 
     Returns:
-        list[DataPortal]: A list of DataPortal instances that are available to
-            the runtime but are not the current active portal stack.
-
-    Raises:
-        TypeError: If any returned portal is not an instance of DataPortal.
+        A list of DataPortal instances that are not currently in the active portal stack.
     """
-    portals = get_nonactive_portals()
-    if not all(isinstance(p, DataPortal) for p in portals):
-        bad = [type(p).__name__ for p in portals if not isinstance(p, DataPortal)]
-        raise TypeError(f"Expected all nonactive portals to be DataPortal, got invalid types: {bad}")
-    return portals
+    return get_nonactive_portals(DataPortal)
+
+
+def get_noncurrent_data_portals() -> list[DataPortal]:
+    """Get a list of all DataPortals that are not the current portal.
+
+    Returns:
+        A list of DataPortal instances that are not currently the active/current portal.
+    """
+    return get_noncurrent_portals(DataPortal)
 
 
 class DataPortal(OrdinaryCodePortal):
@@ -558,8 +602,8 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _ready_in_nonactive_portals(self) -> bool:
-        for portal in get_nonactive_data_portals():
+    def _ready_in_nocurrent_portals(self) -> bool:
+        for portal in get_noncurrent_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
                 get_current_data_portal()._value_store[self] = value
@@ -575,12 +619,12 @@ class ValueAddr(HashAddr):
         """Check if address points to a value that is ready to be retrieved."""
         if self._ready_in_current_portal:
             return True
-        if self._ready_in_nonactive_portals:
+        if self._ready_in_nocurrent_portals:
             return True
         return False
 
 
-    def _get_from_active_portal(self) -> Any:
+    def _get_from_current_portal(self) -> Any:
         """Retrieve value, referenced by the address, from the current portal"""
 
         if hasattr(self, "_value_cache"):
@@ -597,10 +641,10 @@ class ValueAddr(HashAddr):
         return value
 
 
-    def _get_from_nonactive_portals(self) -> Any:
+    def _get_from_noncurrent_portals(self) -> Any:
         """Retrieve value, referenced by the address, from noncurrent portals"""
 
-        for portal in get_nonactive_data_portals():
+        for portal in get_noncurrent_data_portals():
             try:
                 value = portal._value_store[self]
                 get_current_data_portal()._value_store[self] = value
@@ -621,9 +665,9 @@ class ValueAddr(HashAddr):
         """Retrieve value, referenced by the address from any available portal"""
 
         try:
-            result = self._get_from_active_portal()
+            result = self._get_from_current_portal()
         except:
-            result = self._get_from_nonactive_portals()
+            result = self._get_from_noncurrent_portals()
 
         if not (expected_type is Any or expected_type is object):
             if not isinstance(result, expected_type):

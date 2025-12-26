@@ -266,7 +266,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 PortalType = TypeVar("PortalType", bound=BasicPortal)
 
-def _validate_target_class(target_portal_type: PortalType) -> None:
+def _validate_target_portal_type(target_portal_type: PortalType) -> None:
     if not (isinstance(target_portal_type, type) and issubclass(target_portal_type, BasicPortal)):
         raise TypeError(
             "target_portal_type must be BasicPortal or one of its (grand)children")
@@ -347,7 +347,7 @@ class _PortalRegistry(NotPicklableClass):
 
     def all_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
         """Get a list of all portals registered in the system."""
-        _validate_target_class(target_portal_type)
+        _validate_target_portal_type(target_portal_type)
         return [p for p in self.known_portals.values() if isinstance(p, target_portal_type)]
 
     def push_new_active_portal(self, portal: BasicPortal) -> None:
@@ -430,12 +430,12 @@ class _PortalRegistry(NotPicklableClass):
 
     def unique_active_portals_count(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
         """Count unique portals currently in the active stack."""
-        _validate_target_class(target_portal_type)
+        _validate_target_portal_type(target_portal_type)
         return len({p for p in self.active_portals_stack if isinstance(p, target_portal_type)})
 
     def active_portals_stack_depth(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
         """Calculate the total depth of the active portal stack."""
-        _validate_target_class(target_portal_type)
+        _validate_target_portal_type(target_portal_type)
         
         total_depth = 0
         for portal, count in zip(self.active_portals_stack, self.active_portals_stack_counters):
