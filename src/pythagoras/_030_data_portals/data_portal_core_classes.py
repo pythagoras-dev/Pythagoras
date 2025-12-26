@@ -21,7 +21,7 @@ _TOTAL_VALUES_TXT = "Values, total"
 _PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 
-def get_current_active_data_portal() -> DataPortal:
+def get_current_data_portal() -> DataPortal:
     """Return the currently active DataPortal.
 
     Returns:
@@ -523,7 +523,7 @@ class ValueAddr(HashAddr):
         self._value_cache = data
 
         if store:
-            portal = get_current_active_data_portal()
+            portal = get_current_data_portal()
             portal._value_store[self] = data
             self._containing_portals.add(portal.fingerprint)
 
@@ -546,8 +546,8 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _ready_in_current_active_portal(self) -> bool:
-        portal = get_current_active_data_portal()
+    def _ready_in_current_portal(self) -> bool:
+        portal = get_current_data_portal()
         portal_id = portal.fingerprint
         if portal_id in self._containing_portals:
             return True
@@ -562,7 +562,7 @@ class ValueAddr(HashAddr):
         for portal in get_nonactive_data_portals():
             if self in portal._value_store:
                 value = portal._value_store[self]
-                get_current_active_data_portal()._value_store[self] = value
+                get_current_data_portal()._value_store[self] = value
                 new_ids = {portal.fingerprint, get_current_portal().fingerprint}
                 self._containing_portals |= new_ids
                 self._value_cache = value
@@ -573,7 +573,7 @@ class ValueAddr(HashAddr):
     @property
     def ready(self) -> bool:
         """Check if address points to a value that is ready to be retrieved."""
-        if self._ready_in_current_active_portal:
+        if self._ready_in_current_portal:
             return True
         if self._ready_in_nonactive_portals:
             return True
@@ -587,11 +587,11 @@ class ValueAddr(HashAddr):
             if get_current_portal().fingerprint in self._containing_portals:
                 return self._value_cache
             else:
-                get_current_active_data_portal()._value_store[self] = self._value_cache
+                get_current_data_portal()._value_store[self] = self._value_cache
                 self._containing_portals |= {get_current_portal().fingerprint}
                 return self._value_cache
 
-        value = get_current_active_data_portal()._value_store[self]
+        value = get_current_data_portal()._value_store[self]
         self._value_cache = value
         self._containing_portals |= {get_current_portal().fingerprint}
         return value
@@ -603,7 +603,7 @@ class ValueAddr(HashAddr):
         for portal in get_nonactive_data_portals():
             try:
                 value = portal._value_store[self]
-                get_current_active_data_portal()._value_store[self] = value
+                get_current_data_portal()._value_store[self] = value
                 self._value_cache = value
                 new_ids = {portal.fingerprint, get_current_portal().fingerprint}
                 self._containing_portals |= new_ids
