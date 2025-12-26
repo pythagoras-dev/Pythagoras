@@ -18,7 +18,7 @@ def get_number_of_known_portals(target_portal_type: type[PortalType] = BasicPort
     return _PORTAL_REGISTRY.count_known_portals(target_portal_type)
 
 
-def get_all_known_portals(target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+def get_all_known_portals(target_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
     """Get a list of all known portals.
 
     Args:
@@ -60,7 +60,7 @@ def get_depth_of_active_portal_stack(target_portal_type: type[PortalType] = Basi
     return _PORTAL_REGISTRY.active_portals_stack_depth(target_portal_type)
 
 
-def get_current_portal(target_portal_type: type[PortalType] = BasicPortal) -> BasicPortal:
+def get_current_portal() -> PortalType:
     """Get the current portal object.
 
     The current portal is the one that was most recently entered
@@ -69,17 +69,13 @@ def get_current_portal(target_portal_type: type[PortalType] = BasicPortal) -> Ba
     If there are currently no portals exist in the system,
     it creates the default portal, and makes it active and current.
 
-    Args:
-        target_portal_type: Class to filter portals. Default is BasicPortal.
-            It finds the most recently entered portal of this class (or subclass).
-
     Returns:
         The current active portal.
     """
-    return _PORTAL_REGISTRY.current_portal(target_portal_type)
+    return _PORTAL_REGISTRY.current_portal()
 
 
-def get_nonactive_portals(target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+def get_nonactive_portals(target_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
     """Get a list of all portals that are not in the active stack.
 
     Args:
@@ -93,7 +89,7 @@ def get_nonactive_portals(target_portal_type: type[PortalType] = BasicPortal) ->
     return _PORTAL_REGISTRY.nonactive_portals(target_portal_type)
 
 
-def get_noncurrent_portals(target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+def get_noncurrent_portals(target_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
     """Get a list of all portals that are not the current portal.
 
     Args:

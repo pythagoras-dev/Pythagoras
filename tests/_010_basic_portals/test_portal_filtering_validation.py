@@ -1,0 +1,46 @@
+
+import pytest
+from pythagoras import (
+    BasicPortal,
+    _PortalTester,
+    get_number_of_known_portals,
+    get_all_known_portals,
+    get_number_of_active_portals,
+    get_depth_of_active_portal_stack,
+    get_current_portal,
+    get_nonactive_portals,
+    get_noncurrent_portals
+)
+
+class NotAPortal:
+    pass
+
+def test_validation_errors(tmpdir):
+    with _PortalTester():
+        # Prepare some invalid inputs
+        # We need a portal instance for one of the checks
+        portal_instance = BasicPortal(tmpdir)
+        
+        invalid_inputs = [
+            int,
+            str,
+            object,
+            NotAPortal,
+            123,
+            "some string",
+            portal_instance # An instance, not a class
+        ]
+
+        functions_to_test = [
+            get_number_of_known_portals,
+            get_all_known_portals,
+            get_number_of_active_portals,
+            get_depth_of_active_portal_stack,
+            get_nonactive_portals,
+            get_noncurrent_portals
+        ]
+        
+        for func in functions_to_test:
+            for invalid_input in invalid_inputs:
+                with pytest.raises(TypeError, match="must be BasicPortal or one of its"):
+                    func(target_portal_type=invalid_input)

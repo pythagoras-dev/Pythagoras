@@ -389,7 +389,7 @@ class _PortalRegistry(NotPicklableClass):
             raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
 
 
-    def current_portal(self, target_portal_type: type[PortalType] = BasicPortal) -> BasicPortal:
+    def current_portal(self) -> BasicPortal:
         """Get the current portal object.
 
         The current portal is the one that was most recently entered
@@ -401,14 +401,8 @@ class _PortalRegistry(NotPicklableClass):
         Returns:
             The current portal instance.
         """
-        _validate_target_class(target_portal_type)
         if self.active_portals_stack:
-            for portal in reversed(self.active_portals_stack):
-                if isinstance(portal, target_portal_type):
-                    return portal
-
-            # If we are here, stack is not empty but no matching portal found.
-            raise RuntimeError(f"No active portal of type {target_portal_type.__name__} found.")
+            return self.active_portals_stack[-1]
 
         if self.most_recently_created_portal is None:
             if self.default_portal_instantiator is not None:
@@ -424,9 +418,6 @@ class _PortalRegistry(NotPicklableClass):
                 raise RuntimeError(
                     "No portal is active and no default portal instantiator was set "
                     "using _set_default_portal_instantiator()")
-
-        if not isinstance(self.most_recently_created_portal, target_portal_type):
-            raise RuntimeError(f"No active portal of type {target_portal_type.__name__} found.")
 
         self.active_portals_stack.append(self.most_recently_created_portal)
         self.active_portals_stack_counters.append(1)
