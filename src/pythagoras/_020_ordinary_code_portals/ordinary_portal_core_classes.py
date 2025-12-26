@@ -84,14 +84,14 @@ class OrdinaryCodePortal(BasicPortal):
             A set of string IDs corresponding to linked OrdinaryFn instances.
 
         Raises:
-            TypeError: If target_portal_type is not a subclass of OrdinaryFn.
+            TypeError: If required_portal_type is not a subclass of OrdinaryFn.
         """
         if target_class is None:
             target_class = OrdinaryFn
         if isinstance(target_class, OrdinaryFn):
             target_class = target_class.__class__
         if not issubclass(target_class, OrdinaryFn):
-            raise TypeError(f"target_portal_type must be a subclass of {OrdinaryFn.__name__}.")
+            raise TypeError(f"required_portal_type must be a subclass of {OrdinaryFn.__name__}.")
         return self._get_linked_objects_ids(target_class=target_class)
 
     def get_linked_functions(self, target_class: type | None = None) -> list[OrdinaryFn]:
@@ -105,12 +105,12 @@ class OrdinaryCodePortal(BasicPortal):
             A list of linked OrdinaryFn instances.
 
         Raises:
-            TypeError: If target_portal_type is not a subclass of OrdinaryFn.
+            TypeError: If required_portal_type is not a subclass of OrdinaryFn.
         """
         if target_class is None:
             target_class = OrdinaryFn
         if not issubclass(target_class, OrdinaryFn):
-            raise TypeError(f"target_portal_type must be a subclass of {OrdinaryFn.__name__}.")
+            raise TypeError(f"required_portal_type must be a subclass of {OrdinaryFn.__name__}.")
         return self.get_linked_objects(target_class=target_class)
 
     def get_number_of_linked_functions(self, target_class: type | None = None) -> int:

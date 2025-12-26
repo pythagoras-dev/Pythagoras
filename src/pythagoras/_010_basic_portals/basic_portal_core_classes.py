@@ -266,10 +266,10 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
 
 PortalType = TypeVar("PortalType", bound=BasicPortal)
 
-def _validate_target_portal_type(target_portal_type: PortalType) -> None:
-    if not (isinstance(target_portal_type, type) and issubclass(target_portal_type, BasicPortal)):
+def _validate_required_portal_type(required_portal_type: PortalType) -> None:
+    if not (isinstance(required_portal_type, type) and issubclass(required_portal_type, BasicPortal)):
         raise TypeError(
-            "target_portal_type must be BasicPortal or one of its (grand)children")
+            "required_portal_type must be BasicPortal or one of its (grand)children")
 
 class _PortalRegistry(NotPicklableClass):
     """
@@ -341,14 +341,44 @@ class _PortalRegistry(NotPicklableClass):
         if self.most_recently_created_portal is portal:
             self.most_recently_created_portal = None
 
-    def count_known_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
-        """Get the number of portals registered in the system."""
-        return len(self.all_portals(target_portal_type))
+    def count_known_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
+        """Get the number of portals registered in the system.
 
-    def all_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
-        """Get a list of all portals registered in the system."""
-        _validate_target_portal_type(target_portal_type)
-        return [p for p in self.known_portals.values() if isinstance(p, target_portal_type)]
+        Args:
+            required_portal_type: Class to validate portals. Default is BasicPortal.
+                If any known portal is not an instance of this class (or subclass),
+                a TypeError is raised.
+
+        Returns:
+            The total count of all known portals in the system.
+
+        Raises:
+            TypeError: If any known portal is not an instance of required_portal_type.
+        """
+        return len(self.all_portals(required_portal_type))
+
+    def all_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
+        """Get a list of all portals registered in the system.
+
+        Args:
+            required_portal_type: Class to validate portals. Default is BasicPortal.
+                If any known portal is not an instance of this class (or subclass),
+                a TypeError is raised.
+
+        Returns:
+            A list containing all portal instances currently known to the system.
+
+        Raises:
+            TypeError: If any known portal is not an instance of required_portal_type.
+        """
+        _validate_required_portal_type(required_portal_type)
+        candidates = list(self.known_portals.values())
+        for p in candidates:
+            if not isinstance(p, required_portal_type):
+                raise TypeError(
+                    f"Found portal {type(p).__name__} which is not "
+                    f"an instance of required {required_portal_type.__name__}")
+        return candidates
 
     def push_new_active_portal(self, portal: BasicPortal) -> None:
         """Put *portal* on top of the active-stack, handling re-entrancy."""
@@ -428,54 +458,117 @@ class _PortalRegistry(NotPicklableClass):
         return (len(self.active_portals_stack) > 0
                 and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
 
-    def unique_active_portals_count(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
-        """Count unique portals currently in the active stack."""
-        _validate_target_portal_type(target_portal_type)
-        return len({p for p in self.active_portals_stack if isinstance(p, target_portal_type)})
+    def unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
+        """Count unique portals currently in the active stack.
 
-    def active_portals_stack_depth(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
-        """Calculate the total depth of the active portal stack."""
-        _validate_target_portal_type(target_portal_type)
+        Args:
+            required_portal_type: Class to validate portals. Default is BasicPortal.
+                If any active portal is not an instance of this class (or subclass),
+                a TypeError is raised.
+
+        Returns:
+            The count of unique portals currently in the active portal stack.
+
+        Raises:
+            TypeError: If any active portal is not an instance of required_portal_type.
+        """
+        _validate_required_portal_type(required_portal_type)
+        unique_active = {p for p in self.active_portals_stack}
+        for p in unique_active:
+            if not isinstance(p, required_portal_type):
+                raise TypeError(
+                    f"Found active portal {type(p).__name__} which is not "
+                    f"an instance of required {required_portal_type.__name__}")
+        return len(unique_active)
+
+    def active_portals_stack_depth(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
+        """Calculate the total depth of the active portal stack.
+
+        Args:
+            required_portal_type: Class to validate portals. Default is BasicPortal.
+                If any active portal is not an instance of this class (or subclass),
+                a TypeError is raised.
+
+        Returns:
+            The total depth (sum of all counters) of the active portal stack.
+
+        Raises:
+            TypeError: If any active portal is not an instance of required_portal_type.
+        """
+        _validate_required_portal_type(required_portal_type)
         
         total_depth = 0
         for portal, count in zip(self.active_portals_stack, self.active_portals_stack_counters):
-            if isinstance(portal, target_portal_type):
-                total_depth += count
+            if not isinstance(portal, required_portal_type):
+                raise TypeError(
+                    f"Found active portal {type(portal).__name__} which is not "
+                    f"an instance of required {required_portal_type.__name__}")
+            total_depth += count
         return total_depth
 
-    def nonactive_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+    def nonactive_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
         """Get a list of all portals that are not in the active stack.
+
+        Args:
+            required_portal_type: Class to validate portals. Default is BasicPortal.
+                If any non-active portal is not an instance of this class (or subclass),
+                a TypeError is raised.
 
         Returns:
             A list of portal instances that are not currently in the active portal stack.
-        """
-        active_ids = {p.fingerprint for p in self.active_portals_stack}
-        candidates = self.all_portals(target_portal_type)
 
-        return [
-            p for p in candidates
+        Raises:
+            TypeError: If any non-active portal is not an instance of required_portal_type.
+        """
+        _validate_required_portal_type(required_portal_type)
+        active_ids = {p.fingerprint for p in self.active_portals_stack}
+        all_known = self.all_portals(BasicPortal)
+
+        candidates = [
+            p for p in all_known
             if p.fingerprint not in active_ids
         ]
 
-    def noncurrent_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+        for p in candidates:
+            if not isinstance(p, required_portal_type):
+                raise TypeError(
+                    f"Found non-active portal {type(p).__name__} which is not "
+                    f"an instance of required {required_portal_type.__name__}")
+
+        return candidates
+
+    def noncurrent_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
         """Get a list of all known portals that are not the current portal.
 
         The current portal is the one at the top of the active stack.
         If the stack is empty, all known portals are returned.
 
+        Args:
+            required_portal_type: Class to validate portals. Default is BasicPortal.
+                If any non-current portal is not an instance of this class (or subclass),
+                a TypeError is raised.
+
         Returns:
-            A list of all known portal instances but the current one..
+            A list of all known portal instances but the current one.
+
+        Raises:
+            TypeError: If any non-current portal is not an instance of required_portal_type.
         """
+        _validate_required_portal_type(required_portal_type)
         current_id = None
         if len(self.active_portals_stack) > 0:
             current_id = self.active_portals_stack[-1].fingerprint
 
-        candidates = self.all_portals(target_portal_type)
+        all_known = self.all_portals(BasicPortal)
+        candidates = [p for p in all_known if p.fingerprint != current_id]
 
-        noncurrent =  [p for p in candidates
-            if p.fingerprint != current_id]
+        for p in candidates:
+            if not isinstance(p, required_portal_type):
+                raise TypeError(
+                    f"Found non-current portal {type(p).__name__} which is not "
+                    f"an instance of required {required_portal_type.__name__}")
 
-        return noncurrent
+        return candidates
 
     def register_object(self, obj: PortalAwareClass) -> None:
         """Register an object in the global registry."""
