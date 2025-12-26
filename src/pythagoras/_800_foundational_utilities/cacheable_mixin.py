@@ -21,6 +21,13 @@ class CacheableMixin:
        Also, the CacheableMixin is not supposed to be used with
        dynamically modified classes.
     """
+    # We use __slots__ = () to ensure that this mixin doesn't implicitly
+    # add __dict__ or __weakref__ to subclasses. This allows subclasses
+    # to use __slots__ for memory optimization if they wish.
+    # Note: subclasses that use __slots__ MUST include '__dict__' in their
+    # slots to support functools.cached_property, as enforced by
+    # _ensure_cache_storage_supported().
+    __slots__ = ()
 
     def _ensure_cache_storage_supported(self) -> None:
         """Ensure the instance can store cached_property values.
