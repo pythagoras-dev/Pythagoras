@@ -264,11 +264,12 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
         self._init_finished = False
 
 
-def _validate_target_class(target_class: type) -> None:
-    if not (isinstance(target_class, type) and issubclass(target_class, BasicPortal)):
+PortalType = TypeVar("PortalType", bound=BasicPortal)
+
+def _validate_target_class(target_portal_type: PortalType) -> None:
+    if not (isinstance(target_portal_type, type) and issubclass(target_portal_type, BasicPortal)):
         raise TypeError(
             "target_class must be BasicPortal or one of its (grand)children")
-
 
 class _PortalRegistry(NotPicklableClass):
     """
@@ -302,7 +303,6 @@ class _PortalRegistry(NotPicklableClass):
         self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, PortalStrFingerprint] = {}
         self.known_objects: dict[PAwareObjectStrFingerprint, PortalAwareClass] = {}
         self.default_portal_instantiator: Callable[[], None] | None = None
-
 
 
 
@@ -341,15 +341,14 @@ class _PortalRegistry(NotPicklableClass):
         if self.most_recently_created_portal is portal:
             self.most_recently_created_portal = None
 
-    def count_known_portals(self, target_class: type = BasicPortal) -> int:
+    def count_known_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> int:
         """Get the number of portals registered in the system."""
-        _validate_target_class(target_class)
-        return len([p for p in self.known_portals.values() if isinstance(p, target_class)])
+        return len(self.all_portals(target_portal_type))
 
-    def all_portals(self, target_class: type = BasicPortal) -> list[BasicPortal]:
+    def all_portals(self, target_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
         """Get a list of all portals registered in the system."""
-        _validate_target_class(target_class)
-        return [p for p in self.known_portals.values() if isinstance(p, target_class)]
+        _validate_target_class(target_portal_type)
+        return [p for p in self.known_portals.values() if isinstance(p, target_portal_type)]
 
     def push_new_active_portal(self, portal: BasicPortal) -> None:
         """Put *portal* on top of the active-stack, handling re-entrancy."""
@@ -459,10 +458,9 @@ class _PortalRegistry(NotPicklableClass):
         Returns:
             A list of portal instances that are not currently in the active portal stack.
         """
-        _validate_target_class(target_class)
         active_ids = {p.fingerprint for p in self.active_portals_stack}
-        candidates = [p for p in self.known_portals.values() if isinstance(p, target_class)]
-             
+        candidates = self.all_portals(target_class)
+
         return [
             p for p in candidates
             if p.fingerprint not in active_ids
@@ -477,12 +475,11 @@ class _PortalRegistry(NotPicklableClass):
         Returns:
             A list of all known portal instances but the current one..
         """
-        _validate_target_class(target_class)
         current_id = None
         if len(self.active_portals_stack) > 0:
             current_id = self.active_portals_stack[-1].fingerprint
 
-        candidates = [p for p in self.known_portals.values() if isinstance(p, target_class)]
+        candidates = self.all_portals(target_class)
 
         noncurrent =  [p for p in candidates
             if p.fingerprint != current_id]
@@ -748,7 +745,7 @@ def _clear_all_portals() -> None:
 
     # Take snapshots before clearing to avoid iteration issues
     objects_to_clear = list(_PORTAL_REGISTRY.known_objects.values())
-    portals_to_clear = list(_PORTAL_REGISTRY.known_portals.values())
+    portals_to_clear = _PORTAL_REGISTRY.all_portals()
 
     # Clean up objects first (while registry is still intact)
     for obj in objects_to_clear:
