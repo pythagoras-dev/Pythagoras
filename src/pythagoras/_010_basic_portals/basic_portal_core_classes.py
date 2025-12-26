@@ -25,6 +25,7 @@ from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)
 from .default_portal_base_dir import get_default_portal_base_dir
+from .._800_foundational_utilities.cacheable_mixin import CacheableMixin
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
@@ -36,7 +37,7 @@ PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
-class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedInitMeta):
+class BasicPortal(NotPicklableClass, ParameterizableClass, CacheableMixin, metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -197,12 +198,6 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, metaclass = GuardedIn
             raise RuntimeError("Portal is not fully initialized yet, "
                                "fingerprint is not available.")
         return PortalStrFingerprint(get_hash_signature(self.get_essential_jsparams()))
-
-
-    def _invalidate_cache(self) -> None:
-        """Invalidate the portal's attribute cache.
-        """
-        pass
 
 
     def describe(self) -> pd.DataFrame:
@@ -392,6 +387,7 @@ class _PortalRegistry(NotPicklableClass):
         if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
             raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
 
+
     def pop_active_portal(self, portal: BasicPortal) -> None:
         """Remove the current active portal, keeping the stack consistent.
 
@@ -449,10 +445,12 @@ class _PortalRegistry(NotPicklableClass):
         self.active_portals_stack_counters.append(1)
         return self.most_recently_created_portal
 
+
     def is_current_portal(self, portal: BasicPortal) -> bool:
         """Check if *portal* is the current one."""
         return (len(self.active_portals_stack) > 0
                 and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
+
 
     def unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
         """Count unique portals currently in the active stack.
@@ -472,12 +470,14 @@ class _PortalRegistry(NotPicklableClass):
         unique_active = {p for p in self.active_portals_stack}
         for p in unique_active:
             if not isinstance(p, required_portal_type):
-                raise TypeError(
-                    f"Found active portal {type(p).__name__} which is not "
+                raise TypeError( f"Found active portal {type(p).__name__} which is not "
                     f"an instance of required {required_portal_type.__name__}")
         return len(unique_active)
 
-    def active_portals_stack_depth(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
+
+    def active_portals_stack_depth(self,
+            required_portal_type: type[PortalType] = BasicPortal
+            ) -> int:
         """Calculate the total depth of the active portal stack.
 
         Args:
@@ -520,10 +520,8 @@ class _PortalRegistry(NotPicklableClass):
         active_ids = {p.fingerprint for p in self.active_portals_stack}
         all_known = self.all_portals(BasicPortal)
 
-        candidates = [
-            p for p in all_known
-            if p.fingerprint not in active_ids
-        ]
+        candidates = [p for p in all_known
+            if p.fingerprint not in active_ids]
 
         for p in candidates:
             if not isinstance(p, required_portal_type):
@@ -641,7 +639,7 @@ class _PortalRegistry(NotPicklableClass):
 _PORTAL_REGISTRY = _PortalRegistry()
 
 
-class PortalAwareClass(metaclass = GuardedInitMeta):
+class PortalAwareClass(CacheableMixin, metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
     These objects either always work with a current portal,
@@ -785,16 +783,6 @@ class PortalAwareClass(metaclass = GuardedInitMeta):
         self._invalidate_cache()
         self._visited_portals = set()
         self._linked_portal_at_init = None
-
-
-    def _invalidate_cache(self):
-        """Invalidate the object's attribute cache.
-
-        If the object's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache.
-        This method should delete all such attributes.
-        """
-        pass
 
 
     @property
