@@ -6,7 +6,7 @@ Your help is greatly appreciated. These guidelines will help you get started.
 ## Getting Started
 
 1. **Learn the Conventions:**
-   Familiarize yourself with the project's [docstrings and comments](docstrings_and_comments.md) and [unit testing](unit_tests.md) guidelines.
+   Familiarize yourself with the project's [docstrings and comments](docstrings_comments.md), [type hints](type_hints.md), and [unit testing](unit_tests.md) guidelines.
 
 
 2. **Fork and Clone:**
@@ -44,8 +44,8 @@ Please provide a clear description, steps to reproduce, and your Python version.
 3.  **Follow Code Style:**
     *   Adhere to PEP 8 guidelines.
     *   Write clear, Google-style docstrings for public functions and classes.
-    *   Add type hints where appropriate.
-    *   See [docstrings_and_comments.md](docstrings_and_comments.md) for detailed guidelines on writing docstrings and comments.
+    *   Add type hints where appropriate. See [type_hints.md](type_hints.md) for details.
+    *   See [docstrings_comments.md](docstrings_comments.md) for detailed guidelines on writing docstrings and comments.
     *   See [unit_tests.md](unit_tests.md) for testing standards and best practices.
 4.  **Write Commit Messages:** Follow the conventions below.
 5.  **Push and Open a Pull Request:** Push your branch to your fork and open a pull request.
