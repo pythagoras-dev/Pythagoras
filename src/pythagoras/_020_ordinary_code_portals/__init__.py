@@ -11,7 +11,7 @@ are not ordinary functions.
 Ordinary functions are not allowed to have decorators, except for ones that
 are part of Pythagoras (e.g. @autonomous, or @idempotent, or @ordinary).
 
-Pythagoras transforms source code of an ordinary function into a normalised
+Pythagoras transforms source code of an ordinary function into a normalized
 form: a string that represents the function's source code, with all
 decorators, docstrings, and comments removed, and the resulting code
 formatted according to PEP8. This way, Pythagoras can later compare the source

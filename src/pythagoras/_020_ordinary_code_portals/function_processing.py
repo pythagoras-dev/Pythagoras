@@ -1,3 +1,10 @@
+"""Utilities for inspecting and validating Python functions.
+
+This module contains helper functions to extract function names from source,
+check for compliance with Pythagoras "ordinary" function rules (no *args,
+no defaults, etc.), and enforce these constraints.
+"""
+
 import ast
 import textwrap
 import types, inspect
@@ -83,7 +90,7 @@ def assert_ordinarity(a_func: Callable) -> None:
     - does not accept unlimited positional arguments (no "*args"), and
     - has no parameters with default values.
 
-    Notes:
+    Note:
     - Static methods: The handling of static methods is undecided; for now they
       are treated the same as regular functions only if provided directly as a
       function object. If a function fails any of the checks below, an error is

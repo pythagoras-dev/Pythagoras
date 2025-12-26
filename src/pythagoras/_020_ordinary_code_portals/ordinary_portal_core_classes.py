@@ -1,3 +1,9 @@
+"""Core classes for ordinary function portals and wrappers.
+
+This module defines `OrdinaryFn` (a wrapper around ordinary functions) and
+`OrdinaryCodePortal` (a portal for managing ordinary functions).
+"""
+
 from __future__ import annotations
 
 import ast
@@ -58,19 +64,16 @@ class OrdinaryCodePortal(BasicPortal):
     with convenience methods specific to ordinary functions.
     """
 
-    def __init__(self
-            , root_dict: PersiDict | str | None = None
-            ):
+    def __init__(self, root_dict: PersiDict | str | None = None):
         """Initialize the portal.
 
         Args:
             root_dict: Optional persistence root (PersiDict or path-like string)
                 used by the underlying BasicPortal to store state.
         """
-        super().__init__(root_dict = root_dict)
+        super().__init__(root_dict=root_dict)
 
-
-    def _get_linked_functions_ids(self, target_class: type | None=None) -> set[str]:
+    def _get_linked_functions_ids(self, target_class: type | None = None) -> set[str]:
         """Return the set of IDs for functions linked to this portal.
 
         Args:
@@ -91,8 +94,7 @@ class OrdinaryCodePortal(BasicPortal):
             raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
         return self._get_linked_objects_ids(target_class=target_class)
 
-
-    def get_linked_functions(self, target_class: type | None=None) -> list[OrdinaryFn]:
+    def get_linked_functions(self, target_class: type | None = None) -> list[OrdinaryFn]:
         """Return linked OrdinaryFn instances managed by this portal.
 
         Args:
@@ -111,8 +113,7 @@ class OrdinaryCodePortal(BasicPortal):
             raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
         return self.get_linked_objects(target_class=target_class)
 
-
-    def get_number_of_linked_functions(self, target_class: type | None=None) -> int:
+    def get_number_of_linked_functions(self, target_class: type | None = None) -> int:
         """Return the number of OrdinaryFn objects linked to this portal.
 
         Args:
@@ -241,7 +242,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @cached_property
-    def _virtual_file_name(self):
+    def _virtual_file_name(self) -> str:
         """Return a synthetic filename used when compiling the function.
 
         Returns:
@@ -252,7 +253,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @cached_property
-    def _kwargs_var_name(self):
+    def _kwargs_var_name(self) -> str:
         """Return the internal name used to store call kwargs during exec.
 
         Returns:
@@ -264,7 +265,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @cached_property
-    def _result_var_name(self):
+    def _result_var_name(self) -> str:
         """Return the internal name used to store the call result.
 
         Returns:
@@ -276,7 +277,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @cached_property
-    def _tmp_fn_name(self):
+    def _tmp_fn_name(self) -> str:
         """Return the internal temporary function name used during exec.
 
         Returns:
@@ -288,9 +289,8 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @cached_property
-    def _compiled_code(self):
-        """Return a code object that executes the wrapped function call.
-        """
+    def _compiled_code(self) -> Any:
+        """Return a code object that executes the wrapped function call."""
         # 1. Parse the stored source
         tree = ast.parse(self.source_code,
             filename=self._virtual_file_name,
@@ -323,7 +323,7 @@ class OrdinaryFn(PortalAwareClass):
 
 
     @classmethod
-    def _compile(cls,*args, **kwargs) -> Any:
+    def _compile(cls, *args, **kwargs) -> Any:
         """Compile Python source code.
 
         Args:
@@ -331,12 +331,12 @@ class OrdinaryFn(PortalAwareClass):
             **kwargs: Keyword arguments passed to compile().
 
         Returns:
-            Any: The code object returned by compile().
+            The code object returned by compile().
         """
         return compile(*args, **kwargs)
 
 
-    def __call__(self,* args, **kwargs) -> Any:
+    def __call__(self, *args, **kwargs) -> Any:
         """Invoke the wrapped function using only keyword arguments.
 
         Args:
@@ -344,7 +344,7 @@ class OrdinaryFn(PortalAwareClass):
             **kwargs: Keyword arguments to pass to the function.
 
         Returns:
-            Any: The result of executing the function.
+            The result of executing the function.
 
         Raises:
             TypeError: If positional arguments are supplied.
@@ -356,20 +356,17 @@ class OrdinaryFn(PortalAwareClass):
         return self.execute(**kwargs)
 
 
-    def _available_names(self):
+    def _available_names(self) -> dict[str, Any]:
         """Return names injected into the function's execution context.
 
         Returns:
-            dict: A mapping of name to object made available during execution,
-            including globals(), the OrdinaryFn itself under its function name
-            and under "self", and the pythagoras package as "pth".
+            dict: A mapping of name to object made available during execution.
+            This includes:
+            - "__builtins__": The builtins module.
+            - The OrdinaryFn itself (under its function name).
+            - "self": The OrdinaryFn itself.
+            - "pth": The pythagoras package.
         """
-        # import pythagoras as pth
-        # names= dict(globals())
-        # names[self.name] = self
-        # names["self"] = self
-        # names["pth"] = pth
-        # return names
         import builtins
         import pythagoras as pth
 
@@ -381,7 +378,7 @@ class OrdinaryFn(PortalAwareClass):
         }
 
 
-    def execute(self,**kwargs):
+    def execute(self, **kwargs: Any) -> Any:
         """Execute the underlying function with the provided keyword args.
 
         The call is executed inside the portal context, with an execution
@@ -401,7 +398,7 @@ class OrdinaryFn(PortalAwareClass):
             return result
 
 
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         """Return the picklable state for this instance.
 
         Returns:
@@ -412,11 +409,11 @@ class OrdinaryFn(PortalAwareClass):
         return state
 
 
-    def __setstate__(self, state):
+    def __setstate__(self, state: dict[str, Any]) -> None:
         """Restore instance state from pickled data.
 
         Args:
-            state (dict): The state mapping previously produced by __getstate__,
+            state: The state mapping previously produced by __getstate__,
                 expected to contain the "source_code" key.
         """
         super().__setstate__(state)
