@@ -160,11 +160,81 @@ def test_portal_aware_portal_property_uses_current_active(tmpdir):
     with _PortalTester():
         portal1 = BasicPortal(tmpdir.mkdir("p1"))
         portal2 = BasicPortal(tmpdir.mkdir("p2"))
-        
+
         obj = SimplePortalAware(70)
-        
+
         with portal1:
             assert obj.portal is portal1
-        
+
         with portal2:
             assert obj.portal is portal2
+
+
+def test_portal_aware_fingerprint_before_init_raises_error():
+    """Test that accessing fingerprint before initialization raises RuntimeError."""
+    with _PortalTester(BasicPortal) as t:
+        # This tests the edge case where fingerprint is accessed before _init_finished=True
+
+        class TestClass(PortalAwareClass):
+            def __init__(self, portal=None):
+                super().__init__(portal)
+                # Try to access fingerprint before init is finished
+                # This should raise because _init_finished is still False
+                try:
+                    _ = self.fingerprint
+                    self.fingerprint_accessed = True
+                except RuntimeError:
+                    self.fingerprint_accessed = False
+
+            def __getstate__(self):
+                return {}
+
+            def __setstate__(self, state):
+                super().__setstate__(state)
+
+        obj = TestClass()
+        # The fingerprint access should have failed during __init__
+        assert not obj.fingerprint_accessed
+
+
+def test_portal_aware_first_visit_before_init_raises_error():
+    """Test that _first_visit_to_portal before init raises RuntimeError."""
+    with _PortalTester(BasicPortal) as t:
+        portal = t.portal
+
+        # Use SimplePortalAware which is defined at module level (can be pickled)
+        obj = SimplePortalAware(42)
+
+        # Manually set _init_finished to False to simulate not-yet-finished init
+        obj._init_finished = False
+
+        # Now try to call _first_visit_to_portal, should raise
+        with pytest.raises(RuntimeError, match="Object is not fully initialized"):
+            obj._first_visit_to_portal(portal)
+
+
+def test_portal_aware_double_first_visit_raises_error(tmpdir):
+    """Test that calling _first_visit_to_portal twice for same portal raises."""
+    with _PortalTester():
+        portal = BasicPortal(tmpdir)
+
+        obj = SimplePortalAware(100, portal=portal)
+
+        # First visit already happened during __post_init__
+        assert portal.fingerprint in obj._visited_portals
+
+        # Try to visit again, should raise
+        with pytest.raises(RuntimeError, match="has already been visited"):
+            obj._first_visit_to_portal(portal)
+
+
+def test_portal_aware_is_registered_consistency(tmpdir):
+    """Test is_registered property consistency with internal state."""
+    with _PortalTester():
+        portal = BasicPortal(tmpdir)
+
+        obj = SimplePortalAware(50, portal=portal)
+
+        # Should be registered after creation with explicit portal
+        assert len(obj._visited_portals) >= 1
+        assert obj.is_registered

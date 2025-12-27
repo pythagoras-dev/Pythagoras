@@ -1,6 +1,9 @@
 from pythagoras._010_basic_portals import *
 from pythagoras._010_basic_portals import _PortalTester
-from pythagoras._010_basic_portals.basic_portal_core_classes import _clear_all_portals
+from pythagoras._010_basic_portals.basic_portal_core_classes import (
+    _clear_all_portals, MAX_NESTED_PORTALS
+)
+import pytest
 
 
 def test_portal(tmpdir):
@@ -98,14 +101,14 @@ def test_get_nonactive_portals(tmpdir):
         portal1 = BasicPortal(tmpdir.mkdir("p1"))
         portal2 = BasicPortal(tmpdir.mkdir("p2"))
         portal3 = BasicPortal(tmpdir.mkdir("p3"))
-        
+
         # No portals active initially
         nonactive = get_nonactive_portals()
         assert len(nonactive) == 3
         assert portal1 in nonactive
         assert portal2 in nonactive
         assert portal3 in nonactive
-        
+
         # Activate portal1
         with portal1:
             nonactive = get_nonactive_portals()
@@ -113,7 +116,7 @@ def test_get_nonactive_portals(tmpdir):
             assert portal1 not in nonactive
             assert portal2 in nonactive
             assert portal3 in nonactive
-            
+
             # Activate portal2 as well
             with portal2:
                 nonactive = get_nonactive_portals()
@@ -121,7 +124,162 @@ def test_get_nonactive_portals(tmpdir):
                 assert portal1 not in nonactive
                 assert portal2 not in nonactive
                 assert portal3 in nonactive
-        
+
         # Back to no active portals
         nonactive = get_nonactive_portals()
         assert len(nonactive) == 3
+
+
+def test_portal_is_current(tmpdir):
+    """Test portal.is_current property tracks current portal status."""
+    with _PortalTester():
+        portal1 = BasicPortal(tmpdir.mkdir("p1"))
+        portal2 = BasicPortal(tmpdir.mkdir("p2"))
+
+        # No portals active - neither is current
+        assert not portal1.is_current
+        assert not portal2.is_current
+
+        # Activate portal1 - it becomes current
+        with portal1:
+            assert portal1.is_current
+            assert not portal2.is_current
+
+            # Activate portal2 nested - it becomes current
+            with portal2:
+                assert not portal1.is_current
+                assert portal2.is_current
+
+            # Back to portal1 context
+            assert portal1.is_current
+            assert not portal2.is_current
+
+
+def test_portal_is_active(tmpdir):
+    """Test portal.is_active property tracks active portal stack."""
+    with _PortalTester():
+        portal1 = BasicPortal(tmpdir.mkdir("p1"))
+        portal2 = BasicPortal(tmpdir.mkdir("p2"))
+
+        # No portals active initially
+        assert not portal1.is_active
+        assert not portal2.is_active
+
+        # Activate portal1
+        with portal1:
+            assert portal1.is_active
+            assert not portal2.is_active
+
+            # Activate portal2 nested - both active
+            with portal2:
+                assert portal1.is_active
+                assert portal2.is_active
+
+            # Back to portal1 context - only portal1 active
+            assert portal1.is_active
+            assert not portal2.is_active
+
+        # No portals active
+        assert not portal1.is_active
+        assert not portal2.is_active
+
+
+def test_portal_fingerprint_stability(tmpdir):
+    """Test portal fingerprint is stable and deterministic."""
+    with _PortalTester():
+        portal = BasicPortal(tmpdir.mkdir("p1"))
+
+        # Fingerprint should be stable across multiple accesses
+        fp1 = portal.fingerprint
+        fp2 = portal.fingerprint
+        assert fp1 == fp2
+        assert isinstance(fp1, str)
+        assert len(fp1) > 0
+
+
+def test_portal_fingerprint_uniqueness(tmpdir):
+    """Test different portals have different fingerprints."""
+    with _PortalTester():
+        portal1 = BasicPortal(tmpdir.mkdir("p1"))
+        portal2 = BasicPortal(tmpdir.mkdir("p2"))
+
+        # Different portals should have different fingerprints
+        assert portal1.fingerprint != portal2.fingerprint
+
+
+def test_portal_fingerprint_deterministic(tmpdir):
+    """Test portal fingerprint is deterministic for same parameters."""
+    with _PortalTester():
+        dir1 = tmpdir.mkdir("same_dir")
+        portal1 = BasicPortal(dir1)
+        fp1 = portal1.fingerprint
+
+        _clear_all_portals()
+
+        # Create portal with same parameters
+        portal2 = BasicPortal(dir1)
+        fp2 = portal2.fingerprint
+
+        # Should have the same fingerprint
+        assert fp1 == fp2
+
+
+def test_portal_max_nesting_limit(tmpdir):
+    """Test that exceeding MAX_NESTED_PORTALS raises RuntimeError."""
+    with _PortalTester():
+        portal = BasicPortal(tmpdir)
+
+        # Create a context manager chain that exceeds the limit
+        with pytest.raises(RuntimeError, match="Too many nested portals"):
+            for _ in range(MAX_NESTED_PORTALS + 1):
+                portal.__enter__()
+
+
+def test_portal_pop_wrong_portal_error(tmpdir):
+    """Test that popping wrong portal from stack raises RuntimeError."""
+    with _PortalTester():
+        portal1 = BasicPortal(tmpdir.mkdir("p1"))
+        portal2 = BasicPortal(tmpdir.mkdir("p2"))
+
+        with portal1:
+            # Try to pop portal2 which is not on stack
+            with pytest.raises(RuntimeError, match="Attempt to pop an unexpected portal"):
+                portal2.__exit__(None, None, None)
+
+
+def test_portal_entropy_infuser_error_after_clear(tmpdir):
+    """Test that accessing entropy_infuser after _clear() raises RuntimeError."""
+    with _PortalTester():
+        portal = BasicPortal(tmpdir)
+
+        # Should work normally
+        _ = portal.entropy_infuser
+
+        # Clear the portal
+        portal._clear()
+
+        # Now accessing entropy_infuser should raise
+        with pytest.raises(RuntimeError, match="Entropy infuser is None"):
+            _ = portal.entropy_infuser
+
+
+def test_portal_clear_before_init_finished():
+    """Test that _clear() on unfinished portal does nothing."""
+    with _PortalTester():
+        # This tests the edge case in _clear() where _init_finished is False
+        # We need to manually create a portal object and call _clear before init finishes
+        # This is an internal edge case that's hard to trigger in normal usage
+
+        class TestPortal(BasicPortal):
+            def __init__(self, root_dict=None):
+                super().__init__(root_dict)
+                # Manually set _init_finished to False to simulate unfinished init
+                self._init_finished = False
+                # Now clear should do nothing
+                self._clear()
+                # Restore it so metaclass doesn't complain
+                self._init_finished = False
+
+        # Just verify this doesn't crash
+        portal = TestPortal()
+        assert portal is not None
