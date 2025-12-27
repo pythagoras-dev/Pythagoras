@@ -117,25 +117,25 @@ def test_wrapped_descriptor():
 def test_status_reporting():
     a = A()
     # Initially nothing cached
-    status = a._get_cached_values_status()
+    status = a._get_all_cached_properties_status()
     assert status["x"] is False
     assert status["y"] is False
     
     # Cache x
     _ = a.x
-    status = a._get_cached_values_status()
+    status = a._get_all_cached_properties_status()
     assert status["x"] is True
     assert status["y"] is False
     
     # Cache y
     _ = a.y
-    status = a._get_cached_values_status()
+    status = a._get_all_cached_properties_status()
     assert status["x"] is True
     assert status["y"] is True
     
     # Invalidate
     a._invalidate_cache()
-    status = a._get_cached_values_status()
+    status = a._get_all_cached_properties_status()
     assert status["x"] is False
     assert status["y"] is False
 
@@ -167,7 +167,7 @@ def test_slots_with_dict():
     s = SlotsWithDict()
     assert s.val == 42
     assert "val" in s._all_cached_properties_names
-    assert s._get_cached_values_status()["val"] is True
+    assert s._get_all_cached_properties_status()["val"] is True
     s._invalidate_cache()
     assert "val" not in s.__dict__
 
@@ -185,7 +185,7 @@ def test_empty_class():
     # Should not raise, even with no cached properties
     e._invalidate_cache()
 
-    status = e._get_cached_values_status()
+    status = e._get_all_cached_properties_status()
     assert isinstance(status, dict)
     assert len(status) == 0
 
@@ -337,7 +337,7 @@ def test_get_cached_values_basic():
     _ = a.x
     _ = a.y
 
-    cached_values = a._get_cached_values()
+    cached_values = a._get_all_cached_properties()
 
     assert isinstance(cached_values, dict)
     assert cached_values == {"x": 1, "y": 2}
@@ -348,7 +348,7 @@ def test_get_cached_values_partial():
     # Cache only x, not y
     _ = a.x
 
-    cached_values = a._get_cached_values()
+    cached_values = a._get_all_cached_properties()
 
     assert cached_values == {"x": 1}
     assert "y" not in cached_values
@@ -357,7 +357,7 @@ def test_get_cached_values_empty():
     """Test that _get_cached_values() returns empty dict when nothing is cached."""
     a = A()
 
-    cached_values = a._get_cached_values()
+    cached_values = a._get_all_cached_properties()
 
     assert cached_values == {}
 
@@ -368,7 +368,7 @@ def test_get_cached_values_after_invalidation():
     _ = a.y
 
     a._invalidate_cache()
-    cached_values = a._get_cached_values()
+    cached_values = a._get_all_cached_properties()
 
     assert cached_values == {}
 
@@ -388,7 +388,7 @@ def test_get_cached_values_inheritance():
     _ = c.base_prop
     _ = c.child_prop
 
-    cached_values = c._get_cached_values()
+    cached_values = c._get_all_cached_properties()
 
     assert cached_values == {"base_prop": "base", "child_prop": "child"}
 
@@ -396,7 +396,7 @@ def test_set_cached_values_basic():
     """Test that _set_cached_values() sets values for cached properties."""
     a = A()
 
-    a._set_cached_values(x=100, y=200)
+    a._set_cached_properties(x=100, y=200)
 
     # Values should be cached and accessible without computation
     assert a.__dict__["x"] == 100
@@ -416,7 +416,7 @@ def test_set_cached_values_bypass_computation():
             return 42
 
     c = Counter()
-    c._set_cached_values(computed=999)
+    c._set_cached_properties(computed=999)
 
     # Access the property - should return set value, not computed
     assert c.computed == 999
@@ -427,17 +427,17 @@ def test_set_cached_values_invalid_name():
     a = A()
 
     with pytest.raises(ValueError, match="non-cached properties"):
-        a._set_cached_values(invalid_name=123)
+        a._set_cached_properties(invalid_name=123)
 
     # Regular property should also be rejected
     with pytest.raises(ValueError, match="non-cached properties"):
-        a._set_cached_values(z=456)
+        a._set_cached_properties(z=456)
 
 def test_set_cached_values_partial():
     """Test that _set_cached_values() can set subset of cached properties."""
     a = A()
 
-    a._set_cached_values(x=50)
+    a._set_cached_properties(x=50)
 
     assert a.x == 50
     assert "y" not in a.__dict__
@@ -449,7 +449,7 @@ def test_set_cached_values_overwrite():
     _ = a.x  # Cache original value
     assert a.x == 1
 
-    a._set_cached_values(x=999)
+    a._set_cached_properties(x=999)
 
     assert a.x == 999
 
@@ -457,16 +457,16 @@ def test_set_cached_values_empty():
     """Test that _set_cached_values() with no arguments is safe."""
     a = A()
 
-    a._set_cached_values()  # Should not raise
+    a._set_cached_properties()  # Should not raise
 
-    assert a._get_cached_values() == {}
+    assert a._get_all_cached_properties() == {}
 
 def test_set_cached_values_multiple_invalid():
     """Test that error message includes all invalid property names."""
     a = A()
 
     with pytest.raises(ValueError) as exc_info:
-        a._set_cached_values(invalid1=1, invalid2=2, x=3)
+        a._set_cached_properties(invalid1=1, invalid2=2, x=3)
 
     error_msg = str(exc_info.value)
     assert "invalid1" in error_msg
@@ -480,16 +480,16 @@ def test_get_set_cached_values_roundtrip():
     _ = a.y
 
     # Save cached state
-    saved_values = a._get_cached_values()
+    saved_values = a._get_all_cached_properties()
 
     # Invalidate cache
     a._invalidate_cache()
-    assert a._get_cached_values() == {}
+    assert a._get_all_cached_properties() == {}
 
     # Restore cached state
-    a._set_cached_values(**saved_values)
+    a._set_cached_properties(**saved_values)
 
     # Verify restoration
-    assert a._get_cached_values() == saved_values
+    assert a._get_all_cached_properties() == saved_values
     assert a.x == 1
     assert a.y == 2
