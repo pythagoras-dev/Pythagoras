@@ -387,8 +387,8 @@ class _PortalRegistry(NotPicklableClass):
                     f"an instance of required {required_portal_type.__name__}")
         return candidates
 
-    def all_portal_fingerprints(self, required_portal_type: type[PortalType] = BasicPortal) -> list[PortalStrFingerprint]:
-        """Get a list of all portal fingerprints.
+    def all_portal_fingerprints(self, required_portal_type: type[PortalType] = BasicPortal) -> set[PortalStrFingerprint]:
+        """Get a set of all portal fingerprints.
 
         Args:
             required_portal_type: Class to validate portals. Default is BasicPortal.
@@ -396,13 +396,13 @@ class _PortalRegistry(NotPicklableClass):
                 a TypeError is raised.
 
         Returns:
-            A list containing fingerprints of all portals currently known to the system.
+            A set containing fingerprints of all portals currently known to the system.
 
         Raises:
             TypeError: If any known portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        candidates = list(self.known_portals.keys())
+        candidates = set(self.known_portals.keys())
         for fingerprint in candidates:
             portal = self.known_portals[fingerprint]
             if not isinstance(portal, required_portal_type):

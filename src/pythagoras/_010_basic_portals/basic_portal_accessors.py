@@ -70,8 +70,8 @@ def get_all_known_portals(required_portal_type: type[PortalType] = BasicPortal) 
 
 def get_all_known_portal_fingerprints(
         required_portal_type: type[PortalType] = BasicPortal
-        ) -> list[PortalStrFingerprint]:
-    """Get a list of all known portal fingerprints.
+        ) -> set[PortalStrFingerprint]:
+    """Get a set of all known portal fingerprints.
 
     Args:
         required_portal_type: Class to validate portals. Default is BasicPortal.
@@ -79,7 +79,7 @@ def get_all_known_portal_fingerprints(
             a TypeError is raised.
 
     Returns:
-        A list containing fingerprints of all portals currently known to the system.
+        A set containing fingerprints of all portals currently known to the system.
 
     Raises:
         TypeError: If any known portal is not an instance of required_portal_type.
