@@ -1,8 +1,8 @@
 from functools import cached_property, wraps
-from pythagoras._800_foundational_utilities.cacheable_mixin import CacheableMixin
+from pythagoras._800_foundational_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
 import pytest
 
-class A(CacheableMixin):
+class A(CacheablePropertiesMixin):
     @cached_property
     def x(self):
         return 1
@@ -52,7 +52,7 @@ def test_cached_properties_names_existence():
     assert "z" not in names
 
 def test_inheritance():
-    class Base(CacheableMixin):
+    class Base(CacheablePropertiesMixin):
         @cached_property
         def base_prop(self):
             return "base"
@@ -91,7 +91,7 @@ def test_wrapped_descriptor():
                 return self.__wrapped__.__get__(instance, owner)
         return Wrapper(descriptor)
 
-    class Wrapped(CacheableMixin):
+    class Wrapped(CacheablePropertiesMixin):
         @descriptor_wrapper
         @cached_property
         def wrapped_prop(self):
@@ -141,7 +141,7 @@ def test_status_reporting():
 
 def test_slots_without_dict():
     """Test that classes with __slots__ but no __dict__ raise clear errors."""
-    class SlotsOnly(CacheableMixin):
+    class SlotsOnly(CacheablePropertiesMixin):
         __slots__ = ("_val",)
 
         @cached_property
@@ -157,7 +157,7 @@ def test_slots_without_dict():
         s._invalidate_cache()
 
 def test_slots_with_dict():
-    class SlotsWithDict(CacheableMixin):
+    class SlotsWithDict(CacheablePropertiesMixin):
         __slots__ = ("__dict__",)
 
         @cached_property
@@ -173,7 +173,7 @@ def test_slots_with_dict():
 
 def test_empty_class():
     """Test that classes with no cached properties work correctly."""
-    class Empty(CacheableMixin):
+    class Empty(CacheablePropertiesMixin):
         def regular_method(self):
             return 1
 
@@ -191,7 +191,7 @@ def test_empty_class():
 
 def test_property_that_raises():
     """Test that cached properties raising exceptions don't break cache management."""
-    class RaisingProp(CacheableMixin):
+    class RaisingProp(CacheablePropertiesMixin):
         @cached_property
         def failing_prop(self):
             raise ValueError("computation failed")
@@ -223,7 +223,7 @@ def test_property_that_raises():
 
 def test_multiple_inheritance_diamond():
     """Test that cached properties are discovered correctly in diamond inheritance."""
-    class Base(CacheableMixin):
+    class Base(CacheablePropertiesMixin):
         @cached_property
         def base_prop(self):
             return "base"
@@ -282,7 +282,7 @@ def test_deep_wrapping_chain():
             current = Wrapper(current)
         return current
 
-    class DeepWrapped(CacheableMixin):
+    class DeepWrapped(CacheablePropertiesMixin):
         pass
 
     # Manually add wrapped properties to the class
@@ -374,7 +374,7 @@ def test_get_cached_values_after_invalidation():
 
 def test_get_cached_values_inheritance():
     """Test that _get_cached_values() works with inherited cached properties."""
-    class Base(CacheableMixin):
+    class Base(CacheablePropertiesMixin):
         @cached_property
         def base_prop(self):
             return "base"
@@ -406,7 +406,7 @@ def test_set_cached_values_basic():
 
 def test_set_cached_values_bypass_computation():
     """Test that _set_cached_values() bypasses property computation."""
-    class Counter(CacheableMixin):
+    class Counter(CacheablePropertiesMixin):
         def __init__(self):
             self.compute_count = 0
 

@@ -25,7 +25,7 @@ from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)
 from .default_portal_base_dir import get_default_portal_base_dir
-from .._800_foundational_utilities.cacheable_mixin import CacheableMixin
+from .._800_foundational_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
@@ -37,7 +37,7 @@ PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
-class BasicPortal(NotPicklableClass, ParameterizableClass, CacheableMixin, metaclass = GuardedInitMeta):
+class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -639,7 +639,7 @@ class _PortalRegistry(NotPicklableClass):
 _PORTAL_REGISTRY = _PortalRegistry()
 
 
-class PortalAwareClass(CacheableMixin, metaclass = GuardedInitMeta):
+class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
     These objects either always work with a current portal,

@@ -1,12 +1,12 @@
 """Mixin for managing cached properties with automatic discovery and invalidation.
 
-This module provides CacheableMixin, which adds functionality to track and
-invalidate functools.cached_property attributes across a class hierarchy.
+This module provides CacheablePropertiesMixin, which adds functionality to track
+and invalidate functools.cached_property attributes across a class hierarchy.
 The mixin enables efficient cache management by automatically discovering
 all cached properties and providing methods to inspect, set, and clear their values.
 
 Note:
-    CacheableMixin is not thread-safe and should not be used with dynamically
+    CacheablePropertiesMixin is not thread-safe and should not be used with dynamically
     modified classes. The implementation relies on functools.cached_property
     internals; any refactoring should begin with reviewing those implementation
     details.
@@ -15,7 +15,7 @@ from functools import cached_property, cache
 from typing import Any
 
 
-class CacheableMixin:
+class CacheablePropertiesMixin:
     """Mixin class for automatic management of cached properties.
 
     Provides methods to discover all functools.cached_property attributes
@@ -135,6 +135,53 @@ class CacheableMixin:
         return {name: vars_dict[name]
                 for name in cached_names
                 if name in vars_dict}
+
+
+    def _get_cached_property(self, name: str) -> Any:
+        """Retrieve the cached value for a single cached property.
+
+        Args:
+            name: The name of the cached property to retrieve.
+
+        Returns:
+            The cached value for the specified property.
+
+        Raises:
+            ValueError: If the name is not a recognized cached property.
+            KeyError: If the property exists but doesn't have a cached value yet.
+        """
+        self._ensure_cache_storage_supported()
+
+        if name not in self._all_cached_properties_names:
+            raise ValueError(
+                f"'{name}' is not a cached property")
+
+        if name not in self.__dict__:
+            raise KeyError(
+                f"Cached property '{name}' has not been computed yet")
+
+        return self.__dict__[name]
+
+
+    def _get_cached_property_status(self, name: str) -> bool:
+        """Check if a cached property has a cached value.
+
+        Args:
+            name: The name of the cached property to check.
+
+        Returns:
+            True if the property has a cached value, False if it needs computation.
+
+        Raises:
+            ValueError: If the name is not a recognized cached property.
+        """
+        self._ensure_cache_storage_supported()
+
+        if name not in self._all_cached_properties_names:
+            raise ValueError(
+                f"'{name}' is not a cached property")
+
+        return name in self.__dict__
 
 
     def _set_cached_properties(self, **names_values: Any) -> None:
