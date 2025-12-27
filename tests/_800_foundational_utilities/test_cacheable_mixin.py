@@ -329,3 +329,167 @@ def test_invalidate_cache_idempotency():
     # Properties should still be recomputable
     assert a.x == 1
     assert a.y == 2
+
+def test_get_cached_values_basic():
+    """Test that _get_cached_values() returns dict with cached property values."""
+    a = A()
+    # Cache properties
+    _ = a.x
+    _ = a.y
+
+    cached_values = a._get_cached_values()
+
+    assert isinstance(cached_values, dict)
+    assert cached_values == {"x": 1, "y": 2}
+
+def test_get_cached_values_partial():
+    """Test that _get_cached_values() only includes actually cached properties."""
+    a = A()
+    # Cache only x, not y
+    _ = a.x
+
+    cached_values = a._get_cached_values()
+
+    assert cached_values == {"x": 1}
+    assert "y" not in cached_values
+
+def test_get_cached_values_empty():
+    """Test that _get_cached_values() returns empty dict when nothing is cached."""
+    a = A()
+
+    cached_values = a._get_cached_values()
+
+    assert cached_values == {}
+
+def test_get_cached_values_after_invalidation():
+    """Test that _get_cached_values() returns empty dict after invalidation."""
+    a = A()
+    _ = a.x
+    _ = a.y
+
+    a._invalidate_cache()
+    cached_values = a._get_cached_values()
+
+    assert cached_values == {}
+
+def test_get_cached_values_inheritance():
+    """Test that _get_cached_values() works with inherited cached properties."""
+    class Base(CacheableMixin):
+        @cached_property
+        def base_prop(self):
+            return "base"
+
+    class Child(Base):
+        @cached_property
+        def child_prop(self):
+            return "child"
+
+    c = Child()
+    _ = c.base_prop
+    _ = c.child_prop
+
+    cached_values = c._get_cached_values()
+
+    assert cached_values == {"base_prop": "base", "child_prop": "child"}
+
+def test_set_cached_values_basic():
+    """Test that _set_cached_values() sets values for cached properties."""
+    a = A()
+
+    a._set_cached_values(x=100, y=200)
+
+    # Values should be cached and accessible without computation
+    assert a.__dict__["x"] == 100
+    assert a.__dict__["y"] == 200
+    assert a.x == 100
+    assert a.y == 200
+
+def test_set_cached_values_bypass_computation():
+    """Test that _set_cached_values() bypasses property computation."""
+    class Counter(CacheableMixin):
+        def __init__(self):
+            self.compute_count = 0
+
+        @cached_property
+        def computed(self):
+            self.compute_count += 1
+            return 42
+
+    c = Counter()
+    c._set_cached_values(computed=999)
+
+    # Access the property - should return set value, not computed
+    assert c.computed == 999
+    assert c.compute_count == 0  # Never computed
+
+def test_set_cached_values_invalid_name():
+    """Test that _set_cached_values() raises ValueError for invalid names."""
+    a = A()
+
+    with pytest.raises(ValueError, match="non-cached properties"):
+        a._set_cached_values(invalid_name=123)
+
+    # Regular property should also be rejected
+    with pytest.raises(ValueError, match="non-cached properties"):
+        a._set_cached_values(z=456)
+
+def test_set_cached_values_partial():
+    """Test that _set_cached_values() can set subset of cached properties."""
+    a = A()
+
+    a._set_cached_values(x=50)
+
+    assert a.x == 50
+    assert "y" not in a.__dict__
+    assert a.y == 2  # y computes normally
+
+def test_set_cached_values_overwrite():
+    """Test that _set_cached_values() can overwrite existing cached values."""
+    a = A()
+    _ = a.x  # Cache original value
+    assert a.x == 1
+
+    a._set_cached_values(x=999)
+
+    assert a.x == 999
+
+def test_set_cached_values_empty():
+    """Test that _set_cached_values() with no arguments is safe."""
+    a = A()
+
+    a._set_cached_values()  # Should not raise
+
+    assert a._get_cached_values() == {}
+
+def test_set_cached_values_multiple_invalid():
+    """Test that error message includes all invalid property names."""
+    a = A()
+
+    with pytest.raises(ValueError) as exc_info:
+        a._set_cached_values(invalid1=1, invalid2=2, x=3)
+
+    error_msg = str(exc_info.value)
+    assert "invalid1" in error_msg
+    assert "invalid2" in error_msg
+
+def test_get_set_cached_values_roundtrip():
+    """Test that get/set cached values work together for state preservation."""
+    a = A()
+    # Cache some values
+    _ = a.x
+    _ = a.y
+
+    # Save cached state
+    saved_values = a._get_cached_values()
+
+    # Invalidate cache
+    a._invalidate_cache()
+    assert a._get_cached_values() == {}
+
+    # Restore cached state
+    a._set_cached_values(**saved_values)
+
+    # Verify restoration
+    assert a._get_cached_values() == saved_values
+    assert a.x == 1
+    assert a.y == 2

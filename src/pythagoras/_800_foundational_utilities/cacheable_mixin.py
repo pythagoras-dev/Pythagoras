@@ -11,6 +11,7 @@ any refactoring should start with understanding the functools.cached_property
 implementation details.
 """
 from functools import cached_property, cache
+from typing import Any
 
 
 class CacheableMixin:
@@ -111,6 +112,57 @@ class CacheableMixin:
 
         return {name: name in self.__dict__
             for name in self._all_cached_properties_names}
+
+
+    def _get_cached_values(self) -> dict[str, Any]:
+        """Get the currently cached values of all cached properties.
+
+        Returns:
+            Dictionary mapping property names to their cached values.
+            Only includes properties that are currently cached.
+
+        Note:
+            Standard functools.cached_property requires __dict__ to function.
+            If the instance has no __dict__, an empty dict is returned.
+        """
+        self._ensure_cache_storage_supported()
+
+        vars_dict = self.__dict__
+        cached_names = self._all_cached_properties_names
+
+        return {name: vars_dict[name]
+                for name in cached_names
+                if name in vars_dict}
+
+
+    def _set_cached_values(self, **names_values: Any) -> None:
+        """Set cached values for cached properties.
+
+        Args:
+            **names_values: Keyword arguments where keys are property names
+                and values are the values to cache.
+
+        Raises:
+            ValueError: If any provided name is not a recognized cached property.
+
+        Note:
+            This method directly sets values in __dict__, bypassing the property
+            computation. This is useful for restoring cached state or for testing.
+        """
+        self._ensure_cache_storage_supported()
+
+        cached_names = self._all_cached_properties_names
+
+        # Validate all names before setting any values
+        invalid_names = [name for name in names_values if name not in cached_names]
+        if invalid_names:
+            raise ValueError(
+                f"Cannot set cached values for non-cached properties: {invalid_names}")
+
+        # Set values directly in __dict__
+        vars_dict = self.__dict__
+        for name, value in names_values.items():
+            vars_dict[name] = value
 
 
     def _invalidate_cache(self) -> None:
