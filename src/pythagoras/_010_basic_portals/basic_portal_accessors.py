@@ -1,7 +1,37 @@
+"""Accessor functions for retrieving and managing portal objects.
+
+This module provides a public API for accessing portals from the global
+portal registry. Functions allow querying by fingerprint, counting portals,
+and retrieving active/inactive portal lists.
+"""
+
 from __future__ import annotations
 
-from .basic_portal_core_classes import _PORTAL_REGISTRY, BasicPortal, PortalType
-from .single_thread_enforcer import _ensure_single_thread
+from .basic_portal_core_classes import _PORTAL_REGISTRY, BasicPortal, PortalType, PortalStrFingerprint
+
+
+def get_portal_by_fingerprint(
+        portal_fingerprint: PortalStrFingerprint,
+        required_portal_type: type[PortalType] = BasicPortal
+        ) -> BasicPortal:
+    """Get a portal by its fingerprint.
+
+    Args:
+        portal_fingerprint: The unique string fingerprint identifying the portal.
+        required_portal_type: Class to validate the portal against. Default is BasicPortal.
+            If the found portal is not an instance of this class (or subclass),
+            a TypeError is raised.
+
+    Returns:
+        The portal instance matching the fingerprint.
+
+    Raises:
+        TypeError: If the found portal is not an instance of required_portal_type,
+            or if portal_fingerprint is not a string.
+        KeyError: If no portal with the given fingerprint exists.
+    """
+    return _PORTAL_REGISTRY.get_portal_by_fingerprint(
+        portal_fingerprint,required_portal_type)
 
 
 def get_number_of_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:

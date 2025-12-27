@@ -46,25 +46,19 @@ class _PortalTester:
 
     @property
     def portal(self) -> BasicPortal | None:
-        """The portal object being tested.
-
-        Returns:
-            The current portal instance if one exists, None otherwise.
-        """
+        """The portal object being tested, or None if no portal was created."""
         return self._portal
 
     def __enter__(self):
         """Enter the portal testing context.
 
-        Clears all existing portals and creates a new portal instance if
-        a portal class was specified during initialization. The created
-        portal is automatically entered as a context manager.
+        Clears all existing portals and creates a new portal if specified.
 
         Returns:
-            The _PortalTester instance for use in context management.
+            The _PortalTester instance.
 
         Raises:
-            Exception: If another _PortalTester instance is already active.
+            Exception: If another _PortalTester is already active.
         """
         if (_PortalTester._current_instance is not None
                 and _PortalTester._current_instance is not self):
@@ -79,10 +73,7 @@ class _PortalTester:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit the portal testing context.
-
-        Properly exits the portal context if one was created, clears all
-        portals from the system, and resets the current instance tracker.
+        """Exit the portal testing context and clean up.
 
         Args:
             exc_type: Exception type if an exception occurred, None otherwise.

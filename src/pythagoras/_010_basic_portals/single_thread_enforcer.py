@@ -1,7 +1,9 @@
-"""Enforcement of single-threaded access to Portals and related classes.
+"""Single-thread enforcement for Pythagoras portal access.
 
-This module guarantees that Pythagoras portals and portal-aware objects
-are only accessed from the thread where the portal system was first used.
+This module ensures that portals and portal-aware objects are accessed
+only from the thread that first initialized the portal system. Pythagoras
+supports multi-process parallelism (swarming) but not multi-threading
+within a single process.
 """
 
 from __future__ import annotations
@@ -10,21 +12,20 @@ import inspect
 import os
 import threading
 
-# Native (OS-level) id of the thread that first accessed the portal layer
 _portal_native_id: int | None = None
-# Human-readable name of that thread, for diagnostics
 _portal_thread_name: str | None = None
-# Process id where the above thread was registered
 _owner_pid: int | None = None
 
 
 def _ensure_single_thread() -> None:
-    """Raise RuntimeError if the current thread differs from the owner thread.
+    """Ensure current thread is the portal owner thread.
 
-    Pythagoras supports multi-process (swarming) parallelism, but not
-    multi-thread parallelism within a single process. Portals and related
-    objects must be accessed exclusively from the thread that first initialized
-    the portal system in the current process.
+    Pythagoras portals must be accessed exclusively from the thread that
+    first initialized the portal system in the current process. After a fork,
+    ownership is reset for the child process.
+
+    Raises:
+        RuntimeError: If called from a thread different from the owner thread.
     """
     global _portal_native_id, _portal_thread_name, _owner_pid
 
@@ -33,13 +34,11 @@ def _ensure_single_thread() -> None:
     curr_name = threading.current_thread().name
 
     if _owner_pid is not None and curr_pid != _owner_pid:
-        # We are in a child process – abandon previous ownership
         _portal_native_id = None
         _portal_thread_name = None
         _owner_pid = None
 
     if _portal_native_id is None:
-        # First use (or first use after fork) – lock the layer to this thread
         _portal_native_id = curr_native_id
         _portal_thread_name = curr_name
         _owner_pid = curr_pid
@@ -56,7 +55,10 @@ def _ensure_single_thread() -> None:
 
 
 def _reset_single_thread_enforcer() -> None:
-    """FOR UNIT TESTS ONLY – re-arm the guard for the current process/thread."""
+    """Reset the thread ownership for the current process.
+
+    For unit tests only.
+    """
     global _portal_native_id, _portal_thread_name, _owner_pid
     _portal_native_id = None
     _portal_thread_name = None

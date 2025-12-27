@@ -1,7 +1,10 @@
-"""Metaclass enforcing strict initialization and lifecycle hooks.
+"""Metaclass for strict initialization control and lifecycle hooks.
 
-Ensures `_init_finished` becomes `True` only after `__init__` or `__setstate__`
-complete (but before their respective post-hooks).
+This module provides GuardedInitMeta, a metaclass that enforces a strict
+initialization contract where _init_finished is set to True only after
+complete initialization. It wraps __setstate__ to ensure proper state
+restoration during unpickling and provides hooks for post-initialization
+and post-unpickling tasks.
 """
 import functools
 from abc import ABCMeta
@@ -12,7 +15,15 @@ T = TypeVar('T')
 
 
 def _validate_pickle_state_integrity(state: Any, cls_name: str) -> None:
-    """Ensure pickled state does not claim initialization is already finished."""
+    """Ensure pickled state does not claim initialization is finished.
+
+    Args:
+        state: The pickle state to validate.
+        cls_name: Class name for error reporting.
+
+    Raises:
+        RuntimeError: If _init_finished is True in the pickled state.
+    """
     candidate_dict, _ = _parse_pickle_state(state, cls_name)
 
     if candidate_dict is not None and candidate_dict.get("_init_finished") is True:
@@ -21,14 +32,17 @@ def _validate_pickle_state_integrity(state: Any, cls_name: str) -> None:
 
 
 def _parse_pickle_state(state: Any, cls_name: str) -> tuple[dict | None, dict | None]:
-    """Extract `__dict__` and `__slots__` state from the pickle data.
-    
+    """Extract __dict__ and __slots__ state from pickle data.
+
     Args:
         state: The state object passed to __setstate__.
-        cls_name: Name of the class for error reporting.
-        
+        cls_name: Class name for error reporting.
+
     Returns:
-        A tuple (dict_state, slots_state). Each element is a dictionary or None.
+        A tuple (dict_state, slots_state) where each element is a dictionary or None.
+
+    Raises:
+        RuntimeError: If state format is unsupported.
     """
     if state is None:
         return None, None
@@ -44,7 +58,16 @@ def _parse_pickle_state(state: Any, cls_name: str) -> tuple[dict | None, dict | 
 
 
 def _restore_dict_state(instance: Any, state_dict: dict, cls_name: str) -> None:
-    """Update instance `__dict__` with the restored state."""
+    """Update instance __dict__ with restored state.
+
+    Args:
+        instance: The object instance being restored.
+        state_dict: Dictionary of attribute values to restore.
+        cls_name: Class name for error reporting.
+
+    Raises:
+        RuntimeError: If instance has no __dict__ attribute.
+    """
     if hasattr(instance, "__dict__"):
         instance.__dict__.update(state_dict)
     else:
@@ -54,13 +77,25 @@ def _restore_dict_state(instance: Any, state_dict: dict, cls_name: str) -> None:
 
 
 def _restore_slots_state(instance: Any, state_slots: dict[str,Any]) -> None:
-    """Restore slot values using `setattr`. Assumes slots are valid attributes."""
+    """Restore slot values using setattr.
+
+    Args:
+        instance: The object instance being restored.
+        state_slots: Dictionary mapping slot names to values.
+    """
     for key, value in state_slots.items():
         setattr(instance, key, value)
 
 
 def _invoke_post_setstate_hook(instance: Any) -> None:
-    """Execute `__post_setstate__` if defined."""
+    """Execute __post_setstate__ hook if defined.
+
+    Args:
+        instance: The object instance to invoke the hook on.
+
+    Raises:
+        TypeError: If __post_setstate__ is not callable.
+    """
     post_setstate = getattr(instance, "__post_setstate__", None)
     if post_setstate:
         if not callable(post_setstate):
@@ -75,16 +110,33 @@ def _invoke_post_setstate_hook(instance: Any) -> None:
 class GuardedInitMeta(ABCMeta):
     """Metaclass for strict initialization control and lifecycle hooks.
 
+    Enforces a contract where _init_finished is False during initialization
+    and only becomes True after all initialization code completes. This ensures
+    that properties and methods can reliably check initialization state.
+
+    The metaclass automatically wraps __setstate__ to maintain the same
+    contract during unpickling, and invokes __post_init__ and __post_setstate__
+    hooks when defined.
+
     Contract:
-    - `__init__` must set `self._init_finished = False` immediately.
-    - The metaclass sets `self._init_finished = True` only after `__init__`
-      return (before `__post_init__`, if any).
-    - `__setstate__` is wrapped to ensure `_init_finished` becomes `True`
-      only after full state restoration (and before `__post_setstate__`, if any).
+        - __init__ must set self._init_finished = False immediately.
+        - The metaclass sets self._init_finished = True after __init__ returns
+          (but before __post_init__, if defined).
+        - __setstate__ is wrapped to ensure _init_finished becomes True after
+          full state restoration (but before __post_setstate__, if defined).
     """
 
     def __init__(cls, name, bases, dct):
-        """Inject lifecycle enforcement into `__setstate__`."""
+        """Initialize the class and inject lifecycle enforcement.
+
+        Args:
+            name: The class name.
+            bases: Base classes.
+            dct: Class dictionary.
+
+        Raises:
+            TypeError: If class is a dataclass or has multiple GuardedInitMeta bases.
+        """
         super().__init__(name, bases, dct)
         _raise_if_dataclass(cls)
 
@@ -97,23 +149,19 @@ class GuardedInitMeta(ABCMeta):
             original_setstate = dct['__setstate__']
         elif getattr(cls, '__setstate__', None) is not None:
             inherited = getattr(cls, '__setstate__')
-            # Avoid re-wrapping.
             if getattr(inherited, "__guarded_init_meta_wrapped__", False):
                 return
-            # Inherited raw __setstate__.
             original_setstate = inherited
         else:
-            # Use default restoration logic.
             original_setstate = None
 
         def setstate_wrapper(self, state):
-            """Restores state, finalizes initialization, and calls hook."""
+            """Restore state, finalize initialization, and invoke hook."""
             _validate_pickle_state_integrity(state, type(self).__name__)
 
             if original_setstate is not None:
                 original_setstate(self, state)
             else:
-                # Handle dict and/or slots.
                 state_dict, state_slots = _parse_pickle_state(state, type(self).__name__)
 
                 if state_dict is not None:
@@ -134,14 +182,25 @@ class GuardedInitMeta(ABCMeta):
         setattr(cls, '__setstate__', setstate_wrapper)
 
     def __call__(cls: Type[T], *args: Any, **kwargs: Any) -> T:
-        """Creates instance, enforces initialization contract, and calls hook."""
+        """Create instance, enforce initialization contract, and invoke hook.
+
+        Args:
+            *args: Positional arguments for __init__.
+            **kwargs: Keyword arguments for __init__.
+
+        Returns:
+            The initialized instance.
+
+        Raises:
+            RuntimeError: If _init_finished is not False after __init__.
+            TypeError: If __post_init__ is not callable.
+        """
         _raise_if_dataclass(cls)
 
         instance = super().__call__(*args, **kwargs)
         if not isinstance(instance, cls):
-            return instance  # __new__ returned a different class; skip hooks.
+            return instance
 
-        # Verify contract: __init__ must start with _init_finished=False.
         if not hasattr(instance, '_init_finished') or instance._init_finished:
             raise RuntimeError(f"Class {cls.__name__} must set attribute "
                                "_init_finished to False in __init__")
@@ -162,41 +221,38 @@ class GuardedInitMeta(ABCMeta):
 
 
 def _re_raise_with_context(hook_name: str, exc: Exception) -> None:
-    """Re-raise an exception with added context, preserving type if possible.
-
-    Attempts to instantiate a new exception of the same type with an augmented
-    message. If the exception constructor is incompatible (e.g., does not accept
-    a single string), a RuntimeError is raised instead.
+    """Re-raise an exception with added context about the hook.
 
     Args:
-        hook_name: The name of the hook where the error occurred (e.g. "__post_init__").
+        hook_name: The hook name where the error occurred (e.g., "__post_init__").
         exc: The original exception caught during hook execution.
 
     Raises:
-        RuntimeError: If the exception type is not compatible with string instantiation.
-        Exception: The new exception with augmented message (or the original type).
+        RuntimeError: If the exception constructor is incompatible.
+        Exception: The augmented exception with added context.
     """
     try:
         new_exc = type(exc)(f"Error in {hook_name}: {exc}")
     except Exception:
-        # Fallback if exception constructor does not work with one string argument.
         raise RuntimeError(
             f"Error in {hook_name} (original error: {type(exc).__name__}: {exc})"
         ) from exc
-    
+
     raise new_exc from exc
 
 
 def _raise_if_dataclass(cls: Type) -> None:
-    """Forbid application to dataclasses (incompatible lifecycle).
+    """Forbid GuardedInitMeta on dataclasses due to incompatible lifecycle.
 
-    This check is performed in two places:
-    1. In `GuardedInitMeta.__init__`: Detects if the class inherits from an
-       existing dataclass. This allows failing early at class definition time.
-    2. In `GuardedInitMeta.__call__`: Detects if the class itself was decorated
-       with `@dataclass`. Since the decorator runs after the metaclass
-       `__init__`, the first check misses this case, so we must catch it
-       during instantiation.
+    This check runs in two places:
+    1. In GuardedInitMeta.__init__ - catches inheritance from dataclasses.
+    2. In GuardedInitMeta.__call__ - catches @dataclass decorator on the class itself.
+
+    Args:
+        cls: The class to check.
+
+    Raises:
+        TypeError: If the class is a dataclass.
     """
     if is_dataclass(cls):
         raise TypeError(
