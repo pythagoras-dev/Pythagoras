@@ -68,6 +68,25 @@ def get_all_known_portals(required_portal_type: type[PortalType] = BasicPortal) 
     return _PORTAL_REGISTRY.all_portals(required_portal_type)
 
 
+def get_all_known_portal_fingerprints(
+        required_portal_type: type[PortalType] = BasicPortal
+        ) -> list[PortalStrFingerprint]:
+    """Get a list of all known portal fingerprints.
+
+    Args:
+        required_portal_type: Class to validate portals. Default is BasicPortal.
+            If any known portal is not an instance of this class (or subclass),
+            a TypeError is raised.
+
+    Returns:
+        A list containing fingerprints of all portals currently known to the system.
+
+    Raises:
+        TypeError: If any known portal is not an instance of required_portal_type.
+    """
+    return _PORTAL_REGISTRY.all_portal_fingerprints(required_portal_type)
+
+
 def get_number_of_active_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
     """Get the number of unique portals in the active stack.
 
