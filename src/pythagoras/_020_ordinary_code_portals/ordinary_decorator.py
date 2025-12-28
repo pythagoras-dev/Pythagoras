@@ -13,9 +13,19 @@ from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
 class ordinary:
     """A decorator that converts a Python function into an OrdinaryFn object.
 
-    As a part of the conversion process, the source code of the function
-    is checked. If it does not meet the requirements of an ordinary function,
-    an exception is raised.
+    Transforms regular Python functions into Pythagoras OrdinaryFn wrappers,
+    enabling them to participate in the Pythagoras execution model. The
+    decorator validates ordinarity constraints (no closures, no defaults,
+    keyword-args only) and prepares the function for normalized execution.
+
+    The decorator instance maintains optional portal linkage that will be
+    transferred to all functions it wraps. This allows entire modules or
+    function groups to be associated with specific portals.
+
+    Note:
+        Decorator instances are stateless beyond portal linkage and should
+        not be pickled. Functions wrapped by this decorator become OrdinaryFn
+        instances, which ARE picklable (without portal references).
     """
 
     _portal: OrdinaryCodePortal | None
