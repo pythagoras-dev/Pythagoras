@@ -1,169 +1,175 @@
-"""Utilities for checking readiness and retrieving nested data structures.
-
-This module provides two main functions for working with data structures that
-contain HashAddr/ValueAddr objects:
-
-- ready(): Recursively checks if all addresses in a nested structure are ready
-  for retrieval (i.e., values are available in at least one portal).
-- get(): Recursively retrieves values for all addresses in a nested structure,
-  returning a fully resolved copy of the original structure.
-
-Both functions handle cycles safely through memoization and support common
-Python containers (lists, tuples, dicts). Atomic types (str, bytes, range)
-are treated as leaf nodes and returned as-is.
 """
-import collections
-from typing import Any
+ready_and_get.py – utilities for HashAddr-aware tree traversal
+--------------------------------------------------------------
+
+This module offers two convenience helpers that can walk arbitrary
+Python object graphs looking for ``HashAddr`` / ``ValueAddr`` objects
+defined in *pythagoras* data-portals:
+
+• ready(obj) – depth-first check that *every* address embedded in
+  ``obj`` is ``ready`` (i.e. its value can be fetched from at least one
+  known portal).
+
+• get(obj)   – deep-copy of ``obj`` where every address is replaced by
+  its resolved value (via ``.get()``).  Container topology and identity
+  are preserved and cycles are handled correctly.
+
+The functions understand:
+
+    – atomic immutable scalars: str, bytes, bytearray, range
+    – built-in containers: list, tuple, dict
+    – any ``collections.abc.Sequence`` / ``Mapping`` subclass *provided
+      that* we can construct an empty placeholder of the same class.
+      Otherwise a clear ``TypeError`` is raised so that client code can
+      register a custom handler.
+
+They are intentionally dependency-free apart from ``HashAddr``.
+"""
+from __future__ import annotations
+
+from collections.abc import Mapping as _Mapping, Sequence as _Sequence
+from typing import Any, Dict, Set
 
 from .data_portal_core_classes import HashAddr
 
+# --------------------------------------------------------------------------- #
+# Helper utilities                                                            #
+# --------------------------------------------------------------------------- #
 
-def ready(obj) -> bool:
-    """Check if all addresses in a nested structure are ready for retrieval.
+# Sequence subclasses that should *not* be traversed (act as atoms)
+_ATOMIC_SEQ_TYPES: tuple[type, ...] = (str, bytes, bytearray, range)
 
-    Recursively traverses the structure to verify that every HashAddr/ValueAddr
-    is ready (i.e., its value is available in at least one known portal). Atomic
-    types like strings and bytes are considered ready by default. Container types
-    (lists, tuples, dicts) are recursed into.
 
-    This is useful for checking preconditions before performing bulk retrievals
-    or for validating that distributed computations have completed.
+def _is_atomic(obj: Any) -> bool:
+    """Return True if *obj* is considered a leaf for recursion purposes."""
+    return isinstance(obj, _ATOMIC_SEQ_TYPES)
 
-    Args:
-        obj: Any Python object, possibly containing nested HashAddr/ValueAddr objects
-            within lists, tuples, or dictionaries.
 
-    Returns:
-        True if all contained addresses are ready (or if obj contains no addresses),
-        False if any address is not ready.
-
-    Example:
-        >>> data = [ValueAddr(1), ValueAddr(2), {"key": ValueAddr(3)}]
-        >>> if ready(data):
-        ...     values = get(data)
+def _make_empty_clone(container: Any) -> Any | None:
     """
-    return _ready_impl(obj)
-
-def _ready_impl(obj, seen=None):
-    """Implementation helper for ready() with cycle protection.
-
-    Traverses objects depth-first, tracking visited objects to handle cycles.
-    Returns True for atomic types, recursively checks containers, and evaluates
-    HashAddr.ready for address objects.
-
-    Args:
-        obj: Object under inspection.
-        seen: Set of object ids already visited (prevents infinite loops on cycles).
-
-    Returns:
-        True if obj and all nested addresses are ready.
+    Attempt to create an *empty* instance of ``type(container)`` so that we
+    can break cycles while descending.  Returns the clone or ``None`` if it
+    cannot be built safely.
     """
-    if seen is None:
-        seen = set()
-    elif id(obj) in seen:
+    cls = type(container)
+    # Fast-path for common containers
+    if cls in (list, dict, tuple, set):
+        return cls()
+    try:
+        return cls()  # hope for no-arg constructor
+    except Exception:
+        return None
+
+
+# --------------------------------------------------------------------------- #
+# ready()                                                                     #
+# --------------------------------------------------------------------------- #
+def ready(obj: Any) -> bool:
+    """Recursively verify that **all** HashAddr objects inside *obj* are ready."""
+    return _ready_impl(obj, seen=set())
+
+
+def _ready_impl(obj: Any, *, seen: Set[int]) -> bool:
+    if id(obj) in seen:
         return True
-
     seen.add(id(obj))
 
-    if isinstance(obj, (str,range, bytearray, bytes)):
+    if _is_atomic(obj):
         return True
-    elif isinstance(obj, HashAddr):
+    if isinstance(obj, HashAddr):
         return obj.ready
-    elif isinstance(obj,(list,tuple)):
-        return all(_ready_impl(item, seen) for item in obj)
-    elif isinstance(obj, dict):
-        return all(_ready_impl(value, seen) for key, value in obj.items())
-    else:
-        return True
+    if isinstance(obj, (list, tuple)):
+        return all(_ready_impl(item, seen=seen) for item in obj)
+    if isinstance(obj, dict):
+        return all(_ready_impl(k, seen=seen) and _ready_impl(v, seen=seen)
+                   for k, v in obj.items())
+    if isinstance(obj, _Mapping):
+        return all(_ready_impl(k, seen=seen) and _ready_impl(v, seen=seen)
+                   for k, v in obj.items())
+    if isinstance(obj, _Sequence) and not _is_atomic(obj):
+        return all(_ready_impl(item, seen=seen) for item in obj)
+    # Fallback: treat as leaf
+    return True
 
-    # TODO: decide how to deal with Sequences/Mappings
-    # elif isinstance(obj, collections.abc.Sequence):
-    #     raise TypeError("Unsupported Sequence type: " + str(type(obj)))
-    # elif isinstance(obj, collections.abc.Mapping):
-    #     raise TypeError("Unsupported Mapping type: " + str(type(obj)))
+
+# --------------------------------------------------------------------------- #
+# get()                                                                       #
+# --------------------------------------------------------------------------- #
+def get(obj: Any) -> Any:
+    """Return a deep copy of *obj* with every HashAddr replaced by its value."""
+    return _get_impl(obj, seen={})
 
 
-def get(obj:Any) -> Any:
-    """Recursively resolve all addresses in a nested structure.
-
-    Creates a deep copy of the structure where every HashAddr/ValueAddr is
-    replaced with its actual value (retrieved via .get()). Container topology
-    is preserved: lists remain lists, dicts remain dicts, etc. Cycles are
-    handled through memoization.
-
-    This is the primary way to bulk-retrieve values from complex data structures
-    that contain multiple addresses, such as the results of distributed computations.
-
-    Args:
-        obj: Any Python object or nested structure. Can contain HashAddr/ValueAddr
-            objects at any depth within lists, tuples, or dictionaries.
-
-    Returns:
-        A copy of obj with all addresses replaced by their concrete values. Atomic
-        types and non-address objects are returned as-is (or copied for containers).
-
-    Example:
-        >>> addr1 = ValueAddr([1, 2, 3])
-        >>> addr2 = ValueAddr({"x": 10})
-        >>> structure = {"data": addr1, "config": addr2}
-        >>> resolved = get(structure)
-        >>> resolved  # {"data": [1, 2, 3], "config": {"x": 10}}
+def _get_impl(obj: Any, *, seen: Dict[int, Any]) -> Any:
     """
-    return _get_impl(obj)
-
-
-def _get_impl(obj:Any, seen=None)->Any:
-    """Implementation helper for get() with cycle protection and memoization.
-
-    Performs depth-first traversal, creating placeholders for mutable containers
-    to break cycles, then filling them recursively. For HashAddr objects, calls
-    .get() to retrieve the value. Preserves object identity for cyclic structures.
-
-    Args:
-        obj: Object to resolve.
-        seen: Dict mapping object ids to their resolved copies (prevents infinite
-            recursion on cycles).
-
-    Returns:
-        The resolved object or a structure with all addresses replaced by values.
+    Depth-first copy of *obj* where every HashAddr is replaced by its value.
+    Cycles are handled via the *seen* memo-dict.
     """
-    if seen is None:
-        seen = dict()
-
+    # ➊ Cycle guard ­­– return the already-built clone if we revisited the same id
     if id(obj) in seen:
         return seen[id(obj)]
 
-    # For mutable objects that could contain circular references,
-    # add a placeholder to break recursion
-    if isinstance(obj, (str, range, bytearray, bytes)):
+    # ➋ Primitive atomic “leaves” (strings, bytes, …)
+    if _is_atomic(obj):
         return obj
-    elif isinstance(obj, (list, dict)):
-        # Create an empty container of the same type as a placeholder
-        placeholder = type(obj)()
+
+    # ➌ Addresses MUST be handled *before* general tuple / sequence logic
+    if isinstance(obj, HashAddr):
+        value = obj.get()
+        seen[id(obj)] = value
+        return value
+
+    # ------------------------------------------------------------------ #
+    # Built-in containers with identity-preserving placeholders           #
+    # ------------------------------------------------------------------ #
+    if isinstance(obj, list):
+        placeholder: list = []
         seen[id(obj)] = placeholder
+        placeholder.extend(_get_impl(item, seen=seen) for item in obj)
+        return placeholder
 
-        if isinstance(obj, list):
-            result = [_get_impl(item, seen) for item in obj]
-            # Update the placeholder with the actual values
-            placeholder.extend(result)
-            return placeholder
-        elif isinstance(obj, dict):
-            result = {key: _get_impl(value, seen) for key, value in obj.items()}
-            # Update the placeholder with the actual values
-            placeholder.update(result)
-            return placeholder
-    elif isinstance(obj, HashAddr):
-        result = obj.get()
-    elif isinstance(obj, tuple):
-        result = tuple(_get_impl(item, seen) for item in obj)
-    else:
-        result = obj
+    if isinstance(obj, dict):
+        placeholder: dict = {}
+        seen[id(obj)] = placeholder
+        for k, v in obj.items():
+            placeholder[_get_impl(k, seen=seen)] = _get_impl(v, seen=seen)
+        return placeholder
 
-    # TODO: decide how to deal with Sequences/Mappings
-    # elif isinstance(obj, collections.abc.Sequence):
-    #     raise TypeError("Unsupported Sequence type: " + str(type(obj)))
-    # elif isinstance(obj, collections.abc.Mapping):
-    #     raise TypeError("Unsupported Mapping type: " + str(type(obj)))
+    if isinstance(obj, tuple):
+        clone = tuple(_get_impl(item, seen=seen) for item in obj)
+        seen[id(obj)] = clone
+        return clone
 
-    seen[id(obj)] = result
-    return result
+    # ------------------------------------------------------------------ #
+    # Generic Mapping / Sequence fall-backs                               #
+    # ------------------------------------------------------------------ #
+    if isinstance(obj, _Mapping):
+        placeholder = _make_empty_clone(obj)
+        if placeholder is None:
+            raise TypeError(f"Cannot create empty placeholder for mapping type {type(obj)}")
+        seen[id(obj)] = placeholder
+        for k, v in obj.items():
+            placeholder[_get_impl(k, seen=seen)] = _get_impl(v, seen=seen)
+        return placeholder
+
+    if isinstance(obj, _Sequence) and not _is_atomic(obj):
+        placeholder = _make_empty_clone(obj)
+        if placeholder is None:
+            raise TypeError(f"Cannot create empty placeholder for sequence type {type(obj)}")
+        seen[id(obj)] = placeholder
+        items = [_get_impl(item, seen=seen) for item in obj]
+        # Try to rebuild the original type; fall back gracefully
+        try:
+            rebuilt = type(obj)(items)
+        except Exception:
+            rebuilt = items
+        if hasattr(placeholder, "extend"):          # mutable sequence
+            placeholder.extend(items)
+            rebuilt = placeholder
+        return rebuilt
+
+    # ------------------------------------------------------------------ #
+    # Any other object – keep as-is                                       #
+    # ------------------------------------------------------------------ #
+    seen[id(obj)] = obj
+    return obj
