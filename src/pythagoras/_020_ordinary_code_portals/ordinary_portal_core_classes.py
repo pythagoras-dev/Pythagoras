@@ -403,12 +403,10 @@ class OrdinaryFn(PortalAwareClass):
         import builtins
         import pythagoras as pth
 
-        return {
-            "__builtins__": builtins,
+        return {"__builtins__": builtins,
             self.name: self,
             "self": self,
-            "pth": pth,
-        }
+            "pth": pth,}
 
 
     def execute(self, **kwargs: Any) -> Any:
