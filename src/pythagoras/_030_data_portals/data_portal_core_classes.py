@@ -520,7 +520,7 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
             raise ValueError("descriptor and hash_signature must not be empty")
         if len(hash_signature) < 10:
             raise ValueError(f"hash_signature must be at least 10 characters, "
-                             f"got {len(hash_signature)}")
+                             f"got {len(hash_signature)} characters instead.")
         SafeStrTuple.__init__(self,hash_signature[:3], hash_signature[3:6]
                               ,descriptor, hash_signature[6:])
 
