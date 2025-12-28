@@ -111,3 +111,76 @@ def test_exception_inside_nested_with(tmpdir):
         assert len(p.portal._crash_history) == 1
         assert len(portal2._crash_history) == 0
         assert len(portal3._crash_history) == 0
+
+
+def test_same_exception_not_logged_twice(tmpdir):
+    """Test that the same exception instance is not logged multiple times."""
+    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+        initial_count = len(p.portal._crash_history)
+
+        try:
+            with p.portal:
+                raise ValueError("This exception should only be logged once")
+        except ValueError:
+            pass
+
+        # Exception should be logged once
+        assert len(p.portal._crash_history) == initial_count + 1
+
+
+def test_exception_deduplication_across_nested_contexts(tmpdir):
+    """Test that exception deduplication works across nested portal contexts."""
+    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+        initial_count = len(p.portal._crash_history)
+
+        try:
+            with p.portal:
+                with p.portal:
+                    with p.portal:
+                        raise RuntimeError("Nested exception")
+        except RuntimeError:
+            pass
+
+        # Despite multiple nested contexts, exception should be logged once
+        assert len(p.portal._crash_history) == initial_count + 1
+
+
+def test_different_exception_instances_logged_separately(tmpdir):
+    """Test that different exception instances are logged separately."""
+    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+        initial_count = len(p.portal._crash_history)
+
+        # First exception
+        try:
+            with p.portal:
+                raise ValueError("First exception")
+        except ValueError:
+            pass
+
+        # Second exception (different instance)
+        try:
+            with p.portal:
+                raise ValueError("Second exception")
+        except ValueError:
+            pass
+
+        # Both should be logged
+        assert len(p.portal._crash_history) == initial_count + 2
+
+
+def test_exception_types_mixed(tmpdir):
+    """Test that different exception types are all logged correctly."""
+    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+        initial_count = len(p.portal._crash_history)
+
+        exception_types = [ValueError, TypeError, RuntimeError, KeyError, AttributeError]
+
+        for exc_type in exception_types:
+            try:
+                with p.portal:
+                    raise exc_type(f"Exception of type {exc_type.__name__}")
+            except Exception:
+                pass
+
+        # All should be logged
+        assert len(p.portal._crash_history) == initial_count + len(exception_types)
