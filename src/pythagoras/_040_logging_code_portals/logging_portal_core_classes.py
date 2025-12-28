@@ -731,12 +731,12 @@ class LoggingFnExecutionFrame(NotPicklableClass):
             LoggingFnExecutionFrame: This frame instance for use as a context var.
         """
         if self.context_used:
-            raise RuntimeError(f"An instance of PureFnExecutionFrame can be used only once.")
+            raise RuntimeError(f"An instance of LoggingFnExecutionFrame can be used only once.")
         self.context_used = True
         if self.exception_counter != 0:
-            raise RuntimeError(f"An instance of PureFnExecutionFrame can be used only once.")
+            raise RuntimeError(f"An instance of LoggingFnExecutionFrame can be used only once.")
         if self.event_counter != 0:
-            raise RuntimeError(f"An instance of PureFnExecutionFrame can be used only once.")
+            raise RuntimeError(f"An instance of LoggingFnExecutionFrame can be used only once.")
         self.portal.__enter__()
         if isinstance(self.output_capturer, OutputCapturer):
             self.output_capturer.__enter__()
@@ -789,12 +789,12 @@ class LoggingFnExecutionFrame(NotPicklableClass):
         """
         log_exception()
         if isinstance(self.output_capturer, OutputCapturer):
-            self.output_capturer.__exit__(exc_type, exc_value, traceback)
+            self.output_capturer.__exit__(exc_type, exc_value, trace_back)
             output_id = self.session_id+"_output"
             execution_outputs = self.fn_call_signature.execution_outputs
             execution_outputs[output_id] = self.output_capturer.get_output()
 
-        self.portal.__exit__(exc_type, exc_value, traceback)
+        self.portal.__exit__(exc_type, exc_value, trace_back)
         LoggingFnExecutionFrame.call_stack.pop()
 
 
@@ -944,7 +944,7 @@ class LoggingCodePortal(DataPortal):
             - Unregisters global uncaught exception handlers.
         """
         self._crash_history = None
-        self._event_log = None
+        self._event_history = None
         self._run_history = None
         unregister_systemwide_uncaught_exception_handlers()
         super()._clear()
@@ -1009,7 +1009,7 @@ def log_event(*args, **kwargs):
         frame = None
         event_id =  get_random_signature() + "_event"
 
-    event_body = add_execution_environment_summary(args=args, **kwargs)
+    event_body = add_execution_environment_summary(*args, **kwargs)
 
     if frame is not None:
         frame.fn_call_signature.events[event_id] = event_body
