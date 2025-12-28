@@ -44,7 +44,6 @@ class AutonomousFnCallSignature(SafeFnCallSignature):
 
     This extends SafeFnCallSignature to reference AutonomousFn instances.
     """
-    _fn_cache: AutonomousFn | None
 
     def __init__(self, fn: AutonomousFn, arguments: dict):
         """Create a call signature for an autonomous function.
@@ -59,7 +58,7 @@ class AutonomousFnCallSignature(SafeFnCallSignature):
             raise TypeError(f"arguments must be dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
-    @property
+    @cached_property
     def fn(self) -> AutonomousFn:
         """Return the function object referenced by the signature."""
         return super().fn

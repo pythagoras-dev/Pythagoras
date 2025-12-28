@@ -63,7 +63,6 @@ class SafeFnCallSignature(LoggingFnCallSignature):
     (e.g., fn) to Safe* counterparts. All logging behavior and storage layout
     are inherited from LoggingFnCallSignature.
     """
-    _fn_cache: SafeFn | None
 
     def __init__(self, fn: SafeFn, arguments: dict):
         """Construct a signature for a specific SafeFn call.
@@ -78,7 +77,7 @@ class SafeFnCallSignature(LoggingFnCallSignature):
             raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
-    @property
+    @cached_property
     def fn(self) -> SafeFn:
         """Return the SafeFn referenced by this signature.
 
