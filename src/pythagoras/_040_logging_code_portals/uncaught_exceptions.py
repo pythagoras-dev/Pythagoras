@@ -1,3 +1,22 @@
+"""System-wide exception handlers for Pythagoras logging integration.
+
+This module registers custom exception handlers that capture uncaught exceptions
+and log them to the active LoggingCodePortal. It handles both standard Python
+environments (via sys.excepthook) and Jupyter/IPython notebooks (via IPython's
+custom exception handler mechanism).
+
+Design Rationale:
+    Uncaught exceptions represent critical failures that should always be logged
+    for post-mortem analysis. By hooking into the system's exception handling
+    mechanisms, Pythagoras ensures these failures are captured even when they
+    occur outside of explicitly logged functions.
+
+Handler Registration:
+    Handlers are reference-counted to support multiple portal instances.
+    Registration is idempotent: multiple calls increment a counter, and
+    handlers are only removed when the counter reaches zero during unregistration.
+"""
+
 from __future__ import annotations
 
 import sys
@@ -16,7 +35,12 @@ from .._800_foundational_utilities.random_signatures import (
 
 
 def pth_excepthook(exc_type, exc_value, trace_back) -> None:
-    """sys.excepthook replacement that logs uncaught exceptions.
+    """Custom sys.excepthook that logs uncaught exceptions to Pythagoras.
+
+    This handler is installed in standard Python environments (non-Jupyter).
+    It captures uncaught exceptions, enriches them with execution environment
+    context, logs them to the portal's crash history, then delegates to the
+    original sys.__excepthook__ to preserve standard Python exception behavior.
 
     Args:
         exc_type: The exception class.
@@ -24,8 +48,9 @@ def pth_excepthook(exc_type, exc_value, trace_back) -> None:
         trace_back: Traceback object for the exception.
 
     Side Effects:
-        - Records the exception in the active LoggingCodePortal's crash history.
-        - Calls the original sys.__excepthook__ after logging.
+        - Records the exception in the active LoggingCodePortal's crash history
+        - Marks the exception as processed to prevent duplicate logging
+        - Calls the original sys.__excepthook__ for standard error display
     """
     if _exception_needs_to_be_processed(exc_type, exc_value, trace_back):
         exception_id = "app_"+ get_random_signature() + "_crash"
@@ -41,16 +66,26 @@ def pth_excepthook(exc_type, exc_value, trace_back) -> None:
 
 def pth_excepthandler(_, exc_type, exc_value
                     , trace_back, tb_offset=None) -> None:
-    """IPython custom exception handler that logs uncaught exceptions.
+    """Custom IPython exception handler that logs uncaught exceptions to Pythagoras.
 
-    This signature matches IPython's set_custom_exc handler protocol.
+    This handler is installed in Jupyter/IPython environments. It captures
+    uncaught exceptions, enriches them with execution context, logs them to
+    the portal's crash history, then displays the traceback.
+
+    The signature matches IPython's set_custom_exc() protocol, which requires
+    a specific parameter signature that differs from sys.excepthook.
 
     Args:
-        _: Unused first parameter required by IPython.
+        _: IPython shell instance (required by protocol but unused here).
         exc_type: The exception class.
         exc_value: The exception instance.
         trace_back: Traceback object for the exception.
-        tb_offset: Optional traceback offset used by IPython. Unused.
+        tb_offset: Optional traceback offset for IPython's display system. Unused.
+
+    Side Effects:
+        - Records the exception in the active LoggingCodePortal's crash history
+        - Marks the exception as processed to prevent duplicate logging
+        - Prints the exception traceback via traceback.print_exception()
     """
     if _exception_needs_to_be_processed(exc_type, exc_value, trace_back):
         exception_id = "app_" + get_random_signature() + "_crash"
@@ -67,14 +102,22 @@ _previous_excepthook = None
 _number_of_handlers_registrations = 0
 
 def register_systemwide_uncaught_exception_handlers() -> None:
-    """Install Pythagoras handlers for uncaught exceptions system-wide.
+    """Install Pythagoras exception handlers for the current environment.
 
-    In standard Python, replaces sys.excepthook; in Jupyter/IPython,
-    registers a custom exception handler via IPython.set_custom_exc when
-    available. Multiple registrations are reference-counted and idempotent.
+    Detects the execution environment (standard Python vs Jupyter/IPython)
+    and installs the appropriate handler:
+    - Standard Python: replaces sys.excepthook with pth_excepthook
+    - Jupyter/IPython: registers pth_excepthandler via set_custom_exc()
 
-    Returns:
-        None
+    Multiple registrations are reference-counted: the first call installs
+    handlers, subsequent calls increment a counter. Handlers are only
+    removed when unregister_systemwide_uncaught_exception_handlers() is
+    called an equal number of times.
+
+    Side Effects:
+        - Increments the global registration counter
+        - Installs exception handlers (first registration only)
+        - Stores the previous sys.excepthook for later restoration
     """
     global _number_of_handlers_registrations, _previous_excepthook
     _number_of_handlers_registrations += 1
@@ -95,14 +138,18 @@ def register_systemwide_uncaught_exception_handlers() -> None:
 
 
 def unregister_systemwide_uncaught_exception_handlers() -> None:
-    """Uninstall previously registered Pythagoras exception handlers.
+    """Remove Pythagoras exception handlers from the system.
 
-    Decrements the registration reference counter. When it reaches zero,
-    restores the previous sys.excepthook (if any) and removes the custom
-    IPython exception handler in notebook environments.
+    Decrements the registration reference counter. When the counter reaches
+    zero (indicating all portals have been closed), restores the original
+    exception handling behavior:
+    - Standard Python: restores the previous sys.excepthook
+    - Jupyter/IPython: clears the custom exception handler
 
-    Returns:
-        None
+    Side Effects:
+        - Decrements the global registration counter
+        - Restores original exception handlers (when counter reaches zero)
+        - Clears the stored previous excepthook reference
     """
     global _number_of_handlers_registrations, _previous_excepthook
     _number_of_handlers_registrations -= 1
