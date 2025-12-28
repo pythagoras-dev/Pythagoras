@@ -57,7 +57,86 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         if self.func_nesting_level == 0:
             self.names.function = node.name
             self.func_nesting_level += 1
+            for arg in node.args.posonlyargs:
+                self.names.local |= {arg.arg}
             for arg in node.args.args:
+                self.names.local |= {arg.arg}
+            for arg in node.args.kwonlyargs:
+                self.names.local |= {arg.arg}
+            if node.args.vararg:
+                self.names.local |= {node.args.vararg.arg}
+            if node.args.kwarg:
+                self.names.local |= {node.args.kwarg.arg}
+            self.names.accessible |= self.names.local
+            self.generic_visit(node)
+            self.func_nesting_level -= 1
+        else:
+            nested = NamesUsageAnalyzer()
+            nested.visit(node)
+            self.imported_packages_deep |= nested.imported_packages_deep
+            nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+            self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+            self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+            nested.names.unclassified_deep -= self.names.accessible
+            self.names.unclassified_deep |= nested.names.unclassified_deep
+            self.names.local |= {node.name}
+            self.names.accessible |= {node.name}
+            # self.names.imported is not changing
+            # self.n_yelds is not changing
+
+    def visit_Lambda(self, node):
+        """Handle a lambda expression.
+
+        Lambdas create a nested scope similar to nested functions. Their
+        parameters are local to the lambda and should not leak into the
+        parent scope as unclassified names.
+
+        Args:
+            node: The ast.Lambda node.
+        """
+        nested = NamesUsageAnalyzer()
+        nested.func_nesting_level = 0
+        nested.names.function = "<lambda>"
+        nested.func_nesting_level += 1
+        for arg in node.args.posonlyargs:
+            nested.names.local |= {arg.arg}
+        for arg in node.args.args:
+            nested.names.local |= {arg.arg}
+        for arg in node.args.kwonlyargs:
+            nested.names.local |= {arg.arg}
+        if node.args.vararg:
+            nested.names.local |= {node.args.vararg.arg}
+        if node.args.kwarg:
+            nested.names.local |= {node.args.kwarg.arg}
+        nested.names.accessible |= nested.names.local
+        nested.generic_visit(node)
+        nested.func_nesting_level -= 1
+
+        # Merge nested lambda's analysis into parent scope
+        self.imported_packages_deep |= nested.imported_packages_deep
+        nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+        self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+        self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+        nested.names.unclassified_deep -= self.names.accessible
+        self.names.unclassified_deep |= nested.names.unclassified_deep
+
+    def visit_AsyncFunctionDef(self, node):
+        """Handle an async function definition.
+
+        Async functions are treated similarly to regular nested functions
+        when they appear as nested definitions.
+
+        Args:
+            node: The ast.AsyncFunctionDef node.
+        """
+        if self.func_nesting_level == 0:
+            self.names.function = node.name
+            self.func_nesting_level += 1
+            for arg in node.args.posonlyargs:
+                self.names.local |= {arg.arg}
+            for arg in node.args.args:
+                self.names.local |= {arg.arg}
+            for arg in node.args.kwonlyargs:
                 self.names.local |= {arg.arg}
             if node.args.vararg:
                 self.names.local |= {node.args.vararg.arg}
