@@ -22,7 +22,7 @@ from __future__ import annotations
 
 from .._010_basic_portals import get_current_portal
 from .._010_basic_portals.basic_portal_core_classes import _visit_portal
-from .._030_data_portals import DataPortal, ValueAddr
+from .._030_data_portals import ValueAddr
 from parameterizable import sort_dict_by_keys
 
 class KwArgs(dict):
@@ -34,15 +34,15 @@ class KwArgs(dict):
     """
 
 
-    def __init__(self, *args, **kargs):
+    def __init__(self, *args, **kwargs):
         """Create a KwArgs mapping with deterministically sorted keys.
 
         Args:
             *args: Positional arguments accepted by dict().
-            **kargs: Keyword arguments accepted by dict().
+            **kwargs: Keyword arguments accepted by dict().
         """
         dict.__init__(self)
-        tmp_dict = dict(*args, **kargs)
+        tmp_dict = dict(*args, **kwargs)
         tmp_dict = sort_dict_by_keys(tmp_dict)
         self.update(tmp_dict)
 
@@ -195,12 +195,12 @@ class PackedKwArgs(KwArgs):
         >>> assert isinstance(packed, PackedKwArgs)
         >>> assert all(isinstance(v, ValueAddr) for v in packed.values())
     """
-    def __init__(self,*args, **kargs):
+    def __init__(self, *args, **kwargs):
         """Construct a PackedKwArgs mapping.
 
         Accepts the same arguments as dict/KwArgs.
         """
-        super().__init__(*args, **kargs)
+        super().__init__(*args, **kwargs)
 
 
     def __setitem__(self, key, value):
@@ -239,12 +239,12 @@ class UnpackedKwArgs(KwArgs):
         >>> assert isinstance(unpacked, UnpackedKwArgs)
         >>> assert unpacked["x"] == 5
     """
-    def __init__(self,*args, **kargs):
+    def __init__(self, *args, **kwargs):
         """Construct an UnpackedKwArgs mapping.
 
         Accepts the same arguments as dict/KwArgs.
         """
-        super().__init__(*args, **kargs)
+        super().__init__(*args, **kwargs)
 
 
     def __setitem__(self, key, value):
