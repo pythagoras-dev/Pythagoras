@@ -170,8 +170,8 @@ class AutonomousFn(SafeFn):
             overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
             if len(overlapping_keys) != 0:
                 raise ValueError(f"Overlapping kwargs with fixed kwargs: {sorted(overlapping_keys)}")
-            kwargs.update(self.fixed_kwargs)
-            return super().execute(**kwargs)
+            call_kwargs = {**kwargs, **self.fixed_kwargs}
+            return super().execute(**call_kwargs)
 
 
     def get_signature(self, arguments:dict) -> AutonomousFnCallSignature:
