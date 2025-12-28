@@ -89,6 +89,7 @@ class OrdinaryCodePortal(BasicPortal):
         if target_class is None:
             target_class = OrdinaryFn
         if isinstance(target_class, OrdinaryFn):
+            # in case an instance is passed by mistake
             target_class = target_class.__class__
         if not issubclass(target_class, OrdinaryFn):
             raise TypeError(f"required_portal_type must be a subclass of {OrdinaryFn.__name__}.")
@@ -145,20 +146,31 @@ class OrdinaryCodePortal(BasicPortal):
 
 
 class OrdinaryFn(PortalAwareClass):
-    """A wrapper around an ordinary function that allows calling it.
+    """A wrapper around an ordinary function that enables controlled execution.
 
-    An ordinary function is just a regular function. Async functions,
-    class/object method, closures, and lambda functions
-    are not considered ordinary.
+    OrdinaryFn provides a normalized, introspectable representation of regular
+    Python functions. It stores function source in canonical form (no comments,
+    docstrings, or type hints) enabling reliable comparison and hashing for
+    caching and memoization.
 
-    An ordinary function can only be called with keyword arguments.
-    It can't be called with positional arguments.
+    The execution model:
+    1. Normalized source is compiled to a code object (cached)
+    2. Function is renamed to avoid namespace collisions
+    3. Execution happens in a controlled namespace with explicit dependencies
+    4. All calls use keyword arguments only for maximum clarity
 
-    An OrdinaryFn object stores the source code of the function
-    in a normalized form: without comments, docstrings, type annotations,
-    and empty lines. The source code is formatted according to PEP 8.
-    This way, Pythagoras can later compare the source
-    code of two functions to check if they are equivalent.
+    Ordinary functions must be:
+    - Regular Python functions (not methods, lambdas, closures, or async)
+    - Callable with keyword arguments only
+    - Free of default parameter values
+    - Free of *args
+
+    These constraints enable Pythagoras to reliably hash, compare, cache,
+    and execute functions in isolated contexts where all dependencies are
+    explicit and traceable.
+
+    Attributes:
+        _source_code: Normalized source representation of the function.
     """
     _source_code:str
 
@@ -245,8 +257,12 @@ class OrdinaryFn(PortalAwareClass):
     def _virtual_file_name(self) -> str:
         """Return a synthetic filename used when compiling the function.
 
+        The virtual filename appears in tracebacks and enables debuggers to
+        identify the source of dynamically compiled code. Including the hash
+        signature ensures each function version has a unique traceback identity.
+
         Returns:
-            str: A stable file name derived from the function name and hash
+            A stable file name derived from the function name and hash
             signature, ending with ".py".
         """
         return self.name + "_" + self.hash_signature + ".py"
@@ -256,8 +272,12 @@ class OrdinaryFn(PortalAwareClass):
     def _kwargs_var_name(self) -> str:
         """Return the internal name used to store call kwargs during exec.
 
+        Each function instance needs a unique variable name in the execution
+        namespace to avoid collisions when multiple OrdinaryFn instances
+        execute in the same or nested contexts.
+
         Returns:
-            str: A stable variable name unique to this function instance.
+            A stable variable name unique to this function instance.
         """
         var_name = "kwargs_" + self.name
         var_name += "_" + self.hash_signature
@@ -268,8 +288,12 @@ class OrdinaryFn(PortalAwareClass):
     def _result_var_name(self) -> str:
         """Return the internal name used to store the call result.
 
+        After execution, the result is retrieved from the namespace using
+        this unique variable name. The hash-based naming prevents collisions
+        between different function instances executing concurrently or nested.
+
         Returns:
-            str: A stable variable name unique to this function instance.
+            A stable variable name unique to this function instance.
         """
         var_name = "result_" + self.name
         var_name += "_" + self.hash_signature
@@ -280,8 +304,11 @@ class OrdinaryFn(PortalAwareClass):
     def _tmp_fn_name(self) -> str:
         """Return the internal temporary function name used during exec.
 
+        The original function is renamed to this unique identifier before
+        compilation to prevent namespace collisions.
+
         Returns:
-            str: A stable function name unique to this function instance.
+            A stable function name unique to this function instance.
         """
         fn_name = "func_" + self.name
         fn_name += "_" + self.hash_signature
@@ -359,22 +386,28 @@ class OrdinaryFn(PortalAwareClass):
     def _available_names(self) -> dict[str, Any]:
         """Return names injected into the function's execution context.
 
+        Provides a controlled namespace for function execution with only
+        explicitly allowed symbols. This ensures:
+        - Standard builtins are available (print, len, etc.)
+        - Functions can reference themselves (for recursion or introspection)
+        - Access to the Pythagoras package for framework operations
+        - No implicit access to the caller's namespace (enforces isolation)
+
         Returns:
-            dict: A mapping of name to object made available during execution.
-            This includes:
-            - "__builtins__": The builtins module.
-            - The OrdinaryFn itself (under its function name).
-            - "self": The OrdinaryFn itself.
-            - "pth": The pythagoras package.
+            A mapping of name to object made available during execution:
+            - "__builtins__": The builtins module for standard Python functions.
+            - self.name: The OrdinaryFn itself, allowing recursive calls.
+            - "self": Alias for the OrdinaryFn (enables self-reference).
+            - "pth": The pythagoras package for framework-level operations.
         """
         import builtins
         import pythagoras as pth
 
         return {
             "__builtins__": builtins,
-            self.name: self,  # original symbol
-            "self": self,  # common alias
-            "pth": pth,  # project root module
+            self.name: self,
+            "self": self,
+            "pth": pth,
         }
 
 
@@ -388,7 +421,7 @@ class OrdinaryFn(PortalAwareClass):
             **kwargs: Keyword-only arguments for the function call.
 
         Returns:
-            Any: The value returned by the function.
+            The value returned by the function.
         """
         with self.portal:
             names_dict = self._available_names()
