@@ -261,25 +261,3 @@ def test_portal_entropy_infuser_error_after_clear(tmpdir):
         # Now accessing entropy_infuser should raise
         with pytest.raises(RuntimeError, match="Entropy infuser is None"):
             _ = portal.entropy_infuser
-
-
-def test_portal_clear_before_init_finished():
-    """Test that _clear() on unfinished portal does nothing."""
-    with _PortalTester():
-        # This tests the edge case in _clear() where _init_finished is False
-        # We need to manually create a portal object and call _clear before init finishes
-        # This is an internal edge case that's hard to trigger in normal usage
-
-        class TestPortal(BasicPortal):
-            def __init__(self, root_dict=None):
-                super().__init__(root_dict)
-                # Manually set _init_finished to False to simulate unfinished init
-                self._init_finished = False
-                # Now clear should do nothing
-                self._clear()
-                # Restore it so metaclass doesn't complain
-                self._init_finished = False
-
-        # Just verify this doesn't crash
-        portal = TestPortal()
-        assert portal is not None

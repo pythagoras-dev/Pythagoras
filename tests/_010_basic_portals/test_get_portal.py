@@ -78,3 +78,14 @@ def test_get_all_known_portal_fingerprints_invalid_type():
 
         with pytest.raises(TypeError, match="must be BasicPortal or one of its"):
             get_all_known_portal_fingerprints(int)
+
+
+def test_get_current_portal_no_portals_no_instantiator():
+    """Test get_current_portal raises when no portals exist and no instantiator set."""
+    from pythagoras._010_basic_portals.basic_portal_core_classes import _clear_all_portals
+
+    _clear_all_portals()
+
+    # Should raise RuntimeError
+    with pytest.raises(RuntimeError, match="No portal is active and no default portal instantiator"):
+        get_current_portal()

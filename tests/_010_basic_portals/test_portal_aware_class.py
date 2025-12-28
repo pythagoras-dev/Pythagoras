@@ -238,3 +238,41 @@ def test_portal_aware_is_registered_consistency(tmpdir):
         # Should be registered after creation with explicit portal
         assert len(obj._visited_portals) >= 1
         assert obj.is_registered
+
+
+def test_portal_aware_abstract_getstate_not_implemented():
+    """Test that PortalAwareClass without __getstate__ cannot be instantiated."""
+
+    class IncompletePortalAware(PortalAwareClass):
+        """Portal-aware class that doesn't implement __getstate__."""
+        def __init__(self, portal=None):
+            super().__init__(portal)
+
+        # Missing __getstate__ implementation
+
+        def __setstate__(self, state):
+            super().__setstate__(state)
+
+    with _PortalTester(BasicPortal) as t:
+        # Should raise TypeError when trying to instantiate
+        with pytest.raises(TypeError, match="Can't instantiate abstract class.*__getstate__"):
+            obj = IncompletePortalAware()
+
+
+def test_portal_aware_abstract_setstate_not_implemented():
+    """Test that PortalAwareClass without __setstate__ cannot be instantiated."""
+
+    class IncompletePortalAware2(PortalAwareClass):
+        """Portal-aware class that doesn't implement __setstate__."""
+        def __init__(self, portal=None):
+            super().__init__(portal)
+
+        def __getstate__(self):
+            return {}
+
+        # Missing __setstate__ implementation
+
+    with _PortalTester(BasicPortal) as t:
+        # Should raise TypeError when trying to instantiate
+        with pytest.raises(TypeError, match="Can't instantiate abstract class.*__setstate__"):
+            obj = IncompletePortalAware2()
