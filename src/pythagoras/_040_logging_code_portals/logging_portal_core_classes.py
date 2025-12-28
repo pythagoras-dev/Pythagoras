@@ -53,12 +53,14 @@ from __future__ import annotations
 
 import sys
 import traceback
+from functools import cached_property
 from typing import Callable, Any
 
 import pandas as pd
 from parameterizable import NotPicklableClass
 from persidict import PersiDict, KEEP_CURRENT, Joker
 
+from .. import CacheablePropertiesMixin
 from .._010_basic_portals import get_current_portal
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic, _describe_runtime_characteristic)
@@ -192,7 +194,7 @@ class LoggingFn(StorableFn):
         return super().portal
 
 
-class   LoggingFnCallSignature:
+class   LoggingFnCallSignature(CacheablePropertiesMixin):
     """Unique identifier for a LoggingFn execution with specific arguments.
 
     Combines a function's ValueAddr with its packed arguments' ValueAddr to
@@ -218,21 +220,14 @@ class   LoggingFnCallSignature:
     _fn_addr: ValueAddr
     _kwargs_addr: ValueAddr
 
-    _fn_name_cache: str | None
-    _fn_cache: LoggingFn | None
-    _packed_kwargs_cache: PackedKwArgs | None
-    _addr_cache: ValueAddr | None
-
     def __init__(self, fn:LoggingFn, arguments:dict):
         if not isinstance(fn, LoggingFn):
             raise TypeError(f"fn must be an instance of LoggingFn, got {type(fn).__name__}")
         isinstance(arguments, dict)
         arguments = KwArgs(**arguments)
         with fn.portal:
-            self._fn_cache = fn
             self._fn_addr = fn.addr
-            self._packed_kwargs_cache = arguments.pack()
-            self._kwargs_addr = ValueAddr(self._packed_kwargs_cache)
+            self._kwargs_addr = ValueAddr(arguments.pack())
 
 
     @property
@@ -261,43 +256,24 @@ class   LoggingFnCallSignature:
         self._kwargs_addr = state["kwargs_addr"]
 
 
-    def _invalidate_cache(self):
-        """Clear all cached property values to force re-computation.
-
-
-        """
-        if hasattr(self, "_fn_cache"):
-            del self._fn_cache
-        if hasattr(self, "_fn_name_cache"):
-            del self._fn_name_cache
-        if hasattr(self, "_packed_kwargs_cache"):
-            del self._packed_kwargs_cache
-        if hasattr(self, "_addr_cache"):
-            del self._addr_cache
-
-
-    @property
+    @cached_property
     def fn(self) -> LoggingFn:
         """Resolve and cache the wrapped LoggingFn instance.
 
         Returns:
             LoggingFn: The function associated with this call signature.
         """
-        if not hasattr(self, "_fn_cache") or self._fn_cache is None:
-            self._fn_cache = self.fn_addr.get(expected_type=LoggingFn)
-        return self._fn_cache
+        return self.fn_addr.get(expected_type=LoggingFn)
 
 
-    @property
+    @cached_property
     def fn_name(self) -> str:
         """Name of the wrapped function.
 
         Returns:
             str: The function's name, cached after first access.
         """
-        if not hasattr(self, "_fn_name_cache") or self._fn_name_cache is None:
-            self._fn_name_cache = self.fn.name
-        return self._fn_name_cache
+        return self.fn.name
 
 
     @property
@@ -320,19 +296,16 @@ class   LoggingFnCallSignature:
         return self._kwargs_addr
 
 
-    @property
+    @cached_property
     def packed_kwargs(self) -> PackedKwArgs:
         """Packed keyword arguments for this call signature.
 
         Returns:
             PackedKwArgs: The packed kwargs, fetched from storage if not cached.
         """
-        if (not hasattr(self,"_packed_kwargs_cache")
-                or self._packed_kwargs_cache is None):
-            with self.portal:
-                self._packed_kwargs_cache = self._kwargs_addr.get(
-                    expected_type=PackedKwArgs)
-        return self._packed_kwargs_cache
+
+        with self.portal:
+            return self._kwargs_addr.get(expected_type=PackedKwArgs)
 
 
     @property
@@ -367,18 +340,15 @@ class   LoggingFnCallSignature:
         return self.fn.execute(**self.packed_kwargs.unpack())
 
 
-    @property
+    @cached_property
     def addr(self) -> ValueAddr:
         """Address uniquely identifying this call signature.
 
         Returns:
             ValueAddr: Address of the LoggingFnCallSignature persisted in portal.
         """
-        if hasattr(self, "_addr_cache") and self._addr_cache is not None:
-            return self._addr_cache
         with self.portal:
-            self._addr_cache = ValueAddr(self)
-            return self._addr_cache
+            return ValueAddr(self)
 
 
     @property
