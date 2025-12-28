@@ -1,32 +1,51 @@
-"""Classes to work with persistent storage and immutable values.
+"""Content-addressable storage and immutable value management.
 
-The most important classes in this sub-package are
-DataPortal and ValueAddr.
+This subpackage provides the foundation for persistent, content-addressed data
+storage in Pythagoras. It enables distributed applications to share immutable
+values across processes and machines through DataPortals.
 
-A DataPortal is a container for storing and retrieving values.
-In distributed applications, multiple application sessions / processes
-can access the same DataPortal, which enables them to interact
-via passing values through the portal.
+Core Concepts
+-------------
+**DataPortal**: A persistent storage container that manages immutable values
+using content-addressable storage. Multiple processes or application sessions
+can access the same DataPortal to share data. Typically backed by a shared
+filesystem (e.g., Dropbox or Amazon EFS) or cloud storage (e.g., Amazon S3).
 
-A ValueAddr is a unique identifier for an immutable value.
-Two objects with exactly the same type and value will always have
-exactly the same ValueAddr-es.
+**ValueAddr**: A globally unique identifier for an immutable value, derived
+from the value's content. Two objects with identical type and content always
+produce identical ValueAddr instances, enabling reliable deduplication and
+content-based retrieval.
 
-Conceptually, ValueAddr consists of 2 strings: a descriptor, and a hash signature.
-A descriptor contains human-readable information about an object's type.
-A hash string contains the object's hash signature.
+**StorableFn**: Functions that can be persistently stored in DataPortals using
+content-addressable storage, enabling function sharing across distributed processes.
 
-Under the hood, the hash signature is further split into 3 strings:
-a shard, a subshard and a hash tail.
-This is done to address limitations of some file systems
-and to optimize work with cloud storage (e.g. S3).
+Address Structure
+-----------------
+A ValueAddr conceptually consists of:
+- descriptor: Human-readable type/shape information
+- hash_signature: SHA-256 hash encoded in base-32
 
-Typically, a DataPortal is implemented as
-a shared directory on a file system (e.g., Amazon EFS),
-or as a shared bucket in a cloud storage (e.g., Amazon S3).
-In this case, a ValueAddr becomes a part of a file path
-or a URL (e.g., a hash serves as a filename,
-and a prefix is a folder name).
+The hash is split into three parts (shard, subshard, hash_tail) to:
+- Address filesystem limitations (max files per directory)
+- Optimize cloud storage access patterns (S3 prefix distribution)
+
+In filesystem implementations, the address structure naturally maps to directory
+hierarchies: `<base>/<shard>/<subshard>/<descriptor>/<hash_tail>`.
+
+Exports
+-------
+Core classes:
+- DataPortal: Portal for storing and retrieving immutable values
+- HashAddr: Base class for hash-based addresses (abstract)
+- ValueAddr: Content-derived address for immutable values
+- StorableFn: Ordinary function with content-addressable storage
+
+Decorators:
+- storable: Convert functions to StorableFn instances
+
+Utilities:
+- ready: Check if addresses in a nested structure are ready for retrieval
+- get: Recursively resolve all addresses in a nested structure
 """
 
 

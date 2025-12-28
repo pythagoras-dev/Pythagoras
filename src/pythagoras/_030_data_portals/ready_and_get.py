@@ -1,3 +1,17 @@
+"""Utilities for checking readiness and retrieving nested data structures.
+
+This module provides two main functions for working with data structures that
+contain HashAddr/ValueAddr objects:
+
+- ready(): Recursively checks if all addresses in a nested structure are ready
+  for retrieval (i.e., values are available in at least one portal).
+- get(): Recursively retrieves values for all addresses in a nested structure,
+  returning a fully resolved copy of the original structure.
+
+Both functions handle cycles safely through memoization and support common
+Python containers (lists, tuples, dicts). Atomic types (str, bytes, range)
+are treated as leaf nodes and returned as-is.
+"""
 import collections
 from typing import Any
 
@@ -5,31 +19,44 @@ from .data_portal_core_classes import HashAddr
 
 
 def ready(obj) -> bool:
-    """Check readiness of a possibly nested data structure.
+    """Check if all addresses in a nested structure are ready for retrieval.
 
-    Recursively inspects the structure and returns True only if every
-    HashAddr/ValueAddr contained is ready. Strings and bytes-like objects are
-    treated as atomic. Lists, tuples, and dicts are traversed recursively.
+    Recursively traverses the structure to verify that every HashAddr/ValueAddr
+    is ready (i.e., its value is available in at least one known portal). Atomic
+    types like strings and bytes are considered ready by default. Container types
+    (lists, tuples, dicts) are recursed into.
+
+    This is useful for checking preconditions before performing bulk retrievals
+    or for validating that distributed computations have completed.
 
     Args:
-        obj: Any Python object, possibly a nested combination of lists, tuples,
-            and dicts containing HashAddr/ValueAddr objects.
+        obj: Any Python object, possibly containing nested HashAddr/ValueAddr objects
+            within lists, tuples, or dictionaries.
 
     Returns:
-        bool: True if all contained addresses are ready; False otherwise.
+        True if all contained addresses are ready (or if obj contains no addresses),
+        False if any address is not ready.
+
+    Example:
+        >>> data = [ValueAddr(1), ValueAddr(2), {"key": ValueAddr(3)}]
+        >>> if ready(data):
+        ...     values = get(data)
     """
     return _ready_impl(obj)
 
 def _ready_impl(obj, seen=None):
     """Implementation helper for ready() with cycle protection.
 
+    Traverses objects depth-first, tracking visited objects to handle cycles.
+    Returns True for atomic types, recursively checks containers, and evaluates
+    HashAddr.ready for address objects.
+
     Args:
         obj: Object under inspection.
-        seen: A set of object ids already visited to prevent infinite loops
-            on cyclic graphs.
+        seen: Set of object ids already visited (prevents infinite loops on cycles).
 
     Returns:
-        bool: True if obj and all nested addresses are ready.
+        True if obj and all nested addresses are ready.
     """
     if seen is None:
         seen = set()
@@ -57,17 +84,30 @@ def _ready_impl(obj, seen=None):
 
 
 def get(obj:Any) -> Any:
-    """Deep-copy a structure, replacing HashAddr/ValueAddr with values.
+    """Recursively resolve all addresses in a nested structure.
 
-    Traverses the structure and replaces every address with the value
-    obtained via .get(), preserving container topology. Handles cycles by
-    memoizing objects during traversal.
+    Creates a deep copy of the structure where every HashAddr/ValueAddr is
+    replaced with its actual value (retrieved via .get()). Container topology
+    is preserved: lists remain lists, dicts remain dicts, etc. Cycles are
+    handled through memoization.
+
+    This is the primary way to bulk-retrieve values from complex data structures
+    that contain multiple addresses, such as the results of distributed computations.
 
     Args:
-        obj: Any Python object or nested structure containing addresses.
+        obj: Any Python object or nested structure. Can contain HashAddr/ValueAddr
+            objects at any depth within lists, tuples, or dictionaries.
 
     Returns:
-        Any: A copy of obj with all addresses resolved into concrete values.
+        A copy of obj with all addresses replaced by their concrete values. Atomic
+        types and non-address objects are returned as-is (or copied for containers).
+
+    Example:
+        >>> addr1 = ValueAddr([1, 2, 3])
+        >>> addr2 = ValueAddr({"x": 10})
+        >>> structure = {"data": addr1, "config": addr2}
+        >>> resolved = get(structure)
+        >>> resolved  # {"data": [1, 2, 3], "config": {"x": 10}}
     """
     return _get_impl(obj)
 
@@ -75,13 +115,17 @@ def get(obj:Any) -> Any:
 def _get_impl(obj:Any, seen=None)->Any:
     """Implementation helper for get() with cycle protection and memoization.
 
+    Performs depth-first traversal, creating placeholders for mutable containers
+    to break cycles, then filling them recursively. For HashAddr objects, calls
+    .get() to retrieve the value. Preserves object identity for cyclic structures.
+
     Args:
         obj: Object to resolve.
-        seen: A dict mapping visited object ids to their resolved copies,
-            used to preserve identities and break cycles.
+        seen: Dict mapping object ids to their resolved copies (prevents infinite
+            recursion on cycles).
 
     Returns:
-        Any: The resolved object or a structure containing resolved values.
+        The resolved object or a structure with all addresses replaced by values.
     """
     if seen is None:
         seen = dict()
