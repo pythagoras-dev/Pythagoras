@@ -69,7 +69,9 @@ class KwArgs(dict):
     def __setitem__(self, key, value):
         """Set an item enforcing KwArgs invariants.
 
-        Enforces that keys are strings and values are not KwArgs themselves.
+        Enforces that keys are strings and values are not base KwArgs instances.
+        PackedKwArgs and UnpackedKwArgs are allowed as values since they represent
+        immutable data types rather than structural nesting.
 
         Args:
             key: The key to set; must be a str.
@@ -77,11 +79,11 @@ class KwArgs(dict):
 
         Raises:
             KeyError: If the key is not a string.
-            ValueError: If the value is a KwArgs (nested KwArgs are disallowed).
+            ValueError: If the value is a base KwArgs instance (nested KwArgs are disallowed).
         """
         if not isinstance(key, str):
             raise KeyError("Keys must be strings in KwArgs.")
-        if isinstance(value, KwArgs):
+        if type(value) is KwArgs:
             raise ValueError("Nested KwArgs are not allowed.")
         super().__setitem__(key, value)
 
@@ -201,6 +203,26 @@ class PackedKwArgs(KwArgs):
         super().__init__(*args, **kargs)
 
 
+    def __setitem__(self, key, value):
+        """Set an item enforcing PackedKwArgs invariants.
+
+        PackedKwArgs must only contain ValueAddr instances as values.
+
+        Args:
+            key: The key to set; must be a str.
+            value: The value to associate with the key; must be a ValueAddr.
+
+        Raises:
+            KeyError: If the key is not a string.
+            ValueError: If the value is not a ValueAddr instance.
+        """
+        if not isinstance(key, str):
+            raise KeyError("Keys must be strings in PackedKwArgs.")
+        if not isinstance(value, ValueAddr):
+            raise ValueError("PackedKwArgs can only contain ValueAddr instances.")
+        dict.__setitem__(self, key, value)
+
+
 class UnpackedKwArgs(KwArgs):
     """KwArgs container where all values are raw (non-ValueAddr) objects.
 
@@ -223,3 +245,24 @@ class UnpackedKwArgs(KwArgs):
         Accepts the same arguments as dict/KwArgs.
         """
         super().__init__(*args, **kargs)
+
+
+    def __setitem__(self, key, value):
+        """Set an item enforcing UnpackedKwArgs invariants.
+
+        UnpackedKwArgs must only contain raw values. ValueAddr and base KwArgs are rejected,
+        but PackedKwArgs and UnpackedKwArgs are allowed as they represent data values.
+
+        Args:
+            key: The key to set; must be a str.
+            value: The value to associate with the key; must not be ValueAddr or base KwArgs.
+
+        Raises:
+            KeyError: If the key is not a string.
+            ValueError: If the value is a ValueAddr or base KwArgs instance.
+        """
+        if not isinstance(key, str):
+            raise KeyError("Keys must be strings in UnpackedKwArgs.")
+        if isinstance(value, ValueAddr) or type(value) is KwArgs:
+            raise ValueError("UnpackedKwArgs cannot contain ValueAddr or base KwArgs instances.")
+        dict.__setitem__(self, key, value)
