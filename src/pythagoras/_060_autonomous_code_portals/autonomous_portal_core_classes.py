@@ -103,10 +103,9 @@ class AutonomousFn(SafeFn):
         fixed_kwargs_packed = fixed_kwargs.pack(store=False)
 
         if isinstance(fn, AutonomousFn):
-            self._fixed_kwargs_packed.update(fixed_kwargs_packed)
-            self._fixed_kwargs_cache = KwArgs(**{**fn.fixed_kwargs, **fixed_kwargs})
+            self._fixed_kwargs_packed = KwArgs(**{**fn.fixed_kwargs, **fixed_kwargs})
+            self._fixed_kwargs_packed = self._fixed_kwargs_packed.pack()
         else:
-            self._fixed_kwargs_cache = fixed_kwargs
             self._fixed_kwargs_packed = fixed_kwargs_packed
 
         fn_name = self.name
@@ -144,17 +143,14 @@ class AutonomousFn(SafeFn):
                 f"Function {self.name} is not autonomous, it uses global objects {import_required} without importing them inside the function body")
 
 
-    @property
+    @cached_property
     def fixed_kwargs(self) -> KwArgs:
         """KwArgs of pre-bound keyword arguments for this function.
 
         Returns:
             KwArgs: The fixed keyword arguments.
         """
-        if not hasattr(self, "_fixed_kwargs_cache"):
-            with self.portal:
-                self._fixed_kwargs_cache = self._fixed_kwargs_packed.unpack()
-        return self._fixed_kwargs_cache
+        return self._fixed_kwargs_packed.unpack()
 
 
     def execute(self, **kwargs) -> Any:
