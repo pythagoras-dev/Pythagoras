@@ -73,7 +73,7 @@ class AutonomousFn(SafeFn):
     has no yield statements, and does not reference nonlocal variables.
     It also supports partial application via fixed keyword arguments.
     """
-    _fixed_kwargs_cache: KwArgs | None
+
     _fixed_kwargs_packed: KwArgs | None
 
     def __init__(self, fn: Callable|str|SafeFn
@@ -244,17 +244,3 @@ class AutonomousFn(SafeFn):
         """Return the autonomous portal associated with this function."""
         return super().portal
 
-
-    def _invalidate_cache(self):
-        """Invalidate the function's attribute cache.
-
-        If the function's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
-        """
-        super()._invalidate_cache()
-        if hasattr(self, "_fixed_kwargs_cache"):
-            if not hasattr(self, "_fixed_kwargs_packed"):
-                raise AttributeError("Premature cache invalidation: "
-                                     "fixed_kwargs_packed is missing.")
-            del self._fixed_kwargs_cache
