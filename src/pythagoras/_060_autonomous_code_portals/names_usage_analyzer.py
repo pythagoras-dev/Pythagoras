@@ -254,42 +254,134 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
     def visit_ListComp(self, node):
         """Handle bindings within a list comprehension.
 
+        List comprehensions in Python 3 create an implicit function scope,
+        similar to generator expressions. Iterator variables should not
+        leak to the parent function scope.
+
         Args:
             node: The ast.ListComp node.
         """
+        # Create a nested analyzer for the comprehension's implicit scope
+        nested = NamesUsageAnalyzer()
+        nested.func_nesting_level = 0
+        nested.names.function = "<listcomp>"
+        nested.func_nesting_level += 1
+
+        # Process iterator variables as local to the comprehension
         for gen in node.generators:
-            self.visit_comprehension(gen)
-        self.generic_visit(node)
+            nested.visit_comprehension(gen)
+
+        # Visit the element expression in the nested scope
+        nested.visit(node.elt)
+
+        nested.func_nesting_level -= 1
+
+        # Merge nested analysis into parent scope
+        self.imported_packages_deep |= nested.imported_packages_deep
+        nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+        self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+        self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+        nested.names.unclassified_deep -= self.names.accessible
+        self.names.unclassified_deep |= nested.names.unclassified_deep
 
     def visit_SetComp(self, node):
         """Handle bindings within a set comprehension.
 
+        Set comprehensions in Python 3 create an implicit function scope,
+        similar to list comprehensions. Iterator variables should not
+        leak to the parent function scope.
+
         Args:
             node: The ast.SetComp node.
         """
+        # Create a nested analyzer for the comprehension's implicit scope
+        nested = NamesUsageAnalyzer()
+        nested.func_nesting_level = 0
+        nested.names.function = "<setcomp>"
+        nested.func_nesting_level += 1
+
+        # Process iterator variables as local to the comprehension
         for gen in node.generators:
-            self.visit_comprehension(gen)
-        self.generic_visit(node)
+            nested.visit_comprehension(gen)
+
+        # Visit the element expression in the nested scope
+        nested.visit(node.elt)
+
+        nested.func_nesting_level -= 1
+
+        # Merge nested analysis into parent scope
+        self.imported_packages_deep |= nested.imported_packages_deep
+        nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+        self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+        self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+        nested.names.unclassified_deep -= self.names.accessible
+        self.names.unclassified_deep |= nested.names.unclassified_deep
 
     def visit_DictComp(self, node):
         """Handle bindings within a dict comprehension.
 
+        Dict comprehensions in Python 3 create an implicit function scope,
+        similar to list comprehensions. Iterator variables should not
+        leak to the parent function scope.
+
         Args:
             node: The ast.DictComp node.
         """
+        # Create a nested analyzer for the comprehension's implicit scope
+        nested = NamesUsageAnalyzer()
+        nested.func_nesting_level = 0
+        nested.names.function = "<dictcomp>"
+        nested.func_nesting_level += 1
+
+        # Process iterator variables as local to the comprehension
         for gen in node.generators:
-            self.visit_comprehension(gen)
-        self.generic_visit(node)
+            nested.visit_comprehension(gen)
+
+        # Visit key and value expressions in the nested scope
+        nested.visit(node.key)
+        nested.visit(node.value)
+
+        nested.func_nesting_level -= 1
+
+        # Merge nested analysis into parent scope
+        self.imported_packages_deep |= nested.imported_packages_deep
+        nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+        self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+        self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+        nested.names.unclassified_deep -= self.names.accessible
+        self.names.unclassified_deep |= nested.names.unclassified_deep
 
     def visit_GeneratorExp(self, node):
         """Handle bindings within a generator expression.
 
+        Generator expressions in Python 3 create an implicit function scope.
+        Iterator variables should not leak to the parent function scope.
+
         Args:
             node: The ast.GeneratorExp node.
         """
+        # Create a nested analyzer for the generator's implicit scope
+        nested = NamesUsageAnalyzer()
+        nested.func_nesting_level = 0
+        nested.names.function = "<genexpr>"
+        nested.func_nesting_level += 1
+
+        # Process iterator variables as local to the generator
         for gen in node.generators:
-            self.visit_comprehension(gen)
-        self.generic_visit(node)
+            nested.visit_comprehension(gen)
+
+        # Visit the element expression in the nested scope
+        nested.visit(node.elt)
+
+        nested.func_nesting_level -= 1
+
+        # Merge nested analysis into parent scope
+        self.imported_packages_deep |= nested.imported_packages_deep
+        nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+        self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+        self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+        nested.names.unclassified_deep -= self.names.accessible
+        self.names.unclassified_deep |= nested.names.unclassified_deep
 
     def visit_Import(self, node):
         """Register imported names and top-level package usage.

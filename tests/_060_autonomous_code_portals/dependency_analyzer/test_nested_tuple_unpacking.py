@@ -12,19 +12,12 @@ def test_two_level_comprehension():
     sample_two_level_comprehension()
     analyzer = analyze_names_in_function(sample_two_level_comprehension)["analyzer"]
 
-    # All unpacked variables should be local
-    assert "x" in analyzer.names.local
-    assert "y" in analyzer.names.local
-    assert "z" in analyzer.names.local
-    assert "data" in analyzer.names.local
+    # In Python 3, comprehension iterator variables (x, y, z) are local to the
+    # comprehension's implicit scope, NOT to the parent function.
+    # Only 'data' should be in parent's local.
+    assert analyzer.names.local == {"data"}
 
-    # No nested variables should be incorrectly flagged as unclassified (globals)
-    assert "y" not in analyzer.names.unclassified_deep
-    assert "z" not in analyzer.names.unclassified_deep
-
-    # All should be accessible
-    assert analyzer.names.accessible == {"x", "y", "z", "data"}
-    assert analyzer.names.local == {"x", "y", "z", "data"}
+    # No variables should be flagged as unclassified (all are properly scoped)
     assert analyzer.names.unclassified_deep == set()
 
 
@@ -68,18 +61,10 @@ def test_three_level_nesting():
     sample_three_level_nesting()
     analyzer = analyze_names_in_function(sample_three_level_nesting)["analyzer"]
 
-    # All unpacked variables at all nesting levels should be local
-    assert "a" in analyzer.names.local
-    assert "b" in analyzer.names.local
-    assert "c" in analyzer.names.local
-    assert "d" in analyzer.names.local
+    # Comprehension iterator variables are local to comprehension, not parent
+    assert analyzer.names.local == {"data"}
 
-    # None should be incorrectly flagged as unclassified
-    assert "b" not in analyzer.names.unclassified_deep
-    assert "c" not in analyzer.names.unclassified_deep
-    assert "d" not in analyzer.names.unclassified_deep
-
-    assert analyzer.names.local == {"a", "b", "c", "d", "data"}
+    # No variables should be flagged as unclassified
     assert analyzer.names.unclassified_deep == set()
 
 
@@ -94,16 +79,11 @@ def test_parallel_nested_tuples():
     sample_parallel_nested_tuples()
     analyzer = analyze_names_in_function(sample_parallel_nested_tuples)["analyzer"]
 
-    # All unpacked variables should be local
-    assert "w" in analyzer.names.local
-    assert "x" in analyzer.names.local
-    assert "y" in analyzer.names.local
-    assert "z" in analyzer.names.local
+    # Comprehension iterator variables are local to comprehension, not parent
+    assert analyzer.names.local == {"data"}
 
-    # None should be incorrectly flagged as unclassified
+    # No variables should be flagged as unclassified
     assert analyzer.names.unclassified_deep == set()
-
-    assert analyzer.names.local == {"w", "x", "y", "z", "data"}
 
 
 def sample_dict_comprehension_nested():
@@ -117,14 +97,10 @@ def test_dict_comprehension_nested():
     sample_dict_comprehension_nested()
     analyzer = analyze_names_in_function(sample_dict_comprehension_nested)["analyzer"]
 
-    assert "key" in analyzer.names.local
-    assert "val1" in analyzer.names.local
-    assert "val2" in analyzer.names.local
+    # Comprehension iterator variables are local to comprehension, not parent
+    assert analyzer.names.local == {"data"}
 
-    assert "val1" not in analyzer.names.unclassified_deep
-    assert "val2" not in analyzer.names.unclassified_deep
-
-    assert analyzer.names.local == {"key", "val1", "val2", "data"}
+    # No variables should be flagged as unclassified
     assert analyzer.names.unclassified_deep == set()
 
 
@@ -139,15 +115,10 @@ def test_generator_expression_nested():
     sample_generator_expression_nested()
     analyzer = analyze_names_in_function(sample_generator_expression_nested)["analyzer"]
 
-    assert "x" in analyzer.names.local
-    assert "y" in analyzer.names.local
-    assert "z" in analyzer.names.local
+    # Generator iterator variables are local to generator, not parent
+    assert analyzer.names.local == {"data"}
 
-    assert "y" not in analyzer.names.unclassified_deep
-    assert "z" not in analyzer.names.unclassified_deep
-
-    assert analyzer.names.local == {"x", "y", "z", "data"}
-    # list is a builtin, so it's unclassified
+    # 'list' is a builtin, so it's unclassified
     assert analyzer.names.unclassified_deep == {"list"}
 
 
@@ -162,14 +133,10 @@ def test_set_comprehension_nested():
     sample_set_comprehension_nested()
     analyzer = analyze_names_in_function(sample_set_comprehension_nested)["analyzer"]
 
-    assert "x" in analyzer.names.local
-    assert "y" in analyzer.names.local
-    assert "z" in analyzer.names.local
+    # Comprehension iterator variables are local to comprehension, not parent
+    assert analyzer.names.local == {"data"}
 
-    assert "y" not in analyzer.names.unclassified_deep
-    assert "z" not in analyzer.names.unclassified_deep
-
-    assert analyzer.names.local == {"x", "y", "z", "data"}
+    # No variables should be flagged as unclassified
     assert analyzer.names.unclassified_deep == set()
 
 
