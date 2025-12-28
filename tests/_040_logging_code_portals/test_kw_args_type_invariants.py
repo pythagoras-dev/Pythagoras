@@ -193,3 +193,124 @@ def test_unpack_is_content_idempotent(tmpdir):
 
         assert dict(single_unpack) == dict(double_unpack)
         assert dict(single_unpack.pack()) == dict(double_unpack.pack())
+
+
+def test_packed_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
+    """PackedKwArgs with same content but different insertion order produce identical pickles."""
+    import pickle
+
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Create PackedKwArgs with same content but different insertion orders
+        pk1 = KwArgs(x=1).pack()
+        pk1['a'] = ValueAddr(1)
+        pk1['b'] = ValueAddr(2)
+        pk1['c'] = ValueAddr(3)
+
+        pk2 = KwArgs(x=1).pack()
+        pk2['c'] = ValueAddr(3)
+        pk2['b'] = ValueAddr(2)
+        pk2['a'] = ValueAddr(1)
+
+        # Keys should be in different order before pickling
+        assert list(pk1.keys()) != list(pk2.keys())
+
+        # Pickles should be identical (sorting happens in __reduce__)
+        pickled1 = pickle.dumps(pk1)
+        pickled2 = pickle.dumps(pk2)
+        assert pickled1 == pickled2
+
+        # After unpickling, keys should be sorted
+        unpk1 = pickle.loads(pickled1)
+        unpk2 = pickle.loads(pickled2)
+        assert list(unpk1.keys()) == list(unpk2.keys()) == sorted(pk1.keys())
+
+
+def test_unpacked_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
+    """UnpackedKwArgs with same content but different insertion order produce identical pickles."""
+    import pickle
+
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Create UnpackedKwArgs with same content but different insertion orders
+        uk1 = KwArgs(x=1).pack().unpack()
+        uk1['a'] = 1
+        uk1['b'] = 2
+        uk1['c'] = 3
+
+        uk2 = KwArgs(x=1).pack().unpack()
+        uk2['c'] = 3
+        uk2['b'] = 2
+        uk2['a'] = 1
+
+        # Keys should be in different order before pickling
+        assert list(uk1.keys()) != list(uk2.keys())
+
+        # Pickles should be identical
+        pickled1 = pickle.dumps(uk1)
+        pickled2 = pickle.dumps(uk2)
+        assert pickled1 == pickled2
+
+        # After unpickling, keys should be sorted
+        unpk1 = pickle.loads(pickled1)
+        unpk2 = pickle.loads(pickled2)
+        assert list(unpk1.keys()) == list(unpk2.keys()) == sorted(uk1.keys())
+
+
+def test_base_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
+    """Base KwArgs with same content but different insertion order produce identical pickles."""
+    import pickle
+
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Create KwArgs with same content but different insertion orders
+        k1 = KwArgs(x=1)
+        k1['a'] = 1
+        k1['b'] = 2
+        k1['c'] = 3
+
+        k2 = KwArgs(x=1)
+        k2['c'] = 3
+        k2['b'] = 2
+        k2['a'] = 1
+
+        # Keys should be in different order before pickling
+        assert list(k1.keys()) != list(k2.keys())
+
+        # Pickles should be identical
+        pickled1 = pickle.dumps(k1)
+        pickled2 = pickle.dumps(k2)
+        assert pickled1 == pickled2
+
+        # After unpickling, keys should be sorted
+        unpk1 = pickle.loads(pickled1)
+        unpk2 = pickle.loads(pickled2)
+        assert list(unpk1.keys()) == list(unpk2.keys()) == sorted(k1.keys())
+
+
+@pytest.mark.parametrize("kwargs_type,factory", [
+    (KwArgs, lambda: KwArgs(x=1)),
+    (PackedKwArgs, lambda: KwArgs(x=1).pack()),
+    (UnpackedKwArgs, lambda: KwArgs(x=1).pack().unpack()),
+])
+def test_kwargs_equality_independent_of_insertion_order(tmpdir, kwargs_type, factory):
+    """KwArgs instances with same content are equal regardless of insertion order."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        obj1 = factory()
+        obj2 = factory()
+
+        # Add same items in different orders
+        if kwargs_type == PackedKwArgs:
+            obj1['a'] = ValueAddr(1)
+            obj1['b'] = ValueAddr(2)
+            obj2['b'] = ValueAddr(2)
+            obj2['a'] = ValueAddr(1)
+        else:
+            obj1['a'] = 1
+            obj1['b'] = 2
+            obj2['b'] = 2
+            obj2['a'] = 1
+
+        # Keys in different order
+        assert list(obj1.keys()) != list(obj2.keys())
+
+        # But objects should be equal
+        assert obj1 == obj2
+        assert dict(obj1) == dict(obj2)
