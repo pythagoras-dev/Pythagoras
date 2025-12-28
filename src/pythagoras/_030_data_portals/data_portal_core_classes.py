@@ -19,6 +19,14 @@ from persidict import WriteOnceDict
 _TOTAL_VALUES_TXT = "Values, total"
 _PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
+def get_all_known_data_portal_fingerprints() -> set[PortalStrFingerprint]:
+    """Get a set of all known portal fingerprints."""
+    return get_all_known_portal_fingerprints(DataPortal)
+
+def get_data_portal_by_fingerprint(fingerprint: PortalStrFingerprint) -> DataPortal:
+    """Get a DataPortal by its fingerprint."""
+    return get_portal_by_fingerprint(fingerprint, DataPortal)
+
 
 def get_number_of_known_data_portals() -> int:
     """Get the number of known DataPortals.
@@ -319,7 +327,6 @@ class DataPortal(OrdinaryCodePortal):
 class StorableFn(OrdinaryFn):
     """An ordinary function that can be persistently stored in a DataPortal."""
 
-    _addr_cache: ValueAddr
     _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self
@@ -340,7 +347,7 @@ class StorableFn(OrdinaryFn):
         super()._first_visit_to_portal(portal)
         self._persist_initial_config_params(portal)
         with portal:
-            _ = ValueAddr(self)
+            _ = self.addr
 
 
     def _persist_initial_config_params(self, portal:DataPortal) -> None:
@@ -376,24 +383,9 @@ class StorableFn(OrdinaryFn):
         portal._set_portal_config_setting(ValueAddr(self) + key, value)
 
 
-    @property
+    @cached_property
     def addr(self) -> ValueAddr:
-        if not hasattr(self, "_addr_cache"):
-            with self.portal:
-                self._addr_cache = ValueAddr(self)
-        return self._addr_cache
-
-
-    def _invalidate_cache(self):
-        """Invalidate the function's attribute cache.
-
-        If the function's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
-        """
-        if hasattr(self, "_addr_cache"):
-            del self._addr_cache
-        super()._invalidate_cache()
+        return ValueAddr(self)
 
 
     def __setstate__(self, state):
@@ -407,7 +399,7 @@ class StorableFn(OrdinaryFn):
         return super().__getstate__()
 
 
-class HashAddr(SafeStrTuple):
+class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
     """A globally unique hash-based address of an object.
 
     Two objects with exactly the same type and value will always have
@@ -421,7 +413,7 @@ class HashAddr(SafeStrTuple):
     Under the hood, the hash signature is further split into 3 strings:
     a shard, a subshard and a hash tail.
     This is done to address limitations of some file systems
-    and to optimize work sith cloud storage (e.g. S3).
+    and to optimize work with cloud storage (e.g. S3).
     """
 
     def __init__(self, descriptor:str
@@ -430,27 +422,30 @@ class HashAddr(SafeStrTuple):
             raise TypeError("descriptor and hash_signature must be strings")
         if len(descriptor) == 0 or len(hash_signature) == 0:
             raise ValueError("descriptor and hash_signature must not be empty")
+        if len(hash_signature) < 9:  # Add validation
+            raise ValueError(f"hash_signature must be at least 9 characters, "
+                             f"got {len(hash_signature)}")
         SafeStrTuple.__init__(self,hash_signature[:3], hash_signature[3:6]
                               ,descriptor, hash_signature[6:])
 
 
-    @property
+    @cached_property
     def shard(self)->str:
         return self.strings[0]
 
-    @property
+    @cached_property
     def subshard(self)->str:
         return self.strings[1]
 
-    @property
+    @cached_property
     def descriptor(self) -> str:
         return self.strings[2]
 
-    @property
+    @cached_property
     def hash_tail(self)->str:
         return self.strings[3]
 
-    @property
+    @cached_property
     def hash_signature(self) -> str:
         return self.shard+self.subshard+self.hash_tail
 
@@ -502,11 +497,7 @@ class HashAddr(SafeStrTuple):
             raise ValueError("descriptor and hash_signature must not be empty")
 
         address = cls.__new__(cls)
-        super(cls, address).__init__(descriptor=descriptor
-            , hash_signature=hash_signature)
-        if assert_readiness:
-            if not address.ready:
-                raise ValueError("Address is not ready for retrieving data")
+        HashAddr.__init__(address, descriptor = descriptor, hash_signature=hash_signature)
         return address
 
 
@@ -534,16 +525,6 @@ class HashAddr(SafeStrTuple):
         return not (self == other)
 
 
-    def _invalidate_cache(self):
-        """Invalidate the object's attribute cache.
-
-        If the object's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
-        """
-        pass
-
-
 class ValueAddr(HashAddr):
     """A globally unique address of an immutable value.
 
@@ -557,11 +538,10 @@ class ValueAddr(HashAddr):
     It makes it easier for humans to interpret an address
     and further decreases collision risk.
     """
-    _containing_portals: set[str]
-    _value_cache: Any
+    _containing_portals_fngpts: set[PortalStrFingerprint]
 
     def __init__(self, data: Any, store: bool = True):
-        self._containing_portals = set()
+        self._containing_portals_fngpts = set()
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
@@ -572,6 +552,9 @@ class ValueAddr(HashAddr):
                 , hash_signature=hash_signature)
             return
 
+        if hasattr(data, "_init_finished") and not data._init_finished:
+            raise ValueError("Cannot create ValueAddr for an uninitialized object")
+
         if isinstance(data, HashAddr):
             raise TypeError("get_ValueAddr is the only way to convert HashAddr into ValueAddr")
 
@@ -581,98 +564,197 @@ class ValueAddr(HashAddr):
             , descriptor=descriptor
             , hash_signature=hash_signature)
 
-        self._value_cache = data
+        self._set_cached_properties(value=data)
 
         if store:
             portal = get_current_data_portal()
             portal._value_store[self] = data
-            self._containing_portals.add(portal.fingerprint)
+            self._containing_portals_fngpts.add(portal.fingerprint)
+
+
+    @cached_property
+    def value(self) -> Any:
+        """Retrieve value, referenced by the address from any available portal"""
+        return self.get()
 
 
     def _invalidate_cache(self):
-        """Invalidate the object's attribute cache.
-
-        If the object's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
-        """
-        if hasattr(self, "_value_cache"):
-            del self._value_cache
-        self._containing_portals = set()
+        """Invalidate the object's attribute cache."""
+        self._containing_portals_fngpts = set()
         super()._invalidate_cache()
 
 
     def get_ValueAddr(self):
         return self
 
+    # @property
+    # def _containing_noncurrent_portals_fngpts(self) -> set[PortalStrFingerprint]:
+    #     current_portal_fp = get_current_data_portal().fingerprint
+    #     fingerprints = self._containing_portals_fngpts - {current_portal_fp}
+    #     return fingerprints
 
     @property
-    def _ready_in_current_portal(self) -> bool:
-        portal = get_current_data_portal()
-        portal_id = portal.fingerprint
-        if portal_id in self._containing_portals:
-            return True
-        result = self in portal._value_store
-        if result:
-            self._containing_portals.add(portal_id)
-        return result
+    def _noncontaining_portals_fngpts(self) -> set[PortalStrFingerprint]:
+        fingerprints = get_all_known_data_portal_fingerprints()
+        fingerprints -= self._containing_portals_fngpts
+        return fingerprints
 
+    # @property
+    # def _noncontaining_noncurrent_portals_fngpts(self) -> set[PortalStrFingerprint]:
+    #     current_portal_fp = get_current_data_portal().fingerprint
+    #     fingerprints = get_all_known_data_portal_fingerprints()
+    #     fingerprints -= self._containing_portals_fngpts
+    #     fingerprints -= {current_portal_fp}
+    #     return fingerprints
 
-    @property
-    def _ready_in_noncurrent_portals(self) -> bool:
-        for portal in get_noncurrent_data_portals():
-            if self in portal._value_store:
-                value = portal._value_store[self]
-                get_current_data_portal()._value_store[self] = value
-                new_ids = {portal.fingerprint, get_current_data_portal().fingerprint}
-                self._containing_portals |= new_ids
-                self._value_cache = value
-                return True
-        return False
+    def _get_from_current_portal(self) -> tuple[Any, bool]:
+        """Try to retrieve value from current portal.
+
+        Checks if value exists in current portal's store, either by using
+        cached fingerprint or by direct lookup.
+
+        Returns:
+            Tuple of (data, success) where success is True if data was retrieved.
+        """
+        current_portal = get_current_data_portal()
+        current_portal_fngpt = current_portal.fingerprint
+
+        # Fast path: check if we already know it's in current portal
+        if current_portal_fngpt in self._containing_portals_fngpts:
+            data = current_portal._value_store[self]
+            self._set_cached_properties(value=data)
+            return data, True
+
+        # Slow path: check the store directly
+        if self in current_portal._value_store:
+            self._containing_portals_fngpts.add(current_portal_fngpt)
+            data = current_portal._value_store[self]
+            self._set_cached_properties(value=data)
+            return data, True
+
+        return None, False
 
 
     @property
     def ready(self) -> bool:
-        """Check if address points to a value that is ready to be retrieved."""
-        if self._ready_in_current_portal:
+        """Check if address points to a value that is ready to be retrieved.
+
+        If the value is found in a non-current portal, it is automatically
+        replicated to the current portal.
+
+        Returns:
+            True if value is available (or has been replicated), False otherwise.
+        """
+        # Try to retrieve using the same strategies as get(), just return boolean
+        if get_current_data_portal().fingerprint in self._containing_portals_fngpts:
             return True
-        if self._ready_in_noncurrent_portals:
+
+        _, success = self._get_from_cache()
+        if success:
             return True
-        return False
+
+        _, success = self._get_from_current_portal()
+        if success:
+            return True
+
+        _, success = self._get_from_known_containing_portal()
+        if success:
+            return True
+
+        _, success = self._get_from_noncontaining_portals()
+        return success
 
 
-    def _get_from_current_portal(self) -> Any:
-        """Retrieve value, referenced by the address, from the current portal"""
+    def _get_from_cache(self) -> tuple[Any, bool]:
+        """Try to retrieve value from cached property.
 
-        if hasattr(self, "_value_cache"):
-            if get_current_data_portal().fingerprint in self._containing_portals:
-                return self._value_cache
-            else:
-                get_current_data_portal()._value_store[self] = self._value_cache
-                self._containing_portals |= {get_current_data_portal().fingerprint}
-                return self._value_cache
+        If successful and current portal doesn't have it, store it there.
 
-        value = get_current_data_portal()._value_store[self]
-        self._value_cache = value
-        self._containing_portals |= {get_current_data_portal().fingerprint}
-        return value
+        Returns:
+            Tuple of (data, success) where success is True if data was retrieved.
+        """
+        if not self._get_cached_property_status("value"):
+            return None, False
+
+        data = self._get_cached_property("value")
+        current_portal = get_current_data_portal()
+        current_portal_fngpt = current_portal.fingerprint
+
+        if current_portal_fngpt not in self._containing_portals_fngpts:
+            current_portal._value_store[self] = data
+            self._containing_portals_fngpts.add(current_portal_fngpt)
+
+        return data, True
 
 
-    def _get_from_noncurrent_portals(self) -> Any:
-        """Retrieve value, referenced by the address, from noncurrent portals"""
+    def _get_from_known_containing_portal(self) -> tuple[Any, bool]:
+        """Try to retrieve value from a known containing portal (not current).
 
-        for portal in get_noncurrent_data_portals():
+        Retrieves from any portal whose fingerprint is cached, then replicates
+        to the current portal.
+
+        Returns:
+            Tuple of (data, success) where success is True if data was retrieved.
+        """
+        if len(self._containing_portals_fngpts) < 1:
+            return None, False
+
+        containing_portal_fngpt = next(iter(self._containing_portals_fngpts))
+        portal = get_data_portal_by_fingerprint(containing_portal_fngpt)
+        data = portal._value_store[self]
+
+        current_portal = get_current_data_portal()
+        current_portal_fngpt = current_portal.fingerprint
+        current_portal._value_store[self] = data
+        self._containing_portals_fngpts.add(current_portal_fngpt)
+        self._set_cached_properties(value=data)
+
+        return data, True
+
+
+    def _get_from_noncontaining_portals(self) -> tuple[Any, bool]:
+        """Search all portals we haven't checked yet for the value.
+
+        Iterates through all portals not known to contain this value and tries
+        to retrieve it. If found, replicates to current portal.
+
+        Returns:
+            Tuple of (data, success) where success is True if data was retrieved.
+        """
+        current_portal = get_current_data_portal()
+        current_portal_fngpt = current_portal.fingerprint
+
+        for other_portal_fgrpt in self._noncontaining_portals_fngpts:
+            other_portal = get_data_portal_by_fingerprint(other_portal_fgrpt)
             try:
-                value = portal._value_store[self]
-                get_current_data_portal()._value_store[self] = value
-                self._value_cache = value
-                new_ids = {portal.fingerprint, get_current_data_portal().fingerprint}
-                self._containing_portals |= new_ids
-                return value
-            except:
-                continue
+                data = other_portal._value_store[self]
+                self._containing_portals_fngpts.add(other_portal_fgrpt)
+                current_portal._value_store[self] = data
+                self._containing_portals_fngpts.add(current_portal_fngpt)
+                self._set_cached_properties(value=data)
+                return data, True
+            except Exception:
+                pass
 
-        raise KeyError(f"ValueAddr {self} not found in any portal")
+        return None, False
+
+
+    def _validate_type(self, data: Any, expected_type: Type[T]) -> None:
+        """Validate that retrieved data matches the expected type.
+
+        Args:
+            data: The retrieved data to validate.
+            expected_type: The expected type.
+
+        Raises:
+            TypeError: If data doesn't match expected_type.
+        """
+        if expected_type is Any or expected_type is object:
+            return
+
+        if not isinstance(data, expected_type):
+            raise TypeError(f"Expected type {expected_type}, "
+                +f"but got {type(data)}")
 
 
     def get(self
@@ -680,17 +762,21 @@ class ValueAddr(HashAddr):
             , expected_type:Type[T]= Any
             ) -> T:
         """Retrieve value, referenced by the address from any available portal"""
+        # Try to retrieve data through various strategies
+        data, success = self._get_from_cache()
+        if not success:
+            data, success = self._get_from_current_portal()
+        if not success:
+            data, success = self._get_from_known_containing_portal()
+        if not success:
+            data, success = self._get_from_noncontaining_portals()
 
-        try:
-            result = self._get_from_current_portal()
-        except:
-            result = self._get_from_noncurrent_portals()
+        if not success:
+            raise KeyError(f"Could not retrieve value for address {self} "
+                           f"from any available portal")
 
-        if not (expected_type is Any or expected_type is object):
-            if not isinstance(result, expected_type):
-                raise TypeError(f"Expected type {expected_type}, "
-                    +f"but got {type(result)}")
-        return result
+        self._validate_type(data, expected_type)
+        return data
 
 
     def __getstate__(self):
@@ -703,7 +789,7 @@ class ValueAddr(HashAddr):
         """This method is called when the object is unpickled."""
         self._invalidate_cache()
         self.strings = state["strings"]
-        self._containing_portals = set()
+        self._containing_portals_fngpts = set()
 
 
     @classmethod
@@ -711,14 +797,14 @@ class ValueAddr(HashAddr):
                      , descriptor: str
                      , hash_signature: str
                      , assert_readiness: bool = True
-                     ) -> HashAddr:
+                     ) -> ValueAddr:
         """(Re)construct address from text representations of descriptor and hash"""
 
         address = super().from_strings(
             descriptor=descriptor
             , hash_signature=hash_signature
             , assert_readiness=False)
-        address._containing_portals = set()
+        address._containing_portals_fngpts = set()
         if assert_readiness:
             if not address.ready:
                 raise ValueError("Address is not ready for retrieving data")
