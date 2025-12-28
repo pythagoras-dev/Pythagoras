@@ -13,7 +13,7 @@ from .basic_portal_core_classes import _PORTAL_REGISTRY, BasicPortal, PortalType
 def get_portal_by_fingerprint(
         portal_fingerprint: PortalStrFingerprint,
         required_portal_type: type[PortalType] = BasicPortal
-        ) -> BasicPortal:
+        ) -> PortalType:
     """Get a portal by its fingerprint.
 
     Args:
