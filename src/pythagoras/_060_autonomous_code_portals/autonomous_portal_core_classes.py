@@ -116,9 +116,6 @@ class AutonomousFn(SafeFn):
             raise RuntimeError("Normalized source does not match original source for autonomous function")
 
         nonlocal_names = analyzer.names.explicitly_nonlocal_unbound_deep
-        all_decorators = _pythagoras_decorator_names
-        # all_decorators = sys.modules["pythagoras"].all_decorators
-        nonlocal_names -= set(all_decorators) #????????????
 
         if len(nonlocal_names) != 0:
             raise FunctionError(
@@ -129,8 +126,6 @@ class AutonomousFn(SafeFn):
 
         import_required = analyzer.names.explicitly_global_unbound_deep
         import_required |= analyzer.names.unclassified_deep
-        # import_required -= set(pth.primary_decorators)
-        import_required -= {"pure", "autonomous"}
         builtin_names = set(dir(builtins))
         import_required -= builtin_names
         pth_names = set(self._available_names())
