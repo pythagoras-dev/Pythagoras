@@ -1,3 +1,10 @@
+"""Detection utilities for Jupyter/IPython notebook environments.
+
+Provides a cached function to determine whether code is running inside a
+Jupyter notebook or IPython interactive shell. This information is used to
+adjust exception handling behavior (IPython has its own exception hooks)
+and to enrich execution environment metadata.
+"""
 
 _is_in_notebook: bool|None = None
 

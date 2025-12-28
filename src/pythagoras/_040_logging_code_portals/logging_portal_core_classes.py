@@ -1,3 +1,54 @@
+"""Core classes for application-level function execution logging.
+
+This module implements the logging infrastructure that enables Pythagoras to
+capture detailed execution traces, exceptions, and events at both the function
+level and portal level. It provides the foundation for reproducible debugging,
+performance analysis, and audit trails.
+
+Key Components:
+
+LoggingFn:
+    A function wrapper that records every execution attempt, capturing inputs,
+    outputs, exceptions, and custom events. Extends StorableFn with logging
+    capabilities.
+
+LoggingFnCallSignature:
+    A unique identifier combining a LoggingFn and its packed arguments.
+    Serves as the primary key for organizing execution artifacts in storage.
+
+LoggingFnExecutionFrame:
+    A context manager that orchestrates a single function execution. Handles
+    output capture, exception routing, and artifact persistence. Maintains
+    a class-level call stack to support nested function calls.
+
+LoggingFnExecutionRecord:
+    A read-only view of artifacts from a completed execution session:
+    attempt context, captured output, crashes, events, and the result.
+
+LoggingCodePortal:
+    The portal class providing logging infrastructure. Maintains three
+    persistent dictionaries (_run_history, _crash_history, _event_history)
+    and supports both function-level and application-level logging.
+
+Execution Model:
+    When a LoggingFn executes, it creates a unique session_id (e.g., "run_abc123"),
+    enters a LoggingFnExecutionFrame context, and records:
+    - Attempt metadata (if excessive_logging=True): environment, timestamp
+    - Captured stdout/stderr/logging (if excessive_logging=True)
+    - Any exceptions raised (always logged)
+    - Custom events via log_event() (always logged)
+    - Function result (if excessive_logging=True)
+
+    All artifacts are timestamped and organized by call signature, enabling
+    time-series analysis of function behavior.
+
+Excessive Logging Mode:
+    When enabled (per-function or per-portal), captures detailed per-call
+    artifacts including execution environment, full output, and results.
+    When disabled, only logs exceptions and custom events to reduce storage
+    overhead for high-frequency functions.
+"""
+
 from __future__ import annotations
 
 import sys
@@ -142,13 +193,27 @@ class LoggingFn(StorableFn):
 
 
 class   LoggingFnCallSignature:
-    """A signature of a call to a logging function.
+    """Unique identifier for a LoggingFn execution with specific arguments.
 
-    This class is used to create a unique identifier for a call to
-    a function, consisting of the function itself as well as all its arguments.
+    Combines a function's ValueAddr with its packed arguments' ValueAddr to
+    create a stable, content-based signature. This signature serves as the
+    primary key for organizing all execution artifacts (attempts, results,
+    outputs, crashes, events) in the portal's storage.
 
-    This is a supporting class for the LoggingFnExecutionResultAddr class, and
-    Pythagoras' users should not need to interact with it directly.
+    Design Rationale:
+        Separating the call signature from the execution frame enables:
+        - Querying historical executions of the same function+args combination
+        - Comparing results across multiple executions
+        - Detecting when functions are called with identical inputs
+        - Organizing artifacts in a content-addressable hierarchy
+
+    Attributes:
+        _fn_addr: ValueAddr pointing to the LoggingFn in storage.
+        _kwargs_addr: ValueAddr pointing to the packed arguments in storage.
+
+    Note:
+        Users typically don't instantiate this class directly; it's created
+        automatically when LoggingFn.execute() is called.
     """
     _fn_addr: ValueAddr
     _kwargs_addr: ValueAddr
@@ -197,11 +262,9 @@ class   LoggingFnCallSignature:
 
 
     def _invalidate_cache(self):
-        """Invalidate the function's attribute cache.
+        """Clear all cached property values to force re-computation.
 
-        If the function's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
+
         """
         if hasattr(self, "_fn_cache"):
             del self._fn_cache
@@ -485,17 +548,20 @@ class   LoggingFnCallSignature:
 
 
 class LoggingFnExecutionRecord(NotPicklableClass):
-    """Record of a single function execution session.
+    """Read-only view of artifacts from a completed function execution.
 
-    Provides convenient accessors to all artifacts logged for one particular
-    execution of a LoggingFn: environment context, captured output, crashes,
-    events, and the returned result value.
+    Provides convenient accessors to all artifacts logged during one specific
+    execution session of a LoggingFn. Each execution gets a unique session_id
+    (e.g., "run_abc123") that ties together all related artifacts: attempt
+    context, captured output, exceptions, events, and the result.
+
+    This class enables post-execution analysis, debugging, and audit trails
+    by organizing artifacts that were scattered across multiple storage
+    locations during execution.
 
     Attributes:
-        call_signature (LoggingFnCallSignature): The function-call identity
-            this record belongs to.
-        session_id (str): Unique identifier for the execution session ("run_*"),
-            shared by all artifacts emitted during this run.
+        call_signature: The function-call signature this record belongs to.
+        session_id: Unique identifier for the execution session ("run_*").
     """
     call_signature: LoggingFnCallSignature
     session_id: str
@@ -608,15 +674,36 @@ class LoggingFnExecutionRecord(NotPicklableClass):
 
 
 class LoggingFnExecutionFrame(NotPicklableClass):
-    """Context manager managing a single function execution with logging.
+    """Context manager orchestrating a single LoggingFn execution with logging.
 
-    When used as a context, optionally captures stdout/stderr/logging,
-    registers attempt metadata, stores results and output, and routes
-    exceptions/events to both per-call artifacts and portal-level histories.
+    This class is the execution engine for logging-enabled functions. When
+    entered as a context, it:
+    1. Creates a unique session_id for this execution
+    2. Optionally starts capturing stdout/stderr/logging output
+    3. Pushes itself onto the class-level call_stack (enables nested calls)
+    4. Registers execution attempt metadata (if excessive_logging enabled)
+    5. Routes any exceptions/events to both function-level and portal-level logs
+    6. Stores the result and captured output (if excessive_logging enabled)
+    7. Pops itself from the call_stack on exit
+
+    The class-level call_stack enables nested function calls to work correctly,
+    with each frame knowing its parent and able to route events to the
+    appropriate function's log.
+
+    Lifecycle:
+        - Created by LoggingFn.execute() with a call signature
+        - Used exactly once as a context manager (reuse raises RuntimeError)
+        - Automatically cleaned up on exit, even if exceptions occur
 
     Attributes:
-        call_stack (list[LoggingFnExecutionFrame]): Class-level stack of active
-            frames (last item is the current execution frame).
+        call_stack: Class-level stack tracking all active execution frames.
+            The last item is the currently executing frame. Used by log_event()
+            and log_exception() to determine which function is currently active.
+        session_id: Unique identifier (e.g., "run_abc123") for this execution.
+        fn_call_signature: The call signature being executed.
+        output_capturer: Optional OutputCapturer instance (when excessive_logging=True).
+        exception_counter: Count of exceptions logged during this execution.
+        event_counter: Count of custom events logged during this execution.
     """
     call_stack: list[LoggingFnExecutionFrame] = []
 
@@ -746,9 +833,18 @@ class LoggingFnExecutionFrame(NotPicklableClass):
 
 
     def _register_execution_attempt(self):
-        """Record an execution attempt with environment and source snapshot.
+        """Record execution attempt metadata and function source code.
 
-        No-op when excessive logging is disabled.
+        Captures the execution environment (hostname, Python version, CPU/memory,
+        etc.) and stores the function's source code. This metadata enables
+        reproducing issues and understanding the execution context.
+
+        Side Effects:
+            - Stores environment summary in execution_attempts under session_id
+            - Stores function source code in _run_history.py
+
+        Note:
+            No-op when excessive_logging is disabled.
         """
         if not self.excessive_logging:
             return
@@ -760,13 +856,20 @@ class LoggingFnExecutionFrame(NotPicklableClass):
 
 
     def _register_execution_result(self, result: Any):
-        """Store the function's return value into the results timeline.
+        """Persist the function's return value to enable result retrieval.
+
+        Converts the result to a ValueAddr and stores it in the execution_results
+        timeline, enabling later retrieval via LoggingFnExecutionRecord.result
+        or LoggingFnCallSignature.last_execution_result.
 
         Args:
             result: The value returned by the wrapped function.
 
-        Notes:
-            No-op when excessive logging is disabled.
+        Side Effects:
+            - Stores result as ValueAddr in execution_results under session_id
+
+        Note:
+            No-op when excessive_logging is disabled.
         """
         if not self.excessive_logging:
             return

@@ -1,3 +1,14 @@
+"""Exception tracking utilities to prevent duplicate logging.
+
+This module provides functions to mark exceptions as already processed by
+Pythagoras and to check whether an exception needs logging. This prevents
+the same exception from being logged multiple times as it propagates through
+the call stack or through multiple exception handlers.
+
+The marking mechanism uses Python 3.11+ Exception.add_note() when available,
+falling back to a custom attribute for earlier versions.
+"""
+
 def _exception_needs_to_be_processed(exc_type, exc_value, trace_back) -> bool:
     """Determine whether an exception should be logged by Pythagoras.
 

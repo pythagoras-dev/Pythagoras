@@ -1,3 +1,17 @@
+"""Output capture utilities for function execution logging.
+
+Provides OutputCapturer, a context manager that simultaneously captures and
+displays stdout, stderr, and logging output. Uses a "tee" strategy where
+output is duplicated: sent to both the original destination (for normal
+display) and to an internal buffer (for storage in execution logs).
+
+Design Rationale:
+    Simple redirection (e.g., sys.stdout = StringIO()) would suppress output
+    from the user's view. The tee approach preserves normal output behavior
+    while also capturing it for later analysis, making it suitable for both
+    interactive use and production logging.
+"""
+
 import sys, io, logging, traceback
 
 
@@ -5,33 +19,40 @@ import sys, io, logging, traceback
 # TODO: see if we can use similar functionality from pytest
 
 class OutputCapturer:
-    """
-    Captures all output sent to stdout, stderr, and the logging system
-    into a single stream. This class is useful for testing and debugging,
-    where capturing output is necessary. It ensures that logged messages are
-    both captured and printed normally.
+    """Context manager that captures stdout, stderr, and logging output.
+
+    Uses a dual-stream "tee" approach: output is sent to both the original
+    streams (preserving normal display) and to an internal buffer (enabling
+    capture). This ensures users see output in real-time while also storing
+    it for later retrieval via get_output().
+
+    Example:
+        >>> with OutputCapturer() as capturer:
+        ...     print("Hello")  # Prints normally AND is captured
+        ...     logging.info("Test")  # Logged normally AND is captured
+        >>> output = capturer.get_output()
+        >>> assert "Hello" in output
+        >>> assert "Test" in output
     """
 
     class _TeeStream:
-        """An internal class that duplicates output.
+        """Internal stream that duplicates output to two destinations.
 
-        The output is duplicated to both a specified original stream
-        and a StringIO buffer. Used for capturing stdout and stderr
-        while allowing normal output.
+        Duplicates all write() calls to both the original stream (for normal
+        display) and a StringIO buffer (for capture). This enables simultaneous
+        capture and display of stdout/stderr.
+
+        Args:
+            original: The original stream (stdout or stderr) to preserve.
+            buffer: The StringIO buffer to capture output.
         """
         def __init__(self, original, buffer):
-            """
-            Initialize the _TeeStream object.
-            Args:
-                original: The original stream (stdout or stderr) to duplicate.
-                buffer: The StringIO buffer to capture the output.
-            """
             self.original = original
             self.buffer = buffer
 
         def write(self, data):
-            """
-            Write data to both the original stream and the buffer.
+            """Write data to both the original stream and the capture buffer.
+
             Args:
                 data: The data to be written.
             """
@@ -39,31 +60,28 @@ class OutputCapturer:
             self.buffer.write(data)
 
         def flush(self):
-            """Flush original stream and buffer to ensure all data is written.
-            """
+            """Flush both streams to ensure all data is written."""
             self.original.flush()
             self.buffer.flush()
 
     class _CaptureHandler(logging.Handler):
-        """  An internal logging handler that captures logging output.
+        """Internal logging handler that captures and forwards log records.
 
-        It also forwards log records to the original logging handlers
-        to maintain normal logging behavior.
+        Captures logging output to a buffer while also forwarding records to
+        the original handlers, preserving normal logging behavior.
+
+        Args:
+            buffer: The StringIO buffer to capture logging output.
+            original_handlers: The original logging handlers to forward records to.
         """
         def __init__(self, buffer, original_handlers):
-            """
-            Initialize the _CaptureHandler object.
-            Args:
-                buffer: The StringIO buffer to capture the logging output.
-                original_handlers: The original logging handlers to forward log records.
-            """
             super().__init__()
             self.buffer = buffer
             self.original_handlers = original_handlers
 
         def emit(self, record):
-            """
-            Emit a log record to the buffer and the original handlers.
+            """Emit a log record to both the capture buffer and original handlers.
+
             Args:
                 record: The log record to be captured and forwarded.
             """
@@ -73,10 +91,11 @@ class OutputCapturer:
                 handler.emit(record)
 
     def __init__(self):
-        """ Initialize the OutputCapturer object.
+        """Initialize the OutputCapturer.
 
-        Sets up tee streams for stdout and stderr,
-        and a capture handler for logging.
+        Sets up tee streams for stdout and stderr, and a capture handler
+        for the logging system. All three output channels will be captured
+        and duplicated when the capturer is used as a context manager.
         """
         self.original_stdout = sys.stdout
         self.original_stderr = sys.stderr
@@ -90,7 +109,10 @@ class OutputCapturer:
             self.captured_buffer, self.original_log_handlers)
 
     def __enter__(self):
-        """Redirect stdout, stderr, and logging output to the capturer.
+        """Start capturing stdout, stderr, and logging output.
+
+        Returns:
+            The OutputCapturer instance for use as a context variable.
         """
         sys.stdout = self.tee_stdout
         sys.stderr = self.tee_stderr
@@ -98,7 +120,12 @@ class OutputCapturer:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Restore stdout, stderr, and logging output to their original state.
+        """Stop capturing and restore stdout, stderr, and logging to original state.
+
+        Args:
+            exc_type: Exception class if an exception occurred, None otherwise.
+            exc_val: Exception instance if an exception occurred, None otherwise.
+            exc_tb: Traceback if an exception occurred, None otherwise.
         """
         if exc_type is not None:
             traceback.print_exc()
@@ -106,10 +133,11 @@ class OutputCapturer:
         sys.stderr = self.original_stderr
         logging.root.handlers = self.original_log_handlers
 
-    def get_output(self):
-        """Retrieve the captured output from the buffer.
+    def get_output(self) -> str:
+        """Retrieve all captured output as a single string.
 
-        Returns a string containing all the output captured
-        during the lifetime of the capturer.
+        Returns:
+            Combined stdout, stderr, and logging output captured during the
+            context manager's lifetime.
         """
         return self.captured_buffer.getvalue()

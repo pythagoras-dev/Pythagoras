@@ -1,3 +1,10 @@
+"""Decorator for creating logging-enabled functions.
+
+Provides the @logging decorator which wraps ordinary Python functions into
+LoggingFn instances that automatically record execution attempts, results,
+outputs, crashes, and events via a LoggingCodePortal.
+"""
+
 from typing import Callable
 
 from persidict import Joker, KEEP_CURRENT

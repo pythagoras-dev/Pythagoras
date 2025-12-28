@@ -1,3 +1,23 @@
+"""Keyword argument containers with deterministic ordering and value packing.
+
+This module provides KwArgs and its variants (PackedKwArgs, UnpackedKwArgs)
+to manage function keyword arguments in a way that enables reliable hashing,
+comparison, and content-addressable storage.
+
+Key Features:
+- Deterministic key ordering for consistent hashing and equality checks
+- Packing: convert values to ValueAddr handles for content-addressable storage
+- Unpacking: resolve ValueAddr handles back to raw values
+- Type safety: prevents nested KwArgs and enforces string keys
+
+Design Rationale:
+    Standard Python dicts have non-deterministic iteration order in older
+    versions and no built-in mechanism for content-addressable value storage.
+    KwArgs addresses both issues by sorting keys deterministically and
+    providing pack/unpack methods that convert between raw values and
+    their content-addressed representations (ValueAddr).
+"""
+
 from __future__ import annotations
 
 from .._010_basic_portals import get_current_portal
@@ -95,11 +115,20 @@ class KwArgs(dict):
 
 
     def unpack(self) -> UnpackedKwArgs:
-        """Return a copy with all ValueAddr values resolved to raw values.
+        """Resolve all ValueAddr values to their underlying raw values.
+
+        This is the inverse of pack(). It retrieves the actual values from
+        storage, enabling function execution with the original arguments.
 
         Returns:
             UnpackedKwArgs: A new mapping where each ValueAddr is replaced with
             its underlying value via ValueAddr.get().
+
+        Example:
+            >>> packed = KwArgs(x=5, y="hello").pack()
+            >>> unpacked = packed.unpack()
+            >>> assert unpacked["x"] == 5
+            >>> assert unpacked["y"] == "hello"
         """
         unpacked_copy = dict()
         for k, v in self.items():
@@ -112,11 +141,13 @@ class KwArgs(dict):
 
 
     def pack(self, store = True) -> PackedKwArgs:
-        """Pack values into ValueAddr handles, optionally storing them.
+        """Convert values to ValueAddr handles for content-addressable storage.
 
-        Each argument value is replaced by a ValueAddr pointing to either the
-        stored value (when store=True) or a non-stored address (when store=False)
-        that can still serve as a stable identifier for hashing/equality.
+        This enables reliable equality checks and hashing based on content
+        rather than object identity. When store=True, values are persisted
+        to the portal's storage backend and can be retrieved in future
+        sessions. When store=False, produces transient addresses useful
+        for identifying argument sets without persistence.
 
         Args:
             store: If True, values are stored in the active portal and the
@@ -125,6 +156,11 @@ class KwArgs(dict):
 
         Returns:
             PackedKwArgs: A new mapping with values converted to ValueAddr.
+
+        Example:
+            >>> kwargs = KwArgs(x=5, y="hello")
+            >>> packed = kwargs.pack(store=True)  # Values stored in portal
+            >>> # packed can be hashed, compared, or unpacked later
         """
         packed_copy = dict()
         if store:
@@ -141,9 +177,21 @@ class KwArgs(dict):
 
 
 class PackedKwArgs(KwArgs):
-    """KwArgs where all values are ValueAddr instances.
+    """KwArgs container where all values are ValueAddr instances.
 
-    This is the packed form produced by KwArgs.pack().
+    This specialized subclass represents function arguments in their packed
+    form, where each value has been converted to a ValueAddr handle. This
+    enables content-based hashing, equality checks, and persistent storage
+    of argument sets.
+
+    Created by calling KwArgs.pack(). Should not typically be instantiated
+    directly by user code.
+
+    Example:
+        >>> original = KwArgs(x=5, y=[1, 2, 3])
+        >>> packed = original.pack()  # Returns PackedKwArgs
+        >>> assert isinstance(packed, PackedKwArgs)
+        >>> assert all(isinstance(v, ValueAddr) for v in packed.values())
     """
     def __init__(self,*args, **kargs):
         """Construct a PackedKwArgs mapping.
@@ -154,9 +202,20 @@ class PackedKwArgs(KwArgs):
 
 
 class UnpackedKwArgs(KwArgs):
-    """KwArgs where all values are raw (non-ValueAddr) objects.
+    """KwArgs container where all values are raw (non-ValueAddr) objects.
 
-    This is the unpacked form produced by KwArgs.unpack().
+    This specialized subclass represents function arguments in their unpacked
+    form, ready for execution. All ValueAddr handles have been resolved to
+    their underlying values.
+
+    Created by calling KwArgs.unpack() or PackedKwArgs.unpack(). Should not
+    typically be instantiated directly by user code.
+
+    Example:
+        >>> packed = KwArgs(x=5, y=[1, 2, 3]).pack()
+        >>> unpacked = packed.unpack()  # Returns UnpackedKwArgs
+        >>> assert isinstance(unpacked, UnpackedKwArgs)
+        >>> assert unpacked["x"] == 5
     """
     def __init__(self,*args, **kargs):
         """Construct an UnpackedKwArgs mapping.

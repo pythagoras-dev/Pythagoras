@@ -1,3 +1,15 @@
+"""Execution environment snapshot utilities for diagnostic context.
+
+This module provides functions to capture detailed system, process, and runtime
+metadata at the moment of logging. This contextual information is invaluable
+for diagnosing issues in distributed systems, long-running applications, or
+when reproducing bugs across different environments.
+
+The captured snapshot includes hostname, user, process ID, platform details,
+Python version, CPU/memory statistics, working directory, timezone, and
+whether execution is inside a Jupyter notebook.
+"""
+
 import random
 
 import psutil
@@ -46,10 +58,12 @@ def build_execution_environment_summary() -> Dict:
     return execution_environment_summary
 
 def make_unique_name(suggested_name: str, existing_names) -> str:
-    """Return a unique name based on the suggestion and a set of existing names.
+    """Generate a unique name by appending random suffixes on collision.
 
-    If the suggested name already exists, appends a random numeric
-    suffix until a unique candidate is found.
+    Uses a simple collision-avoidance strategy: if the suggested name already
+    exists in the collection, appends an underscore and a random number
+    (1 to 10 billion) until finding an unused name. This approach ensures
+    uniqueness while maintaining readability of the base name.
 
     Args:
         suggested_name: Preferred base name.
@@ -57,7 +71,7 @@ def make_unique_name(suggested_name: str, existing_names) -> str:
             set, list) used to determine collisions.
 
     Returns:
-        str: A name guaranteed to not be present in existing_names at the
+        A name guaranteed to not be present in existing_names at the
         time of checking.
     """
     candidate = suggested_name
