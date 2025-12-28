@@ -25,7 +25,7 @@ PortalAwareClass is not intended for direct use and should be subclassed.
 A Pythagoras-based application can have multiple portals. A portal becomes
 active when used within a `with` statement. The most recent portal in the
 stack of active portals is considered the current active portal, which can
-be accessed via the `get_current_active_portal()` function. This portal
+be accessed via the `get_current_portal()` function. This portal
 is used by code executed inside the `with` block.
 
 If PortalAwareClass-based objects are accessed by the code, they will use
@@ -34,6 +34,13 @@ portal at creation time. If there are no active portals when a
 PortalAwareClass-based object needs one, a default portal will be
 instantiated and activated automatically.
 
+Exports:
+    BasicPortal: Base class for all portal types.
+    PortalAwareClass: Base class for objects that use portals.
+    get_current_portal: Access the current active portal.
+    get_portal_by_fingerprint: Retrieve a specific portal by ID.
+    get_default_portal_base_dir: Get the default portal storage location.
+    _PortalTester: Testing utility for portal lifecycle management.
 
 Important Notes
 ---------------

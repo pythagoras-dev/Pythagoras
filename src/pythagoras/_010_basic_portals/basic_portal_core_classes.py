@@ -66,9 +66,8 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
         """Initialize a BasicPortal instance.
 
         Args:
-            root_dict: The root dictionary for persistent storage, a path string,
-                or None to use the default location. If a string is provided,
-                it will be converted to a FileDirDict using that path.
+            root_dict: Root dictionary for persistent storage, path to storage location,
+                or None for default location.
         """
         _ensure_single_thread()
         self._init_finished = False
@@ -96,15 +95,13 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
 
     def _get_linked_objects_ids(self
             , target_class: type | None = None) -> set[PAwareObjectStrFingerprint]:
-        """Get the set of string IDs of objects linked to this portal.
+        """Get the set of IDs of objects linked to this portal.
 
         Args:
-            target_class: The class type to filter for, or None to include
-                all linked objects regardless of type.
+            target_class: Optional class type filter.
 
         Returns:
-            A set of string IDs representing objects linked to this portal,
-            optionally filtered by the specified target class.
+            IDs of objects linked to this portal, filtered by target_class if provided.
         """
         return _PORTAL_REGISTRY.linked_objects_fingerprints(self, target_class)
 
@@ -113,12 +110,10 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
         """Get the list of objects linked to this portal.
 
         Args:
-            target_class: The class type to filter for, or None to include
-                all linked objects regardless of type.
+            target_class: Optional class type filter.
 
         Returns:
-            A list of PortalAwareClass instances that are linked to this portal,
-            optionally filtered by the specified target class.
+            PortalAwareClass instances linked to this portal, filtered by target_class if provided.
         """
         return _PORTAL_REGISTRY.linked_objects(self, target_class)
 
@@ -127,12 +122,10 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
         """Get the number of objects linked to this portal.
 
         Args:
-            target_class: The class type to filter for, or None to include
-                all linked objects regardless of type.
+            target_class: Optional class type filter.
 
         Returns:
-            The count of portal-aware objects linked to this portal,
-            optionally filtered by the specified target class.
+            Count of portal-aware objects linked to this portal, filtered by target_class if provided.
         """
         return len(self._get_linked_objects_ids(target_class))
 
@@ -172,8 +165,9 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
     def fingerprint(self) -> PortalStrFingerprint:
         """The portal's persistent hash fingerprint.
 
-        This is an internal hash used by Pythagoras and differs from __hash__().
-        Only available after the portal has been fully initialized.
+        This is an internal identifier used by Pythagoras to uniquely identify
+        portals in the registry. It differs from __hash__() and is based on
+        the portal's essential parameters.
         """
         if not self._init_finished:
             raise RuntimeError("Portal is not fully initialized yet, "
@@ -246,14 +240,17 @@ def _validate_required_portal_type(required_portal_type: PortalType) -> None:
 class _PortalRegistry(NotPicklableClass):
     """Registry maintaining all portal bookkeeping and state for Pythagoras.
 
+    This singleton tracks all portals and portal-aware objects, manages the stack
+    of active portals, and provides mechanisms for portal lookup and lifecycle management.
+
     Attributes:
-        known_portals: All portals that have been instantiated in the system.
-        active_portals_stack: Stack mirroring nested `with portal:` blocks.
-        active_portals_stack_counters: Re-entrancy counters aligned with active_portals_stack.
-        most_recently_created_portal: Last portal created in the system.
-        links_from_objects_to_portals: Maps object fingerprints to portal fingerprints.
-        known_objects: Maps object fingerprints to portal-aware object instances.
-        default_portal_instantiator: Callable that creates a default portal when none exists.
+        known_portals: Maps portal fingerprints to portal instances.
+        active_portals_stack: Stack of currently active portals (nested `with` statements).
+        active_portals_stack_counters: Re-entrancy counters for each stack level.
+        most_recently_created_portal: Last portal instantiated, used for auto-activation.
+        links_from_objects_to_portals: Maps object fingerprints to their linked portal fingerprints.
+        known_objects: Maps object fingerprints to PortalAwareClass instances.
+        default_portal_instantiator: Factory function for creating the default portal.
     """
 
     def __init__(self) -> None:
@@ -272,8 +269,7 @@ class _PortalRegistry(NotPicklableClass):
         """Register a callable that creates the default portal.
 
         Args:
-            instantiator: Zero-argument callable that creates and optionally enters
-                a default portal.
+            instantiator: Factory function that creates the default portal.
 
         Raises:
             TypeError: If instantiator is not callable.
@@ -308,7 +304,7 @@ class _PortalRegistry(NotPicklableClass):
         """Get a portal by its fingerprint.
 
         Args:
-            portal_fingerprint: The portal's unique fingerprint string.
+            portal_fingerprint: Portal fingerprint to look up.
             required_portal_type: Expected portal type for validation.
 
         Returns:
@@ -352,9 +348,7 @@ class _PortalRegistry(NotPicklableClass):
         """Get the number of portals registered in the system.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any known portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
             The total count of all known portals in the system.
@@ -368,12 +362,10 @@ class _PortalRegistry(NotPicklableClass):
         """Get a list of all portals registered in the system.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any known portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
-            A list containing all portal instances currently known to the system.
+            All portal instances currently known to the system.
 
         Raises:
             TypeError: If any known portal is not an instance of required_portal_type.
@@ -391,12 +383,10 @@ class _PortalRegistry(NotPicklableClass):
         """Get a set of all portal fingerprints.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any known portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
-            A set containing fingerprints of all portals currently known to the system.
+            Fingerprints of all portals currently known to the system.
 
         Raises:
             TypeError: If any known portal is not an instance of required_portal_type.
@@ -464,11 +454,8 @@ class _PortalRegistry(NotPicklableClass):
     def current_portal(self) -> BasicPortal:
         """Get the current portal object.
 
-        The current portal is the one that was most recently entered
-        using the 'with' statement. If no portal was entered yet,
-        it finds the most recently created portal and makes it current.
-        If no portals exist in the system, it creates and returns
-        the default portal.
+        Returns the top portal from the active stack, or activates the most recently
+        created portal if the stack is empty. Creates the default portal if none exist.
 
         Returns:
             The current portal instance.
@@ -513,9 +500,7 @@ class _PortalRegistry(NotPicklableClass):
         """Count unique portals currently in the active stack.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any active portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
             The count of unique portals currently in the active portal stack.
@@ -538,12 +523,10 @@ class _PortalRegistry(NotPicklableClass):
         """Calculate the total depth of the active portal stack.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any active portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
-            The total depth (sum of all counters) of the active portal stack.
+            The total depth (sum of all re-entrancy counters) of the active portal stack.
 
         Raises:
             TypeError: If any active portal is not an instance of required_portal_type.
@@ -841,8 +824,8 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     def fingerprint(self) -> PAwareObjectStrFingerprint:
         """The hash fingerprint of the portal-aware object.
 
-        This is an internal hash used by Pythagoras and differs from __hash__().
-        Only available after full initialization.
+        This is an internal identifier used by Pythagoras for object tracking
+        in the registry. It differs from __hash__() and is based on the object itself.
         """
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "

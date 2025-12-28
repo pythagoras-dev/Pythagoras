@@ -13,8 +13,13 @@ class _PortalTester:
     """A context manager for testing portal objects.
 
     Ensures that all portal objects are properly initialized and cleared
-    between tests. Intended for internal unit tests only, not for
-    application code.
+    between tests. Automatically clears the global portal registry on entry
+    and exit. Intended for internal unit tests only, not for application code.
+
+    Example:
+        >>> with _PortalTester(BasicPortal) as tester:
+        ...     assert tester.portal is not None
+        ...     # Test portal functionality
     """
     _current_instance:_PortalTester|None = None
     _portal:BasicPortal|None = None
@@ -23,10 +28,9 @@ class _PortalTester:
         """Initialize the portal tester.
 
         Args:
-            portal_class: The portal class to test, or None for no portal.
-                Must be a subclass of BasicPortal if provided.
-            *args: Positional arguments to pass to the portal constructor.
-            **kwargs: Keyword arguments to pass to the portal constructor.
+            portal_class: Portal class to instantiate and test, or None.
+            *args: Positional arguments for portal constructor.
+            **kwargs: Keyword arguments for portal constructor.
 
         Raises:
             Exception: If another _PortalTester instance is already active.

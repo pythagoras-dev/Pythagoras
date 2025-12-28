@@ -23,13 +23,15 @@ def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
     """Create a one-row DataFrame for a persistent (disk-backed) property.
 
     Args:
-        name: The characteristic name (e.g., base directory path label).
-        value: The characteristic value. Can be any object that pandas can
-            store in a single cell (typically str, int, Path, etc.).
+        name: Characteristic name.
+        value: Characteristic value (any pandas-compatible type).
 
     Returns:
-        A pandas DataFrame with columns `type`, `name`, `value` and a single
-        row where `type` is "Disk".
+        DataFrame with columns `type`, `name`, `value` where `type` is "Disk".
+
+    Example:
+        >>> _describe_persistent_characteristic("Base dir", "/path/to/dir")
+        # Returns: DataFrame with one row: {"type": "Disk", "name": "Base dir", "value": "/path/to/dir"}
     """
     d = dict(
         type="Disk",
@@ -43,13 +45,11 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
     """Create a one-row DataFrame for a runtime-computed property.
 
     Args:
-        name: The characteristic name (e.g., backend type, version).
-        value: The characteristic value. Can be any object that pandas can
-            store in a single cell.
+        name: Characteristic name.
+        value: Characteristic value (any pandas-compatible type).
 
     Returns:
-        A pandas DataFrame with columns `type`, `name`, `value` and a single
-        row where `type` is "Runtime".
+        DataFrame with columns `type`, `name`, `value` where `type` is "Runtime".
     """
     d = dict(
         type="Runtime",
@@ -60,20 +60,17 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
 
 
 def _get_description_value_by_key(dataframe: pd.DataFrame, key: str) -> Any:
-    """Return the value associated with *key* in a portal‐description DataFrame.
-
-    The DataFrame must follow the schema produced by portal ``describe()``
-    implementations: three columns ``["type", "name", "value"]``.
+    """Return the value associated with a key in a portal description DataFrame.
 
     Args:
-        dataframe: Portal description table.
+        dataframe: Portal description DataFrame with columns ["type", "name", "value"].
         key: Characteristic name to retrieve.
 
     Returns:
-        The value stored in the ``"value"`` column for the matching row.
+        The value from the "value" column for the matching row.
 
     Raises:
-        KeyError: If *key* is not present in the ``"name"`` column.
+        KeyError: If key is not found in the "name" column.
     """
     mask = dataframe.iloc[:, 1] == key
     if not mask.any():

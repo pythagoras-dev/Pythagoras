@@ -129,6 +129,9 @@ class GuardedInitMeta(ABCMeta):
     def __init__(cls, name, bases, dct):
         """Initialize the class and inject lifecycle enforcement.
 
+        Wraps __setstate__ to ensure proper initialization state after unpickling
+        and validates that the class is compatible with the GuardedInitMeta contract.
+
         Args:
             name: The class name.
             bases: Base classes.
@@ -183,6 +186,9 @@ class GuardedInitMeta(ABCMeta):
 
     def __call__(cls: Type[T], *args: Any, **kwargs: Any) -> T:
         """Create instance, enforce initialization contract, and invoke hook.
+
+        Ensures _init_finished is False during __init__, sets it to True afterward,
+        and invokes __post_init__ if defined.
 
         Args:
             *args: Positional arguments for __init__.

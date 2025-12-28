@@ -4,6 +4,12 @@ This module ensures that portals and portal-aware objects are accessed
 only from the thread that first initialized the portal system. Pythagoras
 supports multi-process parallelism (swarming) but not multi-threading
 within a single process.
+
+Design Rationale:
+    Single-threaded portal access simplifies concurrency management and avoids
+    the complexity of locks, race conditions, and thread-safety guarantees.
+    Multi-process parallelism (via swarming) provides scalability without the
+    overhead and complexity of thread synchronization.
 """
 
 from __future__ import annotations
@@ -20,12 +26,12 @@ _owner_pid: int | None = None
 def _ensure_single_thread() -> None:
     """Ensure current thread is the portal owner thread.
 
-    Pythagoras portals must be accessed exclusively from the thread that
-    first initialized the portal system in the current process. After a fork,
-    ownership is reset for the child process.
+    Validates that the calling thread is the same thread that first initialized
+    the portal system. Automatically resets ownership after process forks to
+    support multi-process parallelism.
 
     Raises:
-        RuntimeError: If called from a thread different from the owner thread.
+        RuntimeError: If called from a different thread than the owner thread.
     """
     global _portal_native_id, _portal_thread_name, _owner_pid
 
