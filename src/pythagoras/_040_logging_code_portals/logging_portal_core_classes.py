@@ -787,15 +787,20 @@ class LoggingFnExecutionFrame(NotPicklableClass):
             exc_value: Exception instance raised within the context, if any.
             trace_back: Traceback object associated with the exception, if any.
         """
-        log_exception()
-        if isinstance(self.output_capturer, OutputCapturer):
-            self.output_capturer.__exit__(exc_type, exc_value, trace_back)
-            output_id = self.session_id+"_output"
-            execution_outputs = self.fn_call_signature.execution_outputs
-            execution_outputs[output_id] = self.output_capturer.get_output()
-
-        self.portal.__exit__(exc_type, exc_value, trace_back)
-        LoggingFnExecutionFrame.call_stack.pop()
+        try:
+            try:
+                try:
+                    log_exception()
+                finally:
+                    if isinstance(self.output_capturer, OutputCapturer):
+                        self.output_capturer.__exit__(exc_type, exc_value, trace_back)
+                        output_id = self.session_id + "_output"
+                        execution_outputs = self.fn_call_signature.execution_outputs
+                        execution_outputs[output_id] = self.output_capturer.get_output()
+            finally:
+                self.portal.__exit__(exc_type, exc_value, trace_back)
+        finally:
+            LoggingFnExecutionFrame.call_stack.pop()
 
 
 _EXCEPTIONS_TOTAL_TXT = "Exceptions, total"
