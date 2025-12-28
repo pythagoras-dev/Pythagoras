@@ -66,6 +66,24 @@ class KwArgs(dict):
         super().__setitem__(key, value)
 
 
+    def update(self, *args, **kwargs):
+        """Update the dictionary with new keys and values.
+
+        Args:
+            *args: Positional arguments (other dict or iterable of pairs).
+            **kwargs: Keyword arguments.
+        """
+        if args:
+            if len(args) > 1:
+                raise TypeError("update expected at most 1 arguments, "
+                                f"got {len(args)}")
+            other = dict(args[0])
+            for key in other:
+                self[key] = other[key]
+        for key in kwargs:
+            self[key] = kwargs[key]
+
+
     def __reduce__(self):
         """Support pickling by sorting keys first for stable serialization.
 
