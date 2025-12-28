@@ -162,3 +162,80 @@ def test_value_address_get_with_two_portals(tmpdir):
             assert addr1_hihi.get() == "hihi"
             assert len(portal1._value_store) == 2
             assert len(portal2._value_store) == 3
+
+
+def test_value_addr_rejects_uninitialized_object(tmpdir):
+    """Test ValueError when creating ValueAddr from uninitialized object."""
+    class MockUninitializedObj:
+        def __init__(self):
+            self._init_finished = False
+
+    with _PortalTester(DataPortal, tmpdir):
+        obj = MockUninitializedObj()
+        with pytest.raises(ValueError, match="Cannot create ValueAddr for an uninitialized object"):
+            ValueAddr(obj)
+
+
+def test_value_addr_rejects_hashaddr_direct_conversion(tmpdir):
+    """Test TypeError when creating ValueAddr directly from HashAddr."""
+    class MockHashAddr(HashAddr):
+        @property
+        def ready(self):
+            return True
+        def get(self, timeout=None, expected_type=None):
+            return 42
+
+    with _PortalTester(DataPortal, tmpdir):
+        hash_addr = MockHashAddr("descriptor", "1234567890")
+        with pytest.raises(TypeError, match="get_ValueAddr is the only way to convert HashAddr into ValueAddr"):
+            ValueAddr(hash_addr)
+
+
+def test_value_addr_from_strings_without_readiness_check(tmpdir):
+    """Test ValueAddr.from_strings() with assert_readiness=False."""
+    with _PortalTester(DataPortal, tmpdir):
+        ValueAddr(42)  # Store a value first
+        addr = ValueAddr.from_strings(
+            descriptor="int",
+            hash_signature=ValueAddr(42).hash_signature,
+            assert_readiness=False
+        )
+        assert addr.descriptor == "int"
+        assert len(addr.hash_signature) >= 10
+
+
+def test_value_addr_from_strings_with_readiness_check(tmpdir):
+    """Test ValueAddr.from_strings() with assert_readiness=True."""
+    with _PortalTester(DataPortal, tmpdir):
+        original = ValueAddr(42)
+        addr = ValueAddr.from_strings(
+            descriptor=original.descriptor,
+            hash_signature=original.hash_signature,
+            assert_readiness=True
+        )
+        assert addr.get() == 42
+
+
+def test_value_addr_from_strings_fails_when_not_ready(tmpdir):
+    """Test from_strings() raises ValueError when value not ready."""
+    with _PortalTester(DataPortal, tmpdir):
+        with pytest.raises(ValueError, match="Address is not ready for retrieving data"):
+            ValueAddr.from_strings(
+                descriptor="nonexistent",
+                hash_signature="1234567890abc",
+                assert_readiness=True
+            )
+
+
+def test_value_addr_pickle_unpickle_roundtrip(tmpdir):
+    """Test ValueAddr can be pickled and unpickled correctly."""
+    import pickle
+
+    with _PortalTester(DataPortal, tmpdir):
+        original_addr = ValueAddr(42)
+        pickled = pickle.dumps(original_addr)
+        unpickled_addr = pickle.loads(pickled)
+
+        assert unpickled_addr.descriptor == original_addr.descriptor
+        assert unpickled_addr.hash_signature == original_addr.hash_signature
+        assert unpickled_addr.get() == 42

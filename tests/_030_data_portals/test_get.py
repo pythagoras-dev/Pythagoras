@@ -1,3 +1,5 @@
+import pytest
+from collections.abc import Mapping, Sequence
 from pythagoras._030_data_portals import get, HashAddr
 
 
@@ -149,3 +151,107 @@ def test_get_circular_references():
     assert result[1] == 2
     assert result[2] == 42  # HashAddr is resolved
     assert result[3] is result  # The circular reference is preserved
+
+
+def test_get_custom_mapping_subclass():
+    """Test get works with custom Mapping subclasses that support setitem."""
+    class CustomMapping(Mapping):
+        def __init__(self, data=None):
+            self._data = data or {}
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        def __setitem__(self, key, value):
+            self._data[key] = value
+
+        def __iter__(self):
+            return iter(self._data)
+
+        def __len__(self):
+            return len(self._data)
+
+    custom_map = CustomMapping({"a": 1, "b": 2})
+    result = get(custom_map)
+    assert isinstance(result, CustomMapping)
+    assert result["a"] == 1
+    assert result["b"] == 2
+
+
+def test_get_custom_mapping_with_hashaddr():
+    """Test get resolves HashAddr in custom Mapping subclasses."""
+    class CustomMapping(Mapping):
+        def __init__(self, data=None):
+            self._data = data or {}
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        def __setitem__(self, key, value):
+            self._data[key] = value
+
+        def __iter__(self):
+            return iter(self._data)
+
+        def __len__(self):
+            return len(self._data)
+
+    hash_addr = MockHashAddr(return_value=42)
+    custom_map = CustomMapping({"a": hash_addr})
+    result = get(custom_map)
+    assert result["a"] == 42
+
+
+def test_get_custom_sequence_subclass():
+    """Test get works with custom Sequence subclasses."""
+    class CustomSequence(Sequence):
+        def __init__(self, items=None):
+            self._items = list(items or [])
+
+        def __getitem__(self, index):
+            return self._items[index]
+
+        def __len__(self):
+            return len(self._items)
+
+    custom_seq = CustomSequence([1, 2, 3])
+    result = get(custom_seq)
+    assert len(result) == 3
+    assert list(result) == [1, 2, 3]
+
+
+def test_get_unmakeable_mapping_raises_typeerror():
+    """Test get raises TypeError for Mapping without no-arg constructor."""
+    class UnmakeableMapping(Mapping):
+        def __init__(self, required_arg):
+            self._data = {required_arg: required_arg}
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        def __iter__(self):
+            return iter(self._data)
+
+        def __len__(self):
+            return len(self._data)
+
+    unmakeable = UnmakeableMapping("required")
+    with pytest.raises(TypeError, match="Cannot create empty placeholder for mapping type"):
+        get(unmakeable)
+
+
+def test_get_unmakeable_sequence_raises_typeerror():
+    """Test get raises TypeError for Sequence without no-arg constructor."""
+    class UnmakeableSequence(Sequence):
+        def __init__(self, required_arg):
+            self._items = [required_arg]
+
+        def __getitem__(self, index):
+            return self._items[index]
+
+        def __len__(self):
+            return len(self._items)
+
+    unmakeable = UnmakeableSequence("required")
+    with pytest.raises(TypeError, match="Cannot create empty placeholder for sequence type"):
+        get(unmakeable)

@@ -1,3 +1,4 @@
+from collections.abc import Mapping, Sequence
 from pythagoras._030_data_portals import ready, HashAddr
 
 
@@ -137,3 +138,75 @@ def test_ready_circular_references():
     circular_list_not_ready = [1, 2, not_ready_addr]
     circular_list_not_ready.append(circular_list_not_ready)
     assert ready(circular_list_not_ready) is False
+
+
+def test_ready_custom_mapping_all_ready():
+    """Test ready returns True for custom Mapping with all ready values."""
+    class CustomMapping(Mapping):
+        def __init__(self, data):
+            self._data = data
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        def __iter__(self):
+            return iter(self._data)
+
+        def __len__(self):
+            return len(self._data)
+
+    custom_map = CustomMapping({"a": 1, "b": 2})
+    assert ready(custom_map) is True
+
+
+def test_ready_custom_mapping_with_not_ready_hashaddr():
+    """Test ready returns False for custom Mapping with not ready HashAddr."""
+    class CustomMapping(Mapping):
+        def __init__(self, data):
+            self._data = data
+
+        def __getitem__(self, key):
+            return self._data[key]
+
+        def __iter__(self):
+            return iter(self._data)
+
+        def __len__(self):
+            return len(self._data)
+
+    not_ready_addr = MockHashAddr(ready_value=False)
+    custom_map = CustomMapping({"a": not_ready_addr})
+    assert ready(custom_map) is False
+
+
+def test_ready_custom_sequence_all_ready():
+    """Test ready returns True for custom Sequence with all ready items."""
+    class CustomSequence(Sequence):
+        def __init__(self, items):
+            self._items = list(items)
+
+        def __getitem__(self, index):
+            return self._items[index]
+
+        def __len__(self):
+            return len(self._items)
+
+    custom_seq = CustomSequence([1, 2, 3])
+    assert ready(custom_seq) is True
+
+
+def test_ready_custom_sequence_with_not_ready_hashaddr():
+    """Test ready returns False for custom Sequence with not ready HashAddr."""
+    class CustomSequence(Sequence):
+        def __init__(self, items):
+            self._items = list(items)
+
+        def __getitem__(self, index):
+            return self._items[index]
+
+        def __len__(self):
+            return len(self._items)
+
+    not_ready_addr = MockHashAddr(ready_value=False)
+    custom_seq = CustomSequence([1, not_ready_addr, 3])
+    assert ready(custom_seq) is False
