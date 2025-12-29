@@ -314,3 +314,167 @@ def test_kwargs_equality_independent_of_insertion_order(tmpdir, kwargs_type, fac
         # But objects should be equal
         assert obj1 == obj2
         assert dict(obj1) == dict(obj2)
+
+
+def test_kwargs_copy_returns_correct_type(tmpdir):
+    """KwArgs.copy() returns the correct class type for each variant."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Base KwArgs
+        kwargs = KwArgs(x=1, y=2)
+        kwargs_copy = kwargs.copy()
+        assert type(kwargs_copy) is KwArgs
+        assert isinstance(kwargs_copy, KwArgs)
+
+        # PackedKwArgs
+        packed = kwargs.pack()
+        packed_copy = packed.copy()
+        assert type(packed_copy) is PackedKwArgs
+        assert isinstance(packed_copy, PackedKwArgs)
+
+        # UnpackedKwArgs
+        unpacked = packed.unpack()
+        unpacked_copy = unpacked.copy()
+        assert type(unpacked_copy) is UnpackedKwArgs
+        assert isinstance(unpacked_copy, UnpackedKwArgs)
+
+
+def test_kwargs_copy_creates_independent_instance(tmpdir):
+    """Modifications to the copy don't affect the original."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Base KwArgs
+        original = KwArgs(a=1, b=2)
+        copy = original.copy()
+        copy['c'] = 3
+        assert 'c' not in original
+        assert 'c' in copy
+        assert len(original) == 2
+        assert len(copy) == 3
+
+        # PackedKwArgs
+        packed_original = KwArgs(x=10, y=20).pack()
+        packed_copy = packed_original.copy()
+        packed_copy['z'] = ValueAddr(30)
+        assert 'z' not in packed_original
+        assert 'z' in packed_copy
+
+        # UnpackedKwArgs
+        unpacked_original = KwArgs(p=100, q=200).pack().unpack()
+        unpacked_copy = unpacked_original.copy()
+        unpacked_copy['r'] = 300
+        assert 'r' not in unpacked_original
+        assert 'r' in unpacked_copy
+
+
+def test_kwargs_copy_preserves_equality(tmpdir):
+    """Copy is equal to original but not the same object."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Base KwArgs
+        kwargs = KwArgs(x=1, y='hello', z=[1, 2, 3])
+        kwargs_copy = kwargs.copy()
+        assert kwargs_copy == kwargs
+        assert kwargs_copy is not kwargs
+        assert id(kwargs_copy) != id(kwargs)
+
+        # PackedKwArgs
+        packed = kwargs.pack()
+        packed_copy = packed.copy()
+        assert packed_copy == packed
+        assert packed_copy is not packed
+
+        # UnpackedKwArgs
+        unpacked = packed.unpack()
+        unpacked_copy = unpacked.copy()
+        assert unpacked_copy == unpacked
+        assert unpacked_copy is not unpacked
+
+
+def test_kwargs_copy_preserves_type_invariants(tmpdir):
+    """Copy enforces the same type invariants as original."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # PackedKwArgs copy only accepts ValueAddr
+        packed = KwArgs(a=1).pack()
+        packed_copy = packed.copy()
+
+        with pytest.raises(ValueError, match="PackedKwArgs can only contain ValueAddr"):
+            packed_copy['new'] = 42
+
+        # Should accept ValueAddr
+        packed_copy['valid'] = ValueAddr(99)
+        assert 'valid' in packed_copy
+
+        # UnpackedKwArgs copy rejects ValueAddr and base KwArgs
+        unpacked = packed.unpack()
+        unpacked_copy = unpacked.copy()
+
+        with pytest.raises(ValueError, match="UnpackedKwArgs cannot contain ValueAddr"):
+            unpacked_copy['new'] = ValueAddr(42)
+
+        with pytest.raises(ValueError, match="UnpackedKwArgs cannot contain.*base KwArgs"):
+            unpacked_copy['new'] = KwArgs(x=1)
+
+
+def test_kwargs_copy_maintains_sorted_keys(tmpdir):
+    """Copy maintains deterministic key ordering."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Create with unsorted keys via dict
+        unsorted_dict = {'z': 3, 'a': 1, 'm': 2}
+        kwargs = KwArgs(unsorted_dict)
+        kwargs_copy = kwargs.copy()
+
+        # Both should have sorted keys
+        assert list(kwargs.keys()) == sorted(unsorted_dict.keys())
+        assert list(kwargs_copy.keys()) == sorted(unsorted_dict.keys())
+        assert list(kwargs_copy.keys()) == list(kwargs.keys())
+
+
+def test_kwargs_copy_with_complex_values(tmpdir):
+    """Copy works correctly with complex nested values."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # KwArgs with nested structures
+        kwargs = KwArgs(
+            list_val=[1, 2, 3],
+            dict_val={'nested': 'dict'},
+            tuple_val=(4, 5, 6),
+            packed_val=KwArgs(inner=10).pack(),
+            unpacked_val=KwArgs(inner=20).pack().unpack()
+        )
+
+        kwargs_copy = kwargs.copy()
+
+        # Verify copy is equal
+        assert kwargs_copy == kwargs
+
+        # Verify it's a shallow copy (nested objects are same)
+        assert kwargs_copy['list_val'] is kwargs['list_val']
+        assert kwargs_copy['dict_val'] is kwargs['dict_val']
+
+        # But top-level dict is independent
+        kwargs_copy['new_key'] = 'new_value'
+        assert 'new_key' not in kwargs
+
+
+def test_kwargs_copy_empty_instance(tmpdir):
+    """Copy works correctly with empty KwArgs."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        # Empty base KwArgs
+        empty = KwArgs()
+        empty_copy = empty.copy()
+        assert len(empty_copy) == 0
+        assert type(empty_copy) is KwArgs
+
+        # Empty PackedKwArgs
+        empty_packed = KwArgs().pack()
+        empty_packed_copy = empty_packed.copy()
+        assert len(empty_packed_copy) == 0
+        assert type(empty_packed_copy) is PackedKwArgs
+
+
+def test_kwargs_copy_with_single_item(tmpdir):
+    """Copy works with single-item KwArgs."""
+    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+        kwargs = KwArgs(only_key='only_value')
+        kwargs_copy = kwargs.copy()
+
+        assert kwargs_copy == kwargs
+        assert type(kwargs_copy) is KwArgs
+        assert kwargs_copy['only_key'] == 'only_value'
