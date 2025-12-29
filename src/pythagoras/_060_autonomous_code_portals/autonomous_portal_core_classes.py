@@ -223,7 +223,14 @@ class AutonomousFn(SafeFn):
         if len(overlapping_keys) != 0:
             raise ValueError(f"Overlapping kwargs with fixed kwargs: {sorted(overlapping_keys)}")
         new_fixed_kwargs = {**self.fixed_kwargs, **kwargs}
-        new_fn = type(self)(fn=self, fixed_kwargs=new_fixed_kwargs)
+
+        # Preserve portal and excessive_logging from parent
+
+        new_fn = type(self)(fn=self,
+            fixed_kwargs=new_fixed_kwargs,
+            portal=self._linked_portal_at_init,
+            excessive_logging=self.excessive_logging)
+
         return new_fn
 
 
