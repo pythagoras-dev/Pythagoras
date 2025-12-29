@@ -1,31 +1,32 @@
 """Utilities for inspecting and validating Python functions.
 
-This module contains helper functions to extract function names from source,
-check for compliance with Pythagoras "ordinary" function rules (no *args,
-no defaults, etc.), and enforce these constraints.
+This module provides functions to extract function names from source code,
+validate compliance with Pythagoras ordinarity rules (keyword-only arguments,
+no defaults, no closures, etc.), and enforce these constraints.
 """
 
 import ast
 import textwrap
 import types, inspect
+from functools import cache
 from typing import Callable
 
 from .function_error_exception import FunctionError
 from .._800_foundational_utilities import get_long_infoname
 
-
+@cache
 def get_function_name_from_source(function_source_code: str) -> str:
-    """Extract the function name from a source code snippet.
+    """Extract the function name from source code.
 
     Args:
-        function_source_code: The source code containing a function definition.
+        function_source_code: Source code containing a function definition.
 
     Returns:
-        The function name as it appears before the opening parenthesis.
+        Function name from the definition.
 
     Raises:
-        ValueError: If no function definition line is found in the input,
-             or if there are many of them
+        ValueError: If no function definition is found or multiple definitions
+            are present.
     """
     module_ast = ast.parse(textwrap.dedent(function_source_code))
 
@@ -45,17 +46,13 @@ def get_function_name_from_source(function_source_code: str) -> str:
 
 
 def accepts_unlimited_positional_args(func: Callable) -> bool:
-    """Return True if the function accepts arbitrary positional args.
-
-    The check is based on inspect.signature and looks for a parameter of
-    kind VAR_POSITIONAL (i.e., a "*args" parameter).
+    """Check if function accepts arbitrary positional arguments.
 
     Args:
-        func: The callable to inspect.
+        func: Callable to inspect.
 
     Returns:
-        True if the function defines a VAR_POSITIONAL ("*args") parameter;
-        False otherwise.
+        True if function has a VAR_POSITIONAL (*args) parameter.
     """
 
     signature = inspect.signature(func)
@@ -66,13 +63,13 @@ def accepts_unlimited_positional_args(func: Callable) -> bool:
 
 
 def count_parameters_with_defaults(func: Callable) -> int:
-    """Count parameters that have default values in the function signature.
+    """Count parameters with default values.
 
     Args:
-        func: The callable to inspect.
+        func: Callable to inspect.
 
     Returns:
-        The number of parameters with default values.
+        Number of parameters with default values.
     """
     signature = inspect.signature(func)
     return sum(
@@ -82,27 +79,22 @@ def count_parameters_with_defaults(func: Callable) -> int:
 
 
 def assert_ordinarity(a_func: Callable) -> None:
-    """Validate that a callable complies with Pythagoras "ordinary" rules.
+    """Validate that a callable complies with Pythagoras ordinarity rules.
 
-    In Pythagoras, an "ordinary" function is a regular Python function that:
-    - is a plain function object (not a bound/unbound method, classmethod,
-      staticmethod object, lambda, closure, coroutine, or built-in), and
-    - does not accept unlimited positional arguments (no "*args"), and
-    - has no parameters with default values.
+    An ordinary function must be:
+    - A plain function (not method, classmethod, lambda, closure, or async)
+    - Accept only named arguments (no *args)
+    - Have no parameters with default values
 
     Note:
-    - Static methods: The handling of static methods is undecided; for now they
-      are treated the same as regular functions only if provided directly as a
-      function object. If a function fails any of the checks below, an error is
-      raised.
+        Static method handling is undecided; currently treated as regular
+        functions if provided as function objects.
 
     Args:
-        a_func: The callable to validate.
+        a_func: Callable to validate.
 
     Raises:
-        FunctionError: If the callable violates any of the ordinarity
-            constraints described above (e.g., not a function, is a method,
-            is a lambda/closure/async function, accepts *args, or has defaults).
+        FunctionError: If the callable violates ordinarity constraints.
     """
 
     # TODO: decide how to handle static methods

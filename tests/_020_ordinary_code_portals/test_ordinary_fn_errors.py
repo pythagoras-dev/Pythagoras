@@ -4,10 +4,10 @@ import pytest
 
 from pythagoras import (
     OrdinaryFn, OrdinaryCodePortal, _PortalTester,
-    FunctionError, get_normalized_function_source
+    FunctionError, get_normalized_fn_source_code_str
 )
 from pythagoras._020_ordinary_code_portals.code_normalizer import (
-    _get_normalized_function_source_impl
+    _get_normalized_fn_source_code_str_impl
 )
 
 
@@ -27,10 +27,10 @@ def test_ordinary_fn_invalid_input_type(tmpdir):
 def test_normalization_empty_source():
     """Test normalization with empty or whitespace-only source."""
     with pytest.raises(ValueError):
-        _get_normalized_function_source_impl("", drop_pth_decorators=False)
+        _get_normalized_fn_source_code_str_impl("", drop_pth_decorators=False)
 
     with pytest.raises(ValueError):
-        _get_normalized_function_source_impl("   \n\n  ", drop_pth_decorators=False)
+        _get_normalized_fn_source_code_str_impl("   \n\n  ", drop_pth_decorators=False)
 
 
 def test_normalization_no_function_definition():
@@ -41,7 +41,7 @@ y = 20
 result = x + y
 """
     with pytest.raises(ValueError, match="No function definition found"):
-        _get_normalized_function_source_impl(source, drop_pth_decorators=False)
+        _get_normalized_fn_source_code_str_impl(source, drop_pth_decorators=False)
 
 
 def test_normalization_multiple_decorators():
@@ -57,7 +57,7 @@ def test_normalization_multiple_decorators():
     # This should raise FunctionError due to multiple decorators check
     # However, external decorators are not Pythagoras decorators
     with pytest.raises((FunctionError, ValueError)):
-        get_normalized_function_source(decorated_func)
+        get_normalized_fn_source_code_str(decorated_func)
 
 
 def test_normalization_non_pythagoras_decorator():
@@ -68,7 +68,7 @@ def my_func(x):
     return x
 """
     with pytest.raises(ValueError, match="non-Pythagoras decorator"):
-        _get_normalized_function_source_impl(source, drop_pth_decorators=True)
+        _get_normalized_fn_source_code_str_impl(source, drop_pth_decorators=True)
 
 
 def test_normalization_invalid_ast_node():
@@ -78,7 +78,7 @@ class MyClass:
     pass
 """
     with pytest.raises(ValueError):
-        _get_normalized_function_source_impl(source, drop_pth_decorators=False)
+        _get_normalized_fn_source_code_str_impl(source, drop_pth_decorators=False)
 
 
 def test_ordinary_fn_compile_error(tmpdir):
@@ -172,7 +172,7 @@ def test_normalization_preserves_function_logic():
         else:
             return y
 
-    normalized = get_normalized_function_source(original_func)
+    normalized = get_normalized_fn_source_code_str(original_func)
 
     # Should not contain docstring or comments
     assert "docstring" not in normalized

@@ -1,8 +1,8 @@
 """The @ordinary decorator for converting functions to OrdinaryFn objects.
 
-This module provides the `ordinary` class, which serves as a decorator to
-transform regular Python functions into Pythagoras OrdinaryFn objects,
-enforcing "ordinarity" constraints (no *args, no defaults, etc.).
+This module provides the ordinary class, a decorator that transforms regular
+Python functions into Pythagoras OrdinaryFn objects while enforcing ordinarity
+constraints (keyword-only arguments, no defaults, etc.).
 """
 
 from typing import Callable, Any
@@ -31,24 +31,23 @@ class ordinary:
     _portal: OrdinaryCodePortal | None
 
     def __init__(self, portal: OrdinaryCodePortal | None = None):
-        """Initialize the decorator.
+        """Initialize the decorator with optional portal linkage.
 
         Args:
-            portal: Optional OrdinaryCodePortal to link to the resulting
-                OrdinaryFn wrappers.
+            portal: Optional portal to associate with wrapped functions.
         """
         if not (portal is None or isinstance(portal, OrdinaryCodePortal)):
             raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {type(portal).__name__}")
         self._portal = portal
 
     def __call__(self, fn: Callable) -> OrdinaryFn:
-        """Wrap a callable and return its OrdinaryFn representation.
+        """Wrap a function and return its OrdinaryFn representation.
 
         Args:
-            fn: The function to convert into an OrdinaryFn.
+            fn: The function to wrap.
 
         Returns:
-            The wrapper around the provided function.
+            OrdinaryFn wrapper for the provided function.
         """
         wrapper = OrdinaryFn(fn, portal=self._portal)
         return wrapper
@@ -65,9 +64,9 @@ class ordinary:
         """Prevent unpickling of the decorator instance.
 
         Args:
-            state: The state object to restore (unused).
+            state: The state object to restore.
 
         Raises:
-            TypeError: Always, as decorators are not meant to be pickled.
+            TypeError: Always, as decorators should not be pickled.
         """
         raise TypeError("Decorators cannot be pickled.")

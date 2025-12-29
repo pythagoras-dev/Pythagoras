@@ -1,14 +1,15 @@
 """Function source code normalization utilities.
 
-This module provides functionality to normalize Python function source code
-by removing decorators, docstrings, type annotations, and comments,
-and applying PEP 8 formatting. This allows for consistent comparison
-of function implementations.
+This module provides functionality to normalize Python function source code by
+removing decorators, docstrings, type annotations, and comments, then applying
+PEP 8 formatting. This enables consistent comparison and hashing of function
+implementations.
 """
 
 import ast
 import inspect
 import textwrap
+from functools import cache
 from typing import Callable
 import autopep8
 
@@ -29,17 +30,16 @@ _pythagoras_decorator_names: set[str] = {
 
 
 def _is_pythagoras_decorator(decorator_node: ast.expr) -> bool:
-    """Check if a decorator AST node represents a Pythagoras decorator.
+    """Check if decorator AST node is a Pythagoras decorator.
 
-    Analyzes decorator syntax to identify Pythagoras-specific
-    decorators (@ordinary, @pure, etc.) in their various forms: simple names,
-    module-qualified attributes, or decorator calls.
+    Identifies Pythagoras decorators (@ordinary, @pure, etc.) in various forms:
+    simple names, module-qualified attributes, or decorator calls.
 
     Args:
-        decorator_node: An AST expression node representing a decorator.
+        decorator_node: AST expression node representing a decorator.
 
     Returns:
-        True if the decorator is a known Pythagoras decorator, False otherwise.
+        True if decorator is a known Pythagoras decorator.
     """
     if isinstance(decorator_node, ast.Name):
         return decorator_node.id in _pythagoras_decorator_names
@@ -56,23 +56,21 @@ class _AnnotationRemover(ast.NodeTransformer):
     """AST transformer that strips type annotations from Python code.
 
     Removes type hints from function signatures, arguments, and variable
-    annotations while preserving executable logic. This is essential for
-    creating normalized function representations that can be compared
-    independent of type annotation differences.
+    annotations while preserving executable logic. This enables normalized
+    function representations that can be compared independently of type hints.
     """
 
     def visit_AnnAssign(self, node: ast.AnnAssign) -> ast.Assign | None:
         """Convert annotated assignment to regular assignment.
 
-        Transforms `x: int = 5` into `x = 5` or `x: int` into a bare
-        name expression, ensuring annotated variables remain executable
-        after type hints are stripped.
+        Transforms annotated assignments while preserving executable logic:
+        `x: int = 5` becomes `x = 5`, and `x: int` becomes a bare name.
 
         Args:
-            node: Annotated assignment node to transform.
+            node: Annotated assignment node.
 
         Returns:
-            Regular assignment node or expression statement.
+            Regular assignment or expression statement.
         """
         if node.value is not None:
             new_node = ast.Assign(targets=[node.target], value=node.value)
@@ -90,10 +88,10 @@ class _AnnotationRemover(ast.NodeTransformer):
         """Remove return annotation and process body.
 
         Args:
-            node: Function definition node to process.
+            node: Function definition node.
 
         Returns:
-            Transformed function definition without return type annotation.
+            Transformed function without return annotation.
         """
         node.returns = None
         self.generic_visit(node)
@@ -106,10 +104,10 @@ class _AnnotationRemover(ast.NodeTransformer):
         """Remove return annotation and process body.
 
         Args:
-            node: Async function definition node to process.
+            node: Async function definition node.
 
         Returns:
-            Transformed async function definition without return type annotation.
+            Transformed async function without return annotation.
         """
         node.returns = None
         self.generic_visit(node)
@@ -119,57 +117,50 @@ class _AnnotationRemover(ast.NodeTransformer):
         return node
 
 
-def _get_normalized_function_source_impl(
-        a_func: Callable | str,
-        drop_pth_decorators: bool = False,
-        ) -> str:
-    """Produce a normalized representation of a function's source code.
-
-    Normalization creates a canonical form of function source code that enables
-    reliable comparison of function logic independent of formatting, comments,
-    type hints, or decorators. This is essential for Pythagoras to detect when
-    function implementations are semantically identical despite superficial
-    differences.
-
-    The normalization pipeline:
-    1. Extracts source code (via inspect.getsource for callables)
-    2. Dedents and removes empty lines
-    3. Parses into AST and validates single function definition
-    4. Optionally strips Pythagoras decorators (@ordinary, @pure, etc.)
-    5. Removes all docstrings, type annotations, and variable annotations
-    6. Ensures syntactic validity (adds 'pass' to empty bodies)
-    7. Unparses and formats with autopep8 for consistent style
+def _extract_fn_name_and_source_code(a_func: Callable | str) -> tuple[str | None, str]:
+    """Extract source code and function name from callable or string.
 
     Args:
-        a_func: The target function or a string containing its source code.
-        drop_pth_decorators: If True, remove a single known Pythagoras
-            decorator (e.g., @ordinary) from the function, if present.
+        a_func: Function or source code string.
 
     Returns:
-        A normalized source code string for the function.
+        Tuple of (function_name_or_none, source_code). Name may be None for
+        string inputs; extracted later during normalization.
 
     Raises:
-        FunctionError: If the function has multiple decorators or fails
-            ordinarity checks.
-        TypeError: If input types are not as expected or AST node types are invalid.
-        ValueError: If parsing assumptions fail or integrity checks do not hold.
-        SyntaxError: If the provided source string cannot be parsed.
+        TypeError: If input is neither callable nor string.
     """
-
-    a_func_name, code = None, ""
-
     if callable(a_func):
         assert_ordinarity(a_func)
-        a_func_name = get_long_infoname(a_func)
-        code = inspect.getsource(a_func)
+        fn_name_for_error_messages = get_long_infoname(a_func)
+        fn_source_code = inspect.getsource(a_func)
+        return fn_name_for_error_messages, fn_source_code
     elif isinstance(a_func, str):
-        code = a_func
-        a_func_name = get_function_name_from_source(code)
+        fn_source_code = a_func
+        fn_name_for_error_messages = get_function_name_from_source(fn_source_code)
+        return fn_name_for_error_messages, fn_source_code
     else:
         raise TypeError(f"a_func must be a callable or a string, got {type(a_func).__name__}")
 
-    code = textwrap.dedent(code)
-    code_lines = code.splitlines()
+
+def _dedent_and_clean_empty_lines(
+        fn_source_code: str,
+        fn_name_for_error_messages: str | None
+        ) -> str:
+    """Dedent source code and remove empty lines.
+
+    Args:
+        fn_source_code: Source code string to clean.
+        fn_name_for_error_messages: Function name for error messages; may be None.
+
+    Returns:
+        Cleaned source with dedentation and no empty lines.
+
+    Raises:
+        ValueError: If code is empty after cleaning.
+    """
+    fn_source_code = textwrap.dedent(fn_source_code)
+    code_lines = fn_source_code.splitlines()
 
     code_clean_version_lines = []
     for line in code_lines:
@@ -178,52 +169,107 @@ def _get_normalized_function_source_impl(
         code_clean_version_lines.append(line)
 
     if not code_clean_version_lines:
-        raise ValueError(f"Cannot normalize empty code for function {a_func_name}")
+        raise ValueError(f"Cannot normalize empty code for function {fn_name_for_error_messages}")
 
-    code_clean_version = "\n".join(code_clean_version_lines)
+    return "\n".join(code_clean_version_lines)
 
-    if a_func_name is None:
-        a_func_name = get_function_name_from_source(code_clean_version)
+
+def _parse_and_validate_function_ast(
+        code_clean_version: str,
+        fn_name_for_error_messages: str
+        ) -> ast.Module:
+    """Parse source into AST and validate single function definition.
+
+    Args:
+        code_clean_version: Cleaned source code string.
+        fn_name_for_error_messages: Function name for error messages.
+
+    Returns:
+        Validated AST Module with function definition.
+
+    Raises:
+        TypeError: If AST is not a Module.
+        ValueError: If AST body is empty or lacks FunctionDef.
+        SyntaxError: If source cannot be parsed.
+    """
     code_ast = ast.parse(code_clean_version)
 
     if not isinstance(code_ast, ast.Module):
-        raise TypeError(f"Expected AST Module for {a_func_name}, got {type(code_ast).__name__}")
-    
-    if not code_ast.body:
-        raise ValueError(f"Empty AST body for function {a_func_name}")
-    
-    if not isinstance(code_ast.body[0], (ast.FunctionDef)):
-        raise ValueError(f"Top-level node is not a FunctionDef for {a_func_name}; got {type(code_ast.body[0]).__name__}")
+        raise TypeError(f"Expected AST Module for {fn_name_for_error_messages}, got {type(code_ast).__name__}")
 
-    # TODO: add support for multiple decorators???
+    if not code_ast.body:
+        raise ValueError(f"Empty AST body for function {fn_name_for_error_messages}")
+
+    if not isinstance(code_ast.body[0], (ast.FunctionDef)):
+        raise ValueError(f"Top-level node is not a FunctionDef for {fn_name_for_error_messages}; got {type(code_ast.body[0]).__name__}")
+
+    return code_ast
+
+
+def _validate_and_remove_decorators(
+        code_ast: ast.Module,
+        fn_name_for_error_messages: str,
+        drop_pth_decorators: bool
+        ) -> None:
+    """Validate decorator count and optionally remove Pythagoras decorators.
+
+    Modifies AST in place to remove decorators when requested.
+
+    Args:
+        code_ast: AST Module with function definition.
+        fn_name_for_error_messages: Function name for error messages.
+        drop_pth_decorators: Whether to remove Pythagoras decorators.
+
+    Raises:
+        FunctionError: If function has multiple decorators.
+        ValueError: If drop_pth_decorators is True but decorator is not
+            Pythagoras-specific.
+    """
     decorator_list = code_ast.body[0].decorator_list
     if len(decorator_list) > 1:
-        # Multiple decorators complicate source comparison and execution model.
-        # Pythagoras decorators are designed to be composable at the class level
-        # (e.g., OrdinaryFn -> AutonomousFn -> PureFn) rather than via stacking.
+        # Multiple decorators complicate source comparison and execution.
+        # Pythagoras decorators compose at the class level (OrdinaryFn ->
+        # AutonomousFn -> PureFn) rather than via stacking.
         raise FunctionError(
-            f"Function {a_func_name} can't have multiple decorators,"
-            + " only one decorator is allowed.")
+            f"Function {fn_name_for_error_messages} can't have multiple "
+            "decorators; only one decorator is allowed.")
 
-    # Remove Pythagoras decorators if requested
+    # Remove Pythagoras decorators when requested
     if drop_pth_decorators and decorator_list:
         decorator_node = decorator_list[0]
         if _is_pythagoras_decorator(decorator_node):
             code_ast.body[0].decorator_list = []
         else:
             raise ValueError(
-                f"Function {a_func_name} has a non-Pythagoras decorator "
+                f"Function {fn_name_for_error_messages} has a non-Pythagoras decorator "
                 f"that cannot be dropped with drop_pth_decorators=True"
             )
 
-    # Remove type annotations using NodeTransformer
+
+def _remove_type_annotations(code_ast: ast.Module) -> ast.Module:
+    """Remove type annotations from AST.
+
+    Args:
+        code_ast: AST Module to process.
+
+    Returns:
+        Transformed AST without type annotations.
+    """
     annotation_remover = _AnnotationRemover()
     code_ast = annotation_remover.visit(code_ast)
-    
-    # Fix missing locations after AST transformation
     ast.fix_missing_locations(code_ast)
-    
-    # Remove docstrings
+    return code_ast
+
+
+def _remove_docstrings(code_ast: ast.Module) -> None:
+    """Remove docstrings from all AST nodes.
+
+    Modifies AST in place, removing docstring expressions and adding 'pass' to
+    empty bodies.
+
+    Args:
+        code_ast: AST Module to process.
+    """
     for node in ast.walk(code_ast):
         if not isinstance(node
                 , (ast.FunctionDef, ast.ClassDef
@@ -236,23 +282,96 @@ def _get_normalized_function_source_impl(
             continue
         if not hasattr(node.body[0], 'value'):
             continue
-        
+
         # Check for docstring: ast.Constant (Python 3.8+) with string value
-        # or ast.Str (deprecated but kept for compatibility)
         first_value = node.body[0].value
         is_docstring = False
-        
+
         if isinstance(first_value, ast.Constant) and isinstance(first_value.value, str):
             is_docstring = True
-        
+
         if not is_docstring:
             continue
-            
+
         node.body = node.body[1:]
         if len(node.body) < 1:
             node.body.append(ast.Pass())
+
+
+@cache
+def _normalize_fn_source_code_str(
+        fn_source_code: str,
+        fn_name_for_error_messages: str | None,
+        drop_pth_decorators: bool = False,
+        ) -> str:
+    """Normalize function source code string.
+
+    Applies full normalization: dedent, clean empty lines, parse AST, remove
+    decorators/annotations/docstrings, and PEP 8 format.
+
+    Args:
+        fn_source_code: Source code string to normalize.
+        fn_name_for_error_messages: Function name for error messages; may be None.
+        drop_pth_decorators: Whether to remove Pythagoras decorators.
+
+    Returns:
+        Normalized source code string.
+
+    Raises:
+        FunctionError: If function has multiple decorators.
+        TypeError: If AST node types are invalid.
+        ValueError: If parsing assumptions or integrity checks fail.
+        SyntaxError: If source cannot be parsed.
+    """
+    code_clean_version = _dedent_and_clean_empty_lines(fn_source_code, fn_name_for_error_messages)
+
+    if fn_name_for_error_messages is None:
+        fn_name_for_error_messages = get_function_name_from_source(code_clean_version)
+
+    code_ast = _parse_and_validate_function_ast(code_clean_version, fn_name_for_error_messages)
+    _validate_and_remove_decorators(code_ast, fn_name_for_error_messages, drop_pth_decorators)
+    code_ast = _remove_type_annotations(code_ast)
+    _remove_docstrings(code_ast)
 
     result = ast.unparse(code_ast)
     result = autopep8.fix_code(result)
 
     return result
+
+
+def _get_normalized_fn_source_code_str_impl(
+        a_func: Callable | str,
+        drop_pth_decorators: bool = False,
+        ) -> str:
+    """Produce normalized representation of function source code.
+
+    Normalization creates canonical source form enabling reliable comparison
+    independent of formatting, comments, type hints, or decorators. This allows
+    Pythagoras to detect semantically identical functions despite superficial
+    differences.
+
+    Normalization pipeline:
+    1. Extract source code (via inspect.getsource for callables)
+    2. Dedent and remove empty lines
+    3. Parse into AST and validate single function definition
+    4. Optionally strip Pythagoras decorators (@ordinary, @pure, etc.)
+    5. Remove docstrings, type annotations, and variable annotations
+    6. Ensure syntactic validity (add 'pass' to empty bodies)
+    7. Unparse and apply PEP 8 formatting for consistent style
+
+    Args:
+        a_func: Function or source code string.
+        drop_pth_decorators: Whether to remove Pythagoras decorators.
+
+    Returns:
+        Normalized source code string.
+
+    Raises:
+        FunctionError: If function has multiple decorators or fails ordinarity
+            checks.
+        TypeError: If input types or AST node types are invalid.
+        ValueError: If parsing assumptions or integrity checks fail.
+        SyntaxError: If source cannot be parsed.
+    """
+    func_name_for_error_messages, code = _extract_fn_name_and_source_code(a_func)
+    return _normalize_fn_source_code_str(code, func_name_for_error_messages, drop_pth_decorators)

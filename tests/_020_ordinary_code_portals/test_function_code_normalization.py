@@ -1,7 +1,7 @@
 import inspect, autopep8
 
 from pythagoras import _PortalTester
-from pythagoras._020_ordinary_code_portals import get_normalized_function_source
+from pythagoras._020_ordinary_code_portals import get_normalized_fn_source_code_str
 from pythagoras._020_ordinary_code_portals import OrdinaryFn, OrdinaryCodePortal
 
 
@@ -26,13 +26,13 @@ def f_comments():
 
 
 def test_basics():
-    no_docsting = get_normalized_function_source(f_docstring)
+    no_docsting = get_normalized_fn_source_code_str(f_docstring)
     assert "CRAZY" in inspect.getsource(f_docstring)
     assert "CRAZY" not in no_docsting
     assert no_docsting != autopep8.fix_code(inspect.getsource(f_docstring))
     assert no_docsting == autopep8.fix_code(no_docsting)
 
-    no_comments = get_normalized_function_source(f_comments)
+    no_comments = get_normalized_fn_source_code_str(f_comments)
     assert "STRANGE" in inspect.getsource(f_comments)
     assert "STRANGE" not in no_comments
     assert no_comments != autopep8.fix_code(inspect.getsource(f_comments))
@@ -46,7 +46,7 @@ def a2(x): # a sample function to test
 
 def test_inclosed():
     global a2
-    old_a2 = get_normalized_function_source(a2)
+    old_a2 = get_normalized_fn_source_code_str(a2)
     del a2
 
     def a2(x):
@@ -55,7 +55,7 @@ def test_inclosed():
         # unneeded comment
         return (x * x)
 
-    new_a2 = get_normalized_function_source(a2)
+    new_a2 = get_normalized_fn_source_code_str(a2)
     assert old_a2 == new_a2
     assert new_a2 == autopep8.fix_code(new_a2)
 
@@ -67,7 +67,7 @@ def a3(x): # a sample function to test
 
 def test_inclosed2():
     global a3
-    old_a3 = get_normalized_function_source(a3)
+    old_a3 = get_normalized_fn_source_code_str(a3)
     del a3
     def a3(x):
         """ another version of the same function
@@ -80,7 +80,7 @@ def test_inclosed2():
         else:
             return 0
 
-    new_a3 = get_normalized_function_source(a3)
+    new_a3 = get_normalized_fn_source_code_str(a3)
     assert old_a3 == new_a3
     assert new_a3 == autopep8.fix_code(new_a3)
 
@@ -92,17 +92,17 @@ def test_different(tmpdir):
         for f1 in all_funcs:
             for f2 in all_funcs:
                 if f1 is f2:
-                    assert (get_normalized_function_source(f1)
-                            == get_normalized_function_source(f2))
-                    assert (get_normalized_function_source(
+                    assert (get_normalized_fn_source_code_str(f1)
+                            == get_normalized_fn_source_code_str(f2))
+                    assert (get_normalized_fn_source_code_str(
                                 OrdinaryFn(f1, portal=t.portal))
-                            == get_normalized_function_source(f2))
+                            == get_normalized_fn_source_code_str(f2))
                 else:
-                    assert (get_normalized_function_source(f1)
-                            != get_normalized_function_source(f2))
-                    assert (get_normalized_function_source(
+                    assert (get_normalized_fn_source_code_str(f1)
+                            != get_normalized_fn_source_code_str(f2))
+                    assert (get_normalized_fn_source_code_str(
                                 OrdinaryFn(f1, portal = t.portal))
-                            != get_normalized_function_source(f2))
+                            != get_normalized_fn_source_code_str(f2))
 
 
 def a4(x:int)->float:
@@ -114,7 +114,7 @@ def a4(x:int)->float:
 
 def test_type_annotations():
     global a4
-    old_a4 = get_normalized_function_source(a4)
+    old_a4 = get_normalized_fn_source_code_str(a4)
     del a4
     def a4(x):
         if x > 0:
@@ -125,6 +125,6 @@ def test_type_annotations():
         else:
             return 0
 
-    new_a4 = get_normalized_function_source(a4)
+    new_a4 = get_normalized_fn_source_code_str(a4)
     assert old_a4 == new_a4
     assert new_a4 == autopep8.fix_code(new_a4)
