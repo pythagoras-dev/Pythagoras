@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import builtins
 
-from .. import FunctionError
-from .._020_ordinary_code_portals.code_normalizer import _pythagoras_decorator_names
-from .._040_logging_code_portals import KwArgs
+from .._020_ordinary_code_portals import FunctionError
+
 
 from .._060_autonomous_code_portals.names_usage_analyzer import (
     analyze_names_in_function)
@@ -73,7 +72,8 @@ class AutonomousFn(SafeFn):
     It also supports partial application via fixed keyword arguments.
     """
 
-    _fixed_kwargs_packed: KwArgs | None
+    _packed_fixed_kwargs: PackedKwArgs | None
+    _fixed_kwargs: dict | None
 
     def __init__(self, fn: Callable|str|SafeFn
                  , fixed_kwargs: dict[str,Any]|None = None
@@ -97,15 +97,12 @@ class AutonomousFn(SafeFn):
             , portal = portal
             , excessive_logging = excessive_logging)
 
-        fixed_kwargs = dict() if fixed_kwargs is None else fixed_kwargs
-        fixed_kwargs = KwArgs(**fixed_kwargs)
-        fixed_kwargs_packed = fixed_kwargs.pack(store=False)
+        self._packed_fixed_kwargs = None
 
+        merged_kwargs = dict() if fixed_kwargs is None else fixed_kwargs
         if isinstance(fn, AutonomousFn):
-            self._fixed_kwargs_packed = KwArgs(**{**fn.fixed_kwargs, **fixed_kwargs})
-            self._fixed_kwargs_packed = self._fixed_kwargs_packed.pack()
-        else:
-            self._fixed_kwargs_packed = fixed_kwargs_packed
+            merged_kwargs = {**fn.fixed_kwargs, **merged_kwargs}
+        self._fixed_kwargs = merged_kwargs
 
         fn_name = self.name
 
@@ -138,13 +135,27 @@ class AutonomousFn(SafeFn):
 
 
     @cached_property
-    def fixed_kwargs(self) -> KwArgs:
+    def fixed_kwargs(self) -> dict:
         """KwArgs of pre-bound keyword arguments for this function.
 
-        Returns:
-            KwArgs: The fixed keyword arguments.
         """
-        return self._fixed_kwargs_packed.unpack()
+        if self._fixed_kwargs is not None:
+            return self._fixed_kwargs.copy()
+        elif self._packed_fixed_kwargs is not None:
+            return self._packed_fixed_kwargs.unpack()
+        else:
+            raise RuntimeError(f"No fixed kwargs stored for AutonomousFn {self.name}")
+
+
+    @cached_property
+    def packed_fixed_kwargs(self) -> PackedKwArgs:
+        """Packed version of fixed kwargs, stored in the portal."""
+        if self._packed_fixed_kwargs is not None:
+            return self._packed_fixed_kwargs.copy()
+        elif self._fixed_kwargs is not None:
+            return KwArgs(**self._fixed_kwargs).pack()
+        else:
+            raise RuntimeError(f"No fixed kwargs stored for AutonomousFn {self.name}")
 
 
     def execute(self, **kwargs) -> Any:
@@ -202,7 +213,7 @@ class AutonomousFn(SafeFn):
         overlapping_keys = set(kwargs.keys()) & set(self.fixed_kwargs.keys())
         if len(overlapping_keys) != 0:
             raise ValueError(f"Overlapping kwargs with fixed kwargs: {sorted(overlapping_keys)}")
-        new_fixed_kwargs = {**self.fixed_kwargs,**kwargs}
+        new_fixed_kwargs = {**self.fixed_kwargs, **kwargs}
         new_fn = type(self)(fn=self, fixed_kwargs=new_fixed_kwargs)
         return new_fn
 
@@ -217,20 +228,21 @@ class AutonomousFn(SafeFn):
         """
         super()._first_visit_to_portal(portal)
         with portal:
-            _ = self.fixed_kwargs.pack()
+            _ = self.packed_fixed_kwargs
 
 
     def __getstate__(self):
         """This method is called when the object is pickled."""
         state = super().__getstate__()
-        state["fixed_kwargs_packed"] = self._fixed_kwargs_packed
+        state["packed_fixed_kwargs"] = self.packed_fixed_kwargs
         return state
 
 
     def __setstate__(self, state):
         """This method is called when the object is unpickled."""
         super().__setstate__(state)
-        self._fixed_kwargs_packed = state["fixed_kwargs_packed"]
+        self._packed_fixed_kwargs = state["packed_fixed_kwargs"]
+        self._fixed_kwargs = None
 
 
     @property
