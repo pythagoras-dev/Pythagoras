@@ -21,5 +21,9 @@ def test_bad_simple_nested():
     assert analyzer.names.explicitly_global_unbound_deep == set()
     assert analyzer.names.explicitly_nonlocal_unbound_deep == set()
     assert analyzer.names.imported == set()
-    assert analyzer.names.local == {"nested", "x"}
-    assert analyzer.names.unclassified_deep == {"math","sys"}
+    # 'sys' is now correctly tracked as local due to 'del sys' establishing local scope
+    # (matches Python's compile-time behavior where del establishes local scope)
+    assert analyzer.names.local == {"nested", "x", "sys"}
+    # 'sys' is NOT in unclassified because del made it accessible before the load
+    # Only 'math' remains unclassified (used in nested function without import)
+    assert analyzer.names.unclassified_deep == {"math"}
