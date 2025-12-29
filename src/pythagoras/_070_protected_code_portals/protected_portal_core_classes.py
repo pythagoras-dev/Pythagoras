@@ -17,9 +17,9 @@ Under the hood, validators are autonomous functions.
 from __future__ import annotations
 
 from copy import copy
-from typing import Any, Callable
+
 from parameterizable import sort_dict_by_keys
-from persidict import PersiDict, Joker, KEEP_CURRENT
+from persidict import PersiDict, Joker
 
 from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._010_basic_portals.basic_portal_core_classes import _visit_portal
@@ -79,8 +79,6 @@ class ProtectedFn(AutonomousFn):
     re-attempting the validation/execution loop.
     """
 
-    _pre_validators_cache: list[ValidatorFn] | None
-    _post_validators_cache: list[ValidatorFn] | None
     _pre_validators_addrs: list[ValueAddr]
     _post_validators_addrs: list[ValueAddr]
 
@@ -135,13 +133,13 @@ class ProtectedFn(AutonomousFn):
             pre_validators, PreValidatorFn)
         post_validators = self._normalize_validators(
             post_validators, PostValidatorFn)
+        self._set_cached_properties(pre_validators = pre_validators,
+            post_validators = post_validators)
 
-        self._pre_validators_cache = pre_validators
-        self._post_validators_cache = post_validators
-        self._pre_validators_addrs = [ValueAddr(g, store=False)
-                                      for g in self._pre_validators_cache]
-        self._post_validators_addrs = [ValueAddr(v, store=False)
-                                       for v in self._post_validators_cache]
+        self._pre_validators_addrs = [
+            ValueAddr(g, store=False) for g in pre_validators]
+        self._post_validators_addrs = [
+            ValueAddr(v, store=False) for v in post_validators]
 
 
     def __getstate__(self):
@@ -167,30 +165,24 @@ class ProtectedFn(AutonomousFn):
         _visit_portal(self.post_validators, portal)
 
 
-    @property
+    @cached_property
     def pre_validators(self) -> list[AutonomousFn]:
         """List of pre-validator functions for this protected function.
 
         Returns:
             list[AutonomousFn]: A cached list of PreValidatorFn instances.
         """
-        if not hasattr(self, "_pre_validators_cache"):
-            self._pre_validators_cache = [
-                addr.get() for addr in self._pre_validators_addrs]
-        return self._pre_validators_cache
+        return [address.get() for address in self._pre_validators_addrs]
 
 
-    @property
+    @cached_property
     def post_validators(self) -> list[AutonomousFn]:
         """List of post-validator functions for this protected function.
 
         Returns:
             list[AutonomousFn]: A cached list of PostValidatorFn instances.
         """
-        if not hasattr(self, "_post_validators_cache"):
-            self._post_validators_cache = [
-                addr.get() for addr in self._post_validators_addrs]
-        return self._post_validators_cache
+        return [address.get() for address in self._post_validators_addrs]
 
 
     def can_be_executed(self
@@ -346,26 +338,6 @@ class ProtectedFn(AutonomousFn):
             storage for this protected function.
         """
         return super().portal
-
-
-    def _invalidate_cache(self):
-        """Invalidate the function's attribute cache.
-
-        If the function's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
-        """
-        super()._invalidate_cache()
-        if hasattr(self, "_post_validators_cached"):
-            if not hasattr(self, "_post_validators_addrs"):
-                raise AttributeError("Premature cache invalidation: "
-                                     "_post_validators_addrs is missing.")
-            del self._post_validators_cache
-        if hasattr(self, "_pre_validators_cached"):
-            if not hasattr(self, "_pre_validators_addrs"):
-                raise AttributeError("Premature cache invalidation: "
-                                     "_pre_validators_addrs is missing.")
-            del self._pre_validators_cache
 
 
     def get_signature(self, arguments:dict) -> ProtectedFnCallSignature:
