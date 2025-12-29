@@ -11,11 +11,30 @@ from .._060_autonomous_code_portals.names_usage_analyzer import (
 from .._050_safe_code_portals.safe_portal_core_classes import *
 
 class AutonomousCodePortal(SafeCodePortal):
-    """Portal configured for enforcing autonomy constraints.
+    """Portal for managing and executing autonomous functions with self-containment enforcement.
 
-    This portal behaves like SafeCodePortal but is specialized for autonomous
-    functions. It controls logging and consistency checks for operations related
-    to AutonomousFn instances.
+    An AutonomousCodePortal extends SafeCodePortal to provide specialized support for
+    autonomous functions - self-contained functions that depend only on built-ins and
+    names imported within their own body. This portal ensures that all functions
+    registered through it satisfy autonomy constraints at both static analysis time
+    (decoration) and runtime (execution).
+
+    The portal manages the full lifecycle of AutonomousFn instances, including:
+    - Static validation of function source code via AST analysis
+    - Partial application support through fixed keyword arguments
+    - Content-addressable storage of autonomous functions and their dependencies
+    - Logging and consistency checks for all autonomous function operations
+
+    Autonomy Rules Enforced:
+        - No external name references (except built-ins)
+        - All imports must be inside the function body
+        - No yield or yield from statements
+        - No nonlocal variable references
+        - No relative imports (from . or from ..)
+
+    This portal type is the foundation for distributed execution patterns where
+    functions must be serializable and executable in isolation without relying
+    on ambient state or module-level definitions.
     """
     def __init__(self
             , root_dict: PersiDict | str | None = None
@@ -39,9 +58,17 @@ class AutonomousCodePortal(SafeCodePortal):
 
 
 class AutonomousFnCallSignature(SafeFnCallSignature):
-    """A signature of a call to an autonomous function.
+    """Unique identifier for a specific autonomous function invocation.
 
-    This extends SafeFnCallSignature to reference AutonomousFn instances.
+    AutonomousFnCallSignature combines an AutonomousFn reference with a specific
+    set of arguments to create a unique identifier for that particular function call.
+    This signature is used for:
+    - Logging and tracking execution history
+    - Content-addressable result caching
+    - Replay and reproducibility features
+
+    The signature ensures type safety by restricting the function reference to
+    AutonomousFn instances, preventing accidental mixing with non-autonomous functions.
     """
 
     def __init__(self, fn: AutonomousFn, arguments: dict):
@@ -64,14 +91,48 @@ class AutonomousFnCallSignature(SafeFnCallSignature):
 
 
 class AutonomousFn(SafeFn):
-    """A SafeFn wrapper that enforces function autonomy rules.
+    """Self-contained function wrapper with strict autonomy enforcement and partial application support.
 
-    AutonomousFn performs static validation at construction time to ensure that
-    the wrapped function uses only built-ins or names imported inside its body,
-    has no yield statements, does not reference nonlocal variables,
-    and does not have relative imports.
+    AutonomousFn wraps regular Python functions to create fully autonomous, self-contained
+    units of execution. These functions are guaranteed to depend only on:
+    - Python built-in objects (functions, types, constants)
+    - Names explicitly imported inside the function body
+    - Arguments passed at call time (including fixed kwargs)
 
-    AutonomousFn also supports partial application via fixed keyword arguments.
+    Autonomy Validation:
+        Static Analysis (at construction):
+            - Parses function source code into an AST
+            - Identifies all name references and their scopes
+            - Verifies no external dependencies (global/nonlocal unbound names)
+            - Checks for prohibited constructs (yield, relative imports)
+            - Ensures all non-builtin names are imported within the function body
+
+        Runtime Enforcement:
+            - Executes function in controlled namespace via portal
+            - Merges fixed kwargs with call-time arguments
+            - Validates no overlap between fixed and call-time kwargs
+
+    Partial Application:
+        AutonomousFn supports partial application through fixed keyword arguments.
+        This allows creating specialized versions of functions with some parameters
+        pre-filled. Fixed kwargs are:
+        - Stored alongside the function definition
+        - Serialized in PackedKwArgs form for content-addressable storage
+        - Automatically merged at execution time
+        - Validated to prevent overlaps
+
+    Design Rationale:
+        Autonomy constraints enable functions to be safely:
+        - Serialized and transmitted across processes/machines
+        - Executed in isolated environments without setup
+        - Cached and replayed deterministically
+        - Composed and partially applied without side effects
+
+    This is the foundation for Pythagoras' distributed computing and swarming capabilities.
+
+    Attributes:
+        _packed_fixed_kwargs: Serialized form of fixed arguments (for storage).
+        _fixed_kwargs: Runtime dict of pre-bound keyword arguments (for execution).
     """
 
     _packed_fixed_kwargs: PackedKwArgs | None
@@ -145,8 +206,17 @@ class AutonomousFn(SafeFn):
 
     @cached_property
     def fixed_kwargs(self) -> dict:
-        """KwArgs of pre-bound keyword arguments for this function.
+        """Dictionary of pre-bound keyword arguments for this function.
 
+        Returns a copy of the fixed kwargs, unpacking them from storage if necessary.
+        These are the parameters that were partially applied when the AutonomousFn
+        was created or when fix_kwargs() was called.
+
+        Returns:
+            Dictionary mapping parameter names to their fixed values.
+
+        Raises:
+            RuntimeError: If neither packed nor unpacked fixed kwargs are available.
         """
         if self._fixed_kwargs is not None:
             return self._fixed_kwargs.copy()
@@ -158,7 +228,19 @@ class AutonomousFn(SafeFn):
 
     @cached_property
     def packed_fixed_kwargs(self) -> PackedKwArgs:
-        """Packed version of fixed kwargs, stored in the portal."""
+        """Content-addressable serialized form of fixed keyword arguments.
+
+        Returns the PackedKwArgs representation where all values are replaced by
+        their ValueAddr references. This form is suitable for storage in the portal
+        and enables deduplication across multiple function instances with identical
+        fixed arguments.
+
+        Returns:
+            PackedKwArgs with all values converted to content-addressable references.
+
+        Raises:
+            RuntimeError: If neither packed nor unpacked fixed kwargs are available.
+        """
         if self._packed_fixed_kwargs is not None:
             return self._packed_fixed_kwargs.copy()
         elif self._fixed_kwargs is not None:
@@ -235,9 +317,10 @@ class AutonomousFn(SafeFn):
 
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
-        """Hook called on the first visit to a data portal.
+        """Lifecycle hook invoked when the function first encounters a portal.
 
-        Ensures that fixed kwargs are materialized (packed) within the portal.
+        Ensures that fixed kwargs are properly materialized in the portal's
+        content-addressable storage.
 
         Args:
             portal: The data portal being visited for the first time.

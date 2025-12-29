@@ -4,38 +4,110 @@ from typing import Callable, Union
 from .._020_ordinary_code_portals import get_normalized_function_source
 
 class NamesUsedInFunction:
-    """Container for name usage sets discovered in a function.
+    """Classification of all names referenced within a function and its nested scopes.
+
+    This container organizes names into mutually exclusive sets based on their scope
+    and origin. It is used to determine whether a function is autonomous by identifying
+    external dependencies that would violate self-containment.
+
+    The classification tracks names across the entire function tree (including nested
+    functions, classes, lambdas, and comprehensions), distinguishing between:
+    - Names defined locally within the function
+    - Names explicitly imported inside the function body
+    - Names marked as global or nonlocal
+    - Names with unresolved origin (potential external dependencies)
+
+    Design Rationale:
+        Autonomous functions must be self-sufficient. This requires identifying all
+        name references and ensuring they originate from:
+        1. Built-in Python objects (checked separately against builtins)
+        2. Function parameters or local assignments
+        3. Imports within the function body
+        4. Other autonomous functions passed as arguments
+
+        Any name not falling into these categories indicates an external dependency
+        that would prevent safe serialization and isolated execution.
 
     Attributes:
         function: Name of the top-level function being analyzed.
-        explicitly_global_unbound_deep: Names explicitly marked as global in the
-            function or its nested functions, which are not locally bound.
-        explicitly_nonlocal_unbound_deep: Names explicitly marked as nonlocal in
-            the function or its nested functions, which are not locally bound.
-        local: Names bound locally in the top-level function (including args).
-        imported: Names explicitly imported within the function body.
-        unclassified_deep: Names used in the function and/or nested functions
-            that are neither imported nor explicitly marked global/nonlocal.
-        accessible: All names currently considered accessible within function
-            scope during analysis; a union built as nodes are visited.
-        has_relative_imports: Whether the function contains relative imports.
+
+        explicitly_global_unbound_deep: Names declared with 'global' keyword in the
+            function or nested functions but not subsequently bound locally. These
+            reference module-level state and violate autonomy.
+
+        explicitly_nonlocal_unbound_deep: Names declared with 'nonlocal' keyword in
+            nested functions but not bound in any enclosing scope within the analyzed
+            function. These reference closures and violate autonomy.
+
+        local: Names bound in the top-level function scope through assignment,
+            parameter declaration, or local import. These are safe for autonomy.
+
+        imported: Names explicitly imported via import statements within the function
+            body. These are safe for autonomy as long as imports are absolute.
+
+        unclassified_deep: Names referenced but not locally bound, not imported, and
+            not explicitly marked global/nonlocal. These are potential external
+            dependencies or built-ins that need further validation.
+
+        accessible: Working set of all names currently in scope during AST traversal.
+            Used to distinguish between external references and names defined in
+            enclosing scopes within the analyzed function.
+
+        has_relative_imports: Flag indicating whether the function uses relative
+            imports (from . or from ..), which violate autonomy by depending on
+            package structure.
     """
     def __init__(self):
         """Initialize all name sets to empty defaults."""
-        self.function = None # name of the function
-        self.explicitly_global_unbound_deep = set() # names, explicitly marked as global inside the function and/or called subfunctions, yet not bound to any object
-        self.explicitly_nonlocal_unbound_deep = set() # names, explicitly marked as nonlocal inside the function and/or called subfunctions, yet not bound to any object
-        self.local = set() # local variables in a function
-        self.imported = set() # all names, which are explixitly imported inside the function
-        self.unclassified_deep = set() # names, used inside the function and/or called subfunctions, while not explicitly imported, amd not explicitly marked as nonlocal / global
-        self.accessible = set() # all names, currently accessable within the function
-        self.has_relative_imports = False # whether the function uses relative imports
+        self.function = None
+        self.explicitly_global_unbound_deep = set()
+        self.explicitly_nonlocal_unbound_deep = set()
+        self.local = set()
+        self.imported = set()
+        self.unclassified_deep = set()
+        self.accessible = set()
+        self.has_relative_imports = False
 
 class NamesUsageAnalyzer(ast.NodeVisitor):
-    """Collect data needed to analyze function autonomicity.
+    """AST visitor that performs static analysis of name usage for autonomy validation.
 
-    This class is a visitor of an AST (Abstract Syntax Tree) that collects data
-    needed to analyze function autonomy.
+    This analyzer traverses the Abstract Syntax Tree of a function to collect
+    comprehensive data about all name references, their scopes, and their origins.
+    The collected information is used to determine whether a function satisfies
+    the autonomy requirements.
+
+    Analysis Strategy:
+        The visitor implements a depth-first traversal of the function's AST,
+        maintaining scope-aware state as it descends into nested structures:
+
+        1. Top-level function: Records parameters and body-level assignments as local names.
+
+        2. Nested functions/classes/lambdas: Analyzed with fresh sub-analyzers to
+           maintain separate scope tracking, then merged back with accessibility
+           adjustments.
+
+        3. Comprehensions: Treated as implicit scopes (Python 3 behavior) to prevent
+           iterator variable leakage into parent scope.
+
+        4. Name references: Classified as Load (usage), Store (definition), or
+           Del (deletion), each handled differently for scope tracking.
+
+        5. Import statements: Recorded as explicitly imported names, safe for autonomy.
+
+        6. Global/nonlocal declarations: Tracked separately as potential autonomy violations.
+
+    Scope Merging:
+        When a nested scope completes analysis, its results are merged into the parent:
+        - External references (unclassified names) are filtered against the parent's
+          accessible set to determine if they're truly external or just parent-scoped.
+        - Global/nonlocal declarations bubble up unchanged.
+        - The nested scope's own name becomes accessible in the parent.
+
+    Attributes:
+        names: NamesUsedInFunction container holding all classification sets.
+        imported_packages_deep: Top-level packages imported anywhere in the function tree.
+        func_nesting_level: Current depth in the function nesting hierarchy (0 = top-level).
+        n_yelds: Count of yield/yield from statements (disqualifies autonomy).
     """
     # TODO: add support for structural pattern matching
     def __init__(self):
@@ -83,8 +155,6 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
             self.names.unclassified_deep |= nested.names.unclassified_deep
             self.names.local |= {node.name}
             self.names.accessible |= {node.name}
-            # self.names.imported is not changing
-            # self.n_yelds is not changing
 
     def visit_Lambda(self, node):
         """Handle a lambda expression.
@@ -158,8 +228,6 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
             self.names.unclassified_deep |= nested.names.unclassified_deep
             self.names.local |= {node.name}
             self.names.accessible |= {node.name}
-            # self.names.imported is not changing
-            # self.n_yelds is not changing
 
     def visit_ClassDef(self, node):
         """Handle a nested class definition.
@@ -204,7 +272,6 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         nested.names.unclassified_deep -= self.names.accessible
         self.names.unclassified_deep |= nested.names.unclassified_deep
 
-        # Register the class name as a local in the parent function
         self.names.local |= {node.name}
         self.names.accessible |= {node.name}
 
@@ -319,22 +386,18 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         Args:
             node: The ast.ListComp node.
         """
-        # Create a nested analyzer for the comprehension's implicit scope
         nested = NamesUsageAnalyzer()
         nested.func_nesting_level = 0
         nested.names.function = "<listcomp>"
         nested.func_nesting_level += 1
 
-        # Process iterator variables as local to the comprehension
         for gen in node.generators:
             nested.visit_comprehension(gen)
 
-        # Visit the element expression in the nested scope
         nested.visit(node.elt)
 
         nested.func_nesting_level -= 1
 
-        # Merge nested analysis into parent scope
         self.imported_packages_deep |= nested.imported_packages_deep
         nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
         self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
@@ -352,22 +415,18 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         Args:
             node: The ast.SetComp node.
         """
-        # Create a nested analyzer for the comprehension's implicit scope
         nested = NamesUsageAnalyzer()
         nested.func_nesting_level = 0
         nested.names.function = "<setcomp>"
         nested.func_nesting_level += 1
 
-        # Process iterator variables as local to the comprehension
         for gen in node.generators:
             nested.visit_comprehension(gen)
 
-        # Visit the element expression in the nested scope
         nested.visit(node.elt)
 
         nested.func_nesting_level -= 1
 
-        # Merge nested analysis into parent scope
         self.imported_packages_deep |= nested.imported_packages_deep
         nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
         self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
@@ -385,23 +444,19 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         Args:
             node: The ast.DictComp node.
         """
-        # Create a nested analyzer for the comprehension's implicit scope
         nested = NamesUsageAnalyzer()
         nested.func_nesting_level = 0
         nested.names.function = "<dictcomp>"
         nested.func_nesting_level += 1
 
-        # Process iterator variables as local to the comprehension
         for gen in node.generators:
             nested.visit_comprehension(gen)
 
-        # Visit key and value expressions in the nested scope
         nested.visit(node.key)
         nested.visit(node.value)
 
         nested.func_nesting_level -= 1
 
-        # Merge nested analysis into parent scope
         self.imported_packages_deep |= nested.imported_packages_deep
         nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
         self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
@@ -418,22 +473,18 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         Args:
             node: The ast.GeneratorExp node.
         """
-        # Create a nested analyzer for the generator's implicit scope
         nested = NamesUsageAnalyzer()
         nested.func_nesting_level = 0
         nested.names.function = "<genexpr>"
         nested.func_nesting_level += 1
 
-        # Process iterator variables as local to the generator
         for gen in node.generators:
             nested.visit_comprehension(gen)
 
-        # Visit the element expression in the nested scope
         nested.visit(node.elt)
 
         nested.func_nesting_level -= 1
 
-        # Merge nested analysis into parent scope
         self.imported_packages_deep |= nested.imported_packages_deep
         nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
         self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
@@ -474,7 +525,6 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
             # Use [0] for consistency with visit_Import: track top-level package
             self.imported_packages_deep |= {node.module.split('.')[0]}
 
-        # Register the imported names
         for alias in node.names:
             name = alias.asname if alias.asname else alias.name
             self.names.imported |= {name}
@@ -507,24 +557,46 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
 def analyze_names_in_function(
         a_func: Union[Callable,str]
         ):
-    """Analyze names used in a single conventional function.
+    """Perform comprehensive static analysis of name usage within a function.
 
-    The function source is normalized, decorators are skipped, and an AST is
-    parsed. Assertions ensure that exactly one top-level regular function
-    definition is present. The tree is visited with NamesUsageAnalyzer.
+    This function is the primary entry point for autonomy validation. It normalizes
+    the function source code, parses it into an AST, and performs a complete
+    traversal to identify all name references and their classifications.
+
+    The analysis process:
+        1. Normalizes source code using Pythagoras' code normalizer
+        2. Validates the source is a single regular function definition
+        3. Parses the normalized source into an AST
+        4. Traverses the AST using NamesUsageAnalyzer to collect name usage data
+        5. Returns the complete analysis result for autonomy validation
+
+    This analysis is required before an AutonomousFn can be constructed, ensuring
+    that the function satisfies all autonomy constraints at decoration time rather
+    than discovering violations during execution.
 
     Args:
-        a_func: A function object or its source string to analyze.
+        a_func: Function object or source code string to analyze. If a function
+            object is provided, its source will be extracted and normalized.
 
     Returns:
-        dict: A mapping with keys:
-            - tree (ast.Module): The parsed AST module with a single function.
-            - analyzer (NamesUsageAnalyzer): The populated analyzer instance.
-            - normalized_source (str): The normalized source code.
+        Dictionary with three keys:
+            - tree: The ast.Module containing the parsed function definition.
+            - analyzer: The NamesUsageAnalyzer instance with complete name
+              classification data.
+            - normalized_source: The normalized source code string that was analyzed.
 
     Raises:
-        ValueError: If the input is not a single regular function (e.g., a
-            lambda, async function, callable class, or multiple definitions).
+        ValueError: If the input is not a single conventional function definition.
+            This includes lambda functions, async functions, callable class instances,
+            or source code with multiple top-level definitions.
+
+    Example:
+        >>> def my_func(x: int) -> int:
+        ...     import math
+        ...     return math.sqrt(x)
+        >>> result = analyze_names_in_function(my_func)
+        >>> result['analyzer'].names.imported
+        {'math'}
     """
 
     normalized_source = get_normalized_function_source(a_func)
