@@ -214,6 +214,8 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         - On load: if the name is not accessible, mark it unclassified and
           accessible.
         - On store: register it as a local and accessible.
+        - On del: register it as a local and accessible (del establishes
+          local scope in Python, similar to assignment).
 
         Args:
             node: The ast.Name node.
@@ -223,6 +225,10 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
                 self.names.unclassified_deep |= {node.id}
                 self.names.accessible |= {node.id}
         if isinstance(node.ctx, ast.Store):
+            if node.id not in self.names.accessible:
+                self.names.local |= {node.id}
+                self.names.accessible |= {node.id}
+        if isinstance(node.ctx, ast.Del):
             if node.id not in self.names.accessible:
                 self.names.local |= {node.id}
                 self.names.accessible |= {node.id}
