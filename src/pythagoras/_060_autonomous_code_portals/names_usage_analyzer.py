@@ -263,14 +263,17 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
     def visit_Try(self, node):
         """Track names bound in exception handlers within try/except.
 
-        Exception handler names become local and accessible.
+        Exception handler names become local and accessible when explicitly
+        bound with 'as' syntax. Unbound handlers (e.g., 'except ValueError:')
+        have handler.name = None and should not be added to name sets.
 
         Args:
             node: The ast.Try node.
         """
         for handler in node.handlers:
-            self.names.local |= {handler.name}
-            self.names.accessible |= {handler.name}
+            if handler.name is not None:
+                self.names.local |= {handler.name}
+                self.names.accessible |= {handler.name}
         self.generic_visit(node)
 
     def visit_comprehension(self, node):
