@@ -14,8 +14,6 @@ def test_sqrt(tmpdir):
             from math import sqrt
             return sqrt(x)
 
-        date_str_1 = current_date_gmt_string()
-
         n = 5
         for i in range(-10, n):
             if i <= 0:
