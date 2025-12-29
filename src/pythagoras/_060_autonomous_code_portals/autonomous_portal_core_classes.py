@@ -244,7 +244,10 @@ class AutonomousFn(SafeFn):
         """
         super()._first_visit_to_portal(portal)
         with portal:
-            _ = self.packed_fixed_kwargs
+            if self._fixed_kwargs is not None:
+                _ = KwArgs(**self._fixed_kwargs).pack()
+            elif self._packed_fixed_kwargs is not None:
+                _ = self._packed_fixed_kwargs.unpack()
 
 
     def __getstate__(self):
