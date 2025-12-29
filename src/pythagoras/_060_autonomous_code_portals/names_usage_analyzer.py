@@ -18,6 +18,7 @@ class NamesUsedInFunction:
             that are neither imported nor explicitly marked global/nonlocal.
         accessible: All names currently considered accessible within function
             scope during analysis; a union built as nodes are visited.
+        has_relative_imports: Whether the function contains relative imports.
     """
     def __init__(self):
         """Initialize all name sets to empty defaults."""
@@ -28,6 +29,7 @@ class NamesUsedInFunction:
         self.imported = set() # all names, which are explixitly imported inside the function
         self.unclassified_deep = set() # names, used inside the function and/or called subfunctions, while not explicitly imported, amd not explicitly marked as nonlocal / global
         self.accessible = set() # all names, currently accessable within the function
+        self.has_relative_imports = False # whether the function uses relative imports
 
 class NamesUsageAnalyzer(ast.NodeVisitor):
     """Collect data needed to analyze function autonomicity.
@@ -446,13 +448,28 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
     def visit_ImportFrom(self, node):
         """Register names imported from a module and the module itself.
 
+        Handles both absolute and relative imports. Relative imports
+        (indicated by node.level > 0) are flagged for rejection in
+        autonomous functions.
+
         Args:
             node: The ast.ImportFrom node.
         """
-        self.imported_packages_deep |= {node.module.split('.')[-1]}
+        # Detect relative imports (from . import x, from .. import y, etc.)
+        if node.level > 0:
+            self.names.has_relative_imports = True
+
+        # Track the top-level package name, if available
+        # For relative imports, node.module can be None (e.g., "from . import x")
+        if node.module is not None:
+            # Use [0] for consistency with visit_Import: track top-level package
+            self.imported_packages_deep |= {node.module.split('.')[0]}
+
+        # Register the imported names
         for alias in node.names:
             name = alias.asname if alias.asname else alias.name
             self.names.imported |= {name}
+
         self.names.accessible |= self.names.imported
         self.generic_visit(node)
 

@@ -68,8 +68,10 @@ class AutonomousFn(SafeFn):
 
     AutonomousFn performs static validation at construction time to ensure that
     the wrapped function uses only built-ins or names imported inside its body,
-    has no yield statements, and does not reference nonlocal variables.
-    It also supports partial application via fixed keyword arguments.
+    has no yield statements, does not reference nonlocal variables,
+    and does not have relative imports.
+
+    AutonomousFn also supports partial application via fixed keyword arguments.
     """
 
     _packed_fixed_kwargs: PackedKwArgs | None
@@ -120,6 +122,13 @@ class AutonomousFn(SafeFn):
 
         if analyzer.n_yelds != 0:
             raise FunctionError(f"Function {self.name} is not autonomous, it uses yield statements")
+
+        if analyzer.names.has_relative_imports:
+            raise FunctionError(
+                f"Function {self.name} is not autonomous, it uses relative imports. "
+                f"Relative imports (from . import x, from .. import y) depend on the function's "
+                f"position in the package hierarchy and violate autonomy. "
+                f"Please use absolute imports instead (e.g., 'from mypackage import x').")
 
         import_required = analyzer.names.explicitly_global_unbound_deep
         import_required |= analyzer.names.unclassified_deep
