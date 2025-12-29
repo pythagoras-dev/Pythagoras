@@ -31,6 +31,15 @@ class KwArgs(dict):
     Provides utilities to sort keys deterministically and to pack/unpack values
     to and from ValueAddr instances so that argument sets can be compared and
     hashed reliably across runs.
+
+    Class Invariants:
+        1. **String keys only**: All keys must be strings (enforced in __setitem__).
+        2. **Deterministic ordering**: Keys are sorted alphabetically upon
+           initialization and before pickling for consistent serialization.
+        3. **Equality independence**: Two KwArgs with the same key-value pairs
+           are equal regardless of insertion order.
+        4. **Pickle stability**: Pickling produces identical bytes for instances
+           with same content but different insertion order.
     """
 
 
@@ -64,6 +73,29 @@ class KwArgs(dict):
             return self
         else:
             return KwArgs(**sort_dict_by_keys(self))
+
+
+    def copy(self) -> KwArgs:
+        """Create a shallow copy of this KwArgs instance.
+
+        Returns a new instance of the same class type (KwArgs, PackedKwArgs, or
+        UnpackedKwArgs) with the same keys and values. Keys are deterministically
+        sorted in the copy.
+
+        Returns:
+            KwArgs: A new instance of the same type as self with copied contents.
+
+        Example:
+            >>> kwargs = KwArgs(x=5, y="hello")
+            >>> copy = kwargs.copy()
+            >>> assert copy == kwargs
+            >>> assert copy is not kwargs
+            >>>
+            >>> packed = kwargs.pack()
+            >>> packed_copy = packed.copy()
+            >>> assert isinstance(packed_copy, PackedKwArgs)
+        """
+        return type(self)(**self)
 
 
     def __setitem__(self, key, value):
@@ -189,6 +221,16 @@ class PackedKwArgs(KwArgs):
     Created by calling KwArgs.pack(). Should not typically be instantiated
     directly by user code.
 
+    Class Invariants (in addition to KwArgs invariants):
+        1. **String keys only**: All keys must be strings (inherited from KwArgs).
+        2. **ValueAddr values only**: All values must be ValueAddr instances.
+           No other types are permitted.
+        3. **Deterministic ordering**: Keys are sorted alphabetically (inherited).
+        4. **Equality independence**: Equal regardless of insertion order (inherited).
+        5. **Pickle stability**: Identical serialization for same content (inherited).
+        6. **Idempotent packing**: pack().pack() produces equivalent content to pack().
+        7. **Reversible**: unpack() produces UnpackedKwArgs that can be packed again.
+
     Example:
         >>> original = KwArgs(x=5, y=[1, 2, 3])
         >>> packed = original.pack()  # Returns PackedKwArgs
@@ -232,6 +274,16 @@ class UnpackedKwArgs(KwArgs):
 
     Created by calling KwArgs.unpack() or PackedKwArgs.unpack(). Should not
     typically be instantiated directly by user code.
+
+    Class Invariants:
+        1. **String keys only**: All keys must be strings (inherited from KwArgs).
+        2. **No ValueAddr values**: Values cannot be ValueAddr instances.
+           ValueAddr must be resolved before storage.
+        3. **Deterministic ordering**: Keys are sorted alphabetically (inherited).
+        4. **Equality independence**: Equal regardless of insertion order (inherited).
+        5. **Pickle stability**: Identical serialization for same content (inherited).
+        6. **Idempotent unpacking**: unpack().unpack() produces equivalent content.
+        7. **Reversible**: pack() produces PackedKwArgs that can be unpacked again.
 
     Example:
         >>> packed = KwArgs(x=5, y=[1, 2, 3]).pack()
