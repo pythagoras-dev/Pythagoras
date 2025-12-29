@@ -1,8 +1,8 @@
 import ast
-from typing import List, Set
+from typing import Iterable
 
 
-def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) -> bool:
+def check_if_fn_accepts_args(required_arg_names: Iterable[str], fn: str) -> bool:
     """Determine whether a function can accept specific keyword argument names.
 
     Analyzes the source code of a single Python function and checks whether
@@ -34,8 +34,7 @@ def check_if_fn_accepts_args(required_arg_names: List[str]|Set[str], fn: str) ->
     if args.kwarg is not None:
         return True
 
-    # Collect all explicitly named parameters (excluding positional-only)
-    # Note: args.posonlyargs are NOT included as they cannot be passed by keyword
-    param_names = {arg.arg for arg in args.args + args.kwonlyargs}
+    # Collect parameters that accept keywords (positional-or-keyword + keyword-only)
+    param_names = {arg.arg for arg in [*args.args, *args.kwonlyargs]}
 
     return set(required_arg_names).issubset(param_names)
