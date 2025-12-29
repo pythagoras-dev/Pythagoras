@@ -1,7 +1,7 @@
 import ast
 from typing import Callable, Union
 
-from .._020_ordinary_code_portals import get_normalized_function_source
+from .._020_ordinary_code_portals import get_normalized_fn_source_code_str
 
 class NamesUsedInFunction:
     """Classification of all names referenced within a function and its nested scopes.
@@ -599,7 +599,7 @@ def analyze_names_in_function(
         {'math'}
     """
 
-    normalized_source = get_normalized_function_source(a_func)
+    normalized_source = get_normalized_fn_source_code_str(a_func)
 
     lines, line_num = normalized_source.splitlines(), 0
     while lines[line_num].startswith("@"):
