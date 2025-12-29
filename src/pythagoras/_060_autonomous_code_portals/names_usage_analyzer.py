@@ -159,6 +159,53 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
             # self.names.imported is not changing
             # self.n_yelds is not changing
 
+    def visit_ClassDef(self, node):
+        """Handle a nested class definition.
+
+        Classes create their own scope in Python. Assignments and method
+        definitions within the class body should not leak into the parent
+        function's local namespace. The class name itself becomes a local
+        variable in the parent function.
+
+        Args:
+            node: The ast.ClassDef node.
+        """
+        # Analyze the class body in a nested analyzer to capture any
+        # external references (e.g., base classes, decorators) without
+        # polluting the parent function's locals with class attributes
+        nested = NamesUsageAnalyzer()
+        nested.func_nesting_level = 0
+        nested.names.function = f"<class {node.name}>"
+        nested.func_nesting_level += 1
+
+        # Visit base classes and decorators in the parent scope context
+        # since these are evaluated in the enclosing scope
+        for base in node.bases:
+            self.visit(base)
+        for keyword in node.keywords:
+            self.visit(keyword.value)
+        for decorator in node.decorator_list:
+            self.visit(decorator)
+
+        # Visit the class body in the nested scope
+        for item in node.body:
+            nested.visit(item)
+
+        nested.func_nesting_level -= 1
+
+        # Merge the nested analysis: only external references from the
+        # class body should bubble up, not the class's own attributes
+        self.imported_packages_deep |= nested.imported_packages_deep
+        nested.names.explicitly_nonlocal_unbound_deep -= self.names.accessible
+        self.names.explicitly_nonlocal_unbound_deep |= nested.names.explicitly_nonlocal_unbound_deep
+        self.names.explicitly_global_unbound_deep |= nested.names.explicitly_global_unbound_deep
+        nested.names.unclassified_deep -= self.names.accessible
+        self.names.unclassified_deep |= nested.names.unclassified_deep
+
+        # Register the class name as a local in the parent function
+        self.names.local |= {node.name}
+        self.names.accessible |= {node.name}
+
     def visit_Name(self, node):
         """Track variable usage and binding for a Name node.
 
