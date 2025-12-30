@@ -49,14 +49,27 @@ def _install_uv_and_pip() -> None:
         Called automatically by install_package for any package except pip
         or uv themselves.
     """
+    uv_available = True
+    pip_available = True
+
     try:
         importlib.import_module("uv")
     except ModuleNotFoundError:
-        install_package("uv", use_uv=False)
+        uv_available = False
 
     try:
         importlib.import_module("pip")
     except ModuleNotFoundError:
+        pip_available = False
+
+    if not uv_available and not pip_available:
+        raise RuntimeError(
+            "Neither pip nor uv is available. Cannot bootstrap package managers.")
+
+    if not uv_available:
+        install_package("uv", use_uv=False)
+
+    if not pip_available:
         install_package("pip", use_uv=True)
 
 
@@ -98,13 +111,16 @@ def install_package(package_name: str,
     if not package_name or not isinstance(package_name, str):
         raise ValueError("package_name must be a non-empty string")
 
-    if not re.match(r'^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$', package_name) and len(package_name) > 1:
+    if len(package_name) == 1:
+        if not re.match(r'^[A-Za-z0-9]$', package_name):
+            raise ValueError(f"Invalid package name format: {package_name}")
+    elif not re.match(r'^[A-Za-z0-9]([A-Za-z0-9._-]*[A-Za-z0-9])?$', package_name):
         raise ValueError(f"Invalid package name format: {package_name}")
 
     if version is not None and not isinstance(version, str):
         raise ValueError("version must be a string")
 
-    if version is not None and not re.match(r'^[\w\.\-\+\*,<>=!]+$', version):
+    if version is not None and not re.match(r'^[\w\.\-\+\*,<>=!\s]+$', version):
         raise ValueError(f"Invalid version format: {version}")
 
     if (import_name is not None
@@ -161,6 +177,9 @@ def uninstall_package(package_name:str,
         RuntimeError: If uninstall command fails or package remains importable
             after uninstallation when verify_uninstall is True.
     """
+
+    if not package_name or not isinstance(package_name, str):
+        raise ValueError("package_name must be a non-empty string")
 
     if package_name in ["pip", "uv"]:
         raise ValueError(f"Cannot uninstall '{package_name}' "
