@@ -14,9 +14,7 @@ Execution context:
 Conventions:
 - Return ValidationSuccessFlag (VALIDATION_SUCCESSFUL) to indicate the check
   passed; return None to indicate the check did not pass.
-
-IMPORTANT:
-- Do NOT return True/False, 1/0, strings, or other truthy/falsy values. These
+  Do NOT return True/False, 1/0, strings, or other truthy/falsy values. These
   are treated as validation FAILURE, not success. Only VALIDATION_SUCCESSFUL
   (the sentinel singleton) indicates success. The validation check uses
   identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
@@ -131,6 +129,8 @@ def _check_python_package_and_install_if_needed(
         - Throttling key is a tuple of (node_signature, package_name,
           "installation_attempt") stored in portal._config_settings.
         - Installation is performed synchronously and may take time.
+        - The function assumes that the package names and import names
+          are the same.
     """
     if not isinstance(package_name, str):
         raise TypeError("package_name must be a str")
@@ -166,6 +166,10 @@ def installed_packages(*args) -> list[SimplePreValidatorFn]:
 
     Raises:
         TypeError: If any of the provided arguments is not a string.
+
+    Notes:
+        This function assumes that the package names and import names
+        are the same.
     """
     validators = []
     for package_name in args:
