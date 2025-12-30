@@ -1,27 +1,27 @@
-"""Decorators and utilities to work with pure functions.
+"""Pure functions with persistent result caching and source tracking.
 
-A pure function is a protected function that has no side effects and
-always returns the same result if it is called multiple times
-with the same arguments.
+Pure functions are protected autonomous functions with no side effects that
+always return the same result for identical arguments. They accept only
+keyword arguments and don't depend on external imports or definitions.
 
-A pure function is an autonomous function, which means that it doesn't
-depend on external imports or definitions. It also means it can only be called
-with keyword arguments; positional arguments are not allowed.
+Key components:
+- @pure() decorator: Marks functions as pure and enables persistent caching
+- PureCodePortal: Portal managing execution and caching for pure functions
+- PureFn: Wrapped pure function supporting sync/async execution patterns
+- PureFnExecutionResultAddr: Address-based retrieval for distributed execution
 
-This subpackage defines a decorator which is used to inform Pythagoras that
-a function is intended to be pure: @pure().
+The @pure() decorator enables persistent caching: when a pure function is
+called multiple times with the same arguments, only the first invocation
+executes; subsequent calls return the cached result.
 
-Pythagoras persistently caches results, produced by a pure function, so that
-if the function is called multiple times with the same arguments,
-the function is executed only once, and the cached result is returned
-for all the subsequent executions.
+Pythagoras tracks source code changes in pure functions. When the
+implementation changes, the function re-executes on the next call, but
+previously cached results remain available for the old version. Only
+source code changes are tracked, not external dependencies.
 
-While caching the results of a pure function, Pythagoras also tracks
-changes in the source code of the function. If the source code of a pure
-function changes, the function is executed again on the next call.
-However, the previously cached results are still available
-for the old version of the function. Only changes in the function's
-source code are tracked, but not in the packages it is using.
+For recursive functions, use recursive_parameters() to create pre-validators
+that optimize execution by ensuring prerequisites are computed
+in the correct order.
 """
 
 from .pure_core_classes import *
