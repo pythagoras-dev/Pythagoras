@@ -23,8 +23,8 @@ def get_unused_cpu_cores() -> float:
 
     On POSIX systems with load average support, this uses the 1-minute load
     average to estimate remaining capacity: max(logical_cores - load1, 0).
-    On other systems, it falls back to instantaneous CPU percent usage as
-    reported by psutil and computes: logical_cores * (1 - usage/100).
+    On other systems, it samples CPU usage over 100ms using psutil and
+    computes: logical_cores * (1 - usage/100).
 
     Returns:
         float: A non-negative float representing approximate available logical
@@ -32,8 +32,8 @@ def get_unused_cpu_cores() -> float:
 
     Notes:
         - The number of logical cores (with SMT/Hyper-Threading) is used.
-        - If psutil reports near-zero usage, a small default (0.5%) is assumed
-          to avoid transient 0.0 readings.
+        - On Windows and non-POSIX systems, this function blocks for ~100ms
+          to collect accurate CPU usage measurements.
         - This is a heuristic; short spikes and scheduling nuances may cause
           deviations from actual availability.
     """
@@ -44,32 +44,8 @@ def get_unused_cpu_cores() -> float:
         load1 = os.getloadavg()[0]
         return max(cnt - load1, 0.0)  # 0 … cnt cores
     else:
-        usage = psutil.cpu_percent(interval=None)
-        if usage<=0.001:
-            usage = 0.5
+        usage = psutil.cpu_percent(interval=0.1)
         return cnt * (1 - usage / 100.0)
-
-
-def process_is_active(pid: int) -> bool:
-    """Check whether a process with the given PID is currently active.
-
-    Args:
-        pid (int): Operating system process identifier (PID).
-
-    Returns:
-        bool: True if the process exists and is running; False if it does not
-        exist, has exited, or cannot be inspected due to permissions or other
-        errors.
-
-    Notes:
-        - Any exception from psutil (e.g., NoSuchProcess, AccessDenied) results
-          in a False return value for safety.
-    """
-    try:
-        process = psutil.Process(pid)
-        return process.is_running()
-    except:
-        return False
 
 
 def get_process_start_time(pid: int) -> int:

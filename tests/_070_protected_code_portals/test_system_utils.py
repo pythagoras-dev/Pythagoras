@@ -7,7 +7,6 @@ import psutil
 from pythagoras._070_protected_code_portals.system_utils import (
     get_unused_ram_mb,
     get_unused_cpu_cores,
-    process_is_active,
     get_process_start_time,
     get_current_process_id,
     get_current_process_start_time,
@@ -34,18 +33,38 @@ def test_available_cpu_cores_range_and_type():
     assert 0.0 <= free_cores <= float(logical_cnt)
 
 
+def test_cpu_cores_first_call_not_zero():
+    """
+    Verify get_unused_cpu_cores() returns accurate non-zero readings even
+    on the first call, avoiding the psutil.cpu_percent(interval=None) issue
+    where the first call returns meaningless 0.0.
+
+    This test ensures the function uses interval=0.1 (or load average on POSIX)
+    to get accurate measurements rather than the unreliable first-call behavior.
+    """
+    # Call twice to ensure both calls return reasonable values
+    first_call = get_unused_cpu_cores()
+    second_call = get_unused_cpu_cores()
+
+    logical_cnt = psutil.cpu_count(logical=True) or 1
+
+    # On a system with any activity, we shouldn't see "all cores free"
+    # Allow for very idle systems but flag suspiciously high values
+    # (within 0.1 of max would suggest 0% usage, which is the bug we're testing for)
+    assert first_call < logical_cnt, \
+        f"First call suspiciously reports all {logical_cnt} cores free: {first_call}"
+    assert second_call < logical_cnt, \
+        f"Second call suspiciously reports all {logical_cnt} cores free: {second_call}"
+
+    # Both calls should be in valid range
+    assert 0.0 <= first_call <= float(logical_cnt)
+    assert 0.0 <= second_call <= float(logical_cnt)
+
+
 def test_current_pid_consistency():
     pid = get_current_process_id()
     assert pid == os.getpid() == psutil.Process().pid
     assert pid > 0
-
-
-def test_process_is_active_truth_table():
-    this_pid = get_current_process_id()
-    assert process_is_active(this_pid) is True
-
-    bogus_pid = -42 if os.name != "nt" else 999_999_999
-    assert process_is_active(bogus_pid) is False
 
 
 def test_process_start_time_values():
@@ -72,32 +91,6 @@ def _touch_every_page(buf: bytearray) -> None:
     page = 4096
     for i in range(0, len(buf), page):
         buf[i] = 1
-
-
-def _sleep_brief():
-    time.sleep(0.1)
-
-
-def test_process_is_active_lifecycle_and_start_time():
-    """
-    Spawn a child, verify active → finished transition and start-time plausibility.
-    """
-    child = mp.Process(target=_sleep_brief)
-    child.start()
-
-    # Active while running
-    assert process_is_active(child.pid)
-
-    start_ts = get_process_start_time(child.pid)
-    assert 0 < start_ts <= int(time.time())
-
-    child.join()
-
-    # After exit, should report inactive and same start time (or 0 if PID recycled)
-    assert not process_is_active(child.pid)
-    # For most OSes the /proc entry disappears; expect 0 after exit or unchanged.
-    pst_after = get_process_start_time(child.pid)
-    assert pst_after in (0, start_ts)
 
 
 def _noop():
