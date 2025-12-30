@@ -448,6 +448,12 @@ class PreValidatorFn(ValidatorFn):
     - ProtectedFnCallSignature to request execution of an auxiliary action
       prior to re-validating;
     - None to indicate failure.
+
+    Important:
+        - Do NOT return True/False, 1/0, strings, or other truthy/falsy values. These
+          are treated as validation FAILURE, not success. Only VALIDATION_SUCCESSFUL
+          (the sentinel singleton) indicates success. The validation check uses
+          identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
@@ -531,6 +537,17 @@ class ComplexPreValidatorFn(PreValidatorFn):
 
 class PostValidatorFn(ValidatorFn):
     """Post-execution validator wrapper.
+
+    Post-validators are executed after the protected function to validate its
+    result. They must return:
+    - VALIDATION_SUCCESSFUL to accept the result;
+    - None to reject the result.
+
+    Important:
+        ANY other return value (including True, False, 1, 0, strings, etc.) is
+        treated as validation failure. Do NOT return boolean True/False; use
+        VALIDATION_SUCCESSFUL or None instead. The check is identity-based
+        (``is VALIDATION_SUCCESSFUL``), not truthiness-based.
 
     The callable must accept packed_kwargs, fn_addr, and result.
     """
