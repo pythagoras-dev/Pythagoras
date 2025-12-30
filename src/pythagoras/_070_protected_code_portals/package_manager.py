@@ -18,11 +18,11 @@ from functools import lru_cache
 from typing import Optional
 
 
-def _run(command: list[str]) -> str:
+def _run(command: list[str]) -> None:
     """Run command; raise RuntimeError on failure."""
     try:
         subprocess.run(command, check=True, stdout=subprocess.PIPE
-            , stderr=subprocess.STDOUT, text=True)
+            , stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True)
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"Command failed: {' '.join(command)}\n{e.stdout}") from e
@@ -88,16 +88,16 @@ def install_package(package_name:str
         raise ValueError("version must be a string")
 
     if package_name == "pip" and not use_uv:
-            raise ValueError("pip must be installed using uv (use_uv=True)")
+        raise ValueError("pip must be installed using uv (use_uv=True)")
     elif package_name == "uv" and use_uv:
-            raise ValueError("uv must be installed using pip (use_uv=False)")
+        raise ValueError("uv must be installed using pip (use_uv=False)")
     elif package_name not in ("pip", "uv"):
         _install_uv_and_pip()
 
     if use_uv:
         command = [sys.executable, "-m", "uv", "pip", "install"]
     else:
-        command = [sys.executable, "-m", "pip", "install"]
+        command = [sys.executable, "-m", "pip", "install", "--no-input"]
 
     if upgrade:
         command += ["--upgrade"]
@@ -132,6 +132,8 @@ def uninstall_package(package_name:str, use_uv:bool=True)->None:
     if package_name in ["pip", "uv"]:
         raise ValueError(f"Cannot uninstall '{package_name}' "
                          "- it's a protected package")
+
+    _install_uv_and_pip()
 
     if use_uv:
         command = [sys.executable, "-m", "uv", "pip", "uninstall", package_name]
