@@ -269,9 +269,14 @@ class ProtectedFn(AutonomousFn):
                     validation_result.execute()
                     continue
                 elif validation_result is None:
-                    assert False, (f"Pre-validators failed for function {self.name}")
+                    raise FunctionError(f"Pre-validators failed "
+                                        f"for function {self.name}")
                 result = super().execute(**kwargs)
-                assert (self.validate_execution_result(kw_args, result) is VALIDATION_SUCCESSFUL)
+
+                if not (self.validate_execution_result(kw_args, result)
+                         is VALIDATION_SUCCESSFUL):
+                    raise FunctionError(f"Post-validators failed "
+                                        f"for function {self.name}")
                 return result
 
 
