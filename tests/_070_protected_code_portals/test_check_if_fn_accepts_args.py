@@ -101,3 +101,129 @@ def example(a, **kwargs):
 """
     assert check_if_fn_accepts_args(["anything"], source_code) is True
     assert check_if_fn_accepts_args(["a", "extra"], source_code) is True
+
+
+def test_multiple_function_definitions_raises_value_error():
+    """
+    If the provided source code contains multiple function definitions,
+    we expect a ValueError to be raised.
+    """
+    source_code = """
+def func1(a, b):
+    pass
+
+def func2(x, y):
+    pass
+"""
+    with pytest.raises(ValueError, match="Multiple function definitions"):
+        check_if_fn_accepts_args(["a"], source_code)
+
+
+def test_positional_only_parameters():
+    """
+    Test function with positional-only parameters (before '/').
+    Positional-only parameters cannot be passed as keyword arguments.
+    """
+    source_code = """
+def example(a, b, /, c, d=5):
+    pass
+"""
+    # 'a' and 'b' are positional-only, so they shouldn't be in param_names
+    # Only 'c' and 'd' can be passed as keyword arguments
+    assert check_if_fn_accepts_args(["c"], source_code) is True
+    assert check_if_fn_accepts_args(["d"], source_code) is True
+    assert check_if_fn_accepts_args(["c", "d"], source_code) is True
+    # 'a' and 'b' are positional-only, so they can't be accepted as keyword args
+    assert check_if_fn_accepts_args(["a"], source_code) is False
+    assert check_if_fn_accepts_args(["b"], source_code) is False
+    assert check_if_fn_accepts_args(["a", "c"], source_code) is False
+
+
+def test_positional_only_with_kwargs():
+    """
+    Test function with both positional-only parameters and **kwargs.
+    With **kwargs present, any keyword argument name should be accepted.
+    """
+    source_code = """
+def example(a, b, /, c, **kwargs):
+    pass
+"""
+    # With **kwargs, all keyword argument names should be accepted
+    assert check_if_fn_accepts_args(["a"], source_code) is True
+    assert check_if_fn_accepts_args(["b"], source_code) is True
+    assert check_if_fn_accepts_args(["c"], source_code) is True
+    assert check_if_fn_accepts_args(["anything"], source_code) is True
+
+
+def test_annotated_parameters():
+    """
+    Test that type annotations don't affect the logic.
+    """
+    source_code = """
+def example(a: int, b: str, c: float = 3.14):
+    pass
+"""
+    assert check_if_fn_accepts_args(["a"], source_code) is True
+    assert check_if_fn_accepts_args(["a", "b", "c"], source_code) is True
+    assert check_if_fn_accepts_args(["d"], source_code) is False
+
+
+def test_defaulted_parameters():
+    """
+    Test that default values don't affect the logic.
+    """
+    source_code = """
+def example(a=1, b=2, c=3):
+    pass
+"""
+    assert check_if_fn_accepts_args(["a"], source_code) is True
+    assert check_if_fn_accepts_args(["a", "b", "c"], source_code) is True
+    assert check_if_fn_accepts_args(["d"], source_code) is False
+
+
+def test_syntax_error_propagates():
+    """
+    Test that syntax errors in the supplied source are propagated.
+    """
+    source_code = """
+def example(a, b
+    pass
+"""
+    with pytest.raises(SyntaxError):
+        check_if_fn_accepts_args(["a"], source_code)
+
+
+def test_complex_signature_with_all_parameter_types():
+    """
+    Test a complex function signature with all parameter types combined.
+    """
+    source_code = """
+def example(pos_only1, pos_only2, /, pos_or_kw1, pos_or_kw2=2, *args, kw_only1, kw_only2=10, **kwargs):
+    pass
+"""
+    # With **kwargs, any keyword argument name should be accepted
+    assert check_if_fn_accepts_args(["pos_only1"], source_code) is True
+    assert check_if_fn_accepts_args(["pos_or_kw1"], source_code) is True
+    assert check_if_fn_accepts_args(["kw_only1"], source_code) is True
+    assert check_if_fn_accepts_args(["anything"], source_code) is True
+
+
+def test_complex_signature_without_kwargs():
+    """
+    Test a complex function signature without **kwargs.
+    """
+    source_code = """
+def example(pos_only1, pos_only2, /, pos_or_kw1, pos_or_kw2=2, *args, kw_only1, kw_only2=10):
+    pass
+"""
+    # Only pos_or_kw1, pos_or_kw2, kw_only1, kw_only2 can be passed as keyword args
+    assert check_if_fn_accepts_args(["pos_or_kw1"], source_code) is True
+    assert check_if_fn_accepts_args(["pos_or_kw2"], source_code) is True
+    assert check_if_fn_accepts_args(["kw_only1"], source_code) is True
+    assert check_if_fn_accepts_args(["kw_only2"], source_code) is True
+    assert check_if_fn_accepts_args(["pos_or_kw1", "kw_only1"], source_code) is True
+    # pos_only1 and pos_only2 cannot be passed as keyword args
+    assert check_if_fn_accepts_args(["pos_only1"], source_code) is False
+    assert check_if_fn_accepts_args(["pos_only2"], source_code) is False
+    # Random name not in signature
+    assert check_if_fn_accepts_args(["random"], source_code) is False
