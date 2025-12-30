@@ -19,7 +19,15 @@ from typing import Optional
 
 
 def _run(command: list[str], timeout: int = 300) -> None:
-    """Run command; raise RuntimeError on failure or timeout."""
+    """Execute subprocess command with timeout enforcement.
+
+    Args:
+        command: Command and arguments to execute.
+        timeout: Maximum execution time in seconds.
+
+    Raises:
+        RuntimeError: If command times out or returns non-zero exit code.
+    """
     try:
         subprocess.run(command, check=True, stdout=subprocess.PIPE
             , stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True
@@ -34,17 +42,14 @@ def _run(command: list[str], timeout: int = 300) -> None:
 
 @lru_cache(maxsize=1) # ensure only one call to _install_uv_and_pip
 def _install_uv_and_pip() -> None:
-    """Ensure the 'uv' and 'pip' frontends are available.
+    """Ensure both uv and pip package managers are available.
 
-    Behavior:
-    - If this helper has already run in the current process and determined
-      the tools are present, it returns immediately.
-    - Tries to import 'uv'; if missing, installs it using system pip
-      (use_uv=False).
-    - Tries to import 'pip'; if missing, installs it using uv (use_uv=True).
+    Installs missing package managers using the available one: uv via pip,
+    pip via uv. Subsequent calls return immediately due to caching.
 
-    This function is an internal helper and is called implicitly by
-    install_package() for any package other than 'pip' or 'uv'.
+    Note:
+        This internal helper is called automatically by install_package for
+        any package except pip or uv themselves.
     """
     try:
         importlib.import_module("uv")
@@ -64,49 +69,33 @@ def install_package(package_name: str,
         import_name: str | None = None,
         verify_import: bool = True
         ) -> None:
-    """Install a Python package using uv (default) or pip.
+    """Install a Python package using uv or pip.
 
-    Parameters:
-    - package_name: Name of the package to install (as listed on PyPI). Special cases:
-      - 'pip': must be installed using uv (use_uv=True).
-      - 'uv' : must be installed using pip (use_uv=False).
-    - upgrade: If True, pass "--upgrade" to the installer.
-    - version: Optional version pin, e.g. "1.2.3". If provided, constructs
-      "package_name==version".
-    - use_uv: If True, run as `python -m uv pip install ...`; otherwise use pip.
-    - import_name: The name used to import the package if it differs from
-      package_name. For example, 'Pillow' is installed as 'Pillow' but imported
-      as 'PIL'. If None, defaults to package_name.
-    - verify_import: If True (default), attempts to import the package after
-      installation to verify success. Set to False for packages that are not
-      directly importable (e.g., command-line tools like 'black').
+    Installs packages from PyPI using uv (default) or pip as the installer
+    frontend. Automatically ensures both tools are available before
+    installation. Supports packages with mismatched PyPI and import names.
 
-    Behavior:
-    - Ensures both uv and pip are available unless installing one of them.
-    - Runs the installer in a subprocess with check=True (raises on failure).
-    - Optionally imports the package after installation to verify it is importable.
+    Args:
+        package_name: PyPI package name. Special constraints apply to pip
+            (requires use_uv=True) and uv (requires use_uv=False).
+        upgrade: Whether to upgrade if already installed.
+        version: Version constraint like "1.2.3" for pinned installation.
+        use_uv: Whether to use uv instead of pip as installer.
+        import_name: Module name for import verification when it differs
+            from package_name (e.g., "PIL" for "Pillow").
+        verify_import: Whether to verify package is importable after
+            installation. Disable for CLI-only tools.
 
     Raises:
-    - RuntimeError: if the installation command fails.
-    - ValueError: if package_name or version are invalid, or if attempting
-      to install pip with use_uv=False or uv with use_uv=True.
-    - ModuleNotFoundError: if verify_import is True and the package cannot be
-      imported after installation.
+        ValueError: If package_name or version are invalid, or if attempting
+            to install pip with use_uv=False or uv with use_uv=True.
+        RuntimeError: If installation command fails.
+        ModuleNotFoundError: If verify_import is True and import fails.
 
-    Examples:
-        # Standard package where name matches import
-        install_package("requests")
-
-        # Package where PyPI name differs from import name
-        install_package("Pillow", import_name="PIL")
-        install_package("beautifulsoup4", import_name="bs4")
-        install_package("scikit-learn", import_name="sklearn")
-
-        # Command-line tool that isn't importable
-        install_package("black", verify_import=False)
-
-        # With version pinning
-        install_package("requests", version="2.28.0")
+    Example:
+        >>> install_package("requests")
+        >>> install_package("Pillow", import_name="PIL")
+        >>> install_package("black", verify_import=False)
     """
     if not package_name or not isinstance(package_name, str):
         raise ValueError("package_name must be a non-empty string")
@@ -144,22 +133,23 @@ def install_package(package_name: str,
         importlib.import_module(module_to_import)
 
 
-def uninstall_package(package_name:str, use_uv:bool=True)->None:
-    """Uninstall a Python package using uv (default) or pip.
+def uninstall_package(package_name:str, use_uv:bool=True, import_name: str|None = None)->None:
+    """Uninstall a Python package using uv or pip.
 
-    Parameters:
-    - package_name: Name of the package to uninstall. Must not be 'pip' or 'uv'.
-    - use_uv: If True, run `python -m uv pip uninstall <name>`; otherwise use pip with "-y".
+    Removes packages and verifies they are no longer importable. Protected
+    packages (pip, uv) cannot be uninstalled to maintain package management
+    capabilities.
 
-    Behavior:
-    - Runs the uninstaller in a subprocess with check=True.
-    - Attempts to import and reload the package after uninstallation. If that
-      succeeds, raises an Exception to indicate the package still appears installed.
+    Args:
+        package_name: Package to uninstall. Cannot be pip or uv.
+        use_uv: Whether to use uv instead of pip as uninstaller.
+        import_name: Module name for verification when it differs from
+            package_name.
 
     Raises:
-    - ValueError: if package_name is 'pip' or 'uv'.
-    - RuntimeError: if the uninstall command fails, or if post-uninstall
-      validation indicates the package is still importable.
+        ValueError: If attempting to uninstall pip or uv.
+        RuntimeError: If uninstall command fails or package remains
+            importable after uninstallation.
     """
 
     if package_name in ["pip", "uv"]:
@@ -175,11 +165,19 @@ def uninstall_package(package_name:str, use_uv:bool=True)->None:
 
     _run(command)
 
+    importlib.invalidate_caches()
+    module_to_check = import_name if import_name else package_name
+    if module_to_check in sys.modules:
+        del sys.modules[module_to_check]
+
     try:
-        package = importlib.import_module(package_name)
+        package = importlib.import_module(module_to_check)
         importlib.reload(package)
         raise RuntimeError(
-            f"Package '{package_name}' still importable after uninstallation")
+            f"Package '{package_name}' (module '{module_to_check}') "
+            "still importable after uninstallation")
     except ModuleNotFoundError:
         pass
+
+
 

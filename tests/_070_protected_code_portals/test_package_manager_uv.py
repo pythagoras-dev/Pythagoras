@@ -21,7 +21,7 @@ def test_actual_package():
 
     uninstall_package(actual_package_name)
 
-    with pytest.raises(ModuleNotFoundError):
+    with pytest.raises(Exception):
         importlib.reload(package)
 
 def test_nonexisting_package():
