@@ -12,36 +12,36 @@ at least once but does not offer any further guarantees.
 from __future__ import annotations
 
 import atexit
-import json
 from time import sleep
 
 import pandas as pd
 import parameterizable
-from parameterizable import (
-    sort_dict_by_keys,
-    update_jsparams,
-    access_jsparams)
+
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from parameterizable import *
 
 from .. import VALIDATION_SUCCESSFUL
 from .._010_basic_portals import get_all_known_portals
-from .._070_protected_code_portals.system_utils import get_unused_ram_mb, get_unused_cpu_cores, process_is_active, \
-    get_process_start_time, get_current_process_id, get_current_process_start_time
-from .._040_logging_code_portals.logging_portal_core_classes import build_execution_environment_summary
+from .._070_protected_code_portals.system_resources_info_getters import (
+    get_unused_ram_mb, get_unused_cpu_cores)
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from persidict import OverlappingMultiDict
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr, PureFnCallSignature)
-from .._800_signatures_and_converters.node_signature import get_node_signature
 
 from multiprocessing import get_context
+from .descendant_process_info import *
+
 
 from .._090_swarming_portals.output_suppressor import (
     OutputSuppressor)
 
-_BACKGROUND_WORKERS_TXT = "Background workers"
+_MAX_BACKGROUND_WORKERS_TXT = "Max Background workers"
+_MIN_BACKGROUND_WORKERS_TXT = "Min Background workers"
+_EXACT_BACKGROUND_WORKERS_TXT = "Exact Background workers"
+_ANCESTOR_PROCESS_ID_TXT = "Ancestor Process ID"
+_ANCESTOR_PROCESS_START_TIME_TXT = "Ancestor Process Start Time"
 
 
 class SwarmingPortal(PureCodePortal):
@@ -56,14 +56,9 @@ class SwarmingPortal(PureCodePortal):
     eligible requests will eventually be executed at least once.
 
     Notes:
-    - Parent/child: The portal instance created by user code is the parent.
-      It may spawn a separate child process whose responsibility is to keep
-      background workers alive. Child processes created by the portal do not
-      spawn further workers (max_n_workers is forced to 0 in children).
-    - Resources: The effective number of workers is automatically bounded by
-      currently available CPU cores and RAM at runtime.
-    - Environment logging: Runtime environment summary is stored under compute_nodes
-      for debugging purposes to help describe where the parent process is running.
+    - Ancestor/child: The portal instance created by user code is the ancestor.
+      It may spawn a separate child process whose responsibility is
+      to keep background workers alive.
 
     See also: OutputSuppressor for silencing worker output, PureCodePortal for
     the base API and lifecycle management, and tests in tests/_090_swarming_portals.
@@ -71,9 +66,8 @@ class SwarmingPortal(PureCodePortal):
     _compute_nodes: OverlappingMultiDict | None
     _node_id: str | None
 
-    _parent_process_id: int | None
-    _parent_process_start_time: float | None
-    _is_parent: bool | None
+    _ancestor_process_id: int | None
+    _ancestor_process_start_time: int | None
 
     _atexit_is_registered: bool = False
 
@@ -81,9 +75,11 @@ class SwarmingPortal(PureCodePortal):
                  , root_dict: PersiDict | str | None = None
                  , p_consistency_checks:float|Joker = KEEP_CURRENT
                  , excessive_logging: bool|Joker = KEEP_CURRENT
-                 , max_n_workers: int|Joker = KEEP_CURRENT
-                 , parent_process_id: int | None = None
-                 , parent_process_start_time: float | None = None
+                 , max_n_workers: int|Joker|None = KEEP_CURRENT
+                 , min_n_workers: int|Joker|None = KEEP_CURRENT
+                 , exact_n_workers: int|None = None
+                 , ancestor_process_id: int | None = None
+                 , ancestor_process_start_time: float | None = None
                  ):
         """Initialize a swarming portal.
 
@@ -94,54 +90,180 @@ class SwarmingPortal(PureCodePortal):
                 consistency checks. Passed to PureCodePortal.
             excessive_logging: Whether to enable verbose logging. Passed to
                 PureCodePortal.
-            max_n_workers: Desired maximum number of background workers for the
-                parent process. Children must pass 0 here.
+            max_n_workers: Maximum number of background workers for the
+                ancestor process. Descendants must pass None here.
                 The effective value may be reduced based on available CPUs and
                 RAM at runtime.
-            parent_process_id: ID of the parent process when this portal is
-                constructed inside a child process. For parent portals, it
-                must be None.
-            parent_process_start_time: Start time of the parent process, used to
-                detect PID reuse. For parents, it must be None.
+            min_n_workers: Minimum number of background workers for the portal.
+                The effective value may be increased based on available CPUs and
+                RAM at runtime.
+            exact_n_workers: Exact number of background workers for the portal.
+                If this is not None, min_n_workers and max_n_workers are ignored.
+                If this is None, the effective number of workers is determined
+                by min_n_workers and max_n_workers.
+            ancestor_process_id: ID of the ancestor process when this portal is
+                constructed inside a descendant process. For (root)parent
+                portals, it must be None.
+            ancestor_process_start_time: Start time of the ancestor process,
+                used to detect PID reuse. For parent portals, it must be None.
 
         Notes:
-            - When parent_process_id or parent_process_start_time is provided,
-              both must be provided and max_n_workers must be 0.
-            - Initializes compute_nodes storage and captures a unique
-              node signature for this runtime.
+            - When ancestor_process_id or ancestor_process_start_time is provided,
+              both must be provided.
         """
         PureCodePortal.__init__(self
             , root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
-        if not isinstance(max_n_workers, (int, Joker)):
-            raise TypeError(f"max_n_workers must be int or Joker, got {type(max_n_workers).__name__}")
+        if not isinstance(max_n_workers, (int, Joker, type(None))):
+            raise TypeError(f"max_n_workers must be int or Joker or None, "
+                            f"got {type(max_n_workers).__name__}")
+        if not isinstance(min_n_workers, (int, Joker, type(None))):
+            raise TypeError(f"min_n_workers must be int or Joker or None, "
+                            f"got {type(min_n_workers).__name__}")
+        if not isinstance(exact_n_workers, (int,type(None))):
+            raise TypeError(f"exact_n_workers must be int or None, "
+                            f"got {type(exact_n_workers).__name__}")
 
-        if (parent_process_id is None) != (parent_process_start_time is None):
+        if max_n_workers not in (None, KEEP_CURRENT) and max_n_workers < 0:
+            raise ValueError("max_n_workers cannot be negative")
+        if min_n_workers not in (None, KEEP_CURRENT) and min_n_workers < 0:
+            raise ValueError("min_n_workers cannot be negative")
+        if exact_n_workers not in (None, 0) and exact_n_workers < 0:
+            raise ValueError("exact_n_workers cannot be negative")
+
+        if exact_n_workers not in (None,0):
+            if max_n_workers is not None and max_n_workers is not KEEP_CURRENT:
+                raise ValueError("If exact_n_workers is set, max_n_workers must be None")
+            if min_n_workers is not None and min_n_workers is not KEEP_CURRENT:
+                raise ValueError("If exact_n_workers is set, min_n_workers must be None")
+
+        if ancestor_process_id is not None and exact_n_workers is None:
+            raise ValueError("If ancestor_process_id is set, exact_n_workers must be set as well")
+
+        if (ancestor_process_id is None) != (ancestor_process_start_time is None):
             raise RuntimeError(
-                f"parent_process_id and parent_process_start_time must both be None or both set; got id={parent_process_id}, start_time={parent_process_start_time}")
-        if parent_process_id is None:
-            self._auxiliary_config_params_at_init["max_n_workers"] = max_n_workers
-        else:
-            if max_n_workers != 0:
-                raise ValueError(f"In child context, max_n_workers must be 0, got {max_n_workers}")
+                f"ancestor_process_id and ancestor_process_start_time must "
+                f"both be None or both set; got id={ancestor_process_id}, "
+                f"start_time={ancestor_process_start_time}")
 
-        compute_nodes_prototype = self._root_dict.get_subdict("compute_nodes")
-        compute_nodes_shared_params = compute_nodes_prototype.get_params()
-        dict_type = type(self._root_dict)
-        compute_nodes = OverlappingMultiDict(
-            dict_type=dict_type
-            , shared_subdicts_params=compute_nodes_shared_params
-            , json=dict(append_only=False)
-            , pkl=dict(append_only=False)
-            )
-        self._compute_nodes = compute_nodes
+        self._auxiliary_config_params_at_init["max_n_workers"] = max_n_workers
+        self._auxiliary_config_params_at_init["min_n_workers"] = min_n_workers
+        self._auxiliary_config_params_at_init["exact_n_workers"] = exact_n_workers
 
-        self._node_id = get_node_signature()
-        self._parent_process_id = parent_process_id
-        self._parent_process_start_time = parent_process_start_time
-        self._child_process = None
+        if ancestor_process_id is not None:
+            if max_n_workers is not KEEP_CURRENT or min_n_workers is not KEEP_CURRENT:
+                raise ValueError(f"In child context, min_n_workers and "
+                                 f"max_n_workers must be KEEP_CURRENT, "
+                                 f"got {max_n_workers=} and {min_n_workers=}")
+
+        # compute_nodes_prototype = self._root_dict.get_subdict("compute_nodes")
+        # compute_nodes_shared_params = compute_nodes_prototype.get_params()
+        # dict_type = type(self._root_dict)
+        # compute_nodes = OverlappingMultiDict(
+        #     dict_type=dict_type
+        #     , shared_subdicts_params=compute_nodes_shared_params
+        #     , json=dict(append_only=False)
+        #     , pkl=dict(append_only=False)
+        #     )
+        # self._compute_nodes = compute_nodes
+        #
+        # self._node_id = get_node_signature()
+        self._ancestor_process_id = ancestor_process_id
+        self._ancestor_process_start_time = ancestor_process_start_time
+
+        self._all_workers = self._local_node_store.get_subdict("all_workers")
+
+
+    @property
+    def auxiliary_param_names(self) -> set[str]:
+        names = super().auxiliary_param_names
+        names.update({"ancestor_process_id","ancestor_process_start_time"})
+        return names
+
+
+    def register_descendant_process(self, process_type:str):
+        if self.ancestor_process_id is None:
+            raise RuntimeError("register_descendant_process() called "
+                               "outside of a descendant portal (sub)-process")
+        process_info = DescendantProcessInfo(
+            process_type=process_type,
+            ancestor_process_id=self.ancestor_process_id,
+            ancestor_process_start_time=self.ancestor_process_start_time)
+        address = (str(process_info.process_id),
+                   str(process_info.process_start_time))
+        self._all_workers[address] = process_info
+
+
+    @property
+    def ancestor_process_id(self) -> int | None:
+        return self._ancestor_process_id
+
+
+    @property
+    def ancestor_process_start_time(self) -> int | None:
+        return self._ancestor_process_start_time
+
+    @property
+    def max_n_workers(self) -> int:
+        return self._get_portal_config_setting("max_n_workers")
+
+    @property
+    def min_n_workers(self) -> int:
+        return self._get_portal_config_setting("min_n_workers")
+
+    @property
+    def exact_n_workers(self) -> int:
+        return self._get_portal_config_setting("exact_n_workers")
+
+
+    def get_active_descendant_process_counter(self,
+            process_type: str | None = None) -> int:
+        """Count alive descendant processes, clean up dead ones.
+
+        Args:
+            process_type: If provided, only workers with this process type are
+                counted. When None (default), all alive workers are counted.
+                Dead workers are cleaned up.
+
+        Returns:
+            int: Number of alive descendant processes matching the filter.
+        """
+
+        if process_type is not None and not isinstance(process_type, str):
+            raise TypeError("process_type must be a string or None")
+        if process_type == "":
+            raise ValueError("process_type cannot be an empty string")
+
+        ancestor_process_id = self.ancestor_process_id
+        ancestor_process_start_time = self.ancestor_process_start_time
+        if ancestor_process_id is None:
+            ancestor_process_id = get_current_process_id()
+            ancestor_process_start_time = get_current_process_start_time()
+
+        counter = 0
+        dead_addresses = []
+
+        for worker_address, worker in self._all_workers.items():
+            if len(worker_address) != 2:
+                raise RuntimeError("Unexpected worker address format: "
+                                   f"{worker_address}")
+            if not isinstance(worker, DescendantProcessInfo):
+                raise RuntimeError(f"Unexpected worker type: "
+                                   f"{type(worker).__name__}")
+
+            if not worker.is_alive():
+                dead_addresses.append(worker_address)
+            elif process_type is None or worker.process_type == process_type:
+                if worker.ancestor_process_id == ancestor_process_id:
+                    if worker.ancestor_process_start_time == ancestor_process_start_time:
+                        counter += 1
+
+        for addr in dead_addresses:
+            self._all_workers.discard(addr)
+
+        return counter
 
 
     def get_params(self) -> dict:
@@ -153,27 +275,56 @@ class SwarmingPortal(PureCodePortal):
             parent_process_start_time.
         """
         params = super().get_params()
-        params["parent_process_id"] = self._parent_process_id
-        params["parent_process_start_time"] = self._parent_process_start_time
+        params["parent_process_id"] = self.ancestor_process_id
+        params["parent_process_start_time"] = self.ancestor_process_start_time
         sorted_params = sort_dict_by_keys(params)
         return sorted_params
 
 
     @property
-    def is_parent(self) -> bool:
+    def is_ancestor(self) -> bool:
         """Whether this portal instance represents the parent process.
 
         Returns:
             bool: True if this process created the portal instance on the node
-            (no parent metadata set); False if this is a child portal
+            (no ancestor metadata set); False if this is a descendant portal
             instantiated inside the background worker process.
         """
-        if self._parent_process_id is None:
-            return True
-        return False
+        if self.ancestor_process_id is None:
+            result= True
+        else:
+            result= False
+
+        print(f"\n\n IS ACESTOR = {result}\n\n")
+        return result
+
+    @property
+    def n_workers_to_target(self) -> int:
+        if self.exact_n_workers is not None:
+            result =  self.exact_n_workers
+        else:
+            n = self.max_n_workers
+            if n in (None, KEEP_CURRENT):
+                n = 10
+            n = min(n, int(get_unused_cpu_cores()) + 2)
+            n = min(n, int(get_unused_ram_mb() / 500))
+            n = int(n)
+
+            min_n_workers = self.min_n_workers
+            if min_n_workers in (None, KEEP_CURRENT):
+                min_n_workers = 0
+
+            if n < min_n_workers:
+                n = min_n_workers
+
+            result= max(0, n)
+
+        print(f"\n\n\n_workers_to_target={result}\n")
+
+        return result
 
 
-    def _post_init_hook(self) -> None:
+    def __post_init__(self) -> None:
         """Lifecycle hook invoked after initialization.
 
         Registers a global atexit handler once per process to terminate any
@@ -181,77 +332,101 @@ class SwarmingPortal(PureCodePortal):
         max_n_workers, spawns a child process that manages the pool of
         background worker processes.
         """
-        super()._post_init_hook()
+        super().__post_init__()
 
         if not SwarmingPortal._atexit_is_registered:
-            atexit.register(_terminate_all_portals_child_processes)
+            atexit.register(_terminate_all_portals_descendant_processes)
             SwarmingPortal._atexit_is_registered = True
 
-        if self.is_parent:
-            if self.max_n_workers > 0:
+        print("\n\n====POST_INIT_HOOK_SWARMING================\n\n")
+
+        if self.is_ancestor:
+            if self.n_workers_to_target > 0:
 
                 portal_init_jsparams = parameterizable.dumpjs(self)
-                portal_init_jsparams = update_jsparams(portal_init_jsparams,
-                    max_n_workers = self.max_n_workers)
+                portal_init_jsparams = update_jsparams(
+                    portal_init_jsparams,
+                    exact_n_workers = self.n_workers_to_target,
+                    max_n_workers = KEEP_CURRENT,
+                    min_n_workers = KEEP_CURRENT,
+                    ancestor_process_id = get_current_process_id(),
+                    ancestor_process_start_time = get_current_process_start_time())
 
                 ctx = get_context("spawn")
-                self._child_process = ctx.Process(
+                workers_launcher = ctx.Process(
                     target=_launch_many_background_workers
                     , args=(portal_init_jsparams,))
-                self._child_process.start()
+                workers_launcher.start()
 
 
-    def _terminate_child_process(self):
-        """Terminate the child process if it is running.
+    def _terminate_descendant_processes(self):
+        """Terminate tracked descendant worker processes if they are running.
 
-        This method is idempotent and safe to call from atexit handlers.
-        It attempts a graceful termination, then escalates to kill if the
-        child does not stop within a short grace period.
+        This method also cleans up dead processes.
         """
-        if self._child_process is not None:
-            if self._child_process.is_alive():
-                self._child_process.terminate()
-                self._child_process.join(3)
-                if self._child_process.is_alive():
-                    self._child_process.kill()
-                    self._child_process.join()
-        self._child_process = None
+        if not self.is_ancestor:
+            raise RuntimeError("This method should only be called "
+                               "from the ancestor process")
+
+        workers_to_terminate, adresses_to_discard = list(),list()
+        current_process_id = get_current_process_id()
+        current_process_start_time = get_current_process_start_time()
+
+        for address, worker in self._all_workers.items():
+            if not worker.is_alive():
+                adresses_to_discard.append(address)
+            elif worker.ancestor_process_id == current_process_id:
+                if worker.ancestor_process_start_time == current_process_start_time:
+                    workers_to_terminate.append(worker)
+
+        for address in adresses_to_discard:
+            self._all_workers.discard(address)
+        for worker in workers_to_terminate:
+            try:
+                address = (str(worker.process_id), str(worker.process_start_time))
+                worker.terminate()
+                self._all_workers.discard(address)
+            except:
+                # Best-effort: ensure we don't keep stale tracking records
+                # Bare except is intentional here
+                pass
 
 
-    @property
-    def _execution_environment_address(self) -> list[str]: #TODO: move to Logs
-        """Address path for storing execution environment summary.
 
-        Returns:
-            list[str]: A hierarchical key used in the compute_nodes storage of
-            the form [node_id, parent_pid_and_start, "execution_environment"].
-        """
-        s = str(self._parent_process_id) + "_" + str(self._parent_process_start_time)
-        return [self._node_id, s, "execution_environment"]
+    # @property
+    # def _execution_environment_address(self) -> list[str]: #TODO: move to Logs
+    #     """Address path for storing execution environment summary.
+    #
+    #     Returns:
+    #         list[str]: A hierarchical key used in the compute_nodes storage of
+    #         the form [node_id, parent_pid_and_start, "execution_environment"].
+    #     """
+    #     s = str(self._ancestor_process_id) + "_" + str(self._ancestor_process_start_time)
+    #     return [self._node_id, s, "execution_environment"]
 
 
-    @property
-    def max_n_workers(self) -> int:
-        """Effective cap on background worker processes.
-
-        The configured max_n_workers value is adjusted down by runtime
-        resource availability: currently unused CPU cores and available RAM.
-        The result is cached in RAM for the life of the portal process
-        until the cache is invalidated.
-
-        Returns:
-            int: Effective maximum number of worker processes to use.
-        """
-        if not hasattr(self, "_max_n_workers_cache"):
-            n = self._get_portal_config_setting("max_n_workers")
-            if n in (None, KEEP_CURRENT):
-                n = 10
-            n = min(n, get_unused_cpu_cores() + 2)
-            n = min(n, get_unused_ram_mb() / 500)
-            n = int(n)
-            self._max_n_workers_cache = n
-
-        return self._max_n_workers_cache
+    # @property
+    # def max_n_workers(self) -> int:
+    #     """Effective cap on background worker processes.
+    #
+    #     The configured max_n_workers value is adjusted down by runtime
+    #     resource availability: currently unused CPU cores and available RAM.
+    #     The result is cached in RAM for the life of the portal process
+    #     until the cache is invalidated.
+    #
+    #     Returns:
+    #         int: Effective maximum number of worker processes to use.
+    #     """
+    #     if not hasattr(self, "_max_n_workers_cache"):
+    #         n = self._get_portal_config_setting("max_n_workers")
+    #         if n in (None, KEEP_CURRENT):
+    #             n = 10
+    #         n = min(n, get_unused_cpu_cores() + 2)
+    #         n = min(n, get_unused_ram_mb() / 500)
+    #         n = int(n)
+    #         self._max_n_workers_cache = n
+    #
+    #     result = self._max_n_workers_cache
 
 
     def describe(self) -> pd.DataFrame:
@@ -264,25 +439,32 @@ class SwarmingPortal(PureCodePortal):
         """
         all_params = [super().describe()]
         all_params.append(_describe_runtime_characteristic(
-            _BACKGROUND_WORKERS_TXT, self.max_n_workers))
+            _MAX_BACKGROUND_WORKERS_TXT, self.max_n_workers))
+        all_params.append(_describe_runtime_characteristic(
+            _MIN_BACKGROUND_WORKERS_TXT, self.min_n_workers))
+        all_params.append(_describe_runtime_characteristic(
+            _EXACT_BACKGROUND_WORKERS_TXT, self.exact_n_workers))
+        all_params.append(_describe_runtime_characteristic(
+            _ANCESTOR_PROCESS_ID_TXT, self.ancestor_process_id))
+        all_params.append(_describe_runtime_characteristic(
+            _ANCESTOR_PROCESS_START_TIME_TXT, self.ancestor_process_start_time))
+
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
         return result
 
 
-    def parent_runtime_is_live(self):
+    def ancestor_runtime_is_live(self):
         """Check that the recorded parent process is still alive.
 
         Returns:
             bool: True if the parent PID exists and its start time matches the
             recorded start time (to avoid PID reuse issues); False otherwise.
         """
-        if not process_is_active(self._parent_process_id):
-            return False
-        if get_process_start_time(self._parent_process_id) != self._parent_process_start_time:
-            return False
-        return True
+        return process_is_alive(
+            process_id=self.ancestor_process_id,
+            process_start_time = self.ancestor_process_start_time)
 
 
     def _clear(self):
@@ -290,8 +472,9 @@ class SwarmingPortal(PureCodePortal):
 
         The portal must not be used after this method is called.
         """
-        self._compute_nodes = None
-        self._terminate_child_process()
+        # self._compute_nodes = None
+        if self.is_ancestor:
+            self._terminate_descendant_processes()
         super()._clear()
 
 
@@ -311,21 +494,28 @@ class SwarmingPortal(PureCodePortal):
             min_delay: Minimum sleep duration in seconds.
             max_delay: Maximum sleep duration in seconds.
         """
+        if not 0 <= p <= 1:
+            raise ValueError("p must be between 0 and 1")
+        if min_delay < 0:
+            raise ValueError("min_delay cannot be negative")
+        if max_delay < min_delay:
+            raise ValueError("max_delay must be >= min_delay")
+
         if self.entropy_infuser.uniform(0, 1) < p:
             delay = self.entropy_infuser.uniform(min_delay, max_delay)
             sleep(delay)
 
 
-    def _invalidate_cache(self):
-        """Drop cached computed attributes and delegate to base class.
-
-        This implementation removes any attributes used as local caches by this
-        class (currently _max_n_workers_cache) and then calls the base
-        implementation to allow it to clear its own caches.
-        """
-        if hasattr(self, "_max_n_workers_cache"):
-            del self._max_n_workers_cache
-        super()._invalidate_cache()
+    # def _invalidate_cache(self):
+    #     """Drop cached computed attributes and delegate to base class.
+    #
+    #     This implementation removes any attributes used as local caches by this
+    #     class (currently _max_n_workers_cache) and then calls the base
+    #     implementation to allow it to clear its own caches.
+    #     """
+    #     if hasattr(self, "_max_n_workers_cache"):
+    #         del self._max_n_workers_cache
+    #     super()._invalidate_cache()
 
 
 def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -> None:
@@ -343,51 +533,32 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
             the parent process metadata.
     """
 
-
-    n_workers_to_launch = access_jsparams(portal_init_jsparams
-        , "max_n_workers")["max_n_workers"]
-    n_workers_to_launch = int(n_workers_to_launch)
-
-    portal_init_jsparams = update_jsparams(portal_init_jsparams,
-        max_n_workers=0, parent_process_id = get_current_process_id(),
-        parent_process_start_time = get_current_process_start_time())
+    #
+    # n_workers_to_launch = access_jsparams(portal_init_jsparams
+    #     , "exact_n_workers")["exact_n_workers"]
 
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
-    summary = build_execution_environment_summary()
-    portal._compute_nodes.json[portal._execution_environment_address] = summary
+    # summary = build_execution_environment_summary()
+    # portal._compute_nodes.json[portal._execution_environment_address] = summary
 
-    list_of_all_workers = []
 
-    with portal:
-        for i in range(n_workers_to_launch):
-            portal._randomly_delay_execution(p=1)
-            ctx = get_context("spawn")
-            try:
-                p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
-                p.start()
-                list_of_all_workers.append(p)
-            except Exception as e:
-                break
+    portal.register_descendant_process("_launch_many_background_workers")
 
     with portal:
         while True:
-            portal._randomly_delay_execution(p=1)
-            new_list_of_all_workers = []
-            for worker in list_of_all_workers:
-                if  worker.is_alive():
-                    new_list_of_all_workers.append(worker)
-                else:
-                    portal._randomly_delay_execution(p=1)
+            current_n_workers = portal.get_active_descendant_process_counter("_background_worker")
+            n_workers_to_launch = max(0, portal.n_workers_to_target - current_n_workers)
+            if n_workers_to_launch > 0:
+                try:
                     ctx = get_context("spawn")
-                    try:
-                        p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
-                        p.start()
-                        new_list_of_all_workers.append(p)
-                    except Exception as e:
-                        break
-            list_of_all_workers = new_list_of_all_workers
+                    p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
+                    p.start()
+                except:
+                    # Bare except is intentional here
+                    pass
+            portal._randomly_delay_execution(p=1)
 
 
 def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
@@ -401,14 +572,17 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
         portal_init_jsparams: Serialized initialization parameters for
             reconstructing a SwarmingPortal in child context.
     """
+    portal_init_jsparams = parameterizable.update_jsparams(
+        portal_init_jsparams, exact_n_workers=0)
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
+    portal.register_descendant_process("_background_worker")
     with portal:
         ctx = get_context("spawn")
         with OutputSuppressor():
             while True:
-                if not portal.parent_runtime_is_live():
+                if not portal.ancestor_runtime_is_live():
                     return
                 p = ctx.Process(
                     target=_process_random_execution_request
@@ -439,6 +613,8 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
     with portal:
         call_signature:PureFnCallSignature|None = None
         while True:
+            if not portal.ancestor_runtime_is_live():
+                return
             if call_signature is not None:
                 pre_validation_result = call_signature.fn.can_be_executed(
                     call_signature.packed_kwargs)
@@ -472,15 +648,15 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
                 return
 
 
-def _terminate_all_portals_child_processes():
-    """Terminate child processes for all known portals.
+def _terminate_all_portals_descendant_processes():
+    """Terminate descendant processes for all known portals.
 
     Registered with atexit the first time a SwarmingPortal is initialized.
-    Ensures that any child processes are terminated to avoid orphaned workers.
+    Ensures that any descendant processes are terminated to avoid orphaned workers.
     """
     for portal in get_all_known_portals():
         try:
-            portal._terminate_child_process()
+            portal._terminate_descendant_processes()
         except Exception:
             # Best-effort cleanup; ignore errors during shutdown.
             pass
