@@ -18,11 +18,15 @@ from functools import lru_cache
 from typing import Optional
 
 
-def _run(command: list[str]) -> None:
-    """Run command; raise RuntimeError on failure."""
+def _run(command: list[str], timeout: int = 300) -> None:
+    """Run command; raise RuntimeError on failure or timeout."""
     try:
         subprocess.run(command, check=True, stdout=subprocess.PIPE
-            , stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True)
+            , stderr=subprocess.STDOUT, stdin=subprocess.DEVNULL, text=True
+            , timeout=timeout)
+    except subprocess.TimeoutExpired as e:
+        raise RuntimeError(
+            f"Command timed out after {timeout}s: {' '.join(command)}") from e
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"Command failed: {' '.join(command)}\n{e.stdout}") from e
