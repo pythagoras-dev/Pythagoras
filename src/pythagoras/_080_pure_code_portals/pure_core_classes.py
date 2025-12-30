@@ -26,10 +26,6 @@ import time
 from copy import copy
 from typing import Callable, Any, List, TypeAlias
 
-import pandas as pd
-# from sklearn.model_selection import ParameterGrid
-
-from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from persidict import WriteOnceDict
 
@@ -43,9 +39,6 @@ from .._040_logging_code_portals import *
 
 from .._070_protected_code_portals import *
 
-ASupportingFunc:TypeAlias = str | AutonomousFn
-
-SupportingFuncs:TypeAlias = ASupportingFunc | List[ASupportingFunc] | None
 
 _CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
 _EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
