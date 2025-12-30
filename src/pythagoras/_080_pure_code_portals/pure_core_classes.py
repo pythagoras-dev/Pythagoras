@@ -23,7 +23,7 @@ source code are tracked.
 from __future__ import annotations
 
 import time
-from copy import copy
+
 from typing import Callable, Any, List, TypeAlias
 
 
@@ -34,10 +34,19 @@ from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
 
 from .._030_data_portals import HashAddr, ValueAddr
-from .._040_logging_code_portals import *
-
 
 from .._070_protected_code_portals import *
+
+def get_noncurrent_pure_portals() -> list[PureCodePortal]:
+    """Get a list of all PureCodePortals that are not the current portal.
+
+    Returns:
+        A list of all known pure portal instances but the current one.
+
+    Raises:
+        TypeError: If any non-current portal is not an instance of PureCodePortal.
+    """
+    return get_noncurrent_portals(PureCodePortal)
 
 
 _CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
@@ -392,9 +401,8 @@ class PureFnExecutionResultAddr(HashAddr):
     function execution, such as environmental contexts of the execution attempts,
     outputs printed, exceptions thrown, and events emitted.
     """
-    _fn_cache: PureFn | None
-    _call_signature_cache: PureFnCallSignature | None
-    _kwargs_cache: KwArgs | None
+
+    _DESCRIPTOR_SUFFIX:str = "_result_addr"
 
     _result_cache: Any | None
     _ready_cache: bool | None
@@ -409,12 +417,12 @@ class PureFnExecutionResultAddr(HashAddr):
         if not isinstance(fn, PureFn):
             raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
         with fn.portal as portal:
-            self._kwargs_cache = KwArgs(**arguments)
-            self._fn_cache = fn
-            signature = PureFnCallSignature(fn, self._kwargs_cache)
-            self._call_signature_cache = signature
+            kwargs = KwArgs(**arguments)
+            signature = PureFnCallSignature(fn, kwargs)
+            self._set_cached_properties(call_signature = signature
+                    , fn = fn, kwargs = kwargs)
             tmp = ValueAddr(signature)
-            new_descriptor = fn.name +"_result_addr"
+            new_descriptor = fn.name +self._DESCRIPTOR_SUFFIX
             new_hash_signature = tmp.hash_signature
             super().__init__(new_descriptor, new_hash_signature)
 
@@ -430,47 +438,33 @@ class PureFnExecutionResultAddr(HashAddr):
             del self._ready_cache
         if hasattr(self, "_result_cache"):
             del self._result_cache
-        if hasattr(self, "_fn_cache"):
-            del self._fn_cache
-        if hasattr(self, "_kwargs_cache"):
-            del self._kwargs_cache
-        if hasattr(self, "_call_signature_cache"):
-            del self._call_signature_cache
         super()._invalidate_cache()
 
 
     def get_ValueAddr(self):
-        descriptor = self.descriptor.removesuffix("_result_addr")
+        descriptor = self.descriptor.removesuffix(self._DESCRIPTOR_SUFFIX)
         descriptor += "_" + PureFnCallSignature.__name__.lower()
         return ValueAddr.from_strings(  # TODO: refactor this
             descriptor= descriptor
             , hash_signature=self.hash_signature)
 
 
-    @property
+    @cached_property
     def call_signature(self) -> PureFnCallSignature:
         """The PureFnCallSignature for this address' call."""
-        if (not hasattr(self, "_call_signature_cache")
-            or self._call_signature_cache is None):
-            self._call_signature_cache = self.get_ValueAddr().get()
-        return self._call_signature_cache
+        return self.get_ValueAddr().get()
 
 
-    @property
+    @cached_property
     def fn(self) -> PureFn:
         """Return the function object referenced by the address."""
-        if not hasattr(self, "_fn_cache") or self._fn_cache is None:
-            self._fn_cache = self.call_signature.fn
-        return self._fn_cache
+        return self.call_signature.fn
 
 
-    @property
+    @cached_property
     def kwargs(self) -> KwArgs:
         """Unpacked arguments of the function call, referenced by the address."""
-        if not hasattr(self, "_kwargs_cache") or self._kwargs_cache is None:
-            with self.fn.portal:
-                self._kwargs_cache = self.call_signature.kwargs_addr.get().unpack()
-        return self._kwargs_cache
+        return self.call_signature.kwargs_addr.get().unpack()
 
 
     def __setstate__(self, state):
@@ -486,25 +480,25 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def _ready_in_active_portal(self):
-        """Indicates if the result of the function call is available."""
+    def _ready_in_current_portal(self):
+        """Indicates if the result of the function call is available in the current portal."""
         result = (self in get_current_portal()._execution_results)
         if result:
             self._ready_cache = True
         return result
 
     @property
-    def _ready_in_nonactive_portals(self) -> bool:
-        """Try importing a ready result from non-active portals.
+    def _ready_in_noncurrent_portals(self) -> bool:
+        """Try importing a ready result from non-current portals.
 
         If another known portal already has the execution result, copy the
-        corresponding key/value into the active portal's stores.
+        corresponding key/value into the current portal's stores.
 
         Returns:
             bool: True if the value was found in a non-active portal and
             imported; False otherwise.
         """
-        for another_portal in get_nonactive_portals():
+        for another_portal in get_noncurrent_pure_portals():
             with another_portal:
                 if self in another_portal._execution_results:
                     addr = another_portal._execution_results[self]
@@ -522,18 +516,18 @@ class PureFnExecutionResultAddr(HashAddr):
         """Whether the execution result is already available.
 
         Returns:
-            bool: True if the result is present in the active portal (or can
-            be imported from a known non-active portal); False otherwise.
+            bool: True if the result is present in the current portal (or can
+            be imported from a known non-current portal); False otherwise.
         """
         if hasattr(self, "_ready_cache"):
             if not self._ready_cache:
                 raise RuntimeError(f"Internal inconsistency: _ready_cache is set but False for address {self}")
             return True
         with self.fn.portal:
-            if self._ready_in_active_portal:
+            if self._ready_in_current_portal:
                 self._ready_cache = True
                 return True
-            if self._ready_in_nonactive_portals:
+            if self._ready_in_noncurrent_portals:
                 self._ready_cache = True
                 return True
         return False
@@ -577,12 +571,13 @@ class PureFnExecutionResultAddr(HashAddr):
             portal or any known non-active portal (also synchronizes the
             request into the active portal); False otherwise.
         """
-        with self.fn.portal as active_portal:
-            if self in active_portal._execution_requests:
+        with self.fn.portal as current_portal:
+            if self in current_portal._execution_requests:
                 return True
-            for another_portal in get_nonactive_portals():
+            for another_portal in get_noncurrent_pure_portals():
                 if self in another_portal._execution_requests:
-                    active_portal._execution_requests[self] = True
+                    current_portal._execution_requests[self] = True
+                    #TODO: Review how timestamps should work here
                     return True
         return False
 
