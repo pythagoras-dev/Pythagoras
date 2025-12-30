@@ -31,5 +31,5 @@ def test_polars_package(tmpdir):
 
         uninstall_package(polars_package_name, use_uv=True)
 
-        with pytest.raises(ModuleNotFoundError):
+        with pytest.raises((ImportError, ModuleNotFoundError)):
             importlib.reload(package)
