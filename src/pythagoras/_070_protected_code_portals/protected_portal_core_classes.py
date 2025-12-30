@@ -23,7 +23,7 @@ from persidict import PersiDict, Joker
 
 from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._010_basic_portals.basic_portal_core_classes import _visit_portal
-from .list_flattener import flatten_list
+from .iterative_flattener import flatten_iterative
 from .validation_succesful_const import VALIDATION_SUCCESSFUL, ValidationSuccessFlag
 
 from .._060_autonomous_code_portals import *
@@ -313,7 +313,7 @@ class ProtectedFn(AutonomousFn):
                 validators = [validators]
         if not isinstance(validators, list):
             raise TypeError(f"validators must be a list or compatible item(s); got type {type(validators).__name__}")
-        validators = flatten_list(validators)
+        validators = flatten_iterative(validators)
         new_validators = []
         for validator in validators:
             if not isinstance(validator, validator_type):
