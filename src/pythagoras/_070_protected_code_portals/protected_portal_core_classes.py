@@ -152,7 +152,6 @@ class ProtectedFn(AutonomousFn):
 
     def __setstate__(self, state):
         """This method is called when the object is unpickled."""
-        self._invalidate_cache()
         super().__setstate__(state)
         self._pre_validators_addrs = state["pre_validators_addrs"]
         self._post_validators_addrs = state["post_validators_addrs"]
