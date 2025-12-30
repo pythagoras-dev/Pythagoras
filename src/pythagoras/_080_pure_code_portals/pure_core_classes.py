@@ -1,23 +1,17 @@
-"""Classes to work with pure functions.
+"""Pure function management with persistent result caching.
 
-A pure function is a protected function that has no side effects and
-always returns the same result if it is called multiple times
-with the same arguments.
+Pure functions are protected functions with no side effects that
+always return the same result for identical arguments.
 
-This subpackage defines a decorator which is used to inform Pythagoras that
-a function is intended to be pure: @pure().
+This module defines the @pure() decorator to mark functions as pure and
+provides persistent caching infrastructure. When a pure function is called
+multiple times with the same arguments, only the first invocation executes
+the function body; subsequent calls return the cached result.
 
-Pythagoras persistently caches results, produced by a pure function, so that
-if the function is called multiple times with the same arguments,
-the function is executed only once, and the cached result is returned
-for all the subsequent executions.
-
-While caching the results of a pure function, Pythagoras also tracks
-changes in the source code of the function. If the source code of a pure
-function changes, the function is executed again on the next call.
-However, the previously cached results are still available
-for the old version of the function. Only changes in the function's
-source code are tracked.
+Pythagoras tracks source code changes in pure functions. When the function
+implementation changes, execution occurs again on the next call, but
+previously cached results remain available for the old version. Only
+source code changes are tracked, not dependencies or environment.
 """
 
 from __future__ import annotations
@@ -38,13 +32,13 @@ from .._030_data_portals import HashAddr, ValueAddr
 from .._070_protected_code_portals import *
 
 def get_noncurrent_pure_portals() -> list[PureCodePortal]:
-    """Get a list of all PureCodePortals that are not the current portal.
+    """Get all known PureCodePortals except the currentl one.
 
     Returns:
-        A list of all known pure portal instances but the current one.
+        List of all known pure portal instances excluding the current portal.
 
     Raises:
-        TypeError: If any non-current portal is not an instance of PureCodePortal.
+        TypeError: If any non-current portal is not a PureCodePortal instance.
     """
     return get_noncurrent_portals(PureCodePortal)
 
@@ -53,11 +47,12 @@ _CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
 _EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
 
 class PureCodePortal(ProtectedCodePortal):
-    """Portal that manages execution and caching for pure functions.
+    """Portal managing execution and persistent caching for pure functions.
 
-    The portal extends ProtectedCodePortal with two persistent dictionaries:
-    - execution_results: append-only, stores ValueAddr of function outputs
-    - execution_requests: mutable, tracks pending execution requests
+    Extends ProtectedCodePortal with two persistent dictionaries for distributed
+    coordination:
+    - execution_results: Append-only cache of HashAddr for function outputs
+    - execution_requests: Mutable queue tracking pending execution requests
     """
 
     _execution_results: PersiDict | None
@@ -71,10 +66,10 @@ class PureCodePortal(ProtectedCodePortal):
         """Initialize a PureCodePortal instance.
 
         Args:
-            root_dict: Backing persistent dictionary or path used to create it.
-            p_consistency_checks: Probability [0..1] to re-check cached
-                results for consistency. KEEP_CURRENT to inherit.
-            excessive_logging: Verbosity flag; KEEP_CURRENT to inherit.
+            root_dict: Backing persistent dictionary or filesystem path.
+            p_consistency_checks: Probability (0.0-1.0) of re-verifying cached
+                results for consistency, or KEEP_CURRENT to inherit from parent.
+            excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
         """
         ProtectedCodePortal.__init__(self
             , root_dict=root_dict
@@ -98,7 +93,7 @@ class PureCodePortal(ProtectedCodePortal):
 
 
     def __post_init__(self) -> None:
-        """Hook to be called after all __init__ methods are done"""
+        """Finalize initialization after all __init__ methods complete."""
         super().__post_init__()
         p = self.p_consistency_checks
         self._execution_results._p_consistency_checks = p
@@ -108,9 +103,8 @@ class PureCodePortal(ProtectedCodePortal):
         """Describe the portal state as a DataFrame.
 
         Returns:
-            Concatenated report that includes base portal
-            parameters plus counts of cached execution results and queued
-            execution requests.
+            DataFrame containing base portal parameters, cached result count,
+            and queued execution request count.
         """
         all_params = [super().describe()]
 
@@ -124,9 +118,10 @@ class PureCodePortal(ProtectedCodePortal):
         return result
 
     def _clear(self):
-        """Release references to backing dicts and clear base portal state.
+        """Release backing dictionary references and clear base portal state.
 
-        The portal must not be used after this method is called.
+        Warning:
+            Portal becomes unusable after calling this method.
         """
         self._execution_results = None
         self._execution_requests = None
@@ -134,14 +129,18 @@ class PureCodePortal(ProtectedCodePortal):
 
 
 class PureFnCallSignature(ProtectedFnCallSignature):
-    """A signature of a call to a pure function"""
+    """Signature identifying a specific call to a pure function.
+
+    Combines the function identity with its argument values to create
+    a unique key for result caching and retrieval.
+    """
 
     def __init__(self, fn: PureFn, arguments: dict):
-        """Create a signature object for a specific PureFn call.
+        """Create a call signature for a PureFn invocation.
 
         Args:
-            fn: The pure function being called.
-            arguments: Keyword arguments for the call.
+            fn: Pure function being invoked.
+            arguments: Keyword arguments passed to the function.
         """
         if not isinstance(fn, PureFn):
             raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
@@ -151,21 +150,21 @@ class PureFnCallSignature(ProtectedFnCallSignature):
 
     @cached_property
     def fn(self) -> PureFn:
-        """Return the function object referenced by the signature."""
+        """Pure function referenced by this signature."""
         return super().fn
 
     @cached_property
     def execution_results_addr(self) -> PureFnExecutionResultAddr:
-        """Return the address of the execution results of the function call."""
+        """Address where execution results are stored."""
         return PureFnExecutionResultAddr(self.fn, self.packed_kwargs)
 
 
 class PureFn(ProtectedFn):
-    """Wrapper around a callable that provides pure-function semantics.
+    """Callable wrapper providing pure-function semantics with result caching.
 
-    A PureFn executes inside a PureCodePortal, caches results by call
-    signature, and exposes convenience APIs to request execution, run
-    immediately, and retrieve results via address objects.
+    Executes within a PureCodePortal, persistently caches results indexed by
+    call signature, and provides APIs for synchronous execution, background
+    requests, and address-based retrieval.
     """
 
     def __init__(self, fn: Callable | str
@@ -174,16 +173,15 @@ class PureFn(ProtectedFn):
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None = None):
-        """Construct a PureFn.
+        """Construct a PureFn wrapper.
 
         Args:
-            fn: Target callable.
-            pre_validators: Optional list of pre-execution validators.
-            post_validators: Optional list of post-execution validators.
-            excessive_logging: Verbosity flag; KEEP_CURRENT to inherit.
-            fixed_kwargs: Mapping of argument names to fixed values injected
-                into each call.
-            portal: Optional PureCodePortal to bind this PureFn to.
+            fn: Target callable to wrap.
+            pre_validators: Optional validators run before execution.
+            post_validators: Optional validators run after execution.
+            excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
+            fixed_kwargs: Argument name-value pairs injected into every call.
+            portal: Specific PureCodePortal to link to.
         """
         ProtectedFn.__init__(self
                              , fn=fn
@@ -195,14 +193,13 @@ class PureFn(ProtectedFn):
 
 
     def get_address(self, **kwargs) -> PureFnExecutionResultAddr:
-        """Build an address object for a call with the given arguments.
+        """Build an address for the result of a call with the given arguments.
 
         Args:
-            **kwargs: Keyword arguments to pass to the function.
+            **kwargs: Keyword arguments for the function call.
 
         Returns:
-            PureFnExecutionResultAddr: Address referencing the (cached or
-            future) result corresponding to the provided arguments.
+            Address referencing the result (cached or pending) for these arguments.
         """
         with self.portal:
             packed_kwargs = KwArgs(**kwargs).pack()
@@ -213,27 +210,25 @@ class PureFn(ProtectedFn):
         """Build a call signature for the given arguments.
 
         Args:
-            arguments: Keyword arguments for a potential call.
+            arguments: Keyword arguments for the function call.
 
         Returns:
-            PureFnCallSignature: The signature object identifying the call.
+            Signature object uniquely identifying this call.
         """
         return PureFnCallSignature(self, arguments)
 
 
     def swarm(self, **kwargs) -> PureFnExecutionResultAddr:
-        """Request background function execution for the given arguments.
+        """Request background execution without blocking.
 
-        The function is not executed immediately; instead, an execution request
-        is recorded in the portal. The returned address can later be used to
-        check readiness or retrieve the value.
+        Records an execution request in the portal for external workers to process.
+        The function does not execute immediately.
 
         Args:
-            **kwargs: Keyword arguments to pass to the underlying function.
+            **kwargs: Keyword arguments for the function call.
 
         Returns:
-            PureFnExecutionResultAddr: Address that identifies the pending (or
-            already cached) execution result for these arguments.
+            Address identifying the pending or cached result.
         """
         with self.portal:
             result_address = self.get_address(**kwargs)
@@ -241,16 +236,13 @@ class PureFn(ProtectedFn):
             return result_address
 
     def run(self, **kwargs) -> PureFnExecutionResultAddr:
-        """Execute immediately and return the result address.
-
-        The function is executed synchronously within the current process.
+        """Execute synchronously and return the result address.
 
         Args:
-            **kwargs: Keyword arguments to pass to the underlying function.
+            **kwargs: Keyword arguments for the function call.
 
         Returns:
-            PureFnExecutionResultAddr: Address of the computed value (which can
-            be used to fetch logs/metadata or the value again if needed).
+            Address of the computed result.
         """
         with self.portal:
             result_address = self.get_address(**kwargs)
@@ -259,18 +251,16 @@ class PureFn(ProtectedFn):
 
 
     def execute(self, **kwargs) -> Any:
-        """Execute the function with the given arguments and return the result.
+        """Execute the function and return the result value.
 
-        The function is executed immediately and its result is memoized by the
-        portal. Subsequent calls with identical arguments return the cached
-        value (optionally performing consistency checks depending on the
-        portal's p_consistency_checks setting).
+        Returns the cached result if available, otherwise executes and caches.
+        Consistency checks may run probabilistically based on portal settings.
 
         Args:
-            **kwargs: Keyword arguments to pass to the underlying function.
+            **kwargs: Keyword arguments for the function call.
 
         Returns:
-            Any: The computed result value.
+            The computed or cached result value.
         """
 
         with self.portal as portal:
@@ -306,15 +296,13 @@ class PureFn(ProtectedFn):
             self
             , list_of_kwargs:list[dict]
             ) -> list[PureFnExecutionResultAddr]:
-        """Queue background execution for a batch of argument sets.
+        """Queue background execution for multiple argument sets.
 
         Args:
-            list_of_kwargs: A list of keyword-argument mappings. Each mapping
-                represents one call to the function.
+            list_of_kwargs: List of keyword-argument dicts, one per call.
 
         Returns:
-            list[PureFnExecutionResultAddr]: Addresses for all requested
-            executions, in the same order as the input list.
+            Result addresses in the same order as input.
         """
         if not isinstance(list_of_kwargs, (list, tuple)):
             raise TypeError(f"list_of_kwargs must be a list or tuple, got {type(list_of_kwargs).__name__}")
@@ -338,16 +326,13 @@ class PureFn(ProtectedFn):
             self
             , list_of_kwargs:list[dict]
             ) -> list[PureFnExecutionResultAddr]:
-        """Execute a batch of calls immediately and return their addresses.
-
-        Execution is performed in a shuffled order.
+        """Execute multiple calls synchronously in shuffled order.
 
         Args:
-            list_of_kwargs: A list of keyword-argument mappings for each call.
+            list_of_kwargs: List of keyword-argument dicts, one per call.
 
         Returns:
-            list[PureFnExecutionResultAddr]: Addresses for the executed calls,
-            in the same order as the input list.
+            Result addresses in the same order as input.
         """
         with self.portal:
             addrs = self.swarm_list(list_of_kwargs)
@@ -380,26 +365,18 @@ class PureFn(ProtectedFn):
 
     @property
     def portal(self) -> PureCodePortal:
-        """Active PureCodePortal used for this function execution.
+        """PureCodePortal governing execution and persistence.
 
-        Returns:
-            PureCodePortal: The portal that governs execution and persistence
-            for this PureFn (falls back to the current active portal if this
-            function isn't explicitly bound).
+        Either the function's linked portal or the current active portal if not explicitly bound.
         """
         return super().portal
 
 
 class PureFnExecutionResultAddr(HashAddr):
-    """An address of a (future) result of pure function execution.
+    """Address referencing a pure function execution result (cached or pending).
 
-    This class is used to point to the result of an execution of a pure
-    function in a portal. The address is used to request an execution or
-    to retrieve the result (if available) from the portal.
-
-    The address also provides access to various logs and records of the
-    function execution, such as environmental contexts of the execution attempts,
-    outputs printed, exceptions thrown, and events emitted.
+    Used to request execution, retrieve results, check availability, and access
+    execution metadata such as logs, exceptions, and environmental contexts.
     """
 
     _DESCRIPTOR_SUFFIX:str = "_result_addr"
@@ -408,11 +385,11 @@ class PureFnExecutionResultAddr(HashAddr):
     _ready_cache: bool | None
 
     def __init__(self, fn: PureFn, arguments:dict[str, Any]):
-        """Create an address for a pure-function execution result.
+        """Create an address for a pure function execution result.
 
         Args:
-            fn: The PureFn whose execution result is addressed.
-            arguments: The keyword arguments for the call (packed dict).
+            fn: Pure function whose result is addressed.
+            arguments: Keyword arguments for the call.
         """
         if not isinstance(fn, PureFn):
             raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
@@ -428,11 +405,9 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def _invalidate_cache(self):
-        """Invalidate the object's attribute cache.
+        """Invalidate cached attribute values.
 
-        If the object's attribute named ATTR is cached,
-        its cached value will be stored in an attribute named _ATTR_cache
-        This method should delete all such attributes.
+        Clears all cached properties.
         """
         if hasattr(self, "_ready_cache"):
             del self._ready_cache
@@ -451,37 +426,37 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @cached_property
     def call_signature(self) -> PureFnCallSignature:
-        """The PureFnCallSignature for this address' call."""
+        """Call signature for this address."""
         return self.get_ValueAddr().get()
 
 
     @cached_property
     def fn(self) -> PureFn:
-        """Return the function object referenced by the address."""
+        """Pure function referenced by this address."""
         return self.call_signature.fn
 
 
     @cached_property
     def kwargs(self) -> KwArgs:
-        """Unpacked arguments of the function call, referenced by the address."""
+        """Unpacked keyword arguments for this call."""
         return self.call_signature.kwargs_addr.get().unpack()
 
 
     def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
+        """Restore object state during unpickling."""
         self._invalidate_cache()
         self.strings = state["strings"]
 
 
     def __getstate__(self):
-        """This method is called when the object is pickled."""
+        """Prepare object state for pickling."""
         state = dict(strings=self.strings)
         return state
 
 
     @property
     def _ready_in_current_portal(self):
-        """Indicates if the result of the function call is available in the current portal."""
+        """Check if result is available in the current portal."""
         result = (self in get_current_portal()._execution_results)
         if result:
             self._ready_cache = True
@@ -489,14 +464,13 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def _ready_in_noncurrent_portals(self) -> bool:
-        """Try importing a ready result from non-current portals.
+        """Import result from other portals if available.
 
-        If another known portal already has the execution result, copy the
-        corresponding key/value into the current portal's stores.
+        Searches known non-current portals and copies the result into the
+        current portal if found.
 
         Returns:
-            bool: True if the value was found in a non-active portal and
-            imported; False otherwise.
+            True if the result was found and imported; False otherwise.
         """
         for another_portal in get_noncurrent_pure_portals():
             with another_portal:
@@ -513,11 +487,10 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def ready(self) -> bool:
-        """Whether the execution result is already available.
+        """Whether the execution result is available.
 
         Returns:
-            bool: True if the result is present in the current portal (or can
-            be imported from a known non-current portal); False otherwise.
+            True if the result exists in current or any known portal; False otherwise.
         """
         if hasattr(self, "_ready_cache"):
             if not self._ready_cache:
@@ -534,10 +507,10 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def execute(self):
-        """Execute the function and store the result in the portal.
+        """Execute the function and store the result.
 
         Returns:
-            Any: The computed result of the underlying pure function call.
+            The computed result value.
         """
         if hasattr(self, "_result_cache"):
             return self._result_cache
@@ -547,7 +520,10 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def request_execution(self):
-        """Request execution of the function, without actually executing it."""
+        """Request execution without blocking.
+
+        Records a request in the current portal for external workers to process.
+        """
         with self.fn.portal as portal:
             if self.ready:
                 self.drop_execution_request()
@@ -556,7 +532,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def drop_execution_request(self):
-        """Remove the request for execution from all known portals"""
+        """Remove execution request from all known portals."""
         for portal in get_all_known_portals():
             with portal:
                 portal._execution_requests.delete_if_exists(self)
@@ -564,12 +540,13 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def execution_requested(self):
-        """Whether execution for this call has been requested.
+        """Whether execution has been requested.
+
+        Checks the current and all known portals, synchronizing requests
+        into the current portal if found elsewhere.
 
         Returns:
-            bool: True if there's a pending execution request in the active
-            portal or any known non-active portal (also synchronizes the
-            request into the active portal); False otherwise.
+            True if a pending execution request exists; False otherwise.
         """
         with self.fn.portal as current_portal:
             if self in current_portal._execution_requests:
@@ -577,28 +554,25 @@ class PureFnExecutionResultAddr(HashAddr):
             for another_portal in get_noncurrent_pure_portals():
                 if self in another_portal._execution_requests:
                     current_portal._execution_requests[self] = True
-                    #TODO: Review how timestamps should work here
+                    # TODO: Review how timestamps should work here
                     return True
         return False
 
 
     def get(self, timeout: int = None):
-        """Retrieve the value referenced by this address, waiting if needed.
+        """Retrieve the result value, waiting with exponential backoff if needed.
 
-        The method does not execute the function itself. If the value is not
-        immediately available, it requests execution and waits with
-        exponential backoff until the result arrives or the timeout elapses.
+        Does not execute the function directly; requests execution and waits
+        for an external worker to compute the result.
 
         Args:
-            timeout: Optional maximum number of seconds to wait. If None,
-                tries/waits indefinitely.
+            timeout: Maximum wait time in seconds, or None to wait indefinitely.
 
         Returns:
-            Any: The value produced by the pure function call.
+            The computed result value.
 
         Raises:
-            TimeoutError: If the timeout elapses before the value becomes
-                available.
+            TimeoutError: If timeout expires before result becomes available.
         """
         if timeout is not None and timeout < 0:
             raise ValueError(f"timeout must be None or non-negative, got {timeout}")
@@ -619,7 +593,7 @@ class PureFnExecutionResultAddr(HashAddr):
                 stop_time = start_time + timeout
             else:
                 stop_time = None
-            # start_time, stop_time and backoff_period are in seconds
+            # Times are in seconds; backoff uses exponential growth with jitter
 
             while True:
                 if self.ready:
@@ -642,16 +616,13 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def can_be_executed(self) -> PureFnCallSignature | ValidationSuccessFlag | None:
-        """Whether execution is currently feasible.
+        """Whether execution can proceed.
 
-        This checks pre-validators/guards for the underlying pure function and
-        returns a directive for the protected execution pipeline.
+        Checks pre-validators and returns execution readiness status.
 
         Returns:
-            PureFnCallSignature | ValidationSuccessFlag | None: If a dependent
-            call must be executed first, returns its call signature; if checks
-            pass immediately, returns VALIDATION_SUCCESSFUL; otherwise None to
-            indicate that the execution is not possible.
+            VALIDATION_SUCCESSFUL if ready; a dependent call signature if waiting
+            on another execution; None if execution is not possible.
         """
         with self.fn.portal:
             return self.fn.can_be_executed(self.kwargs)
@@ -659,15 +630,18 @@ class PureFnExecutionResultAddr(HashAddr):
 
     @property
     def needs_execution(self) -> bool:
-        """Indicates if the function is a good candidate for execution.
+        """Whether this call is a good candidate for execution.
 
-        Returns False if the result is already available, or if some other
-        process is currently working on it, or if there were too many
-        past attempts to execute it. Otherwise, returns True.
+        Returns False if the result is cached, another worker is processing it,
+        or too many attempts have failed. Uses exponential backoff to avoid
+        repeatedly executing failing calls.
+
+        Returns:
+            True if execution should be attempted; False otherwise.
         """
-        _DEFAULT_EXECUTION_TIME = 10 #TODO: move to portal config
-        _MAX_EXECUTION_ATTEMPTS = 5
-        # TODO: these should not be constants
+        _DEFAULT_EXECUTION_TIME = 10  # TODO: move to portal config
+        _MAX_EXECUTION_ATTEMPTS = 5   # TODO: move to portal config
+
         if self.ready:
             return False
         with self.fn.portal:
@@ -676,7 +650,7 @@ class PureFnExecutionResultAddr(HashAddr):
             if n_past_attempts == 0:
                 return True
             if n_past_attempts > _MAX_EXECUTION_ATTEMPTS:
-                #TODO: log this event. Should we have DLQ?
+                # TODO: log this event. Should we have a dead-letter queue?
                 return False
             most_recent_timestamp = max(
                 past_attempts.timestamp(a) for a in past_attempts)
