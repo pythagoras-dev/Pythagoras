@@ -9,6 +9,15 @@ def dummy_good_guard(packed_kwargs, fn_addr):
 def dummy_bad_guard(packed_kwargs, fn_addr):
     return True
 
+def guard_returns_false(packed_kwargs, fn_addr):
+    return False
+
+def guard_returns_one(packed_kwargs, fn_addr):
+    return 1
+
+def guard_returns_string(packed_kwargs, fn_addr):
+    return "success"
+
 def f(a, b):
     return a + b
 
@@ -112,3 +121,42 @@ def test_load_save_protected_dummy_bad_guard_autonomous(tmpdir):
         f_3 = f_address.get()
         with pytest.raises(Exception):
             f_3(a=1, b=2)
+
+
+def test_validator_return_values_treated_as_failure(tmpdir):
+    """
+    Test that truthy values other than VALIDATION_SUCCESSFUL are treated as
+    validation failure.
+
+    This is intentional design: validators must return VALIDATION_SUCCESSFUL
+    (the sentinel singleton) to pass, or None to fail. Returning True, False,
+    1, 0, strings, or any other value is treated as failure because the check
+    uses identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
+
+    This test explicitly documents this behavior to prevent confusion, as many
+    developers naturally expect validators to return boolean True/False.
+    """
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+        # Test that returning True is treated as failure
+        f_true = ProtectedFn(f, pre_validators=[guard_returns_false])
+        with pytest.raises(Exception):
+            f_true(a=1, b=2)
+
+        # Test that returning False is treated as failure
+        f_false = ProtectedFn(f, pre_validators=[guard_returns_false])
+        with pytest.raises(Exception):
+            f_false(a=1, b=2)
+
+        # Test that returning 1 (truthy) is treated as failure
+        f_one = ProtectedFn(f, pre_validators=[guard_returns_one])
+        with pytest.raises(Exception):
+            f_one(a=1, b=2)
+
+        # Test that returning a string is treated as failure
+        f_string = ProtectedFn(f, pre_validators=[guard_returns_string])
+        with pytest.raises(Exception):
+            f_string(a=1, b=2)
+
+        # Confirm that VALIDATION_SUCCESSFUL works correctly
+        f_good = ProtectedFn(f, pre_validators=[dummy_good_guard])
+        assert f_good(a=1, b=2) == 3
