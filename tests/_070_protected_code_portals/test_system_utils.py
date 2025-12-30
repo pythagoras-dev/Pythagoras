@@ -4,20 +4,7 @@ import multiprocessing as mp
 
 import psutil
 
-from pythagoras._070_protected_code_portals.system_utils import (
-    get_unused_ram_mb,
-    get_unused_cpu_cores,
-    get_process_start_time,
-    get_current_process_id,
-    get_current_process_start_time,
-    get_unused_nvidia_gpus,
-)
-
-
-
-# ---------------------------------------------------------------------------
-# Basic semantics (from previous answer)
-# ---------------------------------------------------------------------------
+from pythagoras import get_unused_nvidia_gpus, get_unused_ram_mb, get_unused_cpu_cores
 
 def test_available_ram_is_int_and_within_bounds():
     avail = get_unused_ram_mb()
@@ -59,53 +46,6 @@ def test_cpu_cores_first_call_not_zero():
     # Both calls should be in valid range
     assert 0.0 <= first_call <= float(logical_cnt)
     assert 0.0 <= second_call <= float(logical_cnt)
-
-
-def test_current_pid_consistency():
-    pid = get_current_process_id()
-    assert pid == os.getpid() == psutil.Process().pid
-    assert pid > 0
-
-
-def test_process_start_time_values():
-    now = int(time.time())
-    this_pid = get_current_process_id()
-
-    start_ts = get_process_start_time(this_pid)
-    assert 0 < start_ts <= now
-
-    bogus_pid = -42 if os.name != "nt" else 999_999_999
-    assert get_process_start_time(bogus_pid) == 0
-
-
-def test_current_process_start_time_consistency():
-    assert get_current_process_start_time() == get_process_start_time(get_current_process_id())
-
-# ---------------------------------------------------------------------------
-# Deeper semantic checks
-# ---------------------------------------------------------------------------
-
-
-def _touch_every_page(buf: bytearray) -> None:
-    """Write one byte per 4 KiB page to force physical allocation."""
-    page = 4096
-    for i in range(0, len(buf), page):
-        buf[i] = 1
-
-
-def _noop():
-    pass
-
-def test_child_start_time_close_to_now():
-    child = mp.Process(target=_noop)
-    t0 = time.time()
-    child.start()
-    ts = get_process_start_time(child.pid)
-    child.join()
-    t1 = time.time()
-
-    # Start-time recorded between the moments just before and after .start()
-    assert t0 - 2 <= ts <= t1 + 2        # generous ±2 s guard
 
 
 def test_nvidia_gpu_value_is_within_bounds():

@@ -9,4 +9,5 @@ Pythagoras ensures that the function will be eventually executed
 at least once but does not offer any further guarantees.
 """
 
+from .system_processes_info_getters import *
 from .swarming_portals import *
