@@ -99,7 +99,7 @@ class PureCodePortal(ProtectedCodePortal):
         """Describe the portal state as a DataFrame.
 
         Returns:
-            pandas.DataFrame: Concatenated report that includes base portal
+            Concatenated report that includes base portal
             parameters plus counts of cached execution results and queued
             execution requests.
         """
@@ -126,8 +126,6 @@ class PureCodePortal(ProtectedCodePortal):
 
 class PureFnCallSignature(ProtectedFnCallSignature):
     """A signature of a call to a pure function"""
-    _fn_cache: PureFn | None
-    _execution_results_addr_cache: PureFnExecutionResultAddr | None
 
     def __init__(self, fn: PureFn, arguments: dict):
         """Create a signature object for a specific PureFn call.
@@ -142,18 +140,15 @@ class PureFnCallSignature(ProtectedFnCallSignature):
             raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
-    @property
+    @cached_property
     def fn(self) -> PureFn:
         """Return the function object referenced by the signature."""
         return super().fn
 
-    @property
+    @cached_property
     def execution_results_addr(self) -> PureFnExecutionResultAddr:
         """Return the address of the execution results of the function call."""
-        if not hasattr(self, "_execution_results_addr_cache"):
-            self._execution_results_addr_cache = PureFnExecutionResultAddr(
-                fn=self.fn, arguments=self.packed_kwargs)
-        return self._execution_results_addr_cache
+        return PureFnExecutionResultAddr(self.fn, self.packed_kwargs)
 
 
 class PureFn(ProtectedFn):

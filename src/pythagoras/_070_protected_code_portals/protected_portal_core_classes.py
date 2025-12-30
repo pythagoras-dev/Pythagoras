@@ -332,7 +332,6 @@ class ProtectedFnCallSignature(AutonomousFnCallSignature):
 
     Encapsulates a ProtectedFn reference and bound arguments for later execution.
     """
-    _fn_cache: ProtectedFn | None
 
     def __init__(self, fn: ProtectedFn, arguments: dict):
         """Initialize the signature.
@@ -347,7 +346,7 @@ class ProtectedFnCallSignature(AutonomousFnCallSignature):
             raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
         super().__init__(fn, arguments)
 
-    @property
+    @cached_property
     def fn(self) -> ProtectedFn:
         """The protected function object referenced by this signature."""
         return super().fn
