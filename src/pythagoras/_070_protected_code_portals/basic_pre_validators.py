@@ -140,13 +140,11 @@ def _check_python_package_and_install_if_needed(
         return pth.VALIDATION_SUCCESSFUL
     except:
         portal = self.portal
-        address = (pth.get_node_signature()
-                    , package_name
-                    , "installation_attempt")
+        address = ("installation_attempts", package_name)
         # allow installation retries every 10 minutes
-        if (not address in portal._portal_config_settings
-                or portal._portal_config_settings[address] < time.time() - 600):
-            portal._portal_config_settings[address] = time.time()
+        if (not address in portal._local_node_store
+                or portal._local_node_store[address] < time.time() - 600):
+            portal._local_node_store[address] = time.time()
             pth.install_package(package_name)
             return pth.VALIDATION_SUCCESSFUL
 
