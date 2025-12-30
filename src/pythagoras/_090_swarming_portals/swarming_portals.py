@@ -21,9 +21,10 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from parameterizable import *
 
-from .. import VALIDATION_SUCCESSFUL
+from .system_processes_info_getters import (get_process_start_time,
+    get_current_process_id, get_current_process_start_time)
 from .._010_basic_portals import get_all_known_portals
-from .._070_protected_code_portals.system_resources_info_getters import (
+from .._070_protected_code_portals import (VALIDATION_SUCCESSFUL,
     get_unused_ram_mb, get_unused_cpu_cores)
 from .._010_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from persidict import OverlappingMultiDict
@@ -32,10 +33,39 @@ from .._080_pure_code_portals.pure_core_classes import (
 
 from multiprocessing import get_context
 from .descendant_process_info import *
+from .descendant_process_info import MIN_VALID_TIMESTAMP
+from datetime import datetime, timezone
 
 
 from .._090_swarming_portals.output_suppressor import (
     OutputSuppressor)
+
+
+def _get_process_start_time_with_retry(pid: int, max_retries: int = 5, base_delay: float = 0.01) -> int:
+    """Get process start time with exponential backoff retry logic to handle race conditions.
+
+    Args:
+        pid: Process ID to query
+        max_retries: Maximum number of retry attempts
+        base_delay: Base delay in seconds for exponential backoff (default 0.01)
+
+    Returns:
+        Process start time as UNIX timestamp
+
+    Raises:
+        RuntimeError: If unable to get valid start time after all retries
+    """
+    import random
+    delay = 0.0
+    for attempt in range(max_retries):
+        start_time = get_process_start_time(pid)
+        if start_time > 0:
+            return start_time
+        if attempt < max_retries - 1:
+            # Exponential backoff with jitter: base_delay * 2^attempt * random(0.5, 1.5)
+            delay += base_delay * (2 ** attempt) * random.uniform(0.5, 1.25)
+            sleep(delay)
+    raise RuntimeError(f"Failed to get start time for process {pid} after {max_retries} attempts")
 
 _MAX_BACKGROUND_WORKERS_TXT = "Max Background workers"
 _MIN_BACKGROUND_WORKERS_TXT = "Min Background workers"
@@ -79,7 +109,7 @@ class SwarmingPortal(PureCodePortal):
                  , min_n_workers: int|Joker|None = KEEP_CURRENT
                  , exact_n_workers: int|None = None
                  , ancestor_process_id: int | None = None
-                 , ancestor_process_start_time: float | None = None
+                 , ancestor_process_start_time: int | None = None
                  ):
         """Initialize a swarming portal.
 
@@ -183,14 +213,39 @@ class SwarmingPortal(PureCodePortal):
         return names
 
 
-    def register_descendant_process(self, process_type:str):
-        if self.ancestor_process_id is None:
-            raise RuntimeError("register_descendant_process() called "
-                               "outside of a descendant portal (sub)-process")
+    def register_descendant_process(self, process_type:str, process_id:int, process_start_time:int):
+        # Validate inputs
+        if not isinstance(process_type, str):
+            raise TypeError(f"process_type must be a string, got {type(process_type).__name__}")
+        if not process_type:
+            raise ValueError("process_type cannot be empty")
+
+        if not isinstance(process_id, int):
+            raise TypeError(f"process_id must be an integer, got {type(process_id).__name__}")
+        if process_id <= 0:
+            raise ValueError(f"process_id must be positive, got {process_id}")
+
+        if not isinstance(process_start_time, int):
+            raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
+        if process_start_time < MIN_VALID_TIMESTAMP:
+            min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
+
+        # Use self.ancestor_process_id if available (for descendant portals),
+        # otherwise use current process ID (for ancestor portals)
+        if self.ancestor_process_id is not None:
+            ancestor_process_id = self.ancestor_process_id
+            ancestor_process_start_time = self.ancestor_process_start_time
+        else:
+            ancestor_process_id = get_current_process_id()
+            ancestor_process_start_time = get_current_process_start_time()
+
         process_info = DescendantProcessInfo(
-            process_type=process_type,
-            ancestor_process_id=self.ancestor_process_id,
-            ancestor_process_start_time=self.ancestor_process_start_time)
+            process_id=process_id,
+            process_start_time=process_start_time,
+            ancestor_process_id=ancestor_process_id,
+            ancestor_process_start_time=ancestor_process_start_time,
+            process_type=process_type)
         address = (str(process_info.process_id),
                    str(process_info.process_start_time))
         self._all_workers[address] = process_info
@@ -357,6 +412,14 @@ class SwarmingPortal(PureCodePortal):
                     target=_launch_many_background_workers
                     , args=(portal_init_jsparams,))
                 workers_launcher.start()
+
+                # Register the workers_launcher process from outside
+                launcher_pid = workers_launcher.pid
+                launcher_start_time = _get_process_start_time_with_retry(launcher_pid)
+                self.register_descendant_process(
+                    "_launch_many_background_workers",
+                    launcher_pid,
+                    launcher_start_time)
 
 
     def _terminate_descendant_processes(self):
@@ -543,9 +606,6 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
     # summary = build_execution_environment_summary()
     # portal._compute_nodes.json[portal._execution_environment_address] = summary
 
-
-    portal.register_descendant_process("_launch_many_background_workers")
-
     with portal:
         while True:
             current_n_workers = portal.get_active_descendant_process_counter("_background_worker")
@@ -555,6 +615,14 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
                     ctx = get_context("spawn")
                     p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
                     p.start()
+
+                    # Register the background worker process from outside
+                    worker_pid = p.pid
+                    worker_start_time = _get_process_start_time_with_retry(worker_pid)
+                    portal.register_descendant_process(
+                        "_background_worker",
+                        worker_pid,
+                        worker_start_time)
                 except:
                     # Bare except is intentional here
                     pass
@@ -577,7 +645,6 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
-    portal.register_descendant_process("_background_worker")
     with portal:
         ctx = get_context("spawn")
         with OutputSuppressor():

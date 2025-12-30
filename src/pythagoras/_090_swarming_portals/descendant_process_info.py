@@ -6,8 +6,10 @@ reused by the operating system.
 """
 
 import psutil
+from datetime import datetime, timezone
 
-from .system_processes_info_getters import get_current_process_id, get_current_process_start_time
+# Unix timestamp for 2026-01-01 00:00:00 UTC - reasonable minimum for modern processes
+MIN_VALID_TIMESTAMP = 1735689600
 
 
 def process_is_alive(process_id: int, process_start_time: int) -> bool:
@@ -25,11 +27,16 @@ def process_is_alive(process_id: int, process_start_time: int) -> bool:
         True only if the process exists, is running (not a zombie), and
         its actual start time matches the expected start time.
     """
-    process_start_time = int(process_start_time)
+    if not isinstance(process_id, int):
+        raise TypeError(f"process_id must be an integer, got {type(process_id).__name__}")
     if process_id <= 0:
-        raise ValueError(f"Invalid process ID: {process_id}")
-    if process_start_time == 0:
-        raise ValueError("Invalid process start time: 0")
+        raise ValueError(f"process_id must be positive, got {process_id}")
+
+    if not isinstance(process_start_time, int):
+        raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
+    if process_start_time < MIN_VALID_TIMESTAMP:
+        min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+        raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
     try:
         proc = psutil.Process(process_id)
         if int(proc.create_time()) != process_start_time:
@@ -62,21 +69,51 @@ class DescendantProcessInfo:
     ancestor_process_start_time: int
     process_type: str
 
-    def __init__(self, ancestor_process_id: int, ancestor_process_start_time: int, process_type: str):
-        """Initialize process info with the current process and its ancestor.
+    def __init__(self, process_id: int, process_start_time: int, ancestor_process_id: int, ancestor_process_start_time: int, process_type: str):
+        """Initialize process info with the descendant process and its ancestor.
 
         Args:
-            ancestor_process_id: PID of the spawning ancestor process.
-            ancestor_process_start_time: UNIX timestamp when ancestor started.
-            process_type: Type label for this process's role in the swarm.
+            process_id: PID of the descendant process (must be positive).
+            process_start_time: UNIX timestamp when the descendant process started
+                (must be >= 1735689600, i.e., 2026-01-01).
+            ancestor_process_id: PID of the spawning ancestor process (must be positive).
+            ancestor_process_start_time: UNIX timestamp when ancestor started
+                (must be >= 1735689600).
+            process_type: Type label for this process's role in the swarm (non-empty string).
 
         Raises:
-            ValueError: If ancestor_process_start_time is 0.
+            TypeError: If any parameter has wrong type.
+            ValueError: If any parameter has invalid value.
         """
-        if ancestor_process_start_time == 0:
-            raise ValueError("Invalid ancestor process start time: 0")
-        self.process_id = get_current_process_id()
-        self.process_start_time = get_current_process_start_time()
+        if not isinstance(process_id, int):
+            raise TypeError(f"process_id must be an integer, got {type(process_id).__name__}")
+        if process_id <= 0:
+            raise ValueError(f"process_id must be positive, got {process_id}")
+
+        if not isinstance(process_start_time, int):
+            raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
+        if process_start_time < MIN_VALID_TIMESTAMP:
+            min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
+
+        if not isinstance(ancestor_process_id, int):
+            raise TypeError(f"ancestor_process_id must be an integer, got {type(ancestor_process_id).__name__}")
+        if ancestor_process_id <= 0:
+            raise ValueError(f"ancestor_process_id must be positive, got {ancestor_process_id}")
+
+        if not isinstance(ancestor_process_start_time, int):
+            raise TypeError(f"ancestor_process_start_time must be an integer, got {type(ancestor_process_start_time).__name__}")
+        if ancestor_process_start_time < MIN_VALID_TIMESTAMP:
+            min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+            raise ValueError(f"ancestor_process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {ancestor_process_start_time}")
+
+        if not isinstance(process_type, str):
+            raise TypeError(f"process_type must be a string, got {type(process_type).__name__}")
+        if not process_type:
+            raise ValueError("process_type cannot be empty")
+
+        self.process_id = process_id
+        self.process_start_time = process_start_time
         self.ancestor_process_id = ancestor_process_id
         self.ancestor_process_start_time = ancestor_process_start_time
         self.process_type = process_type
@@ -106,6 +143,9 @@ class DescendantProcessInfo:
         Raises:
             ValueError: If timeout is negative.
         """
+        if timeout < 0:
+            raise ValueError(f"timeout must be non-negative, got {timeout}")
+
         if not self.is_alive():
             return
 
