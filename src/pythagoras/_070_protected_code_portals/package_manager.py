@@ -19,6 +19,9 @@ from functools import cache
 def _run(command: list[str], timeout: int = 300) -> None:
     """Execute a package management command with timeout protection.
 
+    Automatically invalidates import caches after successful execution to ensure
+    Python's import system reflects filesystem changes from package operations.
+
     Args:
         command: Command and arguments to execute.
         timeout: Maximum execution time in seconds.
@@ -36,6 +39,8 @@ def _run(command: list[str], timeout: int = 300) -> None:
     except subprocess.CalledProcessError as e:
         raise RuntimeError(
             f"Command failed: {' '.join(command)}\n{e.stdout}") from e
+
+    importlib.invalidate_caches()
 
 
 @cache
@@ -194,15 +199,14 @@ def uninstall_package(package_name:str,
 
     _run(command)
 
-    if verify_uninstall:
-        importlib.invalidate_caches()
-        module_to_check = import_name if import_name else package_name
-        # Remove from sys.modules including submodules
-        modules_to_remove = [m for m in sys.modules
-            if m == module_to_check or m.startswith(f"{module_to_check}.")]
-        for mod in modules_to_remove:
-            del sys.modules[mod]
+    # Remove from sys.modules to ensure clean state
+    module_to_check = import_name if import_name else package_name
+    modules_to_remove = [m for m in sys.modules
+        if m == module_to_check or m.startswith(f"{module_to_check}.")]
+    for mod in modules_to_remove:
+        del sys.modules[mod]
 
+    if verify_uninstall:
         try:
             package = importlib.import_module(module_to_check)
             importlib.reload(package)
