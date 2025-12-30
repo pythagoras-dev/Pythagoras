@@ -32,21 +32,17 @@ from .._060_autonomous_code_portals import *
 class ProtectedCodePortal(AutonomousCodePortal):
     """Portal for protected code execution.
 
-    This portal specializes the AutonomousCodePortal to coordinate execution of
-    ProtectedFn instances. It carries configuration and storage
-    required by validators (e.g., retry throttling) and by protected function
-    orchestration.
+    Specializes AutonomousCodePortal to coordinate execution of ProtectedFn
+    instances. Provides configuration and storage for validators (e.g., retry
+    throttling) and protected function orchestration.
 
     Args:
-        root_dict (PersiDict | str | None): Optional persistent dictionary or a
-            path/identifier to initialize the portal's storage. If None, a
-            default in-memory storage may be used.
-        p_consistency_checks (float | Joker): Probability or flag controlling
-            internal consistency checks performed by the portal. Use
-            KEEP_CURRENT to inherit the current setting.
-        excessive_logging (bool | Joker): Enables verbose logging of portal and
-            function operations. Use KEEP_CURRENT to inherit the current
-            setting.
+        root_dict: Persistent dictionary or path to initialize portal storage.
+            If None, uses default in-memory storage.
+        p_consistency_checks: Probability controlling internal consistency
+            checks. Use KEEP_CURRENT to inherit current setting.
+        excessive_logging: Enables verbose logging of portal and function
+            operations. Use KEEP_CURRENT to inherit current setting.
     """
     
     def __init__(self
@@ -57,12 +53,10 @@ class ProtectedCodePortal(AutonomousCodePortal):
         """Initialize the portal.
 
         Args:
-            root_dict (PersiDict | str | None): Backing storage or its path.
-                If None, use default.
-            p_consistency_checks (float | Joker): Probability for internal
-                consistency checks (or KEEP_CURRENT to inherit).
-            excessive_logging (bool | Joker): Verbose logging flag
-                (KEEP_CURRENT to inherit).
+            root_dict: Backing storage or its path. If None, use default.
+            p_consistency_checks: Probability for internal consistency checks,
+                or KEEP_CURRENT to inherit.
+            excessive_logging: Verbose logging flag, or KEEP_CURRENT to inherit.
         """
         super().__init__(root_dict=root_dict
             , p_consistency_checks=p_consistency_checks
@@ -72,11 +66,11 @@ class ProtectedCodePortal(AutonomousCodePortal):
 class ProtectedFn(AutonomousFn):
     """Function wrapper that enforces pre/post validation around execution.
 
-    A ProtectedFn evaluates a sequence of pre-validators before executing the
-    underlying function and a sequence of post-validators after execution. If a
-    pre-validator returns a ProtectedFnCallSignature, that signature will be
-    executed first (allowing validators to perform prerequisite actions) before
-    re-attempting the validation/execution loop.
+    Evaluates pre-validators before executing the underlying function and
+    post-validators after execution. If a pre-validator returns a
+    ProtectedFnCallSignature, that signature is executed first (allowing
+    validators to perform prerequisite actions) before re-attempting validation
+    and execution.
     """
 
     _pre_validators_addrs: list[ValueAddr]
@@ -94,21 +88,14 @@ class ProtectedFn(AutonomousFn):
         """Construct a ProtectedFn.
 
         Args:
-            fn (Callable | str): The underlying Python function or its source
-                code string.
-            pre_validators (list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None):
-                Pre-execution validators. Callables are wrapped into
-                PreValidatorFn. Lists can be nested and will
-                be flattened.
-            post_validators (list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None):
-                Post-execution validators. Callables are wrapped into
-                PostValidatorFn. Lists can be nested and will be flattened.
-            excessive_logging (bool | Joker): Enable verbose logging or inherit
-                current setting with KEEP_CURRENT.
-            fixed_kwargs (dict[str, Any] | None): Keyword arguments to be fixed
-                (bound) for every execution of the function.
-            portal (ProtectedCodePortal | None): Portal instance to bind the
-                function to.
+            fn: The underlying Python function or its source code string.
+            pre_validators: Pre-execution validators. Callables are wrapped into
+                PreValidatorFn subclasses. Nested lists are flattened.
+            post_validators: Post-execution validators. Callables are wrapped
+                into PostValidatorFn. Nested lists are flattened.
+            excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
+            fixed_kwargs: Keyword arguments bound for every execution.
+            portal: Portal instance to bind this function to.
         """
         super().__init__(fn=fn
             , portal = portal
@@ -143,7 +130,7 @@ class ProtectedFn(AutonomousFn):
 
 
     def __getstate__(self):
-        """This method is called when the object is pickled."""
+        """Return state for pickling."""
         state = super().__getstate__()
         state["pre_validators_addrs"] = self._pre_validators_addrs
         state["post_validators_addrs"] = self._post_validators_addrs
@@ -151,14 +138,14 @@ class ProtectedFn(AutonomousFn):
 
 
     def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
+        """Restore state from unpickling."""
         super().__setstate__(state)
         self._pre_validators_addrs = state["pre_validators_addrs"]
         self._post_validators_addrs = state["post_validators_addrs"]
 
 
     def _first_visit_to_portal(self, portal: DataPortal) -> None:
-        """Register an object in a portal that the object has not seen before."""
+        """Register this protected function and its validators in a new portal."""
         super()._first_visit_to_portal(portal)
         _visit_portal(self.pre_validators, portal)
         _visit_portal(self.post_validators, portal)
@@ -166,21 +153,13 @@ class ProtectedFn(AutonomousFn):
 
     @cached_property
     def pre_validators(self) -> list[AutonomousFn]:
-        """List of pre-validator functions for this protected function.
-
-        Returns:
-            list[AutonomousFn]: A cached list of PreValidatorFn instances.
-        """
+        """Cached list of pre-validator functions for this protected function."""
         return [address.get() for address in self._pre_validators_addrs]
 
 
     @cached_property
     def post_validators(self) -> list[AutonomousFn]:
-        """List of post-validator functions for this protected function.
-
-        Returns:
-            list[AutonomousFn]: A cached list of PostValidatorFn instances.
-        """
+        """Cached list of post-validator functions for this protected function."""
         return [address.get() for address in self._post_validators_addrs]
 
 
@@ -189,18 +168,18 @@ class ProtectedFn(AutonomousFn):
             ) -> ProtectedFnCallSignature|ValidationSuccessFlag|None:
         """Run pre-validators to determine if execution can proceed.
 
-        The portal will shuffle the order of pre-validators. If any validator
-        returns a ProtectedFnCallSignature, that signature should be executed by
-        the caller prior to executing the protected function (this method simply
-        returns it). If any validator fails, None is returned. If all succeed,
-        VALIDATION_SUCCESSFUL is returned.
+        Pre-validators are shuffled by the portal to avoid order dependencies.
+        If any validator returns a ProtectedFnCallSignature, that signature
+        should be executed first to satisfy prerequisites (e.g., installing
+        dependencies) before re-validating.
 
         Args:
-            kw_args (KwArgs): Arguments intended for the wrapped function.
+            kw_args: Arguments intended for the wrapped function.
 
         Returns:
-            ProtectedFnCallSignature | ValidationSuccessFlag | None: Either a
-            signature to execute first, the success flag, or None on failure.
+            VALIDATION_SUCCESSFUL if all validators pass, a
+            ProtectedFnCallSignature to execute first if a validator requests it,
+            or None if validation fails.
         """
         with self.portal as portal:
             kw_args = kw_args.pack()
@@ -224,12 +203,11 @@ class ProtectedFn(AutonomousFn):
         """Run post-validators to confirm the execution result is acceptable.
 
         Args:
-            kw_args (KwArgs): Arguments that were passed to the protected function.
-            result (Any): The value returned by the protected function.
+            kw_args: Arguments that were passed to the protected function.
+            result: The value returned by the protected function.
 
         Returns:
-            ValidationSuccessFlag | None: VALIDATION_SUCCESSFUL if all
-                post-validators pass, otherwise None.
+            VALIDATION_SUCCESSFUL if all post-validators pass, otherwise None.
         """
         with self.portal as portal:
             kw_args = kw_args.pack()
@@ -245,21 +223,20 @@ class ProtectedFn(AutonomousFn):
     def execute(self, **kwargs) -> Any:
         """Execute the protected function with validation.
 
-        This method performs the following loop:
-        - Runs pre-validators. If a pre-validator returns a
-          ProtectedFnCallSignature, that signature is executed and validation is
-          reattempted. If any pre-validator fails, an AssertionError is raised.
-        - Executes the wrapped function.
-        - Runs post-validators and asserts they all succeed.
+        Performs validation and execution loop:
+        1. Run pre-validators; if one returns a ProtectedFnCallSignature,
+           execute it and retry validation
+        2. Execute the wrapped function
+        3. Run post-validators and verify they all succeed
 
         Args:
             **kwargs: Keyword arguments to pass to the wrapped function.
 
         Returns:
-            Any: The result returned by the wrapped function.
+            The result returned by the wrapped function.
 
         Raises:
-            AssertionError: If pre- or post-validation fails.
+            FunctionError: If pre- or post-validation fails.
         """
         with (self.portal):
             kw_args = KwArgs(**kwargs)
@@ -284,23 +261,22 @@ class ProtectedFn(AutonomousFn):
             , validators: list[ValidatorFn] | ValidatorFn | None
             , validator_type: type
             ) -> list[ValidatorFn]:
-        """Return list of validators in a normalized form.
+        """Return list of validators in normalized form.
 
-        - Wraps plain callables/strings into appropriate ValidatorFn subclasses.
-        - Flattens nested lists.
-        - Removes duplicates while inforcing deterministic
-          order via sort_dict_by_keys.
+        Wraps plain callables/strings into appropriate ValidatorFn subclasses,
+        flattens nested lists, removes duplicates, and enforces deterministic
+        ordering via sort_dict_by_keys.
 
         Args:
-            validators (list[ValidatorFn] | ValidatorFn | None): Validators in
-                any supported representation (single, list, nested lists, etc.).
-            validator_type (type): Either PreValidatorFn or PostValidatorFn.
+            validators: Validators in any supported representation (single,
+                list, nested lists, etc.).
+            validator_type: Either PreValidatorFn or PostValidatorFn.
 
         Returns:
-            list[ValidatorFn]: A sorted list of validator instances.
+            Sorted list of unique validator instances.
 
         Raises:
-            TypeError: If an unexpected validator_type is provided.
+            TypeError: If validator_type is not PreValidatorFn or PostValidatorFn.
         """
         if validator_type not in {PreValidatorFn, PostValidatorFn}:
             raise TypeError(f"validator_type must be PreValidatorFn or PostValidatorFn, got {validator_type}")
@@ -335,12 +311,7 @@ class ProtectedFn(AutonomousFn):
 
     @property
     def portal(self) -> ProtectedCodePortal:
-        """Return the bound ProtectedCodePortal.
-
-        Returns:
-            ProtectedCodePortal: The portal controlling execution context and
-            storage for this protected function.
-        """
+        """The portal controlling execution context and storage for this function."""
         return super().portal
 
 
@@ -348,11 +319,10 @@ class ProtectedFn(AutonomousFn):
         """Create a call signature for this protected function.
 
         Args:
-            arguments (dict): Arguments to bind into the call signature.
+            arguments: Arguments to bind into the call signature.
 
         Returns:
-            ProtectedFnCallSignature: Signature object representing a
-            particular call to this function.
+            Signature object representing a particular call to this function.
         """
         return ProtectedFnCallSignature(self, arguments)
 
@@ -360,8 +330,7 @@ class ProtectedFn(AutonomousFn):
 class ProtectedFnCallSignature(AutonomousFnCallSignature):
     """Invocation signature for a protected function.
 
-    Encapsulates a function reference and bound arguments that can be executed
-    later via execute().
+    Encapsulates a ProtectedFn reference and bound arguments for later execution.
     """
     _fn_cache: ProtectedFn | None
 
@@ -369,8 +338,8 @@ class ProtectedFnCallSignature(AutonomousFnCallSignature):
         """Initialize the signature.
 
         Args:
-            fn (ProtectedFn): The protected function to call.
-            arguments (dict): Keyword arguments to be passed at execution time.
+            fn: The protected function to call.
+            arguments: Keyword arguments to be passed at execution time.
         """
         if not isinstance(fn, ProtectedFn):
             raise TypeError(f"fn must be a ProtectedFn instance, got {type(fn).__name__}")
@@ -380,16 +349,16 @@ class ProtectedFnCallSignature(AutonomousFnCallSignature):
 
     @property
     def fn(self) -> ProtectedFn:
-        """Return the function object referenced by the signature."""
+        """The protected function object referenced by this signature."""
         return super().fn
 
 
 class ValidatorFn(AutonomousFn):
     """Base class for validator wrappers.
 
-    A ValidatorFn ensures the wrapped callable accepts exactly the keyword
-    arguments declared by get_allowed_kwargs_names(). Subclasses define the
-    specific interface for pre/post validation phases.
+    Ensures the wrapped callable accepts exactly the keyword arguments declared
+    by get_allowed_kwargs_names(). Subclasses define the specific interface for
+    pre- and post-validation phases.
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
@@ -398,12 +367,10 @@ class ValidatorFn(AutonomousFn):
         """Initialize a validator function wrapper.
 
         Args:
-            fn (Callable | str | AutonomousFn): The validator implementation or
-                its source code.
-            fixed_kwargs (dict | None): Keyword arguments fixed for every
-                validation call.
-            excessive_logging (bool | Joker): Controls verbose logging.
-            portal (AutonomousCodePortal | None): Optional portal binding.
+            fn: The validator implementation or its source code.
+            fixed_kwargs: Keyword arguments fixed for every validation call.
+            excessive_logging: Controls verbose logging.
+            portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
@@ -421,7 +388,7 @@ class ValidatorFn(AutonomousFn):
         Subclasses must override to declare their interface.
 
         Returns:
-            set[str]: Names of keyword arguments accepted by execute().
+            Names of keyword arguments accepted by execute().
         """
         raise NotImplementedError("This method must be overridden")
 
@@ -434,8 +401,8 @@ class ValidatorFn(AutonomousFn):
             **kwargs: Must exactly match get_allowed_kwargs_names().
 
         Returns:
-            ProtectedFnCallSignature | ValidationSuccessFlag | None: Depending
-            on the validator type and outcome.
+            Depends on validator type and outcome: VALIDATION_SUCCESSFUL,
+            ProtectedFnCallSignature, or any other value (e.g. None) for failure.
         """
         expected = self.get_allowed_kwargs_names()
         provided = set(kwargs)
@@ -447,17 +414,17 @@ class ValidatorFn(AutonomousFn):
 class PreValidatorFn(ValidatorFn):
     """Base class for pre-execution validators.
 
-    Pre-validators are executed before the protected function. They may return:
-    - VALIDATION_SUCCESSFUL to indicate execution can proceed;
-    - ProtectedFnCallSignature to request execution of an auxiliary action
-      prior to re-validating;
-    - None to indicate failure.
+    Pre-validators run before the protected function and may return:
+    - VALIDATION_SUCCESSFUL to allow execution to proceed
+    - ProtectedFnCallSignature to request execution of a prerequisite action
+      before re-validating
+    - None or other values to indicate failure
 
     Important:
-        - Do NOT return True/False, 1/0, strings, or other truthy/falsy values. These
-          are treated as validation FAILURE, not success. Only VALIDATION_SUCCESSFUL
-          (the sentinel singleton) indicates success. The validation check uses
-          identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
+        Do NOT return True/False, 1/0, strings, or other truthy/falsy values.
+        These are treated as validation FAILURE. Only VALIDATION_SUCCESSFUL
+        (the sentinel singleton) indicates success. The check uses identity
+        comparison (is VALIDATION_SUCCESSFUL), not truthiness.
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
@@ -466,10 +433,10 @@ class PreValidatorFn(ValidatorFn):
         """Initialize a pre-execution validator wrapper.
 
         Args:
-            fn (Callable | str | AutonomousFn): The pre-validator implementation.
-            fixed_kwargs (dict | None): Keyword arguments fixed for every call.
-            excessive_logging (bool | Joker): Controls verbose logging.
-            portal (AutonomousCodePortal | None): Optional portal binding.
+            fn: The pre-validator implementation.
+            fixed_kwargs: Keyword arguments fixed for every call.
+            excessive_logging: Controls verbose logging.
+            portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
@@ -481,7 +448,8 @@ class PreValidatorFn(ValidatorFn):
 class SimplePreValidatorFn(PreValidatorFn):
     """A pre-validator that takes no runtime inputs.
 
-    The wrapped callable must accept no parameters; use fixed_kwargs only.
+    The wrapped callable must accept no parameters. Use fixed_kwargs for any
+    configuration needed during validation.
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
@@ -490,10 +458,10 @@ class SimplePreValidatorFn(PreValidatorFn):
         """Initialize a simple pre-validator.
 
         Args:
-            fn (Callable | str | AutonomousFn): The implementation.
-            fixed_kwargs (dict | None): Fixed keyword arguments, if any.
-            excessive_logging (bool | Joker): Controls verbose logging.
-            portal (AutonomousCodePortal | None): Optional portal binding.
+            fn: The implementation.
+            fixed_kwargs: Fixed keyword arguments, if any.
+            excessive_logging: Controls verbose logging.
+            portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
@@ -509,10 +477,10 @@ class SimplePreValidatorFn(PreValidatorFn):
 
 
 class ComplexPreValidatorFn(PreValidatorFn):
-    """A pre-validator that can inspect inputs and the function address.
+    """A pre-validator that can inspect the function and its inputs.
 
-    The callable must accept the keyword arguments named
-    packed_kwargs and fn_addr.
+    The callable must accept keyword arguments packed_kwargs and fn_addr,
+    enabling context-aware validation decisions.
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
@@ -521,10 +489,10 @@ class ComplexPreValidatorFn(PreValidatorFn):
         """Initialize a complex pre-validator.
 
         Args:
-            fn (Callable | str | AutonomousFn): The implementation.
-            fixed_kwargs (dict | None): Fixed keyword arguments, if any.
-            excessive_logging (bool | Joker): Controls verbose logging.
-            portal (AutonomousCodePortal | None): Optional portal binding.
+            fn: The implementation.
+            fixed_kwargs: Fixed keyword arguments, if any.
+            excessive_logging: Controls verbose logging.
+            portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
@@ -535,23 +503,23 @@ class ComplexPreValidatorFn(PreValidatorFn):
 
     @classmethod
     def get_allowed_kwargs_names(cls) -> set[str]:
-        """Complex pre-validators use info about the function and its input arguments."""
+        """Complex pre-validators receive function metadata and input arguments."""
         return {"packed_kwargs", "fn_addr"}
 
 
 class PostValidatorFn(ValidatorFn):
     """Post-execution validator wrapper.
 
-    Post-validators are executed after the protected function to validate its
-    result. They must return:
-    - VALIDATION_SUCCESSFUL to accept the result;
-    - None to reject the result.
+    Post-validators run after the protected function to validate its result.
+    They must return:
+    - VALIDATION_SUCCESSFUL to accept the result
+    - None (or any other value) to reject the result
 
     Important:
         ANY other return value (including True, False, 1, 0, strings, etc.) is
         treated as validation failure. Do NOT return boolean True/False; use
         VALIDATION_SUCCESSFUL or None instead. The check is identity-based
-        (``is VALIDATION_SUCCESSFUL``), not truthiness-based.
+        (is VALIDATION_SUCCESSFUL), not truthiness-based.
 
     The callable must accept packed_kwargs, fn_addr, and result.
     """
@@ -562,10 +530,10 @@ class PostValidatorFn(ValidatorFn):
         """Initialize a post-execution validator.
 
         Args:
-            fn (Callable | str | AutonomousFn): The implementation.
-            fixed_kwargs (dict | None): Fixed keyword arguments, if any.
-            excessive_logging (bool | Joker): Controls verbose logging.
-            portal (AutonomousCodePortal | None): Optional portal binding.
+            fn: The implementation.
+            fixed_kwargs: Fixed keyword arguments, if any.
+            excessive_logging: Controls verbose logging.
+            portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
@@ -575,9 +543,5 @@ class PostValidatorFn(ValidatorFn):
 
     @classmethod
     def get_allowed_kwargs_names(cls) -> set[str]:
-        """Post-validators use function metadata, inputs, and the result.
-
-        Returns:
-            set[str]: {"packed_kwargs", "fn_addr", "result"}
-        """
+        """Post-validators receive function metadata, inputs, and the result."""
         return {"packed_kwargs", "fn_addr", "result" }
