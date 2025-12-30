@@ -14,6 +14,12 @@ Execution context:
 Conventions:
 - Return ValidationSuccessFlag (VALIDATION_SUCCESSFUL) to indicate the check
   passed; return None to indicate the check did not pass.
+
+IMPORTANT:
+- Do NOT return True/False, 1/0, strings, or other truthy/falsy values. These
+  are treated as validation FAILURE, not success. Only VALIDATION_SUCCESSFUL
+  (the sentinel singleton) indicates success. The validation check uses
+  identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
 """
 
 from .._070_protected_code_portals import SimplePreValidatorFn
