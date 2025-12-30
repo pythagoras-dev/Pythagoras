@@ -1,4 +1,5 @@
 import ast
+from functools import cache
 from typing import Callable, Union
 
 from .._020_ordinary_code_portals import get_normalized_fn_source_code_str
@@ -554,6 +555,7 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         self.names.accessible |= globals
         self.generic_visit(node)
 
+@cache
 def _validate_and_parse_function_source(
         normalized_source: str
         ) -> dict[str,Union[NamesUsageAnalyzer,str]]:
