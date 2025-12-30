@@ -1,17 +1,20 @@
-"""Pure function management with persistent result caching.
+"""Core classes for pure function execution and result caching.
 
-Pure functions are protected functions with no side effects that
-always return the same result for identical arguments.
+This module provides the infrastructure for pure functions: protected functions
+with no side effects that always return the same result for identical arguments.
 
-This module defines the @pure() decorator to mark functions as pure and
-provides persistent caching infrastructure. When a pure function is called
-multiple times with the same arguments, only the first invocation executes
-the function body; subsequent calls return the cached result.
+Classes:
+- PureCodePortal: Portal managing execution and persistent caching for pure functions
+- PureFn: Wrapped pure function supporting sync/async execution and result memoization
+- PureFnCallSignature: Signature identifying a specific call with its arguments
+- PureFnExecutionResultAddr: Address for retrieving results in distributed execution
 
-Pythagoras tracks source code changes in pure functions. When the function
-implementation changes, execution occurs again on the next call, but
-previously cached results remain available for the old version. Only
-source code changes are tracked, not dependencies or environment.
+When a pure function is called multiple times with the same arguments, only the
+first invocation executes; subsequent calls return the cached result. Pythagoras
+tracks source code changes: when the implementation changes, execution occurs
+again on the next call, but previously cached results remain available for the
+old version. Only source code changes in the function and its pre/post validators
+are tracked, not dependencies or environment.
 """
 
 from __future__ import annotations
