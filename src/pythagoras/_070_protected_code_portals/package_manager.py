@@ -57,39 +57,67 @@ def _install_uv_and_pip() -> None:
         install_package("pip", use_uv=True)
 
 
-def install_package(package_name:str
-        , upgrade:bool=False
-        , version:Optional[str]=None
-        , use_uv:bool = True
+def install_package(package_name: str,
+        upgrade: bool = False,
+        version: str | None = None,
+        use_uv: bool = True,
+        import_name: str | None = None,
+        verify_import: bool = True
         ) -> None:
     """Install a Python package using uv (default) or pip.
 
     Parameters:
-    - package_name: Name of the package to install. Special cases:
+    - package_name: Name of the package to install (as listed on PyPI). Special cases:
       - 'pip': must be installed using uv (use_uv=True).
       - 'uv' : must be installed using pip (use_uv=False).
     - upgrade: If True, pass "--upgrade" to the installer.
     - version: Optional version pin, e.g. "1.2.3". If provided, constructs
       "package_name==version".
     - use_uv: If True, run as `python -m uv pip install ...`; otherwise use pip.
+    - import_name: The name used to import the package if it differs from
+      package_name. For example, 'Pillow' is installed as 'Pillow' but imported
+      as 'PIL'. If None, defaults to package_name.
+    - verify_import: If True (default), attempts to import the package after
+      installation to verify success. Set to False for packages that are not
+      directly importable (e.g., command-line tools like 'black').
 
     Behavior:
     - Ensures both uv and pip are available unless installing one of them.
     - Runs the installer in a subprocess with check=True (raises on failure).
-    - Imports the package after installation to verify it is importable.
+    - Optionally imports the package after installation to verify it is importable.
 
     Raises:
     - RuntimeError: if the installation command fails.
     - ValueError: if package_name or version are invalid, or if attempting
       to install pip with use_uv=False or uv with use_uv=True.
-    - ModuleNotFoundError: if the package cannot be imported after installation.
-    """
+    - ModuleNotFoundError: if verify_import is True and the package cannot be
+      imported after installation.
 
+    Examples:
+        # Standard package where name matches import
+        install_package("requests")
+
+        # Package where PyPI name differs from import name
+        install_package("Pillow", import_name="PIL")
+        install_package("beautifulsoup4", import_name="bs4")
+        install_package("scikit-learn", import_name="sklearn")
+
+        # Command-line tool that isn't importable
+        install_package("black", verify_import=False)
+
+        # With version pinning
+        install_package("requests", version="2.28.0")
+    """
     if not package_name or not isinstance(package_name, str):
         raise ValueError("package_name must be a non-empty string")
 
-    if version and not isinstance(version, str):
+    if version is not None and not isinstance(version, str):
         raise ValueError("version must be a string")
+
+    if (import_name is not None
+            and (not isinstance(import_name, str)
+                    or len(import_name)==0)):
+        raise ValueError("import_name must be a non-empty string")
 
     if package_name == "pip" and not use_uv:
         raise ValueError("pip must be installed using uv (use_uv=True)")
@@ -104,15 +132,16 @@ def install_package(package_name:str
         command = [sys.executable, "-m", "pip", "install", "--no-input"]
 
     if upgrade:
-        command += ["--upgrade"]
+        command.append("--upgrade")
 
     package_spec = f"{package_name}=={version}" if version else package_name
-    command += [package_spec]
+    command.append(package_spec)
 
     _run(command)
 
-    # Verify import. Note: assumes package name matches importable module name.
-    importlib.import_module(package_name)
+    if verify_import:
+        module_to_import = import_name if import_name is not None else package_name
+        importlib.import_module(module_to_import)
 
 
 def uninstall_package(package_name:str, use_uv:bool=True)->None:
