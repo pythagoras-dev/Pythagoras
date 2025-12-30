@@ -1,6 +1,5 @@
 import os
 import psutil
-import pynvml
 
 def get_unused_ram_mb() -> int:
     """Get the currently available RAM on the system in megabytes (MB).
@@ -132,6 +131,7 @@ def get_unused_nvidia_gpus() -> float:
           safety.
     """
     try:
+        import pynvml
         pynvml.nvmlInit()
         device_count = pynvml.nvmlDeviceGetCount()
         unused_capacity = 0.0
@@ -143,11 +143,13 @@ def get_unused_nvidia_gpus() -> float:
 
         return unused_capacity / 100.0
 
-    except pynvml.NVMLError:
-        # Return 0.0 on any NVML error (no GPUs, driver issues, etc.)
+    except (ModuleNotFoundError, Exception):
+        # Return 0.0 if pynvml is not installed, or on any NVML error
+        # (no GPUs, driver issues, etc.)
         return 0.0
     finally:
         try:
+            import pynvml
             pynvml.nvmlShutdown()
         except:
             pass  # Safe cleanup even if initialization failed

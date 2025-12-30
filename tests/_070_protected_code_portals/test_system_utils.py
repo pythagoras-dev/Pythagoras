@@ -3,7 +3,6 @@ import time
 import multiprocessing as mp
 
 import psutil
-import pynvml
 
 from pythagoras._070_protected_code_portals.system_utils import (
     get_unused_ram_mb,
@@ -122,6 +121,7 @@ def test_nvidia_gpu_value_is_within_bounds():
     """
     gpu_count = None
     try:
+        import pynvml
         pynvml.nvmlInit()
         try:
             gpu_count = pynvml.nvmlDeviceGetCount()
@@ -135,3 +135,30 @@ def test_nvidia_gpu_value_is_within_bounds():
         assert unused == 0
     else:
         assert 0.0 <= unused <= gpu_count
+
+
+def test_get_unused_nvidia_gpus_without_pynvml():
+    """
+    Verify that get_unused_nvidia_gpus() gracefully returns 0.0 when pynvml
+    is not available, by temporarily hiding the module from imports.
+    """
+    import sys
+
+    # Save original pynvml module reference if it exists
+    pynvml_backup = sys.modules.get('pynvml')
+
+    try:
+        # Hide pynvml by replacing it with None in sys.modules
+        # This simulates ModuleNotFoundError on import
+        sys.modules['pynvml'] = None
+
+        # Should return 0.0 without raising an exception
+        unused = get_unused_nvidia_gpus()
+        assert unused == 0.0
+
+    finally:
+        # Restore original state
+        if pynvml_backup is None:
+            sys.modules.pop('pynvml', None)
+        else:
+            sys.modules['pynvml'] = pynvml_backup

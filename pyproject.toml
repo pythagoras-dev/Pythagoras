@@ -43,7 +43,6 @@ dependencies = [
     "boto3",
     "moto",
     "uv",
-    "nvidia-ml-py",
     "parameterizable",
 ]
 
@@ -67,4 +66,8 @@ aws = [
     "persidict[aws]"
     ,"boto3"
     ,"moto"
+]
+
+nvidia = [
+    "nvidia-ml-py"
 ]
