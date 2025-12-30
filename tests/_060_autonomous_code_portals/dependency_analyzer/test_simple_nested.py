@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def simple_nested(x):
@@ -9,7 +9,7 @@ def simple_nested(x):
 
 def test_simple_nested():
     assert simple_nested(4) == 2
-    analyzer = analyze_names_in_function(simple_nested)["analyzer"]
+    analyzer = _analyze_names_in_function(simple_nested)["analyzer"]
     assert analyzer.imported_packages_deep == {"math"}
     assert analyzer.names.accessible == {"nested", "x"}
     assert analyzer.names.explicitly_global_unbound_deep == set()

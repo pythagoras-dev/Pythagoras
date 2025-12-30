@@ -1,7 +1,7 @@
 """Test walrus operator (:=) handling in names_usage_analyzer."""
 
 import pytest
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import analyze_names_in_function
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def test_walrus_in_if_condition():
@@ -11,7 +11,7 @@ def test_walrus_in_if_condition():
             return n
         return 0
 
-    result = analyze_names_in_function(func)
+    result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
     # n should be recognized as a local variable
@@ -29,7 +29,7 @@ def test_walrus_in_while_condition():
             i += 1
         return result
 
-    result = analyze_names_in_function(func)
+    result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
     # item should be recognized as a local variable
@@ -54,7 +54,7 @@ def test_walrus_in_list_comprehension():
     def func():
         return [y for x in range(5) if (y := x * 2) > 4]
 
-    result = analyze_names_in_function(func)
+    result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
     # The walrus target 'y' is in the nested comprehension scope, not parent scope
@@ -71,7 +71,7 @@ def test_walrus_simple_assignment():
         result = (x := 5) + 10
         return result
 
-    result = analyze_names_in_function(func)
+    result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
     # x should be recognized as a local variable
@@ -86,7 +86,7 @@ def test_walrus_multiple_assignments():
             return a + b
         return 0
 
-    result = analyze_names_in_function(func)
+    result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
     # Both a and b should be recognized as local variables
@@ -104,7 +104,7 @@ def test_walrus_nested_expression():
             return doubled
         return 0
 
-    result = analyze_names_in_function(func)
+    result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
     # Both n and doubled should be local

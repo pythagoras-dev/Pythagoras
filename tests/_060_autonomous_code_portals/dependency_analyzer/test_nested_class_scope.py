@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def nested_class_no_pollution():
@@ -18,7 +18,7 @@ def nested_class_no_pollution():
 
 def test_nested_class_no_pollution():
     """Verify that class attributes don't leak into function's local namespace."""
-    analyzer = analyze_names_in_function(nested_class_no_pollution)["analyzer"]
+    analyzer = _analyze_names_in_function(nested_class_no_pollution)["analyzer"]
 
     # The class name should be local
     assert "MyClass" in analyzer.names.local
@@ -49,7 +49,7 @@ def nested_class_with_base():
 
 def test_nested_class_with_base():
     """Verify that base class references are handled correctly."""
-    analyzer = analyze_names_in_function(nested_class_with_base)["analyzer"]
+    analyzer = _analyze_names_in_function(nested_class_with_base)["analyzer"]
 
     # Both class names should be local
     assert "BaseClass" in analyzer.names.local
@@ -75,7 +75,7 @@ def nested_class_external_reference():
 
 def test_nested_class_external_reference():
     """Verify that external references from class body are captured."""
-    analyzer = analyze_names_in_function(nested_class_external_reference)["analyzer"]
+    analyzer = _analyze_names_in_function(nested_class_external_reference)["analyzer"]
 
     # Class name should be local
     assert "MyClass" in analyzer.names.local
@@ -103,7 +103,7 @@ def nested_class_with_decorator():
 
 def test_nested_class_with_decorator():
     """Verify that class decorators are handled in parent scope."""
-    analyzer = analyze_names_in_function(nested_class_with_decorator)["analyzer"]
+    analyzer = _analyze_names_in_function(nested_class_with_decorator)["analyzer"]
 
     # Both decorator and class should be local
     assert "my_decorator" in analyzer.names.local
@@ -134,7 +134,7 @@ def test_false_negative_example():
                 appears valid even though it's not actually accessible.
     After fix: 'x' is correctly identified as unclassified/missing.
     """
-    analyzer = analyze_names_in_function(false_negative_example)["analyzer"]
+    analyzer = _analyze_names_in_function(false_negative_example)["analyzer"]
 
     # Class name should be local
     assert "MyClass" in analyzer.names.local

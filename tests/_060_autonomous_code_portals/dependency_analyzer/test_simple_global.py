@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def simple_global(x):
@@ -11,7 +11,7 @@ def simple_global(x):
 
 def test_simple_global():
     assert simple_global(4) == 4
-    analyzer = analyze_names_in_function(simple_global)["analyzer"]
+    analyzer = _analyze_names_in_function(simple_global)["analyzer"]
     assert analyzer.imported_packages_deep == {"math"}
     assert analyzer.names.accessible == {"nested", "x", "m"}
     assert analyzer.names.explicitly_global_unbound_deep == {"float"}

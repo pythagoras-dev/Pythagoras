@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def nested_yeld(x):
@@ -16,7 +16,6 @@ def nested_yeld(x):
     return nested(x)(x)
 
 def test_nested_yeld():
-    analyzer = analyze_names_in_function(nested_yeld)
-    tree = analyzer["tree"]
+    analyzer = _analyze_names_in_function(nested_yeld)
     analyzer = analyzer["analyzer"]
     assert analyzer.n_yelds == 0

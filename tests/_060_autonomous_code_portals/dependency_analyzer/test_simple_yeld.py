@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def simple_yeld(x):
@@ -9,7 +9,6 @@ def simple_yeld(x):
         yield x
 
 def test_simple_yeld():
-    analyzer = analyze_names_in_function(simple_yeld)
-    tree = analyzer["tree"]
+    analyzer = _analyze_names_in_function(simple_yeld)
     analyzer = analyzer["analyzer"]
     assert analyzer.n_yelds == 2

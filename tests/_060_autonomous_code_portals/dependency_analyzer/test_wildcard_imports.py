@@ -7,7 +7,7 @@ Note: We test using string source code since Python doesn't allow
 'from module import *' inside function definitions at the syntax level.
 """
 from pythagoras._060_autonomous_code_portals.names_usage_analyzer import (
-    analyze_names_in_function
+    _analyze_names_in_function
 )
 
 
@@ -18,7 +18,7 @@ def func():
     from math import *
     return sqrt(16)
 """
-    result = analyze_names_in_function(source)
+    result = _analyze_names_in_function(source)
     analyzer = result['analyzer']
 
     # The wildcard '*' should appear in imported names
@@ -36,7 +36,7 @@ def func():
     from math import *
     return sqrt(25) + sin(0)
 """
-    result = analyze_names_in_function(source)
+    result = _analyze_names_in_function(source)
     analyzer = result['analyzer']
 
     # sqrt and sin should be accessible via wildcard import
@@ -52,7 +52,7 @@ def func():
     from os import *
     return sqrt(16)
 """
-    result = analyze_names_in_function(source)
+    result = _analyze_names_in_function(source)
     analyzer = result['analyzer']
 
     # Both wildcards should be tracked (they collapse to single '*')
@@ -71,7 +71,7 @@ def outer():
         return sqrt(9)
     return inner()
 """
-    result = analyze_names_in_function(source)
+    result = _analyze_names_in_function(source)
     analyzer = result['analyzer']
 
     # Wildcard is in nested function, so sqrt shouldn't be in outer's local

@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def func_with_lambda(x):
@@ -9,7 +9,7 @@ def func_with_lambda(x):
 
 def test_lambda_parameters():
     """Test that lambda parameters don't leak into parent scope as unclassified."""
-    result = analyze_names_in_function(func_with_lambda)
+    result = _analyze_names_in_function(func_with_lambda)
     analyzer = result['analyzer']
 
     # x and result should be local
@@ -31,7 +31,7 @@ def func_with_multiple_lambdas(x):
 
 def test_multiple_lambdas():
     """Test that multiple lambda parameters don't leak."""
-    result = analyze_names_in_function(func_with_multiple_lambdas)
+    result = _analyze_names_in_function(func_with_multiple_lambdas)
     analyzer = result['analyzer']
 
     # x, a, b, c should be local
@@ -51,7 +51,7 @@ def func_lambda_with_multiple_params(x):
 
 def test_lambda_with_multiple_parameters():
     """Test that lambda with multiple parameters works correctly."""
-    result = analyze_names_in_function(func_lambda_with_multiple_params)
+    result = _analyze_names_in_function(func_lambda_with_multiple_params)
     analyzer = result['analyzer']
 
     assert 'x' in analyzer.names.local
@@ -71,7 +71,7 @@ def func_lambda_with_all_arg_types(x):
 
 def test_lambda_with_all_arg_types():
     """Test lambda with positional-only, keyword-only, *args, **kwargs."""
-    result = analyze_names_in_function(func_lambda_with_all_arg_types)
+    result = _analyze_names_in_function(func_lambda_with_all_arg_types)
     analyzer = result['analyzer']
 
     assert 'x' in analyzer.names.local
@@ -94,7 +94,7 @@ def func_nested_lambda(x):
 
 def test_nested_lambda():
     """Test nested lambda expressions."""
-    result = analyze_names_in_function(func_nested_lambda)
+    result = _analyze_names_in_function(func_nested_lambda)
     analyzer = result['analyzer']
 
     assert 'x' in analyzer.names.local
@@ -113,7 +113,7 @@ def func_lambda_uses_global():
 
 def test_lambda_uses_global():
     """Test that lambda can reference unbound names from parent."""
-    result = analyze_names_in_function(func_lambda_uses_global)
+    result = _analyze_names_in_function(func_lambda_uses_global)
     analyzer = result['analyzer']
 
     # GLOBAL_VAR should be unclassified (used but not defined)

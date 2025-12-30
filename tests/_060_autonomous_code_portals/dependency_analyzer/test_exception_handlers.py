@@ -5,7 +5,7 @@ particularly the distinction between bound handlers (with 'as' clause) and
 unbound handlers (without 'as' clause).
 """
 
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import analyze_names_in_function
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 from pythagoras._060_autonomous_code_portals import AutonomousFn
 
 
@@ -19,7 +19,7 @@ def func():
         print(e)
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # 'e' should be in locals
@@ -40,7 +40,7 @@ def func():
         pass
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # None should NOT be in any sets
@@ -59,7 +59,7 @@ def func():
         pass
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # None should NOT be in any sets
@@ -84,7 +84,7 @@ def func():
         pass
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # 'e' and 'ke' should be in locals
@@ -114,7 +114,7 @@ def func():
         pass
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # Both bound exception names should be in locals
@@ -186,7 +186,7 @@ def func():
         result = 2
     return result
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # 'e' should be in locals (appears in both handlers, same name)
@@ -210,7 +210,7 @@ def func():
         cleanup = True
     return x
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # 'e' and 'cleanup' should be in locals

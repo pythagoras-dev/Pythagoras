@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def simple_exceptioms():
@@ -11,8 +11,7 @@ def simple_exceptioms():
 
 def test_simple_exceptioms():
     simple_exceptioms()
-    analyzer = analyze_names_in_function(simple_exceptioms)
-    tree = analyzer["tree"]
+    analyzer = _analyze_names_in_function(simple_exceptioms)
     analyzer = analyzer["analyzer"]
     assert analyzer.imported_packages_deep == set()
     assert analyzer.names.accessible == {"print", "Exception", "e", "a"}

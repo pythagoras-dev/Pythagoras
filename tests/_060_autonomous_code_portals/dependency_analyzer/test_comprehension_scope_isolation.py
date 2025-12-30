@@ -4,7 +4,7 @@ In Python 3, comprehensions (list, set, dict, generator) create implicit functio
 scopes. Iterator variables should NOT leak to the parent function scope.
 """
 
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def false_negative_list_comp(n):
@@ -27,7 +27,7 @@ def test_false_negative_list_comp():
         pass  # Expected
 
     # Verify analyzer detects this
-    analyzer = analyze_names_in_function(false_negative_list_comp)["analyzer"]
+    analyzer = _analyze_names_in_function(false_negative_list_comp)["analyzer"]
 
     # 'i' should NOT be in local (it's local to comprehension only)
     # The second 'i' should be flagged as unclassified
@@ -48,7 +48,7 @@ def test_false_negative_generator_exp():
     except NameError:
         pass
 
-    analyzer = analyze_names_in_function(false_negative_generator_exp)["analyzer"]
+    analyzer = _analyze_names_in_function(false_negative_generator_exp)["analyzer"]
     assert 'i' in analyzer.names.unclassified_deep, \
         "Iterator 'i' should not leak from generator expression"
 
@@ -66,7 +66,7 @@ def test_false_negative_set_comp():
     except NameError:
         pass
 
-    analyzer = analyze_names_in_function(false_negative_set_comp)["analyzer"]
+    analyzer = _analyze_names_in_function(false_negative_set_comp)["analyzer"]
     assert 'i' in analyzer.names.unclassified_deep, \
         "Iterator 'i' should not leak from set comprehension"
 
@@ -84,7 +84,7 @@ def test_false_negative_dict_comp():
     except NameError:
         pass
 
-    analyzer = analyze_names_in_function(false_negative_dict_comp)["analyzer"]
+    analyzer = _analyze_names_in_function(false_negative_dict_comp)["analyzer"]
     assert 'i' in analyzer.names.unclassified_deep, \
         "Iterator 'i' should not leak from dict comprehension"
 
@@ -100,7 +100,7 @@ def test_correct_usage():
     result = correct_usage_with_outer_i(5)
     assert result == ([0, 1, 2, 3, 4], 100)
 
-    analyzer = analyze_names_in_function(correct_usage_with_outer_i)["analyzer"]
+    analyzer = _analyze_names_in_function(correct_usage_with_outer_i)["analyzer"]
     assert 'i' in analyzer.names.local
     assert 'i' not in analyzer.names.unclassified_deep
 
@@ -116,7 +116,7 @@ def test_comprehension_accesses_outer():
     result = comprehension_uses_outer_variable(3)
     assert result == [0, 10, 20]
 
-    analyzer = analyze_names_in_function(comprehension_uses_outer_variable)["analyzer"]
+    analyzer = _analyze_names_in_function(comprehension_uses_outer_variable)["analyzer"]
     assert 'multiplier' in analyzer.names.local
     assert 'multiplier' not in analyzer.names.unclassified_deep
     # 'i' should NOT be in parent's local
@@ -134,7 +134,7 @@ def test_nested_comprehensions():
     result = nested_comprehensions(3)
     assert result == [[], [0], [0, 1]]
 
-    analyzer = analyze_names_in_function(nested_comprehensions)["analyzer"]
+    analyzer = _analyze_names_in_function(nested_comprehensions)["analyzer"]
     # Neither 'i' nor 'j' should be in parent's local
     assert 'i' not in analyzer.names.local or 'i' in analyzer.names.unclassified_deep
     assert 'j' not in analyzer.names.local or 'j' in analyzer.names.unclassified_deep
@@ -147,7 +147,7 @@ def example_from_issue(n):
 
 def test_example_from_issue():
     """Test the exact example: should detect 'x' as external."""
-    analyzer = analyze_names_in_function(example_from_issue)["analyzer"]
+    analyzer = _analyze_names_in_function(example_from_issue)["analyzer"]
 
     # 'x' should be flagged as unclassified (external)
     assert 'x' in analyzer.names.unclassified_deep, \

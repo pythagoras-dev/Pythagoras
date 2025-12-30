@@ -4,7 +4,7 @@ This module tests that the analyzer correctly handles del statements,
 which establish local scope in Python just like assignments.
 """
 
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import analyze_names_in_function
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def test_del_after_assignment():
@@ -15,7 +15,7 @@ def func():
     del x
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # x should be in locals (from assignment)
@@ -35,7 +35,7 @@ def func():
     del x
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # x should be tracked as local (del establishes local scope)
@@ -52,7 +52,7 @@ def func():
     del x, y
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # Both x and y should be in locals
@@ -68,7 +68,7 @@ def func():
     del x, y, z
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # All should be tracked as local
@@ -85,7 +85,7 @@ def func():
     print(y)
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # x should be local (from del)
@@ -105,7 +105,7 @@ def func():
     del x
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # x should be in explicitly_global_unbound_deep (from global keyword)
@@ -123,7 +123,7 @@ def func():
         del x
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # x should be in explicitly_nonlocal_unbound_deep from the nested function
@@ -138,7 +138,7 @@ def func():
     del (x, y)
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # Both should be in locals
@@ -154,7 +154,7 @@ def func():
     del obj['key']
     return 42
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # obj should be local
@@ -171,7 +171,7 @@ def func():
     del items[0]
     return items
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # items should be local
@@ -190,7 +190,7 @@ def func():
         return 42
     return inner()
 """
-    result = analyze_names_in_function(code)
+    result = _analyze_names_in_function(code)
     analyzer = result["analyzer"]
 
     # x should be in outer function's locals

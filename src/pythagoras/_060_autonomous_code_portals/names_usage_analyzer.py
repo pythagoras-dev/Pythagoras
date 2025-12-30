@@ -554,53 +554,20 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
         self.names.accessible |= globals
         self.generic_visit(node)
 
-def analyze_names_in_function(
-        a_func: Union[Callable,str]
-        ):
-    """Perform comprehensive static analysis of name usage within a function.
-
-    This function is the primary entry point for autonomy validation. It normalizes
-    the function source code, parses it into an AST, and performs a complete
-    traversal to identify all name references and their classifications.
-
-    The analysis process:
-        1. Normalizes source code using Pythagoras' code normalizer
-        2. Validates the source is a single regular function definition
-        3. Parses the normalized source into an AST
-        4. Traverses the AST using NamesUsageAnalyzer to collect name usage data
-        5. Returns the complete analysis result for autonomy validation
-
-    This analysis is required before an AutonomousFn can be constructed, ensuring
-    that the function satisfies all autonomy constraints at decoration time rather
-    than discovering violations during execution.
+def _validate_and_parse_function_source(
+        normalized_source: str
+        ) -> dict[str,Union[NamesUsageAnalyzer,str]]:
+    """Validate that normalized source is a single function definition and parse it.
 
     Args:
-        a_func: Function object or source code string to analyze. If a function
-            object is provided, its source will be extracted and normalized.
+        normalized_source: Normalized function source code to validate and parse.
 
     Returns:
-        Dictionary with three keys:
-            - tree: The ast.Module containing the parsed function definition.
-            - analyzer: The NamesUsageAnalyzer instance with complete name
-              classification data.
-            - normalized_source: The normalized source code string that was analyzed.
+        The parsed AST Module containing the function definition.
 
     Raises:
-        ValueError: If the input is not a single conventional function definition.
-            This includes lambda functions, async functions, callable class instances,
-            or source code with multiple top-level definitions.
-
-    Example:
-        >>> def my_func(x: int) -> int:
-        ...     import math
-        ...     return math.sqrt(x)
-        >>> result = analyze_names_in_function(my_func)
-        >>> result['analyzer'].names.imported
-        {'math'}
+        ValueError: If the source is not a single conventional function definition.
     """
-
-    normalized_source = get_normalized_fn_source_code_str(a_func)
-
     lines, line_num = normalized_source.splitlines(), 0
     while lines[line_num].startswith("@"):
         line_num+=1
@@ -623,8 +590,56 @@ def analyze_names_in_function(
         raise ValueError(
             f"Only one high level function definition is allowed to be processed. "
             f"The following code is not allowed: {normalized_source}")
+
     analyzer = NamesUsageAnalyzer()
     analyzer.visit(tree)
-    result = dict(tree=tree, analyzer=analyzer
-        , normalized_source=normalized_source)
+    result = dict(analyzer=analyzer, normalized_source=normalized_source)
     return result
+
+
+def _analyze_names_in_function(
+        a_func: Union[Callable,str]
+        ) -> dict[str,Union[NamesUsageAnalyzer,str]]:
+    """Perform comprehensive static analysis of name usage within a function.
+
+    This function is the primary entry point for autonomy validation. It normalizes
+    the function source code, parses it into an AST, and performs a complete
+    traversal to identify all name references and their classifications.
+
+    The analysis process:
+        1. Normalizes source code using Pythagoras' code normalizer
+        2. Validates the source is a single regular function definition
+        3. Parses the normalized source into an AST
+        4. Traverses the AST using NamesUsageAnalyzer to collect name usage data
+        5. Returns the complete analysis result for autonomy validation
+
+    This analysis is required before an AutonomousFn can be constructed, ensuring
+    that the function satisfies all autonomy constraints at decoration time rather
+    than discovering violations during execution.
+
+    Args:
+        a_func: Function object or source code string to analyze. If a function
+            object is provided, its source will be extracted and normalized.
+
+    Returns:
+        Dictionary with two keys:
+            - analyzer: The NamesUsageAnalyzer instance with complete name
+              classification data.
+            - normalized_source: The normalized source code string that was analyzed.
+
+    Raises:
+        ValueError: If the input is not a single conventional function definition.
+            This includes lambda functions, async functions, callable class instances,
+            or source code with multiple top-level definitions.
+
+    Example:
+        >>> def my_func(x: int) -> int:
+        ...     import math
+        ...     return math.sqrt(x)
+        >>> result = _analyze_names_in_function(my_func)
+        >>> result['analyzer'].names.imported
+        {'math'}
+    """
+
+    normalized_source = get_normalized_fn_source_code_str(a_func)
+    return _validate_and_parse_function_source(normalized_source)

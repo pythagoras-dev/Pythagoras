@@ -1,7 +1,7 @@
 
 import pytest
 
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 
@@ -12,7 +12,7 @@ def sample_bad_list_comprecension(x):
 def test_bad_list_comprencension():
     with pytest.raises(Exception):
         sample_bad_list_comprecension(3)
-    analyzer = analyze_names_in_function(sample_bad_list_comprecension)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_bad_list_comprecension)["analyzer"]
     assert analyzer.imported_packages_deep == set()
     # 'i' at line 9 is undefined (references outer scope), correctly flagged
     # 'i' in comprehension is local to comprehension, not parent

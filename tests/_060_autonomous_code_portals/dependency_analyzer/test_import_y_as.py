@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def sample_import_y_as(a, **kwargs):
@@ -11,7 +11,7 @@ def sample_import_y_as(a, **kwargs):
 
 def test_import_y_as():
     sample_import_y_as(3, ttt=4, bbb=5)
-    analyzer = analyze_names_in_function(sample_import_y_as)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_import_y_as)["analyzer"]
     assert analyzer.names.function == "sample_import_y_as"
     assert analyzer.imported_packages_deep == {"math","sys"}
     assert analyzer.names.accessible == {"a", "kwargs", "math","s","b","x","y","len","str"}

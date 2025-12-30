@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def simple_with():
@@ -8,8 +8,7 @@ def simple_with():
 
 def test_simple_with():
     simple_with()
-    analyzer = analyze_names_in_function(simple_with)
-    tree = analyzer["tree"]
+    analyzer = _analyze_names_in_function(simple_with)
     analyzer = analyzer["analyzer"]
     assert analyzer.imported_packages_deep == {"contextlib"}
     assert analyzer.names.accessible == {"contextlib", "Exception", "suppressed"}

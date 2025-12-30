@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def sample_two_level_comprehension():
@@ -10,7 +10,7 @@ def sample_two_level_comprehension():
 def test_two_level_comprehension():
     """Verify that nested tuple unpacking in comprehensions works correctly."""
     sample_two_level_comprehension()
-    analyzer = analyze_names_in_function(sample_two_level_comprehension)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_two_level_comprehension)["analyzer"]
 
     # In Python 3, comprehension iterator variables (x, y, z) are local to the
     # comprehension's implicit scope, NOT to the parent function.
@@ -33,7 +33,7 @@ def sample_two_level_for_loop():
 def test_two_level_for_loop():
     """Verify that nested tuple unpacking in for-loops works correctly."""
     sample_two_level_for_loop()
-    analyzer = analyze_names_in_function(sample_two_level_for_loop)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_two_level_for_loop)["analyzer"]
 
     # All unpacked variables should be local
     assert "x" in analyzer.names.local
@@ -59,7 +59,7 @@ def sample_three_level_nesting():
 def test_three_level_nesting():
     """Verify that deeply nested tuple unpacking works correctly."""
     sample_three_level_nesting()
-    analyzer = analyze_names_in_function(sample_three_level_nesting)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_three_level_nesting)["analyzer"]
 
     # Comprehension iterator variables are local to comprehension, not parent
     assert analyzer.names.local == {"data"}
@@ -77,7 +77,7 @@ def sample_parallel_nested_tuples():
 def test_parallel_nested_tuples():
     """Verify that parallel nested tuple unpacking works correctly."""
     sample_parallel_nested_tuples()
-    analyzer = analyze_names_in_function(sample_parallel_nested_tuples)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_parallel_nested_tuples)["analyzer"]
 
     # Comprehension iterator variables are local to comprehension, not parent
     assert analyzer.names.local == {"data"}
@@ -95,7 +95,7 @@ def sample_dict_comprehension_nested():
 def test_dict_comprehension_nested():
     """Verify nested tuple unpacking in dict comprehensions."""
     sample_dict_comprehension_nested()
-    analyzer = analyze_names_in_function(sample_dict_comprehension_nested)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_dict_comprehension_nested)["analyzer"]
 
     # Comprehension iterator variables are local to comprehension, not parent
     assert analyzer.names.local == {"data"}
@@ -113,7 +113,7 @@ def sample_generator_expression_nested():
 def test_generator_expression_nested():
     """Verify nested tuple unpacking in generator expressions."""
     sample_generator_expression_nested()
-    analyzer = analyze_names_in_function(sample_generator_expression_nested)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_generator_expression_nested)["analyzer"]
 
     # Generator iterator variables are local to generator, not parent
     assert analyzer.names.local == {"data"}
@@ -131,7 +131,7 @@ def sample_set_comprehension_nested():
 def test_set_comprehension_nested():
     """Verify nested tuple unpacking in set comprehensions."""
     sample_set_comprehension_nested()
-    analyzer = analyze_names_in_function(sample_set_comprehension_nested)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_set_comprehension_nested)["analyzer"]
 
     # Comprehension iterator variables are local to comprehension, not parent
     assert analyzer.names.local == {"data"}
@@ -158,7 +158,7 @@ def sample_mixed_nesting_patterns():
 def test_mixed_nesting_patterns():
     """Verify multiple different nested unpacking patterns work together."""
     sample_mixed_nesting_patterns()
-    analyzer = analyze_names_in_function(sample_mixed_nesting_patterns)["analyzer"]
+    analyzer = _analyze_names_in_function(sample_mixed_nesting_patterns)["analyzer"]
 
     # All variables from both patterns should be local
     assert {"a", "b", "c", "d", "e", "f"}.issubset(analyzer.names.local)

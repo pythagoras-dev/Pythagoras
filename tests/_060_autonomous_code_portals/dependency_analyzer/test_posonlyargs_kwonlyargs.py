@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def func_with_posonly_and_kwonly(a, b, /, c, d, *, e, f):
@@ -8,7 +8,7 @@ def func_with_posonly_and_kwonly(a, b, /, c, d, *, e, f):
 
 def test_posonlyargs_and_kwonlyargs():
     """Test that posonlyargs and kwonlyargs are recognized as local variables."""
-    result = analyze_names_in_function(func_with_posonly_and_kwonly)
+    result = _analyze_names_in_function(func_with_posonly_and_kwonly)
     analyzer = result['analyzer']
 
     # All parameters should be local
@@ -31,7 +31,7 @@ def func_with_mixed_arg_types(pos1, pos2, /, std1, std2, kw1, kw2):
 
 def test_mixed_argument_types():
     """Test that mixed argument types are recognized as local variables."""
-    result = analyze_names_in_function(func_with_mixed_arg_types)
+    result = _analyze_names_in_function(func_with_mixed_arg_types)
     analyzer = result['analyzer']
 
     # All parameters should be local
@@ -51,7 +51,7 @@ def func_posonly_only(a, b, /):
 
 def test_posonly_only():
     """Test that positional-only arguments work correctly."""
-    result = analyze_names_in_function(func_posonly_only)
+    result = _analyze_names_in_function(func_posonly_only)
     analyzer = result['analyzer']
 
     assert analyzer.names.local == {'a', 'b'}
@@ -65,7 +65,7 @@ def func_kwonly_only(*, a, b):
 
 def test_kwonly_only():
     """Test that keyword-only arguments work correctly."""
-    result = analyze_names_in_function(func_kwonly_only)
+    result = _analyze_names_in_function(func_kwonly_only)
     analyzer = result['analyzer']
 
     assert analyzer.names.local == {'a', 'b'}

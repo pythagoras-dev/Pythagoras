@@ -1,4 +1,4 @@
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 
 def func_with_nested_async(x):
@@ -10,7 +10,7 @@ def func_with_nested_async(x):
 
 def test_async_function_parameters():
     """Test that async function parameters don't leak into parent scope."""
-    result = analyze_names_in_function(func_with_nested_async)
+    result = _analyze_names_in_function(func_with_nested_async)
     analyzer = result['analyzer']
 
     # x and inner should be local
@@ -31,7 +31,7 @@ def func_with_async_all_args(x):
 
 def test_async_with_all_arg_types():
     """Test async function with all argument types."""
-    result = analyze_names_in_function(func_with_async_all_args)
+    result = _analyze_names_in_function(func_with_async_all_args)
     analyzer = result['analyzer']
 
     # x and inner should be local
@@ -56,7 +56,7 @@ def func_with_multiple_async(x):
 
 def test_multiple_async_functions():
     """Test multiple nested async functions."""
-    result = analyze_names_in_function(func_with_multiple_async)
+    result = _analyze_names_in_function(func_with_multiple_async)
     analyzer = result['analyzer']
 
     # x, first, second should be local
@@ -77,7 +77,7 @@ def func_async_with_import(x):
 
 def test_async_with_import():
     """Test async function with imports."""
-    result = analyze_names_in_function(func_async_with_import)
+    result = _analyze_names_in_function(func_async_with_import)
     analyzer = result['analyzer']
 
     # x and inner should be local
@@ -102,7 +102,7 @@ def func_async_uses_nonlocal(x):
 
 def test_async_with_nonlocal():
     """Test async function with nonlocal declaration."""
-    result = analyze_names_in_function(func_async_uses_nonlocal)
+    result = _analyze_names_in_function(func_async_uses_nonlocal)
     analyzer = result['analyzer']
 
     # x, y, inner should be local
@@ -126,7 +126,7 @@ def func_nested_async_in_regular(x):
 
 def test_nested_async_in_regular():
     """Test async function nested inside regular function."""
-    result = analyze_names_in_function(func_nested_async_in_regular)
+    result = _analyze_names_in_function(func_nested_async_in_regular)
     analyzer = result['analyzer']
 
     # x and regular should be local
@@ -148,7 +148,7 @@ def func_with_deeply_nested_async(x):
 
 def test_deeply_nested_async():
     """Test async function nested inside regular nested function."""
-    result = analyze_names_in_function(func_with_deeply_nested_async)
+    result = _analyze_names_in_function(func_with_deeply_nested_async)
     analyzer = result['analyzer']
 
     # x and regular_nested should be local

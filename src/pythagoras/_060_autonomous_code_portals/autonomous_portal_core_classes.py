@@ -6,7 +6,7 @@ from .._020_ordinary_code_portals import FunctionError
 
 
 from .._060_autonomous_code_portals.names_usage_analyzer import (
-    analyze_names_in_function)
+    _analyze_names_in_function)
 
 from .._050_safe_code_portals.safe_portal_core_classes import *
 
@@ -169,7 +169,7 @@ class AutonomousFn(SafeFn):
 
         fn_name = self.name
 
-        analyzer = analyze_names_in_function(self.source_code)
+        analyzer = _analyze_names_in_function(self.source_code)
         normalized_source = analyzer["normalized_source"]
         analyzer = analyzer["analyzer"]
         if self.source_code != normalized_source:

@@ -1,6 +1,6 @@
 """Tests for relative import detection and handling in autonomous functions."""
 import pytest
-from pythagoras._060_autonomous_code_portals.names_usage_analyzer import *
+from pythagoras._060_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 from pythagoras._060_autonomous_code_portals import AutonomousFn
 from pythagoras._020_ordinary_code_portals import FunctionError
 
@@ -48,21 +48,21 @@ def func_with_mixed_imports():
 
 def test_analyzer_detects_relative_import_current():
     """Verify analyzer detects 'from . import x'."""
-    analyzer = analyze_names_in_function(func_with_relative_import_current)["analyzer"]
+    analyzer = _analyze_names_in_function(func_with_relative_import_current)["analyzer"]
     assert analyzer.names.has_relative_imports is True
     assert "utils" in analyzer.names.imported
 
 
 def test_analyzer_detects_relative_import_parent():
     """Verify analyzer detects 'from .. import x'."""
-    analyzer = analyze_names_in_function(func_with_relative_import_parent)["analyzer"]
+    analyzer = _analyze_names_in_function(func_with_relative_import_parent)["analyzer"]
     assert analyzer.names.has_relative_imports is True
     assert "config" in analyzer.names.imported
 
 
 def test_analyzer_detects_relative_import_submodule():
     """Verify analyzer detects 'from .submodule import x'."""
-    analyzer = analyze_names_in_function(func_with_relative_import_submodule)["analyzer"]
+    analyzer = _analyze_names_in_function(func_with_relative_import_submodule)["analyzer"]
     assert analyzer.names.has_relative_imports is True
     assert "helper" in analyzer.names.imported
     # Should track "submodule" as the top-level package
@@ -71,7 +71,7 @@ def test_analyzer_detects_relative_import_submodule():
 
 def test_analyzer_detects_relative_import_parent_submodule():
     """Verify analyzer detects 'from ..sibling import x'."""
-    analyzer = analyze_names_in_function(func_with_relative_import_parent_submodule)["analyzer"]
+    analyzer = _analyze_names_in_function(func_with_relative_import_parent_submodule)["analyzer"]
     assert analyzer.names.has_relative_imports is True
     assert "data" in analyzer.names.imported
     assert "sibling" in analyzer.imported_packages_deep
@@ -79,7 +79,7 @@ def test_analyzer_detects_relative_import_parent_submodule():
 
 def test_analyzer_absolute_import_no_flag():
     """Verify analyzer does NOT flag absolute imports."""
-    analyzer = analyze_names_in_function(func_with_absolute_import)["analyzer"]
+    analyzer = _analyze_names_in_function(func_with_absolute_import)["analyzer"]
     assert analyzer.names.has_relative_imports is False
     assert "sqrt" in analyzer.names.imported
     assert "math" in analyzer.imported_packages_deep
@@ -87,7 +87,7 @@ def test_analyzer_absolute_import_no_flag():
 
 def test_analyzer_mixed_imports():
     """Verify analyzer detects relative imports even when mixed with absolute."""
-    analyzer = analyze_names_in_function(func_with_mixed_imports)["analyzer"]
+    analyzer = _analyze_names_in_function(func_with_mixed_imports)["analyzer"]
     assert analyzer.names.has_relative_imports is True
     assert "sqrt" in analyzer.names.imported
     assert "utils" in analyzer.names.imported
@@ -159,7 +159,7 @@ def test_package_name_extraction_consistency():
     Both should extract the top-level package name (not the last component).
     """
     # Test ImportFrom
-    analyzer1 = analyze_names_in_function(func_with_nested_package_import)["analyzer"]
+    analyzer1 = _analyze_names_in_function(func_with_nested_package_import)["analyzer"]
     assert "os" in analyzer1.imported_packages_deep  # Should be "os", not "path"
     assert "path" not in analyzer1.imported_packages_deep
 
@@ -168,7 +168,7 @@ def test_package_name_extraction_consistency():
         import os.path
         return os.path.join("a", "b")
 
-    analyzer2 = analyze_names_in_function(func_with_import)["analyzer"]
+    analyzer2 = _analyze_names_in_function(func_with_import)["analyzer"]
     assert "os" in analyzer2.imported_packages_deep
 
     # Both should track the same top-level package
@@ -184,7 +184,7 @@ def test_no_crash_on_relative_imports():
     """
     # This should complete without crashing
     try:
-        analyzer = analyze_names_in_function(func_with_relative_import_current)["analyzer"]
+        analyzer = _analyze_names_in_function(func_with_relative_import_current)["analyzer"]
         # If we get here, the crash is fixed
         assert analyzer.names.has_relative_imports is True
     except AttributeError as e:
