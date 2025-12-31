@@ -1,5 +1,5 @@
 from functools import cached_property
-from pythagoras._800_foundational_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
+from pythagoras._000_foundational_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
 
 class A(CacheablePropertiesMixin):
     @cached_property

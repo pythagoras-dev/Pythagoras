@@ -77,11 +77,11 @@ from .._040_logging_code_portals.kw_args import KwArgs, PackedKwArgs
 from .output_capturer import OutputCapturer
 from .._030_data_portals.data_portal_core_classes import (
     DataPortal, StorableFn)
-from .._800_foundational_utilities.current_date_gmt_str import (
+from .._000_foundational_utilities.current_date_gmt_str import (
     current_date_gmt_string)
 from .._040_logging_code_portals.execution_environment_summary import (
     build_execution_environment_summary, add_execution_environment_summary)
-from .._800_foundational_utilities.random_signatures import (
+from .._000_foundational_utilities.random_signatures import (
     get_random_signature)
 
 

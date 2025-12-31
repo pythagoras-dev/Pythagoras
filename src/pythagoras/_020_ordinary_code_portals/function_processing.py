@@ -12,7 +12,7 @@ from functools import cache
 from typing import Callable
 
 from .function_error_exception import FunctionError
-from .._800_foundational_utilities import get_long_infoname
+from .._000_foundational_utilities import get_long_infoname
 
 @cache
 def get_function_name_from_source(function_source_code: str) -> str:
