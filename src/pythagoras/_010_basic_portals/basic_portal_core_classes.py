@@ -750,15 +750,6 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         self._visited_portals = set()
 
 
-    def __post_init__(self):
-        """Execute post-initialization tasks for the portal-aware object.
-
-        Registration is deferred to first `portal` property access (lazy).
-        """
-        pass
-
-
-
     @property
     def _linked_portal(self) -> BasicPortal | None:
         """The object's preferred portal, or None if using current active portals."""
