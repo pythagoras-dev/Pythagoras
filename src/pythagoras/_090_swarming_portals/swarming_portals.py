@@ -21,8 +21,6 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from parameterizable import *
 
-from .system_processes_info_getters import (get_process_start_time,
-    get_current_process_id, get_current_process_start_time)
 from .._010_basic_portals import get_all_known_portals
 from .._070_protected_code_portals import (VALIDATION_SUCCESSFUL,
     get_unused_ram_mb, get_unused_cpu_cores)
@@ -33,39 +31,12 @@ from .._080_pure_code_portals.pure_core_classes import (
 
 from multiprocessing import get_context
 from .descendant_process_info import *
-from .descendant_process_info import MIN_VALID_TIMESTAMP
-from datetime import datetime, timezone
+from .descendant_process_info import _min_date
+from .system_processes_info_getters import *
 
 
-from .._090_swarming_portals.output_suppressor import (
-    OutputSuppressor)
+from .._090_swarming_portals.output_suppressor import OutputSuppressor
 
-
-def _get_process_start_time_with_retry(pid: int, max_retries: int = 5, base_delay: float = 0.01) -> int:
-    """Get process start time with exponential backoff retry logic to handle race conditions.
-
-    Args:
-        pid: Process ID to query
-        max_retries: Maximum number of retry attempts
-        base_delay: Base delay in seconds for exponential backoff (default 0.01)
-
-    Returns:
-        Process start time as UNIX timestamp
-
-    Raises:
-        RuntimeError: If unable to get valid start time after all retries
-    """
-    import random
-    delay = 0.0
-    for attempt in range(max_retries):
-        start_time = get_process_start_time(pid)
-        if start_time > 0:
-            return start_time
-        if attempt < max_retries - 1:
-            # Exponential backoff with jitter: base_delay * 2^attempt * random(0.5, 1.5)
-            delay += base_delay * (2 ** attempt) * random.uniform(0.5, 1.25)
-            sleep(delay)
-    raise RuntimeError(f"Failed to get start time for process {pid} after {max_retries} attempts")
 
 _MAX_BACKGROUND_WORKERS_TXT = "Max Background workers"
 _MIN_BACKGROUND_WORKERS_TXT = "Min Background workers"
@@ -152,9 +123,10 @@ class SwarmingPortal(PureCodePortal):
         if not isinstance(min_n_workers, (int, Joker, type(None))):
             raise TypeError(f"min_n_workers must be int or Joker or None, "
                             f"got {type(min_n_workers).__name__}")
-        if not isinstance(exact_n_workers, (int,type(None))):
+        if not isinstance(exact_n_workers, (int, type(None))):
             raise TypeError(f"exact_n_workers must be int or None, "
                             f"got {type(exact_n_workers).__name__}")
+
 
         if max_n_workers not in (None, KEEP_CURRENT) and max_n_workers < 0:
             raise ValueError("max_n_workers cannot be negative")
@@ -163,43 +135,32 @@ class SwarmingPortal(PureCodePortal):
         if exact_n_workers not in (None, 0) and exact_n_workers < 0:
             raise ValueError("exact_n_workers cannot be negative")
 
-        if exact_n_workers not in (None,0):
-            if max_n_workers is not None and max_n_workers is not KEEP_CURRENT:
-                raise ValueError("If exact_n_workers is set, max_n_workers must be None")
-            if min_n_workers is not None and min_n_workers is not KEEP_CURRENT:
-                raise ValueError("If exact_n_workers is set, min_n_workers must be None")
 
-        if ancestor_process_id is not None and exact_n_workers is None:
-            raise ValueError("If ancestor_process_id is set, exact_n_workers must be set as well")
-
-        if (ancestor_process_id is None) != (ancestor_process_start_time is None):
-            raise RuntimeError(
-                f"ancestor_process_id and ancestor_process_start_time must "
-                f"both be None or both set; got id={ancestor_process_id}, "
-                f"start_time={ancestor_process_start_time}")
+        if ancestor_process_id is not None:
+            # the portal is being created in a descendant process
+            # insise _launch_many_background_workers
+            # or _background_worker or _process_random_execution_request
+            if ancestor_process_start_time is None:
+                raise RuntimeError(
+                    f"ancestor_process_id and ancestor_process_start_time must "
+                    f"both be None or both set; got id={ancestor_process_id}, "
+                    f"start_time={ancestor_process_start_time}")
+        else:
+            if ancestor_process_start_time is not None:
+                raise RuntimeError(
+                    f"ancestor_process_id and ancestor_process_start_time must "
+                    f"both be None or both set; got id={ancestor_process_id}, "
+                    f"start_time={ancestor_process_start_time}")
+            if exact_n_workers not in (None, 0):
+                if max_n_workers is not None and max_n_workers is not KEEP_CURRENT:
+                    raise ValueError("If exact_n_workers is set, max_n_workers must be None")
+                if min_n_workers is not None and min_n_workers is not KEEP_CURRENT:
+                    raise ValueError("If exact_n_workers is set, min_n_workers must be None")
 
         self._auxiliary_config_params_at_init["max_n_workers"] = max_n_workers
         self._auxiliary_config_params_at_init["min_n_workers"] = min_n_workers
         self._auxiliary_config_params_at_init["exact_n_workers"] = exact_n_workers
 
-        if ancestor_process_id is not None:
-            if max_n_workers is not KEEP_CURRENT or min_n_workers is not KEEP_CURRENT:
-                raise ValueError(f"In child context, min_n_workers and "
-                                 f"max_n_workers must be KEEP_CURRENT, "
-                                 f"got {max_n_workers=} and {min_n_workers=}")
-
-        # compute_nodes_prototype = self._root_dict.get_subdict("compute_nodes")
-        # compute_nodes_shared_params = compute_nodes_prototype.get_params()
-        # dict_type = type(self._root_dict)
-        # compute_nodes = OverlappingMultiDict(
-        #     dict_type=dict_type
-        #     , shared_subdicts_params=compute_nodes_shared_params
-        #     , json=dict(append_only=False)
-        #     , pkl=dict(append_only=False)
-        #     )
-        # self._compute_nodes = compute_nodes
-        #
-        # self._node_id = get_node_signature()
         self._ancestor_process_id = ancestor_process_id
         self._ancestor_process_start_time = ancestor_process_start_time
 
@@ -228,8 +189,7 @@ class SwarmingPortal(PureCodePortal):
         if not isinstance(process_start_time, int):
             raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
         if process_start_time < MIN_VALID_TIMESTAMP:
-            min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
+            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {process_start_time}")
 
         # Use self.ancestor_process_id if available (for descendant portals),
         # otherwise use current process ID (for ancestor portals)
@@ -326,12 +286,12 @@ class SwarmingPortal(PureCodePortal):
 
         Returns:
             dict: Sorted dictionary of portal parameters inherited from
-            PureCodePortal plus parent_process_id and
-            parent_process_start_time.
+            PureCodePortal plus ancestor_process_id and
+            ancestor_process_start_time.
         """
         params = super().get_params()
-        params["parent_process_id"] = self.ancestor_process_id
-        params["parent_process_start_time"] = self.ancestor_process_start_time
+        params["ancestor_process_id"] = self.ancestor_process_id
+        params["ancestor_process_start_time"] = self.ancestor_process_start_time
         sorted_params = sort_dict_by_keys(params)
         return sorted_params
 
@@ -346,12 +306,9 @@ class SwarmingPortal(PureCodePortal):
             instantiated inside the background worker process.
         """
         if self.ancestor_process_id is None:
-            result= True
+            return True
         else:
-            result= False
-
-        print(f"\n\n IS ACESTOR = {result}\n\n")
-        return result
+            return False
 
     @property
     def n_workers_to_target(self) -> int:
@@ -374,8 +331,6 @@ class SwarmingPortal(PureCodePortal):
 
             result= max(0, n)
 
-        print(f"\n\n\n_workers_to_target={result}\n")
-
         return result
 
 
@@ -392,8 +347,6 @@ class SwarmingPortal(PureCodePortal):
         if not SwarmingPortal._atexit_is_registered:
             atexit.register(_terminate_all_portals_descendant_processes)
             SwarmingPortal._atexit_is_registered = True
-
-        print("\n\n====POST_INIT_HOOK_SWARMING================\n\n")
 
         if self.is_ancestor:
             if self.n_workers_to_target > 0:
@@ -415,7 +368,7 @@ class SwarmingPortal(PureCodePortal):
 
                 # Register the workers_launcher process from outside
                 launcher_pid = workers_launcher.pid
-                launcher_start_time = _get_process_start_time_with_retry(launcher_pid)
+                launcher_start_time = get_process_start_time_with_retry(launcher_pid)
                 self.register_descendant_process(
                     "_launch_many_background_workers",
                     launcher_pid,
@@ -468,28 +421,6 @@ class SwarmingPortal(PureCodePortal):
     #     return [self._node_id, s, "execution_environment"]
 
 
-    # @property
-    # def max_n_workers(self) -> int:
-    #     """Effective cap on background worker processes.
-    #
-    #     The configured max_n_workers value is adjusted down by runtime
-    #     resource availability: currently unused CPU cores and available RAM.
-    #     The result is cached in RAM for the life of the portal process
-    #     until the cache is invalidated.
-    #
-    #     Returns:
-    #         int: Effective maximum number of worker processes to use.
-    #     """
-    #     if not hasattr(self, "_max_n_workers_cache"):
-    #         n = self._get_portal_config_setting("max_n_workers")
-    #         if n in (None, KEEP_CURRENT):
-    #             n = 10
-    #         n = min(n, get_unused_cpu_cores() + 2)
-    #         n = min(n, get_unused_ram_mb() / 500)
-    #         n = int(n)
-    #         self._max_n_workers_cache = n
-    #
-    #     result = self._max_n_workers_cache
 
 
     def describe(self) -> pd.DataFrame:
@@ -618,7 +549,7 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
 
                     # Register the background worker process from outside
                     worker_pid = p.pid
-                    worker_start_time = _get_process_start_time_with_retry(worker_pid)
+                    worker_start_time = get_process_start_time_with_retry(worker_pid)
                     portal.register_descendant_process(
                         "_background_worker",
                         worker_pid,
@@ -640,8 +571,12 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
         portal_init_jsparams: Serialized initialization parameters for
             reconstructing a SwarmingPortal in child context.
     """
-    portal_init_jsparams = parameterizable.update_jsparams(
-        portal_init_jsparams, exact_n_workers=0)
+    portal_init_jsparams = update_jsparams(
+        portal_init_jsparams
+        , exact_n_workers=0
+        , max_n_workers=KEEP_CURRENT
+        , min_n_workers=KEEP_CURRENT
+    )
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
@@ -673,7 +608,11 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
             reconstructing a SwarmingPortal in child context.
     """
     portal_init_jsparams = update_jsparams(
-        portal_init_jsparams, max_n_workers=0)
+        portal_init_jsparams
+        , exact_n_workers=0
+        , max_n_workers=KEEP_CURRENT
+        , min_n_workers=KEEP_CURRENT
+    )
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")

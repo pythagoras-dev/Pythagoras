@@ -10,6 +10,7 @@ from datetime import datetime, timezone
 
 # Unix timestamp for 2026-01-01 00:00:00 UTC - reasonable minimum for modern processes
 MIN_VALID_TIMESTAMP = 1735689600
+_min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d')
 
 
 def process_is_alive(process_id: int, process_start_time: int) -> bool:
@@ -93,8 +94,7 @@ class DescendantProcessInfo:
         if not isinstance(process_start_time, int):
             raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
         if process_start_time < MIN_VALID_TIMESTAMP:
-            min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
+            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {process_start_time}")
 
         if not isinstance(ancestor_process_id, int):
             raise TypeError(f"ancestor_process_id must be an integer, got {type(ancestor_process_id).__name__}")
@@ -104,8 +104,7 @@ class DescendantProcessInfo:
         if not isinstance(ancestor_process_start_time, int):
             raise TypeError(f"ancestor_process_start_time must be an integer, got {type(ancestor_process_start_time).__name__}")
         if ancestor_process_start_time < MIN_VALID_TIMESTAMP:
-            min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-            raise ValueError(f"ancestor_process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {ancestor_process_start_time}")
+            raise ValueError(f"ancestor_process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {ancestor_process_start_time}")
 
         if not isinstance(process_type, str):
             raise TypeError(f"process_type must be a string, got {type(process_type).__name__}")
