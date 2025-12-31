@@ -1,19 +1,19 @@
-"""Signatures and conversion utilities.
+"""Foundational utilities for signatures, encoding, and caching.
 
-This subpackage provides helpers for generating stable identifiers and
-converting between common textual/byte representations used across
-Pythagoras. It re-exports frequently used helpers for convenience.
+This subpackage provides lightweight, side-effect-free helpers for generating
+stable identifiers and converting between representations. These utilities
+support Content-Addressable Storage (CAS) and distributed execution across
+Pythagoras.
 
-The modules exposed here are intentionally lightweight and side-effect free
-so they can be used in hashing and address computations.
-
-Exports:
-  base_16_32_converters: Base-16/32 encoding and decoding helpers.
-  current_date_gmt_str: Utilities to format current date/time in GMT.
-  hash_signatures: Functions to compute content hash/signature strings.
-  node_signature: Functions to derive signatures for the current node.
-  random_signatures: Helpers to generate random, collision-resistant IDs.
-  long_infoname: Utility for generating extended object identifiers.
+Key exports:
+    CacheablePropertiesMixin: Mixin class providing property caching with
+        invalidation support.
+    get_hash_signature: Compute a short, URL-safe content hash for any object.
+    get_node_signature: Derive a stable identifier for the current compute node.
+    get_random_signature: Generate a cryptographically secure random ID.
+    get_long_infoname: Build extended identifier strings for objects.
+    current_date_gmt_string: Format current UTC date for filenames and logs.
+    convert_base16_to_base32: Convert hex strings to project base32 encoding.
 """
 
 from .constants_for_signatures_converters import *
@@ -23,3 +23,4 @@ from .hash_signatures import *
 from .node_signature import *
 from .random_signatures import *
 from .long_infoname import *
+from .cacheable_properties_mixin import *
