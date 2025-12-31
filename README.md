@@ -259,6 +259,16 @@ pip install pythagoras
 * [nvidia-ml-p](https://pypi.org/project/nvidia-ml-py/)
 * [uv](https://docs.astral.sh/uv/)
 
+## Contributing
+
+Interested in contributing to Pythagoras? Please see our [Contributing Guidelines](contributing.md).
+
+For project documentation standards, see:
+* [Glossary](GLOSSARY.md)
+* [Unit Tests Guidelines](unit_tests.md)
+* [Docstrings and Comments Guidelines](docstrings_comments.md)
+* [Type Hints Guidelines](type_hints.md)
+
 ## Key Contacts
 
 * [Vlad (Volodymyr) Pavlov](https://www.linkedin.com/in/vlpavlov/)
