@@ -30,7 +30,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **SafeCodePortal:** Extends `LoggingCodePortal` with safer defaults for argument handling and execution bookkeeping.
 
-- **AutonomousCodePortal:** Extends `SafeCodePortal` to enable self-scheduling and autonomous execution primitives.
+- **AutonomousCodePortal:** Extends `SafeCodePortal` with self-contained execution support and autonomous primitives.
 
 - **ProtectedCodePortal:** Extends `AutonomousCodePortal` with validation and guards around function execution (pre/post validation hooks).
 
