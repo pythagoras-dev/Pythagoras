@@ -21,7 +21,7 @@ def get_factorial_address(n:int, dir):
 
 @pytest.mark.parametrize("p",[0, 0.5, 1])
 def test_swarming_factorial(tmpdir,p):
-    tmpdir = "FACTORIAL_SWARMING_TEST_"+ str(int(time.time()))
+    # tmpdir = "FACTORIAL_SWARMING_TEST_"+ str(int(time.time()))
     address = get_factorial_address(n=5, dir=tmpdir)
     with _PortalTester(SwarmingPortal
             , tmpdir

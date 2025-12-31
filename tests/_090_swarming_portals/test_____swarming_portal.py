@@ -6,7 +6,7 @@ import time
 
 def test_descendant_process_registration_swarming_portal(tmpdir):
     """Verify descendant process can be registered without errors."""
-    tmpdir = "TEST_PROCESS_REGISTRATION"+str(time.time())
+    # tmpdir = "TEST_PROCESS_REGISTRATION"+str(time.time())
     with _PortalTester():
         portal = SwarmingPortal(
             root_dict=tmpdir,
