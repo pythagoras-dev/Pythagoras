@@ -209,7 +209,7 @@ class OrdinaryFn(PortalAwareClass):
         return super().portal
 
 
-    @property
+    @cached_property
     def source_code(self) -> str:
         """Get the normalized source code of the function.
 
