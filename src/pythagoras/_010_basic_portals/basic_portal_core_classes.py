@@ -813,6 +813,18 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         return linked_portal
 
 
+    @cached_property
+    def is_linked_(self) -> bool:
+        """True if the object is linked to a portal, False otherwise."""
+        return self._linked_portal is not None
+
+
+    @cached_property
+    def is_linkfree(self) -> bool:
+        """True if the object is not linked to a portal, False otherwise."""
+        return self._linked_portal is None
+
+
     @property
     def portal(self) -> BasicPortal:
         """The portal used by this object's methods.
