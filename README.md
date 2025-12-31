@@ -159,66 +159,56 @@ assert is_odd(n=11)
 
 ## Core Concepts
 
- * **Portal**: An application's "window" into the non-ephemeral world outside the current application
-  execution session. It's a connector that enables a link between a runtime-only ephemeral state and
-  a persistent state that can be saved and loaded across multiple runs of the application and across
-  multiple computers. Portals provide a unified interface for data persistence, caching, and state
-  management across distributed systems. They abstract away the complexities of storage backends
-  (local filesystem, cloud storage, etc.) and handle serialization/deserialization transparently.
-  This allows applications to seamlessly work with persistent data while maintaining isolation between
-  runtime and storage concerns. A program can use multiple portals, each with its own storage backend, and
-  each portal can be used by multiple applications. A portal defines a context for the execution of
-  pure functions, which is used to cache and retrieve results. 
+* **Portal**: A persistent gateway that connects your application to the world beyond 
+  the current execution session. Portals link runtime state to persistent storage that 
+  survives across multiple runs and machines. They provide a unified interface for data 
+  persistence, caching, and state management, abstracting away storage backend complexities 
+  (local filesystem, cloud storage, etc.) and handling serialization transparently. 
+  A program can use multiple portals, each with its own storage backend, and each portal 
+  can serve multiple applications. Portals define the execution context for pure functions, 
+  enabling result caching and retrieval.
 
-* **Autonomous Function**: A self-contained function that does not depend on external
-  imports or definitions. All necessary imports must be done inside the function body.
-  These functions cannot use global objects (except built-ins), yield statements, or nonlocal variables.
-  They must be called with keyword arguments only to ensure clear parameter passing.
-  This design ensures complete isolation and portability, allowing the function to execute
-  independently on any machine in a distributed system. The autonomous nature makes these
-  functions ideal building blocks for parallel and distributed computing workflows, as they
-  carry all their dependencies with them and maintain clear interfaces through strict
-  parameter passing requirements.
+* **Autonomous Function**: A self-contained function with no external dependencies. 
+  All imports must be done inside the function body. These functions cannot use global 
+  objects (except built-ins), yield statements, or nonlocal variables, and must be called 
+  with keyword arguments only. This design ensures complete isolation and portability, 
+  making autonomous functions ideal building blocks for distributed computing—they carry 
+  all dependencies with them and maintain clear interfaces.
 
-* **Pure Function**: A special type of autonomous function that has no side effects and always
-  returns the same result for the same arguments. This means the function's output depends solely
-  on its input parameters, without relying on any external state or modifying anything outside its scope.
-  Pythagoras caches the results of pure functions using content-based addressing, so if the function
-  is called multiple times with the same arguments, the function is executed only once, and the cached
-  result is returned for all subsequent executions. This caching mechanism (also known as memoization)
-  works seamlessly across different machines in a distributed system, enabling significant performance
-  improvements for computationally intensive workflows.
+* **Pure Function**: An autonomous function that has no side effects and always returns 
+  the same result for the same arguments. Pythagoras caches pure function results using 
+  content-based addressing: if a function is called multiple times with identical arguments, 
+  it executes only once, and cached results are returned for subsequent calls. This 
+  memoization works seamlessly across machines in a distributed system, enabling significant 
+  performance improvements for computationally intensive workflows.
 
-* **Validator**: An autonomous function that checks if certain conditions are met before or after 
-  the execution of a pure function. Pre-validators run before the function, and post-validators run after.
-  They can be passive (e.g., check for available RAM) or active (e.g., install a missing library).
-  Validators help ensure reliable execution across distributed systems by validating requirements 
-  and system state. Multiple validators can be combined using the standard decorator syntax 
-  to create comprehensive validation chains.
+* **Validator**: An autonomous function that checks conditions before or after executing 
+  a pure function. Pre-validators run before execution, post-validators run after. 
+  Validators can be passive (e.g., check available RAM) or active (e.g., install a missing 
+  library). They help ensure reliable distributed execution by validating requirements 
+  and system state. Multiple validators can be combined using standard decorator syntax.
 
-* **Value Address**: A globally unique address of an ***immutable value***, derived from its content
-  (type and value). It consists of a human-readable descriptor (often based on the object's type
-  and shape/length) and a hash signature (SHA-256, encoded) split into parts for filesystem/storage
-  efficiency. Creating a ValueAddr(data) computes the content hash of data and stores the value
-  in the active portal's storage (if not already stored), allowing that value to be retrieved later
-  via the address. These addresses are used extensively by the portal to identify stored results
-  and to reference inputs/outputs across distributed systems.
+* **Value Address**: A globally unique, content-derived address for an **immutable value**. 
+  It consists of a human-readable descriptor (based on type and shape/length) and a hash 
+  signature (SHA-256) split into parts for storage efficiency. Creating a `ValueAddr(data)` 
+  computes the content hash and stores the value in the active portal's storage, allowing 
+  later retrieval via the address. Value addresses identify stored results and reference 
+  inputs/outputs across distributed systems.
 
-* **Execution Result Address**: A special type of Value Address that represents the result of a pure
-  function execution. It combines the function's signature with its input parameters to create a unique
-  identifier. When a function is executed in swarm mode, it immediately returns an Execution Result Address. This address
-  acts as a "future" reference that can be used to check execution status and retrieve results 
-  once they become available. The address remains valid across application restarts and
-  can be shared between different machines in the distributed system.
+* **Execution Result Address**: A Value Address representing the result of a pure function 
+  execution. It combines the function's signature with input parameters to create a unique 
+  identifier. In swarm mode, functions immediately return an Execution Result Address that 
+  acts as a "future" reference for checking execution status and retrieving results. 
+  These addresses remain valid across application restarts and can be shared between machines.
 
-* **Swarming**: An asynchronous execution model where you do not know when your function will
-  be executed, what machine will execute it, and how many times it will be executed.
-  Pythagoras ensures that the function will be eventually executed at least once but does not
-  offer any further guarantees. This model enables maximum flexibility in distributed execution
-  by decoupling the function call from its actual execution. Functions can be queued, load-balanced,
-  retried on failure, and executed in parallel across multiple machines automatically. The trade-off
-  is reduced control over execution timing and location, in exchange for improved scalability,
-  fault tolerance, and resource utilization across the distributed system.
+* **Swarming**: An asynchronous execution model where you don't know when, where, or how 
+  many times your function will execute. Pythagoras guarantees eventual execution at least 
+  once but offers no further guarantees. This model maximizes flexibility by decoupling 
+  function calls from execution—functions can be queued, load-balanced, retried on failure, 
+  and parallelized automatically. The trade-off is reduced control over timing and location 
+  in exchange for improved scalability, fault tolerance, and resource utilization.
+
+For a complete list of terms and detailed definitions, see the [Glossary](GLOSSARY.md).
 
 ## How to get it?
 
