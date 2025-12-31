@@ -20,12 +20,12 @@ from parameterizable import ParameterizableClass, sort_dict_by_keys
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .guarded_init_metaclass import GuardedInitMeta
 from .single_thread_enforcer import ensure_single_thread, _reset_single_thread_enforcer
-from .._000_foundational_utilities import get_hash_signature
+from .._000_supporting_utilities import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)
 from .default_portal_base_dir import get_default_portal_base_dir
-from .._000_foundational_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
+from .._000_supporting_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"

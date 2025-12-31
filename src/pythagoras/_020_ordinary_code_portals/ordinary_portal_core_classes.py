@@ -18,7 +18,7 @@ from .function_error_exception import FunctionError
 from .._010_basic_portals import BasicPortal, PortalAwareClass
 from .code_normalizer import _get_normalized_fn_source_code_str_impl
 from .function_processing import get_function_name_from_source
-from .._000_foundational_utilities import get_hash_signature
+from .._000_supporting_utilities import get_hash_signature
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_runtime_characteristic)
 

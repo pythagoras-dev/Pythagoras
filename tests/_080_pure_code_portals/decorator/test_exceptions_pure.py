@@ -1,5 +1,5 @@
 from pythagoras._010_basic_portals.portal_tester import _PortalTester
-from pythagoras._000_foundational_utilities.current_date_gmt_str import (
+from pythagoras._000_supporting_utilities.current_date_gmt_str import (
     current_date_gmt_string)
 from pythagoras._080_pure_code_portals.pure_core_classes import (
     PureCodePortal)

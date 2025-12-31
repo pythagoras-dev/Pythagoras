@@ -14,7 +14,7 @@ from typing import Callable
 import autopep8
 
 from .function_processing import get_function_name_from_source
-from .._000_foundational_utilities.long_infoname import get_long_infoname
+from .._000_supporting_utilities.long_infoname import get_long_infoname
 from .function_processing import assert_ordinarity
 from .function_error_exception import FunctionError
 

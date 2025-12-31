@@ -1,4 +1,4 @@
-from pythagoras._000_foundational_utilities.current_date_gmt_str import (
+from pythagoras._000_supporting_utilities.current_date_gmt_str import (
     current_date_gmt_string, _MONTH_ABBREVIATIONS)
 
 from datetime import datetime, timezone
@@ -54,7 +54,7 @@ def test_current_date_gmt_string_all_months():
         # Mock a datetime for each month
         mock_date = datetime(2024, month, 15, 12, 30, 45, tzinfo=timezone.utc)
         
-        with patch('pythagoras._000_foundational_utilities.current_date_gmt_str.datetime') as mock_datetime:
+        with patch('pythagoras._000_supporting_utilities.current_date_gmt_str.datetime') as mock_datetime:
             mock_datetime.now.return_value = mock_date
             result = current_date_gmt_string()
             
@@ -78,7 +78,7 @@ def test_current_date_gmt_string_edge_cases():
     ]
     
     for mock_date, expected in test_cases:
-        with patch('pythagoras._000_foundational_utilities.current_date_gmt_str.datetime') as mock_datetime:
+        with patch('pythagoras._000_supporting_utilities.current_date_gmt_str.datetime') as mock_datetime:
             mock_datetime.now.return_value = mock_date
             result = current_date_gmt_string()
             assert result == expected, f"For {mock_date}: expected {expected}, got {result}"

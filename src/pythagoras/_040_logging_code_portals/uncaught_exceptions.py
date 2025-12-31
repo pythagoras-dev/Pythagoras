@@ -25,12 +25,12 @@ import traceback
 from .._010_basic_portals import get_current_portal
 from .._040_logging_code_portals.exception_processing_tracking import (
     _exception_needs_to_be_processed, _mark_exception_as_processed)
-from .._000_foundational_utilities.current_date_gmt_str import (
+from .._000_supporting_utilities.current_date_gmt_str import (
     current_date_gmt_string)
 from .._040_logging_code_portals.execution_environment_summary import (
     add_execution_environment_summary)
 from .._040_logging_code_portals.notebook_checker import is_executed_in_notebook
-from .._000_foundational_utilities.random_signatures import (
+from .._000_supporting_utilities.random_signatures import (
     get_random_signature)
 
 

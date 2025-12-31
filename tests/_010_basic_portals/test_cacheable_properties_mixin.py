@@ -2,7 +2,7 @@
 
 import pytest
 from functools import cached_property
-from pythagoras._000_foundational_utilities.cacheable_properties_mixin import (
+from pythagoras._000_supporting_utilities.cacheable_properties_mixin import (
     CacheablePropertiesMixin
 )
 
