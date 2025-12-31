@@ -1,6 +1,6 @@
-"""Classes and utilities to work with ordinary functions.
+"""Classes and utilities for ordinary functions in Pythagoras.
 
-An 'ordinary' function is a regular Python function with strict constraints
+An ordinary function is a regular Python function with strict constraints
 that enable reliable introspection, comparison, and isolated execution:
 - Accepts only named (keyword) arguments
 - No default parameter values
@@ -8,37 +8,36 @@ that enable reliable introspection, comparison, and isolated execution:
 - Not a method, lambda, async function, or builtin
 
 Ordinary functions are the foundation of the Pythagoras execution model.
-To be used in Pythagoras, an ordinary function must be converted into an
-OrdinaryFn object by applying the @ordinary decorator.
+To use a function in Pythagoras, apply the @ordinary decorator to convert
+it into an OrdinaryFn wrapper.
 
 Key Concepts
 ------------
-**Normalization**: Pythagoras transforms function source code into canonical
-form by removing decorators, docstrings, comments, and type annotations, then
-applying PEP8 formatting. This enables reliable comparison and hashing for
-caching and memoization.
+**Normalization**: Function source code is transformed into canonical form
+by removing decorators, docstrings, comments, and type annotations, then
+applying consistent PEP8 formatting. This enables reliable comparison and hashing
+for caching and distributed execution.
 
 **Execution Model**: OrdinaryFn instances execute in controlled namespaces
-with only explicitly allowed symbols. This provides isolation from caller
-context, enables portal-based tracking, and ensures reproducibility.
+with only explicitly allowed symbols, providing isolation from caller context
+and ensuring reproducibility.
 
-**Decorator Constraints**: Ordinary functions may only have Pythagoras
-decorators (@ordinary, @autonomous, @protected, @pure, etc.). External
-decorators are not allowed to maintain source code predictability.
+**Decorator Constraints**: Ordinary functions may only use Pythagoras
+decorators (@ordinary, @pure, etc.). External decorators are not allowed.
 
 Main Exports
 ------------
-- OrdinaryFn: Wrapper class for ordinary functions with normalized execution
-- OrdinaryCodePortal: Portal subclass for managing ordinary function lifecycle
-- ordinary: Decorator to convert functions into OrdinaryFn instances
-- get_normalized_function_source: Utility to normalize function source code
-- FunctionError: Exception for ordinarity constraint violations
+- OrdinaryCodePortal: Portal for managing ordinary function lifecycle.
+- OrdinaryFn: Wrapper class for ordinary functions with normalized execution.
+- ordinary: Decorator to convert functions into OrdinaryFn instances.
+- FunctionError: Exception raised when a function violates ordinarity rules.
+- get_normalized_fn_source_code_str: Utility to get normalized source code.
 
 Usage Note
 ----------
-Most Pythagoras users work with higher-level abstractions (autonomous and
-pure functions) built on top of OrdinaryFn. Direct use of this module is
-primarily for framework extension and advanced customization.
+Most users work with higher-level abstractions (pure functions) built on
+OrdinaryFn. Direct use of this module is for framework extension
+and advanced customization.
 """
 
 from .ordinary_portal_core_classes import *
