@@ -1,52 +1,31 @@
-"""Foundational classes and utilities to work with Pythagoras portals.
+"""Foundational portal classes and accessor functions.
 
-In a Pythagoras-based application, a portal is the application's 'window'
-into the non-ephemeral world outside the current application execution
-session. It serves as a connector linking runtime-only ephemeral state
-with persistent state that can be saved and loaded across multiple
-application runs and computers.
+This module provides the base classes for Pythagoras portals and utilities
+for managing portal lifecycle and access.
 
-Beyond being a 'window', a portal also provides various supporting services
-that help manage the application's state and behavior.
+Classes:
+    BasicPortal: Base class for all portal types. Manages lifecycle and
+        registration of portal-aware objects. Not intended for direct use.
+    PortalAwareClass: Base class for objects that require portal access.
+        May be linked to a specific portal or use the current portal.
 
-BasicPortal is the base class for all portal objects. It is not intended
-to be used directly; instead, it should be subclassed to provide
-concrete functionality.
+Portal Management:
+    A Pythagoras application can have multiple portals. Portals become active
+    when entered via `with` statement. The current portal (top of the active
+    stack) is used by portal-aware objects unless explicitly linked elsewhere.
+    If no portal is active when needed, a default portal is auto-created.
 
-BasicPortal's subclasses are expected to provide access to the portal's data
-and manage its state. This access is typically offered via PersiDict objects—
-persistent dictionaries that expose a Dict-like interface while backed by
-non-ephemeral storage. PersiDicts are heavily used throughout Pythagoras.
-
-PortalAwareClass is a base class for classes that use a portal object
-as a context for managing state and behavior. Like BasicPortal,
-PortalAwareClass is not intended for direct use and should be subclassed.
-
-A Pythagoras-based application can have multiple portals. A portal becomes
-active when used within a `with` statement. The most recent portal in the
-stack of active portals is considered the current active portal, which can
-be accessed via the `get_current_portal()` function. This portal
-is used by code executed inside the `with` block.
-
-If PortalAwareClass-based objects are accessed by the code, they will use
-the current active portal unless they were explicitly linked to a specific
-portal at creation time. If there are no active portals when a
-PortalAwareClass-based object needs one, a default portal will be
-instantiated and activated automatically.
-
-Exports:
-    BasicPortal: Base class for all portal types.
-    PortalAwareClass: Base class for objects that use portals.
-    get_current_portal: Access the current active portal.
-    get_portal_by_fingerprint: Retrieve a specific portal by ID.
+Accessor Functions:
+    get_current_portal: Get the current active portal.
+    get_portal_by_fingerprint: Retrieve a portal by its unique fingerprint.
+    get_all_known_portals: List all registered portals.
+    get_number_of_known_portals: Count all registered portals.
+    get_number_of_active_portals: Count unique portals in the active stack.
     get_default_portal_base_dir: Get the default portal storage location.
-    _PortalTester: Testing utility for portal lifecycle management.
 
-Important Notes
----------------
-**Thread Safety**: Work with portals is NOT thread-safe. Portal management uses
-global state that is not protected by locks. All portal operations
-must be performed from a single thread.
+Thread Safety:
+    Portal operations are NOT thread-safe. All portal access must occur
+    from a single thread. Use swarming for multi-process parallelism.
 """
 
 from .guarded_init_metaclass import *
