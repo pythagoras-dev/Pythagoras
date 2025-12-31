@@ -614,7 +614,7 @@ class _PortalRegistry(NotPicklableClass):
         Args:
             obj: The object instance to register.
         """
-        if obj._linked_portal_at_init is not None:
+        if obj._linked_portal is not None:
             raise ValueError(
                 f"Cannot register object {obj.fingerprint} as linkfree: "
                 f"object is linked to a portal"
@@ -643,7 +643,7 @@ class _PortalRegistry(NotPicklableClass):
             portal: The portal to link the object to.
             obj: The portal-aware object to link.
         """
-        if obj._linked_portal_at_init is None:
+        if obj._linked_portal is None:
             raise ValueError(
                 f"Cannot register object {obj.fingerprint} as linked: "
                 f"object is not linked to any portal"
@@ -747,7 +747,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     happens on first access to the `portal` property, not during `__init__()`.
     """
 
-    _linked_portal_at_init: BasicPortal | None
+    _linked_portal: BasicPortal | None
     _visited_portals: set[str]
     _nested_objects:list[Any]
 
@@ -763,7 +763,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         self._init_finished = False
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
-        self._linked_portal_at_init = portal
+        self._linked_portal = portal
         self._visited_portals = set()
         self._nested_objects = list()
 
@@ -790,7 +790,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
             raise TypeError(f"portal must be a BasicPortal, got {type(portal).__name__}")
 
         # Return self if already linked to the same portal
-        if self._linked_portal_at_init is portal:
+        if self._linked_portal is portal:
             return self
 
         # Get current state (excludes portal information per contract)
@@ -799,7 +799,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         # Create new instance with the new portal
         new_obj = type(self).__new__(type(self))
         new_obj.__setstate__(state)
-        new_obj._linked_portal_at_init = portal
+        new_obj._linked_portal = portal
 
         return new_obj
 
@@ -807,7 +807,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     @property
     def linked_portal(self) -> BasicPortal | None:
         """The object's preferred portal, or None if using current active portals."""
-        linked_portal =  self._linked_portal_at_init
+        linked_portal =  self._linked_portal
         if linked_portal is not None:
             self._visit_portal(linked_portal)
         return linked_portal
@@ -860,9 +860,9 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
 
         self._visited_portals.add(portal.fingerprint)
 
-        if self._linked_portal_at_init is not None:
+        if self._linked_portal is not None:
             _PORTAL_REGISTRY.register_linked_object(
-                self._linked_portal_at_init, self)
+                self._linked_portal, self)
         else:
             _PORTAL_REGISTRY.register_linkfree_object(self)
 
@@ -904,7 +904,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         self._invalidate_cache()
         self._visited_portals = set()
         self._nested_objects = list()
-        self._linked_portal_at_init = None
+        self._linked_portal = None
 
 
     @property
