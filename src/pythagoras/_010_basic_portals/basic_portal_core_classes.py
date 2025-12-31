@@ -726,9 +726,9 @@ _PORTAL_REGISTRY = _PortalRegistry()
 class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
-    These objects either always work with a current portal,
-    or they have a preferred (linked) portal which they activate every
-    time their methods are called.
+    Objects work with either the current portal or a linked portal
+    specified at initialization. Registration with the portal is lazy - it
+    happens on first access to the `portal` property, not during `__init__()`.
     """
 
     _linked_portal_at_init: BasicPortal|None
@@ -739,7 +739,8 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
 
         Args:
             portal: The portal to link this object to, or None to use
-                current active portals for operations.
+                current active portals for operations. Registration happens
+                lazily on first `portal` property access.
         """
         ensure_single_thread()
         self._init_finished = False
@@ -752,14 +753,8 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     def __post_init__(self):
         """Execute post-initialization tasks for the portal-aware object.
 
-        This method is automatically called after all __init__() methods complete.
-        It registers the object with its linked portal if one was provided.
+        Registration is deferred to first `portal` property access (lazy).
         """
-        #TODO: Do we need to visit a port here?
-        # if self._linked_portal_at_init is not None:
-        #     _PORTAL_REGISTRY.register_linked_object(
-        #         self._linked_portal_at_init, self)
-        #     self._first_visit_to_portal(self._linked_portal_at_init)
         pass
 
 
@@ -777,7 +772,8 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     def portal(self) -> BasicPortal:
         """The portal used by this object's methods.
 
-        Returns the linked portal if available, otherwise the current active portal.
+        Triggers lazy registration on first access. Returns the linked portal
+        if available, otherwise the current active portal.
         """
         portal_to_use = self._linked_portal
         if portal_to_use is None:
@@ -787,7 +783,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
 
 
     def _visit_portal(self, portal: BasicPortal) -> None:
-        """Register the object with the portal on first visit.
+        """Register the object with the portal on the first visit.
 
         Args:
             portal: The portal to visit.
