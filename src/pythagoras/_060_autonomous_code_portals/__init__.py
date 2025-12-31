@@ -1,42 +1,33 @@
-"""Classes and utilities to work with autonomous functions.
+"""Autonomous code execution infrastructure for Pythagoras.
 
-In essence, an 'autonomous' function contains self-sufficient code
-that does not depend on external imports or definitions. All required
-imports should be done inside the function body.
-Only ordinary functions can be autonomous.
+This subpackage extends SafeCodePortal with self-contained execution support
+and autonomous primitives. Autonomous functions are self-contained: they can
+only use built-ins and names imported inside their own body.
 
-Autonomous functions are always allowed to use the built-in objects
-(functions, types, variables), as well as global objects,
-explicitly imported inside the function body. An autonomous function
-is allowed to use other autonomous functions if they are passed as
-input arguments to the function.
+Core Concepts
+-------------
+**AutonomousCodePortal**: Extends SafeCodePortal with self-contained execution
+support and autonomous primitives.
 
-Autonomous functions are not allowed to:
+**AutonomousFn**: Function wrapper created by the @autonomous decorator.
+Extends SafeFn with autonomy enforcement. Only regular (non-async) functions
+are supported; methods, closures, and lambdas cannot be autonomous.
 
-    * use global objects, imported or defined outside the function body
-      (except built-in objects);
-    * use yield (yield from) statements;
-    * use nonlocal variables, referencing the outside objects.
+**AutonomousFnCallSignature**: Unique identifier combining an AutonomousFn
+and its arguments, used to organize and retrieve execution artifacts.
 
-Autonomous functions can have nested functions and classes.
+Exports
+-------
+Portal and function classes:
+- AutonomousCodePortal: Portal with autonomous execution support
+- AutonomousFn: Wrapper for self-contained functions
+- AutonomousFnCallSignature: Identifier for a specific AutonomousFn call
 
-Only ordinary functions can be autonomous. Asynchronous functions, closures,
-class methods, and lambda functions cannot be autonomous.
-
-Autonomous functions support partial application of arguments:
-the process of pre-filling some arguments of a function,
-producing a new autonomous function that takes the remaining arguments.
-
-This module defines a decorator which is used to
-inform Pythagoras that a function is intended to be autonomous
-and to enforce autonomicity requirements.
-
-Applying a decorator to a function ensures both static and runtime autonomicity
-checks are performed for the function. Static checks happen at the time
-of decoration, while runtime checks happen at the time of function execution.
+Decorator:
+- autonomous: Convert functions to AutonomousFn instances
 """
 
-
-from .autonomous_portal_core_classes import *
-from .autonomous_decorators import *
+from .autonomous_portal_core_classes import (
+    AutonomousCodePortal, AutonomousFn, AutonomousFnCallSignature)
+from .autonomous_decorators import autonomous
 
