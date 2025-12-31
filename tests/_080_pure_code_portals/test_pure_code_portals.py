@@ -34,7 +34,14 @@ def test_pure_portals_smoke_test(tmpdir):
         factorial_p = pure(portal=portal)(factorial)
         do_nothing_p = pure(portal=portal)(do_nothing)
 
+        # Lazy registration - not registered until portal accessed
+        assert portal.get_number_of_linked_functions() == 0
+        # Trigger registration via portal access
+        _ = fibonacci_p.portal
+        _ = factorial_p.portal
+        _ = do_nothing_p.portal
         assert portal.get_number_of_linked_functions() == 3
+
         assert fibonacci_p(n=4) == 3
         assert factorial_p(n=4) == 24
         assert do_nothing_p(x=4) == 4

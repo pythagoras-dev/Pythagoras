@@ -21,11 +21,21 @@ def test_ordinary_portal(tmpdir):
                                              , _REGISTERED_FUNCTIONS_TXT) == 0
 
         f_new = ordinary(portal = portal)(f)
+        # Lazy registration - not registered yet
+        description = portal.describe()
+        assert _get_description_value_by_key(description
+                                             , _REGISTERED_FUNCTIONS_TXT) == 0
+        _ = f_new.portal  # Trigger registration
         description = portal.describe()
         assert _get_description_value_by_key(description
                                              , _REGISTERED_FUNCTIONS_TXT) == 1
 
         g_new = ordinary(portal=portal)(g)
+        # Lazy registration - not registered yet
+        description = portal.describe()
+        assert _get_description_value_by_key(description
+                                             , _REGISTERED_FUNCTIONS_TXT) == 1
+        _ = g_new.portal  # Trigger registration
         description = portal.describe()
         assert _get_description_value_by_key(description
                                              , _REGISTERED_FUNCTIONS_TXT) == 2

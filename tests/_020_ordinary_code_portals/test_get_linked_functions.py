@@ -31,23 +31,29 @@ def test_portal_tracks_linked_functions(tmpdir):
         assert portal.get_number_of_linked_functions() == 0
         assert len(portal.get_linked_functions()) == 0
 
-        # Create first function linked to portal
+        # Create first function - lazy registration, not registered yet
         f1 = OrdinaryFn(sample_func_1, portal=portal)
+        assert portal.get_number_of_linked_functions() == 0
+        _ = f1.portal  # Trigger registration
         assert portal.get_number_of_linked_functions() == 1
         linked = portal.get_linked_functions()
         assert len(linked) == 1
         assert f1 in linked
 
-        # Create second function linked to portal
+        # Create second function - lazy registration
         f2 = OrdinaryFn(sample_func_2, portal=portal)
+        assert portal.get_number_of_linked_functions() == 1  # Still only f1
+        _ = f2.portal  # Trigger registration
         assert portal.get_number_of_linked_functions() == 2
         linked = portal.get_linked_functions()
         assert len(linked) == 2
         assert f1 in linked
         assert f2 in linked
 
-        # Create third function linked to portal
+        # Create third function - lazy registration
         f3 = OrdinaryFn(sample_func_3, portal=portal)
+        assert portal.get_number_of_linked_functions() == 2  # Still only f1, f2
+        _ = f3.portal  # Trigger registration
         assert portal.get_number_of_linked_functions() == 3
         linked = portal.get_linked_functions()
         assert len(linked) == 3
@@ -63,6 +69,14 @@ def test_portal_get_linked_functions_ids(tmpdir):
 
         f1 = OrdinaryFn(sample_func_1, portal=portal)
         f2 = OrdinaryFn(sample_func_2, portal=portal)
+
+        # Lazy registration - not registered yet
+        ids = portal._get_linked_functions_ids()
+        assert len(ids) == 0
+
+        # Trigger registration
+        _ = f1.portal
+        _ = f2.portal
 
         ids = portal._get_linked_functions_ids()
         assert len(ids) == 2
@@ -96,6 +110,12 @@ def test_decorator_with_portal_creates_link(tmpdir):
         def decorated_func(n):
             return n ** 2
 
+        # Lazy registration - not registered yet
+        assert portal.get_number_of_linked_functions() == 0
+
+        # Trigger registration
+        _ = decorated_func.portal
+
         # Should be tracked by portal
         assert portal.get_number_of_linked_functions() == 1
         linked = portal.get_linked_functions()
@@ -118,12 +138,18 @@ def test_portal_describe_shows_function_count(tmpdir):
 
         assert _get_description_value_by_key(desc, _REGISTERED_FUNCTIONS_TXT) == 0
 
-        # Add functions
+        # Add functions - lazy registration
         f1 = OrdinaryFn(sample_func_1, portal=portal)
+        desc = portal.describe()
+        assert _get_description_value_by_key(desc, _REGISTERED_FUNCTIONS_TXT) == 0
+        _ = f1.portal  # Trigger registration
         desc = portal.describe()
         assert _get_description_value_by_key(desc, _REGISTERED_FUNCTIONS_TXT) == 1
 
         f2 = OrdinaryFn(sample_func_2, portal=portal)
+        desc = portal.describe()
+        assert _get_description_value_by_key(desc, _REGISTERED_FUNCTIONS_TXT) == 1
+        _ = f2.portal  # Trigger registration
         desc = portal.describe()
         assert _get_description_value_by_key(desc, _REGISTERED_FUNCTIONS_TXT) == 2
 
@@ -137,6 +163,14 @@ def test_multiple_portals_separate_tracking(tmpdir):
         # Link functions to different portals
         f1 = OrdinaryFn(sample_func_1, portal=portal1)
         f2 = OrdinaryFn(sample_func_2, portal=portal2)
+
+        # Lazy registration - not registered yet
+        assert portal1.get_number_of_linked_functions() == 0
+        assert portal2.get_number_of_linked_functions() == 0
+
+        # Trigger registration
+        _ = f1.portal
+        _ = f2.portal
 
         # Each portal should track only its own function
         assert portal1.get_number_of_linked_functions() == 1
@@ -166,6 +200,10 @@ def test_same_function_different_instances(tmpdir):
         # which would be the same for instances wrapping the same function
         assert f1.fingerprint == f2.fingerprint
 
+        # Trigger registration for both
+        _ = f1.portal
+        _ = f2.portal
+
         # Since they have the same fingerprint, only one gets tracked
         # (the second one replaces the first in the registry)
         assert portal.get_number_of_linked_functions() == 1
@@ -177,6 +215,13 @@ def test_get_linked_functions_with_type_filter(tmpdir):
         portal = t.portal
 
         f1 = OrdinaryFn(sample_func_1, portal=portal)
+
+        # Lazy registration - not registered yet
+        linked = portal.get_linked_functions(target_class=OrdinaryFn)
+        assert len(linked) == 0
+
+        # Trigger registration
+        _ = f1.portal
 
         # Get all OrdinaryFn instances
         linked = portal.get_linked_functions(target_class=OrdinaryFn)
