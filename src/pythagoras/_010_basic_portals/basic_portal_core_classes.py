@@ -900,7 +900,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         return False
 
 
-    def _clear(self):
+    def _clear(self) -> None:
         """Clear the object's registration state.
 
         Unregisters the object from all portals.
