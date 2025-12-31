@@ -1,12 +1,16 @@
-""" Classes and functions that enable swarming algorithm.
+"""Classes and utilities for swarming execution in Pythagoras.
 
-Pythagoras provides infrastructure for remote execution of
-pure functions in distributed environments. Pythagoras employs
-an asynchronous execution model called 'swarming':
-you do not know when your function will be executed,
-what machine will execute it, and how many times it will be executed.
-Pythagoras ensures that the function will be eventually executed
-at least once but does not offer any further guarantees.
+Swarming is an asynchronous execution model where pure-function calls are
+enqueued and executed by available workers across processes or machines.
+The model guarantees eventual execution (at least once) but not timing,
+worker assignment, or single execution.
+
+Main Exports
+------------
+- SwarmingPortal: Portal for distributed swarming execution of pure functions.
+    Extends PureCodePortal with background worker pools and request dispatching.
+- DescendantProcessInfo: Tracks descendant processes spawned by a swarming portal.
+- OutputSuppressor: Context manager to suppress stdout/stderr in worker processes.
 """
 
 from .system_processes_info_getters import *
