@@ -786,8 +786,6 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         new_obj = type(self).__new__(type(self))
         new_obj.__setstate__(state)
         new_obj._linked_portal_at_init = portal
-        new_obj._visited_portals = set()
-        new_obj._init_finished = True
 
         return new_obj
 
