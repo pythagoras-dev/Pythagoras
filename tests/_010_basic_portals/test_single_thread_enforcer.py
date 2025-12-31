@@ -2,7 +2,7 @@ import threading
 import pytest
 import pythagoras._010_basic_portals.single_thread_enforcer as ste
 from pythagoras._010_basic_portals.single_thread_enforcer import (
-    _ensure_single_thread,
+    ensure_single_thread,
     _reset_single_thread_enforcer,
 )
 
@@ -17,24 +17,24 @@ def teardown_function():
 def test_single_thread_success():
     """Test that the first thread to access can access repeatedly."""
     # First access
-    _ensure_single_thread()
+    ensure_single_thread()
     assert ste._portal_native_id == threading.get_native_id()
     
     # Second access from same thread
-    _ensure_single_thread()
+    ensure_single_thread()
     assert ste._portal_native_id == threading.get_native_id()
 
 def test_multi_thread_failure():
     """Test that a second thread raises RuntimeError."""
     # Main thread claims ownership
-    _ensure_single_thread()
+    ensure_single_thread()
     
     exception_caught = False
     
     def intruder_thread():
         nonlocal exception_caught
         try:
-            _ensure_single_thread()
+            ensure_single_thread()
         except RuntimeError as e:
             if "Pythagoras portals are single-threaded by design" in str(e):
                 exception_caught = True
@@ -48,7 +48,7 @@ def test_multi_thread_failure():
 def test_reset_allows_new_owner():
     """Test that resetting allows a new thread to become the owner."""
     # Main thread claims ownership
-    _ensure_single_thread()
+    ensure_single_thread()
     
     # Reset
     _reset_single_thread_enforcer()
@@ -60,7 +60,7 @@ def test_reset_allows_new_owner():
     def new_owner_thread():
         nonlocal exception_caught
         try:
-            _ensure_single_thread()
+            ensure_single_thread()
         except Exception:
             exception_caught = True
 
@@ -79,7 +79,7 @@ def test_reset_allows_new_owner():
     # from the stored ID (which was NewOwner's ID), it should raise RuntimeError.
     
     with pytest.raises(RuntimeError) as excinfo:
-        _ensure_single_thread()
+        ensure_single_thread()
     
     assert "Pythagoras portals are single-threaded by design" in str(excinfo.value)
 
@@ -88,7 +88,7 @@ def test_pid_change_resets_ownership():
     import os
     
     # Main thread claims ownership
-    _ensure_single_thread()
+    ensure_single_thread()
     original_native_id = ste._portal_native_id
     original_pid = ste._owner_pid
     
@@ -102,7 +102,7 @@ def test_pid_change_resets_ownership():
     
     # Now when we call _ensure_single_thread, it should detect PID mismatch
     # and reset ownership, allowing the current thread to claim it
-    _ensure_single_thread()
+    ensure_single_thread()
     
     # Ownership should be reset to current thread and PID
     assert ste._portal_native_id == threading.get_native_id()

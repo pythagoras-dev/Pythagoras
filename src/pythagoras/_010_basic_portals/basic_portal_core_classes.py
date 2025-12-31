@@ -19,7 +19,7 @@ from parameterizable import ParameterizableClass, sort_dict_by_keys
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .guarded_init_metaclass import GuardedInitMeta
-from .single_thread_enforcer import _ensure_single_thread, _reset_single_thread_enforcer
+from .single_thread_enforcer import ensure_single_thread, _reset_single_thread_enforcer
 from .._800_foundational_utilities import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
@@ -69,7 +69,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
             root_dict: Root dictionary for persistent storage, path to storage location,
                 or None for default location.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         self._init_finished = False
         self._entropy_infuser = random.Random()
         ParameterizableClass.__init__(self)
@@ -210,7 +210,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
             exc_val: Exception value if an exception occurred, None otherwise.
             exc_tb: Exception traceback if an exception occurred, None otherwise.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         _PORTAL_REGISTRY.pop_active_portal(self)
 
 
@@ -254,7 +254,7 @@ class _PortalRegistry(NotPicklableClass):
     """
 
     def __init__(self) -> None:
-        _ensure_single_thread()
+        ensure_single_thread()
         self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
         self.active_portals_stack: list[BasicPortal] = []
         self.active_portals_stack_counters: list[int] = []
@@ -275,7 +275,7 @@ class _PortalRegistry(NotPicklableClass):
             TypeError: If instantiator is not callable.
             RuntimeError: If a default portal instantiator is already registered.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         if not callable(instantiator):
             raise TypeError(
                 f"Default portal instantiator must be callable, got {type(instantiator)}")
@@ -295,7 +295,7 @@ class _PortalRegistry(NotPicklableClass):
         Args:
             portal: The portal instance to register.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         self.known_portals[portal.fingerprint] = portal
         self.most_recently_created_portal = portal
 
@@ -410,7 +410,7 @@ class _PortalRegistry(NotPicklableClass):
         Raises:
             RuntimeError: If nesting exceeds MAX_NESTED_PORTALS or portal is unregistered.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
             raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
         if not portal.fingerprint in self.known_portals:
@@ -434,7 +434,7 @@ class _PortalRegistry(NotPicklableClass):
         Raises:
             RuntimeError: If the portal is unregistered or not at the top of the stack.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         if not portal.fingerprint in self.known_portals:
             raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
 
@@ -741,7 +741,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
             portal: The portal to link this object to, or None to use
                 current active portals for operations.
         """
-        _ensure_single_thread()
+        ensure_single_thread()
         self._init_finished = False
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
@@ -962,7 +962,7 @@ def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = No
         portal: The portal to register with.
         seen: Set of object IDs already visited to handle cycles.
     """
-    _ensure_single_thread()
+    ensure_single_thread()
 
     if seen is None:
         seen = set()

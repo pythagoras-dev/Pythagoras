@@ -8,6 +8,7 @@ constraints (keyword-only arguments, no defaults, etc.).
 from typing import Callable, Any
 
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
+from .._010_basic_portals import ensure_single_thread
 
 
 class ordinary:
@@ -36,6 +37,7 @@ class ordinary:
         Args:
             portal: Optional portal to associate with wrapped functions.
         """
+        ensure_single_thread()
         if not (portal is None or isinstance(portal, OrdinaryCodePortal)):
             raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {type(portal).__name__}")
         self._portal = portal
@@ -49,6 +51,7 @@ class ordinary:
         Returns:
             OrdinaryFn wrapper for the provided function.
         """
+        ensure_single_thread()
         wrapper = OrdinaryFn(fn, portal=self._portal)
         return wrapper
 

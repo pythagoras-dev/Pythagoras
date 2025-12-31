@@ -14,6 +14,7 @@ not dependencies or environment.
 
 from typing import Callable, Any
 
+from .._010_basic_portals import ensure_single_thread
 from .._070_protected_code_portals import protected, ValidatorFn
 from .._080_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFn)
@@ -63,6 +64,7 @@ class pure(protected):
         Returns:
             Wrapped function supporting cached execution and address-based retrieval.
         """
+        ensure_single_thread()
         wrapper = PureFn(fn
                          , portal=self._portal
                          , pre_validators=self._pre_validators

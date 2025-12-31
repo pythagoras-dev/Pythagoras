@@ -64,6 +64,7 @@ from .. import CacheablePropertiesMixin
 from .._010_basic_portals import get_current_portal
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic, _describe_runtime_characteristic)
+from .._010_basic_portals.single_thread_enforcer import ensure_single_thread
 
 from .._030_data_portals import ValueAddr
 from .._040_logging_code_portals.exception_processing_tracking import (
@@ -545,6 +546,7 @@ class LoggingFnExecutionRecord(NotPicklableClass):
             call_signature: The call signature the record is associated with.
             session_id: The unique ID of the execution session.
         """
+        ensure_single_thread()
         self.call_signature = call_signature
         self.session_id = session_id
 
@@ -692,6 +694,7 @@ class LoggingFnExecutionFrame(NotPicklableClass):
             fn_call_signature: The call signature identifying the function and
                 its (packed) arguments.
         """
+        ensure_single_thread()
         with fn_call_signature.portal:
             self.session_id = "run_"+get_random_signature()
             self.fn_call_signature = fn_call_signature

@@ -23,7 +23,7 @@ _portal_thread_name: str | None = None
 _owner_pid: int | None = None
 
 
-def _ensure_single_thread() -> None:
+def ensure_single_thread() -> None:
     """Ensure current thread is the portal owner thread.
 
     Validates that the calling thread is the same thread that first initialized

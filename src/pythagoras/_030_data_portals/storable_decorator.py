@@ -13,6 +13,7 @@ normalized source code, enabling:
 """
 from typing import Callable
 
+from .._010_basic_portals import ensure_single_thread
 from .._020_ordinary_code_portals import ordinary
 from .data_portal_core_classes import DataPortal, StorableFn
 
@@ -75,6 +76,7 @@ class storable(ordinary):
         Raises:
             FunctionError: If fn violates ordinarity constraints.
         """
+        ensure_single_thread()
         wrapper = StorableFn(fn
             , portal=self._portal)
         return wrapper

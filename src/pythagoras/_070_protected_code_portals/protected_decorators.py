@@ -10,10 +10,6 @@ allowing you to attach validators at definition
 time while keeping function logic clean and focused.
 """
 
-from typing import Callable, Any
-
-# from .validator_fn_classes import ValidatorFn
-from .._060_autonomous_code_portals import autonomous
 from .protected_portal_core_classes import *
 from persidict import Joker, KEEP_CURRENT
 
@@ -90,6 +86,7 @@ class protected(autonomous):
             ProtectedFn: A wrapper that performs pre/post validation and then
             executes the function.
         """
+        ensure_single_thread()
         wrapper = ProtectedFn(fn
                               , portal=self._portal
                               , pre_validators=self._pre_validators
