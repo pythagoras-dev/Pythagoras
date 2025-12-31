@@ -13,6 +13,10 @@ from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
 from typing import TypeVar, Any, NewType, Callable, Mapping, Iterable
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 import pandas as pd
 from parameterizable import NotPicklableClass
 from parameterizable import ParameterizableClass, sort_dict_by_keys
@@ -748,6 +752,44 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal_at_init = portal
         self._visited_portals = set()
+
+
+    def link_to_portal(self, portal: BasicPortal) -> Self:
+        """Create a copy of this object linked to a (new) portal.
+
+        Args:
+            portal: The portal to link the new object to.
+
+        Returns:
+            Self if the portal is already linked to this object, otherwise
+            a new instance of this object linked to the specified portal.
+
+        Raises:
+            TypeError: If portal is not a BasicPortal instance.
+            RuntimeError: If object is not fully initialized.
+        """
+
+        if not self._init_finished:
+            raise RuntimeError("Cannot link an uninitialized object to a portal")
+
+        if not isinstance(portal, BasicPortal):
+            raise TypeError(f"portal must be a BasicPortal, got {type(portal).__name__}")
+
+        # Return self if already linked to the same portal
+        if self._linked_portal_at_init is portal:
+            return self
+
+        # Get current state (excludes portal information per contract)
+        state = self.__getstate__()
+
+        # Create new instance with the new portal
+        new_obj = type(self).__new__(type(self))
+        new_obj.__setstate__(state)
+        new_obj._linked_portal_at_init = portal
+        new_obj._visited_portals = set()
+        new_obj._init_finished = True
+
+        return new_obj
 
 
     @property
