@@ -1,4 +1,5 @@
 from pythagoras._010_basic_portals.portal_tester import _PortalTester
+from pythagoras._030_data_portals import ValueAddr
 from pythagoras._060_autonomous_code_portals import *
 
 def f(a, b):
