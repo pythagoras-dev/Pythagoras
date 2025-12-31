@@ -1,17 +1,25 @@
-"""Classes and functions that allow protected execution of code.
+"""Classes and functions for protected execution of code.
 
-Protected functions are functions that can be executed only if
-certain conditions are met before the execution; also, certain conditions
-must be met after the execution in order for the system to accept
-and use execution results. These conditions are called validators
-(pre-validators and post-validators). A protected function can have many
-pre-validators and post-validators.
+Protected functions execute only when pre-validators pass before execution
+and post-validators pass after execution. Validators can be passive
+(e.g., check available RAM) or active (e.g., install missing packages).
 
-Validators can be passive (e.g., check if the node has enough RAM)
-or active (e.g., check if some external library is installed, and,
-if not, try to install it). Validators can be rather complex
-(e.g., check if the result, returned by the function, is a valid image).
-Under the hood, validators are autonomous functions.
+Main Exports
+------------
+- ProtectedCodePortal: Portal with pre/post validation hooks.
+- ProtectedFn: Function wrapper enforcing validator checks.
+- protected: Decorator to create protected functions.
+- ValidatorFn: Base class for all validators.
+- PreValidatorFn: Base class for pre-execution validators.
+- PostValidatorFn: Base class for post-execution validators.
+- VALIDATION_SUCCESSFUL: Sentinel indicating successful validation.
+
+Pre-validator Factories
+-----------------------
+- unused_cpu: Require minimum free CPU cores.
+- unused_ram: Require minimum free RAM.
+- installed_packages: Ensure packages are installed.
+- required_environment_variables: Require environment variables.
 """
 
 from .validation_succesful_const import *
