@@ -34,8 +34,8 @@ def test_link_to_portal_creates_new_instance(tmpdir):
         assert obj1.value == obj2.value
 
         # Should have different portals
-        assert obj1._linked_portal_at_init is portal1
-        assert obj2._linked_portal_at_init is portal2
+        assert obj1._linked_portal is portal1
+        assert obj2._linked_portal is portal2
 
 
 def test_link_to_portal_returns_self_when_same_portal(tmpdir):
@@ -113,7 +113,7 @@ def test_link_to_portal_from_none_to_explicit(tmpdir):
         portal = BasicPortal(tmpdir)
 
         obj1 = SimplePortalAware(42)
-        assert obj1._linked_portal_at_init is None
+        assert obj1._linked_portal is None
 
         obj2 = obj1.link_to_portal(portal)
 
@@ -121,7 +121,7 @@ def test_link_to_portal_from_none_to_explicit(tmpdir):
         assert obj1 is not obj2
 
         # New instance should be linked to portal
-        assert obj2._linked_portal_at_init is portal
+        assert obj2._linked_portal is portal
 
 
 def test_link_to_portal_from_explicit_to_none_not_possible(tmpdir):
@@ -165,9 +165,9 @@ def test_link_to_portal_multiple_times(tmpdir):
         assert obj1 is not obj3
 
         # Each should be linked to its portal
-        assert obj1._linked_portal_at_init is portal1
-        assert obj2._linked_portal_at_init is portal2
-        assert obj3._linked_portal_at_init is portal3
+        assert obj1._linked_portal is portal1
+        assert obj2._linked_portal is portal2
+        assert obj3._linked_portal is portal3
 
 
 def test_link_to_portal_registration_state(tmpdir):

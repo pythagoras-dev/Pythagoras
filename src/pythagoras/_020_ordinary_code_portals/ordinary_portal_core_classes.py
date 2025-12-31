@@ -187,8 +187,8 @@ class OrdinaryFn(PortalAwareClass):
         if isinstance(fn, OrdinaryFn):
             self.__setstate__(deepcopy(fn.__getstate__()))
             self._init_finished = False
-            if self._linked_portal_at_init is None:
-                self._linked_portal_at_init = fn._linked_portal_at_init
+            if self._linked_portal is None:
+                self._linked_portal = fn._linked_portal
             #TODO: check this logic
         else:
             if not (callable(fn) or isinstance(fn, str)):

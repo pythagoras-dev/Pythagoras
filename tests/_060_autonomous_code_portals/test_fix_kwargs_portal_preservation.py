@@ -17,14 +17,14 @@ def test_fix_kwargs_preserves_explicit_portal(tmpdir):
 
         # Create function with explicit portal
         f1 = AutonomousFn(simple_add, portal=portal1)
-        assert f1._linked_portal_at_init is portal1
+        assert f1._linked_portal is portal1
 
         # Apply fix_kwargs
         f2 = f1.fix_kwargs(a=10)
 
         # Verify portal is preserved
-        assert f2._linked_portal_at_init is portal1
-        assert f2._linked_portal_at_init is f1._linked_portal_at_init
+        assert f2._linked_portal is portal1
+        assert f2._linked_portal is f1._linked_portal
 
 
 def test_fix_kwargs_preserves_none_portal(tmpdir):
@@ -32,14 +32,14 @@ def test_fix_kwargs_preserves_none_portal(tmpdir):
     with _PortalTester(AutonomousCodePortal, root_dict=tmpdir):
         # Create function without explicit portal (will use ambient)
         f1 = AutonomousFn(simple_add, portal=None)
-        assert f1._linked_portal_at_init is None
+        assert f1._linked_portal is None
 
         # Apply fix_kwargs
         f2 = f1.fix_kwargs(a=10)
 
         # Verify None portal is preserved
-        assert f2._linked_portal_at_init is None
-        assert f2._linked_portal_at_init is f1._linked_portal_at_init
+        assert f2._linked_portal is None
+        assert f2._linked_portal is f1._linked_portal
 
 
 def test_fix_kwargs_multiple_applications_preserve_portal(tmpdir):
@@ -55,9 +55,9 @@ def test_fix_kwargs_multiple_applications_preserve_portal(tmpdir):
         f3 = f2.fix_kwargs(b=20)
 
         # Verify portal is preserved through chain
-        assert f1._linked_portal_at_init is portal1
-        assert f2._linked_portal_at_init is portal1
-        assert f3._linked_portal_at_init is portal1
+        assert f1._linked_portal is portal1
+        assert f2._linked_portal is portal1
+        assert f3._linked_portal is portal1
 
 
 def test_fix_kwargs_child_uses_parent_portal(tmpdir):
@@ -72,7 +72,7 @@ def test_fix_kwargs_child_uses_parent_portal(tmpdir):
 
     # Create function with portal1
     f1 = AutonomousFn(simple_add, portal=portal1)
-    assert f1._linked_portal_at_init is portal1
+    assert f1._linked_portal is portal1
 
     # Apply fix_kwargs while portal2 is active in ambient context
     with portal2:
@@ -80,8 +80,8 @@ def test_fix_kwargs_child_uses_parent_portal(tmpdir):
         f2 = f1.fix_kwargs(a=10)
 
         # Verify f2 still uses portal1, not portal2
-        assert f2._linked_portal_at_init is portal1
-        assert f2._linked_portal_at_init is not portal2
+        assert f2._linked_portal is portal1
+        assert f2._linked_portal is not portal2
 
 
 def test_fix_kwargs_execution_respects_preserved_portal(tmpdir):

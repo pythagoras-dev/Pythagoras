@@ -310,7 +310,7 @@ class AutonomousFn(SafeFn):
 
         new_fn = type(self)(fn=self,
             fixed_kwargs=new_fixed_kwargs,
-            portal=self._linked_portal_at_init,
+            portal=self._linked_portal,
             excessive_logging=self.excessive_logging)
 
         return new_fn
