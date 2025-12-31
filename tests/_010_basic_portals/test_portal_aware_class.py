@@ -220,7 +220,11 @@ def test_portal_aware_double_first_visit_raises_error(tmpdir):
 
         obj = SimplePortalAware(100, portal=portal)
 
-        # First visit already happened during __post_init__
+        # Verify lazy registration: portal not visited until first use
+        assert portal.fingerprint not in obj._visited_portals
+
+        # Trigger first visit by accessing .portal
+        _ = obj.portal
         assert portal.fingerprint in obj._visited_portals
 
         # Try to visit again, should raise
@@ -235,7 +239,14 @@ def test_portal_aware_is_registered_consistency(tmpdir):
 
         obj = SimplePortalAware(50, portal=portal)
 
-        # Should be registered after creation with explicit portal
+        # Verify lazy registration: not registered immediately after creation
+        assert len(obj._visited_portals) == 0
+        assert not obj.is_registered
+
+        # Trigger registration by accessing .portal
+        _ = obj.portal
+
+        # Should be registered after first portal access
         assert len(obj._visited_portals) >= 1
         assert obj.is_registered
 

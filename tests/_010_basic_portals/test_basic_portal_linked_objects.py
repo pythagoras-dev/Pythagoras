@@ -37,11 +37,22 @@ def test_get_linked_objects_no_filter(tmpdir):
     """Test getting all linked objects without type filtering."""
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
         portal = t.portal
-        
+
         obj_a1 = TypeA(1, portal)
         obj_a2 = TypeA(2, portal)
         obj_b1 = TypeB(3, portal)
-        
+
+        # Verify lazy registration: objects not registered until first use
+        assert portal.get_number_of_linked_objects() == 0
+
+        # Trigger registration by accessing .portal
+        _ = obj_a1.portal
+        _ = obj_a2.portal
+        _ = obj_b1.portal
+
+        # Now objects should be registered
+        assert portal.get_number_of_linked_objects() == 3
+
         linked = portal.get_linked_objects()
         assert len(linked) == 3
         assert obj_a1 in linked
@@ -53,17 +64,26 @@ def test_get_linked_objects_with_type_filter(tmpdir):
     """Test getting linked objects filtered by type."""
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
         portal = t.portal
-        
+
         obj_a1 = TypeA(1, portal)
         obj_a2 = TypeA(2, portal)
         obj_b1 = TypeB(3, portal)
-        
+
+        # Verify lazy registration: objects not registered until first use
+        assert portal.get_number_of_linked_objects() == 0
+
+        # Trigger registration by accessing .portal
+        _ = obj_a1.portal
+        _ = obj_a2.portal
+        _ = obj_b1.portal
+
+        # Now objects should be registered
         linked_a = portal.get_linked_objects(target_class=TypeA)
         assert len(linked_a) == 2
         assert obj_a1 in linked_a
         assert obj_a2 in linked_a
         assert obj_b1 not in linked_a
-        
+
         linked_b = portal.get_linked_objects(target_class=TypeB)
         assert len(linked_b) == 1
         assert obj_b1 in linked_b
@@ -73,28 +93,47 @@ def test_get_number_of_linked_objects_no_filter(tmpdir):
     """Test counting all linked objects without type filtering."""
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
         portal = t.portal
-        
+
         assert portal.get_number_of_linked_objects() == 0
-        
-        TypeA(1, portal)
-        assert portal.get_number_of_linked_objects() == 1
-        
-        TypeA(2, portal)
-        assert portal.get_number_of_linked_objects() == 2
-        
-        TypeB(3, portal)
-        assert portal.get_number_of_linked_objects() == 3
+
+        # Verify lazy registration for first object
+        obj1 = TypeA(1, portal)
+        assert portal.get_number_of_linked_objects() == 0  # Not registered yet
+        _ = obj1.portal  # Trigger registration
+        assert portal.get_number_of_linked_objects() == 1  # Now registered
+
+        # Verify lazy registration for second object
+        obj2 = TypeA(2, portal)
+        assert portal.get_number_of_linked_objects() == 1  # Still only first registered
+        _ = obj2.portal  # Trigger registration
+        assert portal.get_number_of_linked_objects() == 2  # Now both registered
+
+        # Verify lazy registration for third object
+        obj3 = TypeB(3, portal)
+        assert portal.get_number_of_linked_objects() == 2  # Still only first two registered
+        _ = obj3.portal  # Trigger registration
+        assert portal.get_number_of_linked_objects() == 3  # All three registered
 
 
 def test_get_number_of_linked_objects_with_type_filter(tmpdir):
     """Test counting linked objects filtered by type."""
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
         portal = t.portal
-        
-        TypeA(1, portal)
-        TypeA(2, portal)
-        TypeB(3, portal)
-        
+
+        obj_a1 = TypeA(1, portal)
+        obj_a2 = TypeA(2, portal)
+        obj_b1 = TypeB(3, portal)
+
+        # Verify lazy registration: objects not registered until first use
+        assert portal.get_number_of_linked_objects(target_class=TypeA) == 0
+        assert portal.get_number_of_linked_objects(target_class=TypeB) == 0
+
+        # Trigger registration by accessing .portal
+        _ = obj_a1.portal
+        _ = obj_a2.portal
+        _ = obj_b1.portal
+
+        # Now objects should be registered
         assert portal.get_number_of_linked_objects(target_class=TypeA) == 2
         assert portal.get_number_of_linked_objects(target_class=TypeB) == 1
 

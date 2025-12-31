@@ -755,10 +755,12 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         This method is automatically called after all __init__() methods complete.
         It registers the object with its linked portal if one was provided.
         """
-        if self._linked_portal_at_init is not None:
-            _PORTAL_REGISTRY.register_linked_object(
-                self._linked_portal_at_init, self)
-            self._first_visit_to_portal(self._linked_portal_at_init)
+        #TODO: Do we need to visit a port here?
+        # if self._linked_portal_at_init is not None:
+        #     _PORTAL_REGISTRY.register_linked_object(
+        #         self._linked_portal_at_init, self)
+        #     self._first_visit_to_portal(self._linked_portal_at_init)
+        pass
 
 
 
