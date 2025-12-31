@@ -1,27 +1,29 @@
-"""Content-addressable storage and immutable value management.
+"""Persistent data storage with content-addressable addressing.
 
-This subpackage provides the foundation for persistent, content-addressed data
-storage in Pythagoras. It enables distributed applications to share immutable
-values across processes and machines through DataPortals.
+This subpackage extends OrdinaryCodePortal with persistent storage capabilities
+using persidict. It enables distributed applications to share immutable values
+and functions across processes and machines through DataPortals.
 
 Core Concepts
 -------------
-**DataPortal**: A persistent storage container that manages immutable values
-using content-addressable storage. Multiple processes or application sessions
-can access the same DataPortal to share data. Typically backed by a shared
-filesystem (e.g., Dropbox or Amazon EFS) or cloud storage (e.g., Amazon S3).
+**DataPortal**: Extends OrdinaryCodePortal with persistent storage for inputs,
+outputs, and metadata using persidict. Multiple processes can access the same
+DataPortal to share data, typically backed by a shared filesystem (e.g., Dropbox
+or Amazon EFS) or cloud storage (e.g., Amazon S3).
 
-**ValueAddr**: A globally unique identifier for an immutable value, derived
-from the value's content. Two objects with identical type and content always
-produce identical ValueAddr instances, enabling reliable deduplication and
-content-based retrieval.
+**HashAddr**: Base address type representing a hash-keyed location in persistent
+storage. Provides the foundation for content-addressable retrieval.
 
-**StorableFn**: Functions that can be persistently stored in DataPortals using
-content-addressable storage, enabling function sharing across distributed processes.
+**ValueAddr**: Address type for values stored in persistent storage. Derived
+from the value's content, ensuring identical objects produce identical addresses.
+
+**StorableFn**: Wrapper class created by the @storable decorator. Makes ordinary
+functions content-addressable and storable, enabling persistent function sharing
+across distributed processes.
 
 Address Structure
 -----------------
-A ValueAddr conceptually consists of:
+A HashAddr consists of:
 - descriptor: Human-readable type/shape information
 - hash_signature: SHA-256 hash encoded in base-32
 
@@ -35,17 +37,17 @@ hierarchies: `<base>/<shard>/<subshard>/<descriptor>/<hash_tail>`.
 Exports
 -------
 Core classes:
-- DataPortal: Portal for storing and retrieving immutable values
-- HashAddr: Base class for hash-based addresses (abstract)
+- DataPortal: Portal with persistent storage via persidict
+- HashAddr: Base class for hash-based addresses
 - ValueAddr: Content-derived address for immutable values
-- StorableFn: Ordinary function with content-addressable storage
+- StorableFn: Wrapper for functions with content-addressable storage
 
 Decorators:
 - storable: Convert functions to StorableFn instances
 
 Utilities:
-- ready: Check if addresses in a nested structure are ready for retrieval
-- get: Recursively resolve all addresses in a nested structure
+- ready: Check if all addresses in a structure are available
+- get: Resolve all addresses in a structure to their values
 """
 
 
