@@ -22,21 +22,21 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **BasicPortal:** The foundational portal class that manages lifecycle and registration of portal-aware objects.
 
-- **OrdinaryCodePortal:** Extends BasicPortal to work with decorated ordinary functions (no persistence/logging yet).
+- **OrdinaryCodePortal:** Extends `BasicPortal` to work with decorated ordinary functions (no persistence/logging yet).
 
-- **DataPortal:** Extends OrdinaryCodePortal with persistent storage for inputs, outputs, and metadata using persidict.
+- **DataPortal:** Extends `OrdinaryCodePortal` with persistent storage for inputs, outputs, and metadata using `persidict`.
 
-- **LoggingCodePortal:** Extends DataPortal with application-level and function-level logging (events, crashes, frames), capturing stdout/stderr.
+- **LoggingCodePortal:** Extends `DataPortal` with application-level and function-level logging (events, crashes, frames), capturing stdout/stderr.
 
-- **SafeCodePortal:** Extends LoggingCodePortal with safer defaults for argument handling and execution bookkeeping.
+- **SafeCodePortal:** Extends `LoggingCodePortal` with safer defaults for argument handling and execution bookkeeping.
 
-- **AutonomousCodePortal:** Extends SafeCodePortal to enable self-scheduling and autonomous execution primitives.
+- **AutonomousCodePortal:** Extends `SafeCodePortal` to enable self-scheduling and autonomous execution primitives.
 
-- **ProtectedCodePortal:** Extends AutonomousCodePortal with validation and guards around function execution (pre/post validation hooks).
+- **ProtectedCodePortal:** Extends `AutonomousCodePortal` with validation and guards around function execution (pre/post validation hooks).
 
-- **PureCodePortal:** Extends ProtectedCodePortal to support pure functions with deterministic caching keyed by code and arguments.
+- **PureCodePortal:** Extends `ProtectedCodePortal` to support pure functions with deterministic caching keyed by code and arguments.
 
-- **SwarmingPortal:** Extends PureCodePortal to provide asynchronous, distributed execution ("swarming") across processes or machines.
+- **SwarmingPortal:** Extends `PureCodePortal` to provide asynchronous, distributed execution ("swarming") across processes or machines.
 
 ### 2.2. Portal-related Concepts
 
@@ -46,43 +46,45 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Current Portal:** The portal at the top of the active portals stack. It is the target for operations when no specific portal is provided.
 
-- **Default Portal:** A specific portal configuration (typically a SwarmingPortal at ~/.pythagoras/.default_portal) that is automatically instantiated and used if no other portal is known or specified at the moment when a portal is needed by the code under execution.
+- **Default Portal:** A specific portal configuration (typically a `SwarmingPortal` at `~/.pythagoras/.default_portal`) that is automatically instantiated and used if no other portal is known or specified when a portal is needed.
 
 ## 3. Functions & Execution
 
 - **PortalAwareObject:** An object that requires access to a Portal to function. It may be permanently linked to a specific portal instance or dynamically use the currently active portal. Examples include all function wrappers (e.g., `PureFn`, `OrdinaryFn`).
 
 - **Function Decorators:** A family of decorators that create portal-bound callable wrappers with progressively more features:
-  - ordinary: Basic wrapper around a Python function.
-  - storable: Adds persistence of inputs/outputs (DataPortal).
-  - logging: Adds execution logging and output capture (LoggingCodePortal).
-  - safe: Safer execution defaults (SafeCodePortal).
-  - autonomous: Enables autonomous scheduling (AutonomousCodePortal).
-  - protected: Adds validation hooks and guards (ProtectedCodePortal).
-  - pure: Declares a function as pure (deterministic, side-effect free) with persistent result caching (PureCodePortal).
+  - `ordinary`: Basic wrapper around a Python function.
+  - `storable`: Adds persistence of inputs/outputs (`DataPortal`).
+  - `logging`: Adds execution logging and output capture (`LoggingCodePortal`).
+  - `safe`: Safer execution defaults (`SafeCodePortal`).
+  - `autonomous`: Enables autonomous scheduling (`AutonomousCodePortal`).
+  - `protected`: Adds validation hooks and guards (`ProtectedCodePortal`).
+  - `pure`: Declares a function as pure (deterministic, side-effect free) with persistent result caching (`PureCodePortal`).
 
-- **OrdinaryFn / StorableFn / LoggingFn / SafeFn / AutonomousFn / ProtectedFn / PureFn:** The function wrapper classes created by the corresponding decorators. PureFn is the most feature-rich and is the typical user-facing class for deterministic computation.
+  *Note: There is no `swarming` decorator. Swarming capabilities are provided by `SwarmingPortal` and the `.swarm()` method on pure functions.*
+
+- **Function Wrappers (OrdinaryFn / StorableFn / LoggingFn / SafeFn / AutonomousFn / ProtectedFn / PureFn):** The classes created by the corresponding decorators. `PureFn` is the most feature-rich and is the typical user-facing class for deterministic computation.
 
 - **Call Signature:** An immutable description of a specific function call (function identity plus normalized/packed keyword arguments) used for caching, addressing, and logging.
 
-- **swarm():** A method on PureFn that queues an asynchronous execution request and returns an address for the future result.
+- **swarm():** A method on `PureFn` that queues an asynchronous execution request and returns an address for the future result.
 
-- **Compute Node:** An entry representing a worker or process capable of executing queued requests within a SwarmingPortal.
+- **Compute Node:** An entry representing a worker or process capable of executing queued requests within a `SwarmingPortal`.
 
 - **Execution Requests:** The persistent queue of requests to execute a function call (used by swarming to distribute work).
 
-- **Execution Results:** The persistent records storing outputs of function calls, typically under execution_results in PureCodePortal.
+- **Execution Results:** The persistent records storing outputs of function calls, typically under `execution_results` in `PureCodePortal`.
 
 - **Validation (Validators):** Functions and decorators used to enforce preconditions and postconditions around execution. Examples include:
-  - pre_validators: Checks before running a function (e.g., resource availability).
-  - post validators: Checks after running a function.
-  - recursive_parameters: A helper indicating which parameters are recursive in mutual recursion scenarios.
+  - `pre_validators`: Checks before running a function (e.g., resource availability).
+  - `post_validators`: Checks after running a function.
+  - `recursive_parameters`: A helper indicating which parameters are recursive in mutual recursion scenarios.
 
 ## 4. Data & Storage
 
 ### 4.1. PersiDicts
 
-- **PersiDict:**  An abstract base class for persistent, key–value storage backed by systems like local disk, S3 or MemoryDB (durable, Redis-compatible in-memory database service on AWS). It exposes a standard `MutableMapping` (dict-like) API, so Pythagoras can remain storage-agnostic. The implementation lives in the external `persidict` library, built as Pythagoras’s storage abstraction layer.
+- **PersiDict:**  An abstract base class for persistent, key–value storage backed by systems like local disk, S3, or MemoryDB. It exposes a standard `MutableMapping` (dict-like) API, so Pythagoras can remain storage-agnostic. The implementation lives in the external `persidict` library, built as Pythagoras’s storage abstraction layer.
 
 - **FileDirDict:** A concrete implementation of `PersiDict` that stores data in a local file system directory. Each key corresponds to a file path, and the value is the file content.
 
@@ -94,7 +96,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **ValueAddr:** An address type for values stored in persistent storage.
 
-- **PureFnExecutionResultAddr:** An address that uniquely identifies cached results of a PureFn call based on function identity, code, and packed arguments.
+- **PureFnExecutionResultAddr:** An address that uniquely identifies cached results of a `PureFn` call based on function identity, code, and packed arguments.
 
 ## 5. API & Utilities
 
@@ -106,7 +108,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **describe():** A method on portals returning a pandas DataFrame snapshot of the portal state (e.g., cached results, queues, workers).
 
-- **fix_kwargs(...):** A method on function wrappers (e.g., PureFn) that partially applies named arguments, returning a new callable with those parameters fixed.
+- **fix_kwargs(...):** A method on function wrappers (e.g., `PureFn`) that partially applies named arguments, returning a new callable with those parameters fixed.
 
 ## 6. Notes
 
