@@ -1,27 +1,23 @@
 """Pure functions with persistent result caching and source tracking.
 
-Pure functions are protected autonomous functions with no side effects that
-always return the same result for identical arguments. They accept only
-keyword arguments and don't depend on external imports or definitions.
-
-Key components:
-- @pure() decorator: Marks functions as pure and enables persistent caching
-- PureCodePortal: Portal managing execution and caching for pure functions
-- PureFn: Wrapped pure function supporting sync/async execution patterns
-- PureFnExecutionResultAddr: Address-based retrieval for distributed execution
-
-The @pure() decorator enables persistent caching: when a pure function is
-called multiple times with the same arguments, only the first invocation
-executes; subsequent calls return the cached result.
+Pure functions are deterministic and side-effect-free. They accept only
+keyword arguments. The @pure() decorator enables persistent caching: repeated
+calls with the same arguments return the cached result without re-execution.
 
 Pythagoras tracks source code changes in pure functions. When the
 implementation changes, the function re-executes on the next call, but
-previously cached results remain available for the old version. Only
-source code changes are tracked, not external dependencies.
+previously cached results remain available for the old version.
 
-For recursive functions, use recursive_parameters() to create pre-validators
-that optimize execution by ensuring prerequisites are computed
-in the correct order.
+Main Exports
+------------
+- PureCodePortal: Portal managing execution and caching for pure functions.
+- PureFn: Wrapped pure function with caching and address-based retrieval.
+- PureFnExecutionResultAddr: Address uniquely identifying a cached result.
+- pure: Decorator to create pure functions.
+
+Utilities
+---------
+- recursive_parameters: Build pre-validators for recursive pure functions.
 """
 
 from .pure_core_classes import *
