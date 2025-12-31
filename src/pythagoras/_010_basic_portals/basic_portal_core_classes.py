@@ -805,7 +805,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
 
 
     @property
-    def _linked_portal(self) -> BasicPortal | None:
+    def linked_portal(self) -> BasicPortal | None:
         """The object's preferred portal, or None if using current active portals."""
         linked_portal =  self._linked_portal_at_init
         if linked_portal is not None:
@@ -820,7 +820,7 @@ class PortalAwareClass(CacheablePropertiesMixin, metaclass = GuardedInitMeta):
         Triggers lazy registration on first access. Returns the linked portal
         if available, otherwise the current active portal.
         """
-        portal_to_use = self._linked_portal
+        portal_to_use = self.linked_portal
         if portal_to_use is None:
             portal_to_use = _PORTAL_REGISTRY.current_portal()
         self._visit_portal(portal_to_use)

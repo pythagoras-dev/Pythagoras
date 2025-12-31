@@ -26,7 +26,7 @@ def test_portal_aware_init_with_none():
     with _PortalTester(BasicPortal) as t:
         obj = SimplePortalAware(42)
         assert obj.value == 42
-        assert obj._linked_portal is None
+        assert obj.linked_portal is None
         assert obj.portal is t.portal
 
 
@@ -35,7 +35,7 @@ def test_portal_aware_init_with_explicit_portal(tmpdir):
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
         portal = t.portal
         obj = SimplePortalAware(42, portal=portal)
-        assert obj._linked_portal is portal
+        assert obj.linked_portal is portal
         assert obj.portal is portal
 
 
@@ -123,7 +123,7 @@ def test_portal_aware_pickle_unpickle(tmpdir):
         
         # Portal information should be reset
         assert new_obj.value == 100
-        assert new_obj._linked_portal is None
+        assert new_obj.linked_portal is None
         assert len(new_obj._visited_portals) == 0
         assert not new_obj.is_registered
 
