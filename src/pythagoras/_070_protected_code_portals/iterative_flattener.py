@@ -1,5 +1,5 @@
 from collections.abc import Iterable
-from typing import Any, List, Set, Tuple, Iterator
+from typing import Any, Iterator
 from collections import deque
 
 _ATOMIC_TYPES = (str, bytes, bytearray, memoryview
@@ -19,7 +19,7 @@ def _is_flattenable(obj: Any) -> bool:
         return isinstance(obj, Iterable)
 
 
-def flatten_iterative(nested_iterative: Iterable[Any]) -> List[Any]:
+def flatten_iterative(nested_iterative: Iterable[Any]) -> list[Any]:
     """
     General-purpose, *iterative* flattener.
 
@@ -59,11 +59,11 @@ def flatten_iterative(nested_iterative: Iterable[Any]) -> List[Any]:
             f"Expected an iterable, got {type(nested_iterative).__name__}"
         )
 
-    flattened: List[Any] = []
+    flattened: list[Any] = []
     # Stack stores tuples of (iterator, obj_id) – we track ids only
-    stack: list[Tuple[Any, int]] = list([(iter(nested_iterative), id(nested_iterative))])
+    stack: list[tuple[Any, int]] = list([(iter(nested_iterative), id(nested_iterative))])
     # Track object ids in the current traversal path to detect cycles
-    path: Set[int] = {id(nested_iterative)}
+    path: set[int] = {id(nested_iterative)}
 
     sentinel = object()
 

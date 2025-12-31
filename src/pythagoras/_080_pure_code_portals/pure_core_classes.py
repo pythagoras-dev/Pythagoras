@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import time
 
-from typing import Callable, Any, List, TypeAlias
+from typing import Callable, Any, TypeAlias
 
 
 from persidict import WriteOnceDict
@@ -171,8 +171,8 @@ class PureFn(ProtectedFn):
     """
 
     def __init__(self, fn: Callable | str
-                 , pre_validators: list[AutonomousFn] | List[Callable] | None = None
-                 , post_validators: list[AutonomousFn] | List[Callable] | None = None
+                 , pre_validators: list[AutonomousFn] | list[Callable] | None = None
+                 , post_validators: list[AutonomousFn] | list[Callable] | None = None
                  , excessive_logging: bool | Joker = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None = None):

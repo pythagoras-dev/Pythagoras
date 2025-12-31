@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
-
 from persidict import replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
@@ -642,7 +640,7 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
 
 
     @abstractmethod
-    def get(self, timeout:Optional[int] = None, expected_type:Type[T]= Any) -> T:
+    def get(self, timeout: int | None = None, expected_type:Type[T]= Any) -> T:
         """Retrieve value, referenced by the address"""
         raise NotImplementedError
 

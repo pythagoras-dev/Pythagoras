@@ -28,7 +28,7 @@ They are intentionally dependency-free apart from ``HashAddr``.
 from __future__ import annotations
 
 from collections.abc import Mapping as _Mapping, Sequence as _Sequence
-from typing import Any, Dict, Set
+from typing import Any
 
 from .data_portal_core_classes import HashAddr
 
@@ -69,7 +69,7 @@ def ready(obj: Any) -> bool:
     return _ready_impl(obj, seen=set())
 
 
-def _ready_impl(obj: Any, *, seen: Set[int]) -> bool:
+def _ready_impl(obj: Any, *, seen: set[int]) -> bool:
     if id(obj) in seen:
         return True
     seen.add(id(obj))
@@ -100,7 +100,7 @@ def get(obj: Any) -> Any:
     return _get_impl(obj, seen={})
 
 
-def _get_impl(obj: Any, *, seen: Dict[int, Any]) -> Any:
+def _get_impl(obj: Any, *, seen: dict[int, Any]) -> Any:
     """
     Depth-first copy of *obj* where every HashAddr is replaced by its value.
     Cycles are handled via the *seen* memo-dict.

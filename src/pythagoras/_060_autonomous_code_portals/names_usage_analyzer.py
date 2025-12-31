@@ -1,6 +1,6 @@
 import ast
 from functools import cache
-from typing import Callable, Union
+from typing import Callable
 
 from .._020_ordinary_code_portals import get_normalized_fn_source_code_str
 
@@ -558,7 +558,7 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
 @cache
 def _validate_and_parse_function_source(
         normalized_source: str
-        ) -> dict[str,Union[NamesUsageAnalyzer,str]]:
+        ) -> dict[str, NamesUsageAnalyzer | str]:
     """Validate that normalized source is a single function definition and parse it.
 
     Args:
@@ -600,8 +600,8 @@ def _validate_and_parse_function_source(
 
 
 def _analyze_names_in_function(
-        a_func: Union[Callable,str]
-        ) -> dict[str,Union[NamesUsageAnalyzer,str]]:
+        a_func: Callable | str
+        ) -> dict[str, NamesUsageAnalyzer | str]:
     """Perform comprehensive static analysis of name usage within a function.
 
     This function is the primary entry point for autonomy validation. It normalizes
