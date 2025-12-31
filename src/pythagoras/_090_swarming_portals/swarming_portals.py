@@ -1,12 +1,14 @@
-""" Classes and functions that enable swarming algorithm.
+"""Classes and functions enabling asynchronous swarming execution.
 
-Pythagoras provides infrastructure for remote execution of
-pure functions in distributed environments. Pythagoras employs
-an asynchronous execution model called 'swarming':
-you do not know when your function will be executed,
-what machine will execute it, and how many times it will be executed.
-Pythagoras ensures that the function will be eventually executed
-at least once but does not offer any further guarantees.
+Pythagoras enables distributed execution of pure functions across multiple
+processes and machines using an asynchronous model called 'swarming'. The
+swarming model provides eventual execution guarantees without deterministic
+timing, worker assignment, or execution count. Functions are guaranteed to
+execute at least once, but may execute multiple times across different workers.
+
+This module implements SwarmingPortal, which manages background worker pools
+and coordinates distributed execution through a best-effort dispatching
+mechanism.
 """
 
 from __future__ import annotations
@@ -48,21 +50,26 @@ _ANCESTOR_PROCESS_START_TIME_TXT = "Ancestor Process Start Time"
 class SwarmingPortal(PureCodePortal):
     """Portal for asynchronous swarming execution of pure functions.
 
-    The SwarmingPortal distributes execution of registered pure functions
-    across background worker processes (potentially on different machines)
-    in a best-effort, eventually-executed manner. It manages a child process
-    that maintains a pool of background workers and randomly dispatches
-    execution requests. No strong guarantees are provided regarding which
-    worker runs a task, how many times it runs, or when it will run; only that
-    eligible requests will eventually be executed at least once.
+    Distributes execution of registered pure functions across background worker
+    processes with eventual consistency guarantees. The portal spawns a child
+    process that maintains a worker pool and randomly dispatches execution
+    requests. Workers run independently and may execute tasks multiple times,
+    but every eligible request will eventually execute at least once.
 
-    Notes:
-    - Ancestor/child: The portal instance created by user code is the ancestor.
-      It may spawn a separate child process whose responsibility is
-      to keep background workers alive.
+    The portal distinguishes between ancestor and descendant processes:
+    the ancestor is the original portal instance created by user code,
+    while descendants are worker processes spawned to execute tasks.
 
-    See also: OutputSuppressor for silencing worker output, PureCodePortal for
-    the base API and lifecycle management, and tests in tests/_090_swarming_portals.
+    Attributes:
+        max_n_workers: Maximum number of background workers to spawn.
+        min_n_workers: Minimum number of background workers to maintain.
+        exact_n_workers: Fixed number of workers, overriding min/max when set.
+        ancestor_process_id: PID of the ancestor process for descendant tracking.
+        ancestor_process_start_time: Start time of ancestor for PID reuse detection.
+
+    Note:
+        Worker output is suppressed to prevent noise. Use OutputSuppressor
+        directly for custom control.
     """
     _compute_nodes: OverlappingMultiDict | None
     _node_id: str | None
@@ -85,32 +92,26 @@ class SwarmingPortal(PureCodePortal):
         """Initialize a swarming portal.
 
         Args:
-            root_dict: Persistent dictionary or path used to back the portal's
-                state. If None, a default dictionary will be used.
-            p_consistency_checks: Probability or Joker controlling internal
-                consistency checks. Passed to PureCodePortal.
-            excessive_logging: Whether to enable verbose logging. Passed to
-                PureCodePortal.
-            max_n_workers: Maximum number of background workers for the
-                ancestor process. Descendants must pass None here.
-                The effective value may be reduced based on available CPUs and
-                RAM at runtime.
-            min_n_workers: Minimum number of background workers for the portal.
-                The effective value may be increased based on available CPUs and
-                RAM at runtime.
-            exact_n_workers: Exact number of background workers for the portal.
-                If this is not None, min_n_workers and max_n_workers are ignored.
-                If this is None, the effective number of workers is determined
-                by min_n_workers and max_n_workers.
-            ancestor_process_id: ID of the ancestor process when this portal is
-                constructed inside a descendant process. For (root)parent
-                portals, it must be None.
-            ancestor_process_start_time: Start time of the ancestor process,
-                used to detect PID reuse. For parent portals, it must be None.
+            root_dict: Persistent storage backing portal state, or None for default.
+            p_consistency_checks: Probability of performing internal validation checks.
+            excessive_logging: Whether to enable verbose diagnostic logging.
+            max_n_workers: Upper bound on background workers. Actual count may be
+                lower based on available CPUs and RAM.
+            min_n_workers: Lower bound on background workers. Actual count may be
+                higher based on resource availability.
+            exact_n_workers: Fixed worker count, overriding min and max when set.
+                When None, worker count is dynamically determined.
+            ancestor_process_id: PID of the ancestor process. Must be None for
+                ancestor portals, required for descendants.
+            ancestor_process_start_time: Unix timestamp of ancestor start time,
+                preventing PID reuse issues. Must match ancestor_process_id.
 
-        Notes:
-            - When ancestor_process_id or ancestor_process_start_time is provided,
-              both must be provided.
+        Raises:
+            TypeError: If worker count parameters have incorrect types.
+            ValueError: If worker counts are negative or exact_n_workers conflicts
+                with min/max settings.
+            RuntimeError: If ancestor_process_id and ancestor_process_start_time
+                are inconsistently set.
         """
         PureCodePortal.__init__(self
             , root_dict=root_dict
@@ -175,6 +176,18 @@ class SwarmingPortal(PureCodePortal):
 
 
     def register_descendant_process(self, process_type:str, process_id:int, process_start_time:int):
+        """Register a descendant worker process for tracking and cleanup.
+
+        Args:
+            process_type: Descriptive label for the process role.
+            process_id: PID of the descendant process.
+            process_start_time: Unix timestamp when the process started.
+
+        Raises:
+            TypeError: If parameters have incorrect types.
+            ValueError: If process_type is empty, process_id is non-positive,
+                or process_start_time is invalid.
+        """
         # Validate inputs
         if not isinstance(process_type, str):
             raise TypeError(f"process_type must be a string, got {type(process_type).__name__}")
@@ -213,37 +226,48 @@ class SwarmingPortal(PureCodePortal):
 
     @property
     def ancestor_process_id(self) -> int | None:
+        """PID of the ancestor process, or None if this is the ancestor."""
         return self._ancestor_process_id
 
 
     @property
     def ancestor_process_start_time(self) -> int | None:
+        """Start time of the ancestor process, or None if this is the ancestor."""
         return self._ancestor_process_start_time
 
     @property
     def max_n_workers(self) -> int:
+        """Maximum number of background workers to spawn."""
         return self._get_portal_config_setting("max_n_workers")
 
     @property
     def min_n_workers(self) -> int:
+        """Minimum number of background workers to maintain."""
         return self._get_portal_config_setting("min_n_workers")
 
     @property
     def exact_n_workers(self) -> int:
+        """Fixed number of workers when set, overriding min/max bounds."""
         return self._get_portal_config_setting("exact_n_workers")
 
 
     def get_active_descendant_process_counter(self,
             process_type: str | None = None) -> int:
-        """Count alive descendant processes, clean up dead ones.
+        """Count alive descendant processes and remove dead ones.
+
+        Iterates through tracked descendant processes, verifies they are still
+        running, and removes stale entries. Only counts descendants belonging to
+        the current ancestor lineage.
 
         Args:
-            process_type: If provided, only workers with this process type are
-                counted. When None (default), all alive workers are counted.
-                Dead workers are cleaned up.
+            process_type: Filter by process role. When None, counts all alive workers.
 
         Returns:
-            int: Number of alive descendant processes matching the filter.
+            Number of alive descendant processes matching the filter.
+
+        Raises:
+            TypeError: If process_type is not a string or None.
+            ValueError: If process_type is an empty string.
         """
 
         if process_type is not None and not isinstance(process_type, str):
@@ -282,12 +306,10 @@ class SwarmingPortal(PureCodePortal):
 
 
     def get_params(self) -> dict:
-        """Return portal parameters including parent process metadata.
+        """Return portal configuration parameters.
 
         Returns:
-            dict: Sorted dictionary of portal parameters inherited from
-            PureCodePortal plus ancestor_process_id and
-            ancestor_process_start_time.
+            Sorted dictionary of portal parameters.
         """
         params = super().get_params()
         params["ancestor_process_id"] = self.ancestor_process_id
@@ -298,13 +320,7 @@ class SwarmingPortal(PureCodePortal):
 
     @property
     def is_ancestor(self) -> bool:
-        """Whether this portal instance represents the parent process.
-
-        Returns:
-            bool: True if this process created the portal instance on the node
-            (no ancestor metadata set); False if this is a descendant portal
-            instantiated inside the background worker process.
-        """
+        """True if this is the original portal instance, False if a worker descendant."""
         if self.ancestor_process_id is None:
             return True
         else:
@@ -312,6 +328,14 @@ class SwarmingPortal(PureCodePortal):
 
     @property
     def n_workers_to_target(self) -> int:
+        """Compute target worker count based on configuration and system resources.
+
+        Uses exact_n_workers if set; otherwise dynamically calculates based on
+        available CPU cores and RAM, bounded by min_n_workers and max_n_workers.
+
+        Returns:
+            Target number of workers to maintain, at least 0.
+        """
         if self.exact_n_workers is not None:
             result =  self.exact_n_workers
         else:
@@ -335,12 +359,11 @@ class SwarmingPortal(PureCodePortal):
 
 
     def __post_init__(self) -> None:
-        """Lifecycle hook invoked after initialization.
+        """Complete portal initialization and spawn worker management process.
 
-        Registers a global atexit handler once per process to terminate any
-        child processes spawned by portals. For parent portals with a positive
-        max_n_workers, spawns a child process that manages the pool of
-        background worker processes.
+        Registers a global atexit handler for process cleanup. Ancestor portals
+        with positive target worker counts spawn a child process that maintains
+        the background worker pool.
         """
         super().__post_init__()
 
@@ -376,9 +399,10 @@ class SwarmingPortal(PureCodePortal):
 
 
     def _terminate_descendant_processes(self):
-        """Terminate tracked descendant worker processes if they are running.
+        """Terminate descendant workers belonging to this ancestor and clean up dead processes.
 
-        This method also cleans up dead processes.
+        Raises:
+            RuntimeError: If called from a descendant process.
         """
         if not self.is_ancestor:
             raise RuntimeError("This method should only be called "
@@ -424,12 +448,10 @@ class SwarmingPortal(PureCodePortal):
 
 
     def describe(self) -> pd.DataFrame:
-        """Describe the current portal configuration and runtime.
+        """Return portal configuration and runtime characteristics as a table.
 
         Returns:
-            pandas.DataFrame: A table combining PureCodePortal description with
-            swarming-specific characteristics such as effective number of
-            background workers.
+            DataFrame with portal settings including worker counts and ancestor metadata.
         """
         all_params = [super().describe()]
         all_params.append(_describe_runtime_characteristic(
@@ -450,11 +472,12 @@ class SwarmingPortal(PureCodePortal):
 
 
     def ancestor_runtime_is_live(self):
-        """Check that the recorded parent process is still alive.
+        """Check whether the ancestor process is still running.
+
+        Verifies both PID existence and start time to prevent PID reuse false positives.
 
         Returns:
-            bool: True if the parent PID exists and its start time matches the
-            recorded start time (to avoid PID reuse issues); False otherwise.
+            True if the ancestor process is alive; False otherwise.
         """
         return process_is_alive(
             process_id=self.ancestor_process_id,
@@ -462,9 +485,10 @@ class SwarmingPortal(PureCodePortal):
 
 
     def _clear(self):
-        """Release resources and clear internal state.
+        """Release resources and terminate descendant processes.
 
-        The portal must not be used after this method is called.
+        Ancestor portals terminate their workers before cleanup. The portal must
+        not be used after calling this method.
         """
         # self._compute_nodes = None
         if self.is_ancestor:
@@ -477,16 +501,18 @@ class SwarmingPortal(PureCodePortal):
             , min_delay:float = 0.02
             , max_delay:float = 0.22
             ) -> None:
-        """Introduce randomized backoff to reduce contention.
+        """Introduce random delay to reduce worker contention.
 
-        With probability p, sleeps for a random delay uniformly drawn from
-        [min_delay, max_delay]. Uses the portal's entropy_infuser to remain
-        deterministic when seeded in tests.
+        Sleeps with probability p for a uniform random duration between min_delay
+        and max_delay. Uses portal entropy_infuser for deterministic behavior in tests.
 
         Args:
-            p: Probability of applying the delay.
-            min_delay: Minimum sleep duration in seconds.
-            max_delay: Maximum sleep duration in seconds.
+            p: Probability of delaying, between 0 and 1.
+            min_delay: Minimum delay duration in seconds.
+            max_delay: Maximum delay duration in seconds.
+
+        Raises:
+            ValueError: If p is outside [0,1] or max_delay < min_delay or min_delay < 0.
         """
         if not 0 <= p <= 1:
             raise ValueError("p must be between 0 and 1")
@@ -513,23 +539,15 @@ class SwarmingPortal(PureCodePortal):
 
 
 def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -> None:
-    """Spawn and maintain a pool of background worker processes.
+    """Maintain target worker pool by spawning workers as needed.
 
-    This function is executed inside a dedicated child process created by the
-    parent portal. It spawns up to max_n_workers worker processes, restarts
-    any that exit unexpectedly, and records an execution environment summary
-    under the portal's compute_nodes.
+    Runs indefinitely in a dedicated child process, monitoring active workers
+    and spawning new ones when the count falls below the target. Restarts workers
+    that exit unexpectedly.
 
     Args:
-        portal_init_jsparams: Serialized initialization parameters for
-            reconstructing a SwarmingPortal. The parameters are adjusted to
-            indicate this is a child context (max_n_workers=0) and to record
-            the parent process metadata.
+        portal_init_jsparams: Serialized portal configuration with ancestor metadata.
     """
-
-    #
-    # n_workers_to_launch = access_jsparams(portal_init_jsparams
-    #     , "exact_n_workers")["exact_n_workers"]
 
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
@@ -539,6 +557,8 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
 
     with portal:
         while True:
+            if not portal.ancestor_runtime_is_live():
+                return
             current_n_workers = portal.get_active_descendant_process_counter("_background_worker")
             n_workers_to_launch = max(0, portal.n_workers_to_target - current_n_workers)
             if n_workers_to_launch > 0:
@@ -561,22 +581,15 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
 
 
 def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
-    """Worker loop that processes random execution requests serially.
+    """Process execution requests in an infinite loop until ancestor dies.
 
-    Runs indefinitely until the parent process is detected as dead.
-    Within the loop, each individual request is handled in a subprocess to
-    isolate failures and to reduce the risk of state leakage.
+    Each request is handled in a subprocess for isolation. Worker output is
+    suppressed to avoid noise.
 
     Args:
-        portal_init_jsparams: Serialized initialization parameters for
-            reconstructing a SwarmingPortal in child context.
+        portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
-    portal_init_jsparams = update_jsparams(
-        portal_init_jsparams
-        , exact_n_workers=0
-        , max_n_workers=KEEP_CURRENT
-        , min_n_workers=KEEP_CURRENT
-    )
+
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
@@ -595,24 +608,16 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
 
 
 def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject):
-    """Process a single pending execution request, if any.
+    """Select and execute a random pending request if ancestor is alive.
 
-    The function reconstructs a child-context portal, selects a random pending
-    execution request (if available), and validates readiness. If validation
-    yields a PureFnCallSignature, it continues with it; otherwise, it executes
-    the request when validation returns VALIDATION_SUCCESSFUL. Output during
-    execution is suppressed by the caller to keep workers quiet.
+    Continuously validates request readiness, following dependency chains when
+    validation returns PureFnCallSignature. Executes when validation succeeds.
+    Returns immediately if the ancestor process dies.
 
     Args:
-        portal_init_jsparams: Serialized initialization parameters for
-            reconstructing a SwarmingPortal in child context.
+        portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
-    portal_init_jsparams = update_jsparams(
-        portal_init_jsparams
-        , exact_n_workers=0
-        , max_n_workers=KEEP_CURRENT
-        , min_n_workers=KEEP_CURRENT
-    )
+
     portal = parameterizable.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
@@ -655,10 +660,10 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
 
 
 def _terminate_all_portals_descendant_processes():
-    """Terminate descendant processes for all known portals.
+    """Clean up descendant processes for all portals at program exit.
 
-    Registered with atexit the first time a SwarmingPortal is initialized.
-    Ensures that any descendant processes are terminated to avoid orphaned workers.
+    Registered via atexit during first SwarmingPortal initialization. Prevents
+    orphaned worker processes.
     """
     for portal in get_all_known_portals():
         try:
