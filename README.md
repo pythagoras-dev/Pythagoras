@@ -23,7 +23,7 @@ data science, machine learning, and AI workflows.
 Pythagoras excels at complex, long-running, resource-demanding computations. 
 It’s not recommended for real-time, latency-sensitive workflows.
 
-For a comprehensive list of terms and definitions, see the [Glossary](GLOSSARY.md).
+For a comprehensive list of terms and definitions, see the [Glossary](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md).
 
 ## Tutorials
 
@@ -208,7 +208,7 @@ assert is_odd(n=11)
   and parallelized automatically. The trade-off is reduced control over timing and location 
   in exchange for improved scalability, fault tolerance, and resource utilization.
 
-For a complete list of terms and detailed definitions, see the [Glossary](GLOSSARY.md).
+For a complete list of terms and detailed definitions, see the [Glossary](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md).
 
 ## How to get it?
 
@@ -251,13 +251,13 @@ pip install pythagoras
 
 ## Contributing
 
-Interested in contributing to Pythagoras? Please see our [Contributing Guidelines](CONTRIBUTING.md).
+Interested in contributing to Pythagoras? Please see our [Contributing Guidelines](https://github.com/pythagoras-dev/pythagoras/blob/master/CONTRIBUTING.md).
 
 For project documentation standards, see:
-* [Glossary](GLOSSARY.md)
-* [Unit Tests Guidelines](unit_tests.md)
-* [Docstrings and Comments Guidelines](docstrings_comments.md)
-* [Type Hints Guidelines](type_hints.md)
+* [Glossary](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md)
+* [Unit Tests Guidelines](https://github.com/pythagoras-dev/pythagoras/blob/master/unit_tests.md)
+* [Docstrings and Comments Guidelines](https://github.com/pythagoras-dev/pythagoras/blob/master/docstrings_comments.md)
+* [Type Hints Guidelines](https://github.com/pythagoras-dev/pythagoras/blob/master/type_hints.md)
 
 ## Key Contacts
 
