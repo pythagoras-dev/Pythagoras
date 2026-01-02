@@ -605,14 +605,14 @@ code.
 - AI refactoring tools can relocate code without breaking docstrings
 
 **Use standard terminology consistently:**
-- Follow the project glossary defined in [GLOSSARY.md](GLOSSARY.md)
+- Follow the project glossary defined in [GLOSSARY.md](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md)
   (e.g., "machine" for LLM instances, "portal" for controlled execution
   contexts)
 - Consistent terms improve AI-generated code quality and reduce
   ambiguity
 - Makes automated documentation generation more coherent
 - When introducing new project-wide architectural or domain concepts,
-  add them to [GLOSSARY.md](GLOSSARY.md) in a logical order that builds
+  add them to [GLOSSARY.md](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md) in a logical order that builds
   on existing terms. Avoid adding module-specific or trivial terms that
   create cognitive overload
 
