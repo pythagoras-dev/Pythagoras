@@ -251,7 +251,7 @@ pip install pythagoras
 
 ## Contributing
 
-Interested in contributing to Pythagoras? Please see our [Contributing Guidelines](contributing.md).
+Interested in contributing to Pythagoras? Please see our [Contributing Guidelines](CONTRIBUTING.md).
 
 For project documentation standards, see:
 * [Glossary](GLOSSARY.md)
