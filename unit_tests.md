@@ -126,6 +126,53 @@ fixtures_and_data:
 - Avoid redundant/overlapping tests that cover the same behavior in
   the same way.
 
+### Using `match` with `pytest.raises`
+The `match` parameter in `pytest.raises` should be used judiciously:
+
+**When to use `match`:**
+- ✅ Good: When the error message is part of the public contract
+  ```python
+  # API promises to mention the field name in validation errors
+  pytest.raises(ValueError, match="user_id")
+  ```
+- ✅ Good: When verifying that an error refers to a specific input/field
+  ```python
+  # Ensure the error message identifies the problematic parameter
+  pytest.raises(TypeError, match="expected.*str.*got.*int")
+  ```
+
+**When to omit `match`:**
+- ✅ Good: When only the exception type matters
+  ```python
+  # We only care that it raises ValueError, not the exact message
+  with pytest.raises(ValueError):
+      validate_input(None)
+  ```
+- ✅ Good: When testing platform/version-dependent internal errors
+  ```python
+  # Low-level errors vary by Python version and platform
+  with pytest.raises(ValueError):
+      "\0".encode("utf-8")  # Message wording is implementation detail
+  ```
+
+**Anti-patterns to avoid:**
+- ❌ Fragile: Mechanical use of `match` on internal/low-level errors
+  ```python
+  # BAD: "embedded null character" wording varies by Python version
+  pytest.raises(ValueError, match="embedded null character")
+  ```
+- ❌ Fragile: Cargo-cult addition of `match` when message is incidental
+  ```python
+  # BAD: Creates brittleness across platforms/versions for no benefit
+  pytest.raises(OSError, match="File not found")
+  ```
+
+**Guideline:** Only use `match` when the error message content is part
+of your API's documented contract or when you need to distinguish
+between different error cases of the same type. Python's internal error
+messages often vary by version, platform, and implementation—avoid
+coupling tests to these incidental details.
+
 ## Fixtures, Test Data, and Doubles
 - Prefer simple, explicit setup in the test body; use fixtures when it
   reduces duplication without hiding intent.
@@ -222,6 +269,12 @@ maintainable when AI/LLM agents generate or modify code.
   "Error: Invalid input provided at line 42"`
 - AI-generated error messages may vary in wording; check for key
   content, not exact phrasing.
+- **Note on `pytest.raises(match=...)`:** Apply the same tolerance
+  principle described in "Using `match` with `pytest.raises`" above.
+  Only use `match` when the error message is part of the public
+  contract. Python's internal error messages vary by version and
+  platform—avoid coupling tests to these implementation details. Omit
+  `match` when only the exception type matters.
 
 **Avoid brittle regular expressions:**
 - If you must use regex for validation, make patterns flexible (e.g.,
