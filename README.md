@@ -230,7 +230,7 @@ pip install pythagoras
 ## Dependencies
 
 * [persidict](https://pypi.org/project/persidict)
-* [parameterizable](https://pypi.org/project/parameterizable/)
+* [mixinforge](https://pypi.org/project/mixinforge/)
 * [jsonpickle](https://jsonpickle.github.io)
 * [joblib](https://joblib.readthedocs.io)
 * [lz4](https://python-lz4.readthedocs.io)

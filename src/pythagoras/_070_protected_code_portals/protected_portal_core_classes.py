@@ -20,7 +20,7 @@ from copy import copy
 from functools import cached_property
 from typing import Callable, Any
 
-from parameterizable import sort_dict_by_keys
+from mixinforge import sort_dict_by_keys
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .fn_arg_names_checker import check_if_fn_accepts_args

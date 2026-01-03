@@ -57,10 +57,8 @@ from functools import cached_property
 from typing import Callable, Any
 
 import pandas as pd
-from parameterizable import NotPicklableClass
+from mixinforge import NotPicklableMixin, CacheablePropertiesMixin
 from persidict import PersiDict, KEEP_CURRENT, Joker
-
-from .. import CacheablePropertiesMixin
 from .._010_basic_portals import get_current_portal
 from .._010_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic, _describe_runtime_characteristic)
@@ -518,7 +516,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
             return result
 
 
-class LoggingFnExecutionRecord(NotPicklableClass):
+class LoggingFnExecutionRecord(NotPicklableMixin):
     """Read-only view of artifacts from a completed function execution.
 
     Provides convenient accessors to all artifacts logged during one specific
@@ -645,7 +643,7 @@ class LoggingFnExecutionRecord(NotPicklableClass):
                 f"{self.call_signature.fn_name} execution results.")
 
 
-class LoggingFnExecutionFrame(NotPicklableClass):
+class LoggingFnExecutionFrame(NotPicklableMixin):
     """Context manager orchestrating a single LoggingFn execution with logging.
 
     This class is the execution engine for logging-enabled functions. When

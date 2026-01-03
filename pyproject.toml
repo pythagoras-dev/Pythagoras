@@ -44,7 +44,7 @@ dependencies = [
     "boto3",
     "moto",
     "uv",
-    "parameterizable",
+    "mixinforge",
 ]
 
 [project.urls]

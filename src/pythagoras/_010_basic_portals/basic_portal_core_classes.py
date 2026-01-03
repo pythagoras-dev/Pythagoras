@@ -18,18 +18,15 @@ try:
 except ImportError:
     from typing_extensions import Self
 import pandas as pd
-from parameterizable import NotPicklableClass
-from parameterizable import ParameterizableClass, sort_dict_by_keys
+from mixinforge import NotPicklableMixin, ParameterizableMixin, sort_dict_by_keys, GuardedInitMeta, CacheablePropertiesMixin
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
-from .guarded_init_metaclass import GuardedInitMeta
 from .single_thread_enforcer import ensure_single_thread, _reset_single_thread_enforcer
 from .._000_supporting_utilities import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)
 from .default_portal_base_dir import get_default_portal_base_dir
-from .._000_supporting_utilities.cacheable_properties_mixin import CacheablePropertiesMixin
 
 _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
@@ -41,7 +38,7 @@ PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
-class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMixin, metaclass = GuardedInitMeta):
+class BasicPortal(NotPicklableMixin, ParameterizableMixin, CacheablePropertiesMixin, metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -76,7 +73,7 @@ class BasicPortal(NotPicklableClass, ParameterizableClass, CacheablePropertiesMi
         ensure_single_thread()
         self._init_finished = False
         self._entropy_infuser = random.Random()
-        ParameterizableClass.__init__(self)
+        ParameterizableMixin.__init__(self)
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
         if not isinstance(root_dict, PersiDict):
@@ -241,7 +238,7 @@ def _validate_required_portal_type(required_portal_type: PortalType) -> None:
         raise TypeError(
             "required_portal_type must be BasicPortal or one of its (grand)children")
 
-class _PortalRegistry(NotPicklableClass):
+class _PortalRegistry(NotPicklableMixin):
     """Registry maintaining all portal bookkeeping and state for Pythagoras.
 
     This singleton tracks all portals and portal-aware objects, manages the stack

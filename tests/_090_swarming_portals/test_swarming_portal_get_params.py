@@ -1,6 +1,6 @@
 import json
 
-import parameterizable
+import mixinforge
 
 from pythagoras import SwarmingPortal
 from pythagoras import _PortalTester
@@ -31,7 +31,7 @@ from pythagoras import _PortalTester
 #         assert params["max_n_workers"] == 5
 #         exportable_params = portal.get_portable_params()
 #         assert exportable_params["max_n_workers"] == 5
-#         params_json = parameterizable.dumps(portal)
+#         params_json = mixinforge.dumps(portal)
 #
 #
 #     with _PortalTester():
@@ -40,12 +40,12 @@ from pythagoras import _PortalTester
 #         # new_exportable_params = new_portal.get_portable_params()
 #         # assert params == new_params
 #         # assert exportable_params == new_exportable_params
-#         new_portal_J2 = parameterizable.loads(params_json)
+#         new_portal_J2 = mixinforge.loads(params_json)
 #         new_params_J2 = new_portal_J2.get_params()
 #         assert params == new_params_J2
 #
 #
 #     updated_params = json.loads(params_json)
-#     updated_params[parameterizable.json_processor._Markers.PARAMS][parameterizable.json_processor._Markers.DICT]["max_n_workers"] = 0
+#     updated_params[mixinforge.json_processor._Markers.PARAMS][mixinforge.json_processor._Markers.DICT]["max_n_workers"] = 0
 #     updated_params_json = json.dumps(updated_params)
 #     print()

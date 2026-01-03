@@ -11,7 +11,7 @@ Your help is greatly appreciated. These guidelines will help you get started.
 2. **Fork and Clone:**
     ```bash
     git clone https://github.com/your-username/Pythagoras.git
-    cd parameterizable
+    cd Pythagoras
     ```
 
 2.  **Install Dependencies:**

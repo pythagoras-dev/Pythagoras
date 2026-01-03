@@ -17,11 +17,11 @@ import atexit
 from time import sleep
 
 import pandas as pd
-import parameterizable
+import mixinforge
 
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
-from parameterizable import *
+from mixinforge import *
 
 from .._010_basic_portals import get_all_known_portals
 from .._010_basic_portals.single_thread_enforcer import ensure_single_thread
@@ -375,7 +375,7 @@ class SwarmingPortal(PureCodePortal):
         if self.is_ancestor:
             if self.n_workers_to_target > 0:
 
-                portal_init_jsparams = parameterizable.dumpjs(self)
+                portal_init_jsparams = mixinforge.dumpjs(self)
                 portal_init_jsparams = update_jsparams(
                     portal_init_jsparams,
                     exact_n_workers = self.n_workers_to_target,
@@ -550,7 +550,7 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
         portal_init_jsparams: Serialized portal configuration with ancestor metadata.
     """
     ensure_single_thread()
-    portal = parameterizable.loadjs(portal_init_jsparams)
+    portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
     # summary = build_execution_environment_summary()
@@ -591,7 +591,7 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
         portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
     ensure_single_thread()
-    portal = parameterizable.loadjs(portal_init_jsparams)
+    portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
     with portal:
@@ -619,7 +619,7 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
         portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
     ensure_single_thread()
-    portal = parameterizable.loadjs(portal_init_jsparams)
+    portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
     with portal:
