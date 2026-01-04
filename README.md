@@ -240,13 +240,11 @@ pip install pythagoras
 * [boto3](https://boto3.readthedocs.io)
 * [pytest](https://pytest.org)
 * [moto](http://getmoto.org)
-* [boto3](https://boto3.readthedocs.io)
 * [scipy](https://www.scipy.org)
-* [jsonpickle](https://jsonpickle.github.io)
 * [scikit-learn](https://scikit-learn.org)
 * [autopep8](https://pypi.org/project/autopep8)
 * [deepdiff](https://zepworks.com/deepdiff/current/)
-* [nvidia-ml-p](https://pypi.org/project/nvidia-ml-py/)
+* [nvidia-ml-py](https://pypi.org/project/nvidia-ml-py/)
 * [uv](https://docs.astral.sh/uv/)
 
 ## Contributing
