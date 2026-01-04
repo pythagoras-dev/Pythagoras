@@ -23,7 +23,7 @@ class AutonomousCodePortal(SafeCodePortal):
     - Static validation of function source code via AST analysis
     - Partial application support through fixed keyword arguments
     - Content-addressable storage of autonomous functions and their dependencies
-    - Logging and consistency checks for all autonomous function operations
+    - Logging for all autonomous function operations
 
     Autonomy Rules Enforced:
         - No external name references (except built-ins)
@@ -38,7 +38,6 @@ class AutonomousCodePortal(SafeCodePortal):
     """
     def __init__(self
             , root_dict: PersiDict | str | None = None
-            , p_consistency_checks: float | Joker = KEEP_CURRENT
             , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
         """Create an autonomous code portal.
@@ -46,14 +45,11 @@ class AutonomousCodePortal(SafeCodePortal):
         Args:
             root_dict: Persistence root backing the portal state. Can be a
                 PersiDict instance, a path string, or None for defaults.
-            p_consistency_checks: Probability [0..1] to run extra consistency
-                checks on operations. KEEP_CURRENT uses the existing setting.
             excessive_logging: Whether to enable verbose logging. KEEP_CURRENT
                 preserves the existing portal setting.
         """
         SafeCodePortal.__init__(self
             , root_dict=root_dict
-            , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
 

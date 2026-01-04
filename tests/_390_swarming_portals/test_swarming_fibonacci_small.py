@@ -14,8 +14,7 @@ def fibonacci(n: int) -> int:
     else:
         return fibonacci(n=n-1) + fibonacci(n=n-2)
 
-@pytest.mark.parametrize("p",[0, 0.5, 1])
-def test_swarming_fibonacci_small(tmpdir,p):
+def test_swarming_fibonacci_small(tmpdir):
     # tmpdir = 2*"TEST_SWARMING_FIBONACCI_SMALL_" + str(int(time.time()))
     global fibonacci
     address = None
@@ -26,7 +25,7 @@ def test_swarming_fibonacci_small(tmpdir,p):
 
     with _PortalTester(SwarmingPortal
             , tmpdir, max_n_workers=7
-            , p_consistency_checks=p) as t:
+            ) as t:
         address._invalidate_cache()
         result = address.get()
         assert result == 21

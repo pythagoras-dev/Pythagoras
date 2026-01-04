@@ -5,12 +5,11 @@ from pythagoras._360_autonomous_code_portals import *
 
 import pytest
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_load_save_two_versions_autonomous(tmpdir,p):
+def test_load_save_two_versions_autonomous(tmpdir):
     with _PortalTester(
             AutonomousCodePortal
             , root_dict=tmpdir
-            , p_consistency_checks=p
+            
             ) as t:
         assert len(t.portal._value_store) == 0
         def f(a, b):
@@ -24,7 +23,7 @@ def test_load_save_two_versions_autonomous(tmpdir,p):
     with _PortalTester(
             AutonomousCodePortal
             , root_dict=tmpdir
-            , p_consistency_checks=p
+            
             ) as t:
 
         def f(a, b):
@@ -39,7 +38,7 @@ def test_load_save_two_versions_autonomous(tmpdir,p):
     with _PortalTester(
             AutonomousCodePortal
             , root_dict=tmpdir
-            , p_consistency_checks=p
+            
             ) as t:
 
 

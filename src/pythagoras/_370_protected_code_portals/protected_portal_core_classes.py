@@ -45,27 +45,21 @@ class ProtectedCodePortal(AutonomousCodePortal):
     Args:
         root_dict: Persistent dictionary or path to initialize portal storage.
             If None, uses default in-memory storage.
-        p_consistency_checks: Probability controlling internal consistency
-            checks. Use KEEP_CURRENT to inherit current setting.
         excessive_logging: Enables verbose logging of portal and function
             operations. Use KEEP_CURRENT to inherit current setting.
     """
-    
+
     def __init__(self
             , root_dict: PersiDict|str|None = None
-            , p_consistency_checks: float|Joker = KEEP_CURRENT
             , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
         """Initialize the portal.
 
         Args:
             root_dict: Backing storage or its path. If None, use default.
-            p_consistency_checks: Probability for internal consistency checks,
-                or KEEP_CURRENT to inherit.
             excessive_logging: Verbose logging flag, or KEEP_CURRENT to inherit.
         """
         super().__init__(root_dict=root_dict
-            , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
 

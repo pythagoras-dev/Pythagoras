@@ -12,12 +12,11 @@ dict4 = {get_random_signature():get_random_signature() for j in range(150)}
 
 dicts_to_test = [dict1, dict2, dict3, dict4]
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_sortedkwargs(tmpdir,p):
+def test_sortedkwargs(tmpdir):
     """Test PackedKwArgs constructor and basic functionality."""
 
     with _PortalTester(DataPortal, root_dict=tmpdir
-            ,p_consistency_checks=p) as t:
+            ) as t:
 
         for i in range(4):
             for sample_dict in dicts_to_test:
@@ -56,12 +55,11 @@ def test_sortedkwargs_2portals(tmpdir):
         assert len(p1._value_store) == 4
         assert len(p2._value_store) == 4
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_sortedkwargs_save_load(tmpdir,p):
+def test_sortedkwargs_save_load(tmpdir):
     """Test PackedKwArgs constructor and basic functionality."""
     for i in range(4):
         with _PortalTester(DataPortal, root_dict=tmpdir
-                ,p_consistency_checks=p) as t:
+                ) as t:
             portal = t.portal
             sampe_dict = { "e": 0, "c":1, "b":2, "a":3}
             pka = KwArgs(**sampe_dict).pack()

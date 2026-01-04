@@ -15,7 +15,7 @@ def test_pure_factorial_fn_class(tmpdir):
     # tmpdir = "TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT"
     with _PortalTester(PureCodePortal
             , tmpdir
-            , p_consistency_checks = 1) as t:
+            ) as t:
         # global factorial
         assert len(t.portal._crash_history) == 0
         assert len(t.portal._execution_results) == 0
@@ -29,12 +29,11 @@ def test_pure_factorial_fn_class(tmpdir):
         assert len(t.portal._execution_results) == 5
         assert len(t.portal._execution_requests) == 0
 
-@pytest.mark.parametrize("p",[0, 0.5, 1])
-def test_pure_factorial_decorator(tmpdir,p):
+def test_pure_factorial_decorator(tmpdir):
     # tmpdir = "TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT-TTTTTTTT"
     with _PortalTester(PureCodePortal
             , tmpdir
-            , p_consistency_checks = p) as t:
+            ) as t:
         # global factorial
         assert len(t.portal._crash_history) == 0
         assert len(t.portal._execution_results) == 0
@@ -51,19 +50,5 @@ def test_pure_factorial_decorator(tmpdir,p):
         assert len(t.portal._crash_history) == 0
         assert len(t.portal._execution_results) == 10
         assert len(t.portal._execution_requests) == 0
-
-        value_store = t.portal._value_store
-        assert value_store.consistency_checks_failed == 0
-        if p>0:
-            assert value_store.consistency_checks_attempted > 0
-        else:
-            assert value_store.consistency_checks_attempted == 0
-
-        execution_results = t.portal._execution_results
-        assert execution_results.consistency_checks_failed == 0
-        if p>0:
-            assert execution_results.consistency_checks_attempted > 0
-        else:
-            assert execution_results.consistency_checks_attempted == 0
 
 

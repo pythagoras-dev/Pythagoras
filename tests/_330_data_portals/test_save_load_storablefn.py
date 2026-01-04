@@ -11,7 +11,7 @@ def f():
 def test_value_address_storablefn(tmpdir,p):
     # tmpdir = 3*"VALUE_ADDRESS_STORABLEFN_" + str(int(time.time())) + "_" + str(p)
 
-    with (_PortalTester(DataPortal,tmpdir, p_consistency_checks=p) as t):
+    with (_PortalTester(DataPortal,tmpdir) as t):
         portal = t.portal
         global f
 

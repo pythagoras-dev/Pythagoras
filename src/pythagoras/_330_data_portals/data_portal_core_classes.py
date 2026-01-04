@@ -15,7 +15,6 @@ from persidict import WriteOnceDict
 T = TypeVar('T')
 
 _TOTAL_VALUES_TXT = "Values, total"
-_PROBABILITY_OF_CHECKS_TXT = "Probability of consistency checks"
 
 def get_all_known_data_portal_fingerprints() -> set[PortalStrFingerprint]:
     """Get a set of all known portal fingerprints."""
@@ -137,9 +136,6 @@ class DataPortal(OrdinaryCodePortal):
       and copied into the active portal on demand.
     - Config settings: portal-specific and function-specific settings are
       persisted in a dedicated config store.
-    - Consistency checks: the underlying persistent dictionary can perform
-      random, probabilistic consistency checks controlled by the
-      p_consistency_checks parameter.
 
     Note:
         Use the portal as a context manager whenever code performs I/O with
@@ -159,7 +155,6 @@ class DataPortal(OrdinaryCodePortal):
 
     def __init__(self
             , root_dict: PersiDict|str|None = None
-            , p_consistency_checks: float|Joker = KEEP_CURRENT
             ):
         """Initialize a DataPortal.
 
@@ -167,11 +162,6 @@ class DataPortal(OrdinaryCodePortal):
             root_dict: Prototype PersiDict or a path/URI used to create
                 a persistent dictionary for internal stores. If None, uses
                 the parent's default.
-            p_consistency_checks: Probability in [0, 1] or KEEP_CURRENT Joker
-                that controls random consistency checks of the value store.
-
-        Raises:
-            ValueError: If p_consistency_checks is not in [0, 1] and not a Joker.
         """
         OrdinaryCodePortal.__init__(self, root_dict = root_dict)
         del root_dict
@@ -184,14 +174,6 @@ class DataPortal(OrdinaryCodePortal):
             digest_len=0, append_only=False, serialization_format="pkl")
         portal_config_settings = type(self._root_dict)(**portal_config_settings_params)
         self._portal_config_settings = portal_config_settings
-
-        if not (isinstance(p_consistency_checks, Joker)
-                or 0 <= p_consistency_checks <= 1):
-            raise ValueError("p_consistency_checks must be a float in [0,1] "
-                +f"or a Joker, but got {p_consistency_checks}")
-
-        self._auxiliary_config_params_at_init["p_consistency_checks"
-            ] = p_consistency_checks
 
         node_config_prototype = self._root_dict.get_subdict("node_cfg")
         node_config_prototype = (
@@ -228,13 +210,10 @@ class DataPortal(OrdinaryCodePortal):
     def __post_init__(self) -> None:
         """Finalize initialization after __init__ completes across the MRO.
 
-        Ensures that auxiliary configuration parameters are persisted and that
-        the value store is configured according to the portal's
-        p_consistency_checks setting.
+        Ensures that auxiliary configuration parameters are persisted.
         """
         super().__post_init__()
         self._persist_initial_config_params()
-        self._value_store.p_consistency_checks = self.p_consistency_checks
 
 
     def get_params(self) -> dict:
@@ -331,25 +310,10 @@ class DataPortal(OrdinaryCodePortal):
 
         all_params.append(_describe_persistent_characteristic(
             _TOTAL_VALUES_TXT, len(self._value_store)))
-        all_params.append(_describe_runtime_characteristic(
-            _PROBABILITY_OF_CHECKS_TXT, self.p_consistency_checks))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
         return result
-
-
-    @property
-    def p_consistency_checks(self) -> float|None:
-        """Probability of performing consistency checks on value store operations.
-
-        Returns:
-            Float in [0, 1] representing check probability, defaults to 0.0.
-        """
-        p = self._get_portal_config_setting("p_consistency_checks")
-        if p is None:
-            p = 0.0
-        return p
 
 
     def _clear(self) -> None:

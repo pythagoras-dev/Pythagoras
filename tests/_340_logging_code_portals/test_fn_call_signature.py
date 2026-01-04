@@ -16,7 +16,7 @@ def plus(x, y):
 def test_fn_call_signature_attributes(tmpdir,pr):
     # tmpdir = "FN_CALL_SIGNATURE_ATTRIBUTES_" + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            ,p_consistency_checks=pr) as p:
+            ) as p:
         new_plus = logging(excessive_logging=True)(plus)
         for i in range(1):
             ValueAddr(new_plus)

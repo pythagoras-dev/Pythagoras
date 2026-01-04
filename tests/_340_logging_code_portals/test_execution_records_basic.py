@@ -30,7 +30,7 @@ def test_basics(tmpdir):
 def test_basics_no_logging_recalc(tmpdir):
     # tmpdir = 3*"BASICS_EXECUTION_RECORDS_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , p_consistency_checks = 1) as t:
+            ) as t:
 
         @logging(excessive_logging=False)
         def f():
@@ -49,7 +49,7 @@ def test_basics_no_logging_recalc(tmpdir):
 def test_basics_with_logging_recalc(tmpdir):
     # tmpdir = 3*"BASICS_EXECUTION_RECORDS_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , p_consistency_checks = 1) as t:
+            ) as t:
 
         @logging(excessive_logging=True)
         def f():
@@ -109,7 +109,7 @@ def test_total_recalc(tmpdir):
     # tmpdir = 5*"TOTAL_RECALC_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal
             , tmpdir
-            , p_consistency_checks = 1) as t:
+            ) as t:
 
         @logging(excessive_logging=True)
         def f():

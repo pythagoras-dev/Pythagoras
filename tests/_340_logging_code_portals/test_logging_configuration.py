@@ -11,8 +11,8 @@ from pythagoras._340_logging_code_portals import (
 def test_all_defaulta_config(tmpdir):
     # tmpdir = "TOTAL_ALL_DEFAULTS_CONFIG_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , p_consistency_checks=0) as t:
-        assert len(t.portal._portal_config_settings) == 1
+            ) as t:
+        assert len(t.portal._portal_config_settings) == 0
 
         @logging()
         def simple_function():
@@ -20,7 +20,7 @@ def test_all_defaulta_config(tmpdir):
 
         assert simple_function() is None
 
-        assert len(t.portal._portal_config_settings) == 1
+        assert len(t.portal._portal_config_settings) == 0
 
 @pytest.mark.parametrize("f",[True,False,KEEP_CURRENT])
 @pytest.mark.parametrize("p",[True,False,KEEP_CURRENT])

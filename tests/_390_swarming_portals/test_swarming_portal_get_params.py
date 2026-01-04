@@ -23,7 +23,7 @@ from pythagoras import _PortalTester
 # def test_swarming_data_portal_get_params_1(tmpdir):
 #     with _PortalTester(SwarmingPortal
 #             , root_dict = tmpdir
-#             , p_consistency_checks = 0.5
+#             
 #             , max_n_workers = 5) as t:
 #         portal = t.portal
 #         params = portal.get_params()

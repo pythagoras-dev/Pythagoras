@@ -11,7 +11,7 @@ def test_portal(tmpdir):
             root_dict=tmpdir,
             max_n_workers=4)
         description = portal.describe()
-        assert description.shape == (16, 3)
+        assert description.shape == (15, 3)
         assert _get_description_value_by_key(
             description, _MAX_BACKGROUND_WORKERS_TXT) == portal.max_n_workers
 

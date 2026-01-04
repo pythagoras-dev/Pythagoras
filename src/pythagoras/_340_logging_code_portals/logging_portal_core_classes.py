@@ -909,7 +909,6 @@ class LoggingCodePortal(DataPortal):
     _excessive_logging_at_init: bool | Joker
 
     def __init__(self, root_dict:PersiDict|str|None = None
-            , p_consistency_checks: float|Joker = KEEP_CURRENT
             , excessive_logging: bool|Joker = KEEP_CURRENT
             ):
         """Construct a LoggingCodePortal.
@@ -918,8 +917,6 @@ class LoggingCodePortal(DataPortal):
             root_dict: PersiDict instance or filesystem path serving as the
                 storage root. When None, a default in-memory or configured
                 PersiDict is used by the base DataPortal.
-            p_consistency_checks: Probability [0..1] to run consistency checks
-                on storage operations; KEEP_CURRENT inherits existing setting.
             excessive_logging: If True, functions executed via this portal will
                 store detailed artifacts (attempts/results/outputs). If
                 KEEP_CURRENT, the setting is inherited when cloning or
@@ -928,8 +925,7 @@ class LoggingCodePortal(DataPortal):
         Raises:
             TypeError: If excessive_logging is not a bool or Joker.
         """
-        super().__init__(root_dict=root_dict
-            , p_consistency_checks=p_consistency_checks)
+        super().__init__(root_dict=root_dict)
         del root_dict
 
         if not isinstance(excessive_logging,(Joker,bool)):

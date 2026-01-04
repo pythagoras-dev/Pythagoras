@@ -10,10 +10,9 @@ def factorial(n:int) -> int:
     else:
         return n * factorial(n=n-1)
 
-@pytest.mark.parametrize("p",[0, 0.5, 1])
-def test_logging_factorial(tmpdir,p):
+def test_logging_factorial(tmpdir):
     with _PortalTester(LoggingCodePortal
-            , root_dict=tmpdir, p_consistency_checks=p):
+            , root_dict=tmpdir):
         global factorial
         new_factorial = logging()(factorial)
         assert new_factorial(n=5) == 120

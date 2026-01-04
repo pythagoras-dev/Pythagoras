@@ -10,9 +10,8 @@ def factorial(n:int) -> int:
     else:
         return n * factorial(n=n-1)
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_safe_factorial(tmpdir,p):
+def test_safe_factorial(tmpdir):
     with _PortalTester(SafeCodePortal
-            , root_dict=tmpdir, p_consistency_checks=p):
+            , root_dict=tmpdir):
         new_factorial = safe()(factorial)
         assert new_factorial(n=5) == 120

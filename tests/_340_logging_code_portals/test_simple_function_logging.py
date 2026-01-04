@@ -12,7 +12,7 @@ def simple_function_original():
 def test_simple_function_single_call_very_basic(tmpdir):
     # tmpdir = "SIMPLE_FUNCTION_SINGLE_CALL_VERY_BASIC_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , p_consistency_checks=1) as p:
+            ) as p:
         for i in range(3):
             global simple_function
             simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
@@ -41,7 +41,7 @@ def test_simple_function_single_call_very_basic(tmpdir):
 def test_simple_function_single_call(tmpdir,pr):
     # tmpdir = "SIMPLE_FUNCTION_SINGLE_CALL_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir+str(pr)
-            , p_consistency_checks=pr) as p:
+            ) as p:
         for i in range(3):
             global simple_function
             simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
@@ -64,7 +64,7 @@ def test_simple_function_single_call(tmpdir,pr):
 def test_simple_function_single_call_no_logs(tmpdir,pr):
     # tmpdir = "SIMPLE_FUNCTION_SINGLE_CALL_NO_LOGS_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , p_consistency_checks=pr) as p:
+            ) as p:
         global simple_function
         simple_function = logging(excessive_logging=False, portal = p.portal)(simple_function_original)
 
@@ -87,7 +87,7 @@ def test_simple_function_single_call_no_logs(tmpdir,pr):
 def test_simple_function_double_call(tmpdir,pr):
     # tmpdir = "SIMPLE_FUNCTION_DOUBLE_CALL_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir+str(pr)
-            , p_consistency_checks=pr) as p:
+            ) as p:
         for i in range(1,5):
             global simple_function
             simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)

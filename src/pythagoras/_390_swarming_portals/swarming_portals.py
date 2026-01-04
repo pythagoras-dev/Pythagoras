@@ -81,7 +81,6 @@ class SwarmingPortal(PureCodePortal):
 
     def __init__(self
                  , root_dict: PersiDict | str | None = None
-                 , p_consistency_checks:float|Joker = KEEP_CURRENT
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  , max_n_workers: int|Joker|None = KEEP_CURRENT
                  , min_n_workers: int|Joker|None = KEEP_CURRENT
@@ -93,7 +92,6 @@ class SwarmingPortal(PureCodePortal):
 
         Args:
             root_dict: Persistent storage backing portal state, or None for default.
-            p_consistency_checks: Probability of performing internal validation checks.
             excessive_logging: Whether to enable verbose diagnostic logging.
             max_n_workers: Upper bound on background workers. Actual count may be
                 lower based on available CPUs and RAM.
@@ -115,7 +113,6 @@ class SwarmingPortal(PureCodePortal):
         """
         PureCodePortal.__init__(self
             , root_dict=root_dict
-            , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
         if not isinstance(max_n_workers, (int, Joker, type(None))):

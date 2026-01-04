@@ -10,12 +10,11 @@ def fibonacci(n: int) -> int:
     else:
         return fibonacci(n=n-1) + fibonacci(n=n-2)
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_aut_fibonacci(tmpdir,p):
+def test_aut_fibonacci(tmpdir):
     with _PortalTester(
             AutonomousCodePortal
             , root_dict=tmpdir
-            , p_consistency_checks=p
+            
             ) as t:
         global fibonacci
         fibonacci_a = autonomous()(fibonacci)

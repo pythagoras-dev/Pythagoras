@@ -29,7 +29,7 @@ def test_odd_even_no_decorators_logging(tmpdir):
 def test_odd_even_two_decorators_autonomous(tmpdir,pr):
     # tmpdir = "ODD_EVEN_TWO_DECORATORS_LOGGING_" + str(int(time.time()))
     with _PortalTester(AutonomousCodePortal, root_dict=tmpdir
-            ,p_consistency_checks=pr) as l:
+            ) as l:
         global isEven, isOdd
         N=5
         for i in range(N):
@@ -57,7 +57,7 @@ def test_odd_even_two_decorators_autonomous(tmpdir,pr):
 def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir,pr):
     # tmpdir = "ODD_EVEN_TWO_DECORATORS_LOGGING_" + str(int(time.time()))
     with _PortalTester(AutonomousCodePortal, root_dict=tmpdir
-            ,p_consistency_checks=pr) as l:
+            ) as l:
         global isEven, isOdd
         N=5
         for i in range(N):

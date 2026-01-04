@@ -19,13 +19,12 @@ def get_factorial_address(n:int, dir):
         address._invalidate_cache()
         return address
 
-@pytest.mark.parametrize("p",[0, 0.5, 1])
-def test_swarming_factorial(tmpdir,p):
+def test_swarming_factorial(tmpdir):
     # tmpdir = "FACTORIAL_SWARMING_TEST_"+ str(int(time.time()))
     address = get_factorial_address(n=5, dir=tmpdir)
     with _PortalTester(SwarmingPortal
             , tmpdir
             , max_n_workers=2
-            , p_consistency_checks=p) as t:
+            ) as t:
         address._portal = t.portal
         assert address.get() == 120

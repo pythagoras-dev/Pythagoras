@@ -33,7 +33,6 @@ class SafeCodePortal(LoggingCodePortal):
 
     def __init__(self
                  , root_dict: PersiDict|str|None = None
-                 , p_consistency_checks: float|Joker = KEEP_CURRENT
                  , excessive_logging: bool|Joker = KEEP_CURRENT
                  ):
         """Initialize a SafeCodePortal.
@@ -43,16 +42,12 @@ class SafeCodePortal(LoggingCodePortal):
                 underlying data portal for storing execution artifacts. If a
                 string is provided, it is treated as a path on disk. If None,
                 an in-memory structure may be used (depending on configuration).
-            p_consistency_checks: Probability in [0, 1] of running additional
-                consistency checks on persistent state mutations. Use
-                KEEP_CURRENT to inherit the active setting from parent context.
             excessive_logging: Whether to enable verbose logging of execution
                 attempts, results, outputs and events. Use KEEP_CURRENT to
                 inherit the active setting from parent context.
         """
         LoggingCodePortal.__init__(self
             , root_dict=root_dict
-            , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
 

@@ -12,12 +12,11 @@ def double(x):
   # sleep(1)
   return x*2
 
-@pytest.mark.parametrize("p",[0, 0.5, 1])
-def test_pure_double_pandas_dataframe(tmpdir,p):
+def test_pure_double_pandas_dataframe(tmpdir):
     # tmpdir = 2*"PURE_DOUBLE_PANDAS_DATAFRAME_" + str(int(time.time()))
     with _PortalTester(PureCodePortal
             , tmpdir
-            , p_consistency_checks = p) as t:
+            ) as t:
         global double
         double_pure = pure()(double)
         df = pd.DataFrame(np.random.randn(10, 20))

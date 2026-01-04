@@ -63,20 +63,16 @@ class PureCodePortal(ProtectedCodePortal):
 
     def __init__(self
             , root_dict: PersiDict | str | None = None
-            , p_consistency_checks: float | Joker = KEEP_CURRENT
             , excessive_logging: bool | Joker = KEEP_CURRENT
             ):
         """Initialize a PureCodePortal instance.
 
         Args:
             root_dict: Backing persistent dictionary or filesystem path.
-            p_consistency_checks: Probability (0.0-1.0) of re-verifying cached
-                results for consistency, or KEEP_CURRENT to inherit from parent.
             excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
         """
         ProtectedCodePortal.__init__(self
             , root_dict=root_dict
-            , p_consistency_checks=p_consistency_checks
             , excessive_logging=excessive_logging)
 
         results_dict_prototype = self._root_dict.get_subdict(
@@ -98,8 +94,6 @@ class PureCodePortal(ProtectedCodePortal):
     def __post_init__(self) -> None:
         """Finalize initialization after all __init__ methods complete."""
         super().__post_init__()
-        p = self.p_consistency_checks
-        self._execution_results._p_consistency_checks = p
 
 
     def describe(self) -> pd.DataFrame:
@@ -257,7 +251,6 @@ class PureFn(ProtectedFn):
         """Execute the function and return the result value.
 
         Returns the cached result if available, otherwise executes and caches.
-        Consistency checks may run probabilistically based on portal settings.
 
         Args:
             **kwargs: Keyword arguments for the function call.
@@ -270,27 +263,13 @@ class PureFn(ProtectedFn):
             packed_kwargs = KwArgs(**kwargs).pack()
             output_address = PureFnExecutionResultAddr(
                 fn=self, arguments=packed_kwargs)
-            random_x = portal.entropy_infuser.random()
-            p_consistency_checks = portal.p_consistency_checks
-            conduct_consistency_checks = False
             if output_address.ready:
-                if p_consistency_checks in [None,0]:
-                    return output_address.get()
-                if not random_x < p_consistency_checks:
-                    return output_address.get()
-                conduct_consistency_checks = True
-            else:
-                output_address.request_execution()
+                return output_address.get()
+            output_address.request_execution()
             unpacked_kwargs = KwArgs(**packed_kwargs).unpack()
             result = super().execute(**unpacked_kwargs)
             result_addr = ValueAddr(result)
-            try:
-                if conduct_consistency_checks:
-                    portal._execution_results._p_consistency_checks = 1
-                portal._execution_results[output_address] = result_addr
-            finally:
-                portal._execution_results._p_consistency_checks = (
-                    p_consistency_checks)
+            portal._execution_results[output_address] = result_addr
             output_address.drop_execution_request()
             return result
 

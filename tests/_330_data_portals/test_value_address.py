@@ -17,7 +17,7 @@ def test_value_address_basic(tmpdir,p):
     # tmpdir = 3*"VALUE_ADDRESS_BASIC_" + str(int(time.time())) + "_" + str(p)
     counter = 0
 
-    with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p) as t:
+    with _PortalTester(DataPortal,tmpdir) as t:
         portal = t.portal
         for v in values_to_test:
             assert len(get_current_portal()._value_store) == counter
@@ -26,7 +26,7 @@ def test_value_address_basic(tmpdir,p):
             counter += 1
             assert len(get_current_portal()._value_store) == counter
 
-    with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
+    with _PortalTester(DataPortal,tmpdir):
         assert len(get_current_portal()._value_store) == counter
 
 
@@ -34,7 +34,7 @@ def test_value_address_basic(tmpdir,p):
 def test_value_address_with_typechecks(tmpdir,p):
     # tmpdir = 2*"VALUE_ADDRESS_WITH_TYPECHECKS_" + str(int(time.time())) + "_" + str(p)
 
-    with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p) as t:
+    with _PortalTester(DataPortal,tmpdir) as t:
         for v in values_to_test:
             assert ValueAddr(v).get(expected_type=type(v)) == v
             assert ValueAddr(v).get(expected_type=Any) == v
@@ -55,11 +55,10 @@ def test_value_address_with_typechecks(tmpdir,p):
 
 
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_nested_value_addrs(tmpdir,p):
+def test_nested_value_addrs(tmpdir):
     counter = 0
 
-    with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
+    with _PortalTester(DataPortal,tmpdir):
         for v in values_to_test:
             assert len(get_current_portal()._value_store) == counter
             assert ValueAddr([ValueAddr(v)]).get()[0].get() == v
@@ -67,16 +66,15 @@ def test_nested_value_addrs(tmpdir,p):
             counter += 2
             assert len(get_current_portal()._value_store) == counter
 
-    with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
+    with _PortalTester(DataPortal,tmpdir):
         assert len(get_current_portal()._value_store) == counter
 
 
-@pytest.mark.parametrize("p",[0,0.5,1])
-def test_value_address_constructor_with_two_portals(tmpdir,p):
+def test_value_address_constructor_with_two_portals(tmpdir):
 
-    with _PortalTester(DataPortal,tmpdir, p_consistency_checks=p):
-        portal1 =DataPortal(tmpdir + "/t1", p_consistency_checks=p)
-        portal2 =DataPortal(tmpdir + "/t2", p_consistency_checks=p)
+    with _PortalTester(DataPortal,tmpdir):
+        portal1 =DataPortal(tmpdir + "/t1")
+        portal2 =DataPortal(tmpdir + "/t2")
 
         with portal1:
             addr1_10 = ValueAddr(10)
