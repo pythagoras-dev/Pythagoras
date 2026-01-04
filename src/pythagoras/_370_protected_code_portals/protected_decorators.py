@@ -86,7 +86,7 @@ class protected(autonomous):
             ProtectedFn: A wrapper that performs pre/post validation and then
             executes the function.
         """
-        ensure_single_thread()
+        self._restrict_to_single_thread()
         wrapper = ProtectedFn(fn
                               , portal=self._portal
                               , pre_validators=self._pre_validators

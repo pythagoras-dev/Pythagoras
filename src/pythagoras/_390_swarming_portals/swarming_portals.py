@@ -24,7 +24,6 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 from mixinforge import *
 
 from .._210_basic_portals import get_all_known_portals
-from .._210_basic_portals.single_thread_enforcer import ensure_single_thread
 from .._370_protected_code_portals import (VALIDATION_SUCCESSFUL,
                                            get_unused_ram_mb, get_unused_cpu_cores)
 from .._210_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
@@ -549,7 +548,7 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
     Args:
         portal_init_jsparams: Serialized portal configuration with ancestor metadata.
     """
-    ensure_single_thread()
+
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
@@ -590,7 +589,6 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
     Args:
         portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
-    ensure_single_thread()
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
@@ -618,7 +616,6 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
     Args:
         portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
-    ensure_single_thread()
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")

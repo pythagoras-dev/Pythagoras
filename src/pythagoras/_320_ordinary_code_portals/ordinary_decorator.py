@@ -7,11 +7,12 @@ constraints (keyword-only arguments, no defaults, etc.).
 
 from typing import Callable, Any
 
+from mixinforge import SingleThreadEnforcerMixin
+
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
-from .._210_basic_portals import ensure_single_thread
 
 
-class ordinary:
+class ordinary(SingleThreadEnforcerMixin):
     """A decorator that converts a Python function into an OrdinaryFn object.
 
     Transforms regular Python functions into Pythagoras OrdinaryFn wrappers,
@@ -37,7 +38,7 @@ class ordinary:
         Args:
             portal: Optional portal to associate with wrapped functions.
         """
-        ensure_single_thread()
+        self._restrict_to_single_thread()
         if not (portal is None or isinstance(portal, OrdinaryCodePortal)):
             raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {type(portal).__name__}")
         self._portal = portal
@@ -51,7 +52,7 @@ class ordinary:
         Returns:
             OrdinaryFn wrapper for the provided function.
         """
-        ensure_single_thread()
+        self._restrict_to_single_thread()
         wrapper = OrdinaryFn(fn, portal=self._portal)
         return wrapper
 

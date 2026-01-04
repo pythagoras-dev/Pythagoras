@@ -40,7 +40,6 @@ of decoration, while runtime checks happen at the time of function execution.
 """
 from typing import Callable
 
-from .._210_basic_portals import ensure_single_thread
 from .._350_safe_code_portals import safe
 from .autonomous_portal_core_classes import AutonomousFn, AutonomousCodePortal
 from persidict import Joker, KEEP_CURRENT
@@ -98,7 +97,7 @@ class autonomous(safe):
             AutonomousFn: A wrapper that enforces autonomy at decoration and at
             execution time, with any fixed keyword arguments pre-applied.
         """
-        ensure_single_thread()
+        self._restrict_to_single_thread()
         wrapper = AutonomousFn(fn
             ,portal=self._portal
             ,fixed_kwargs=self._fixed_kwargs

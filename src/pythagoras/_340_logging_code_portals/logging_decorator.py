@@ -9,7 +9,6 @@ from typing import Callable
 
 from persidict import Joker, KEEP_CURRENT
 
-from .._210_basic_portals import ensure_single_thread
 from .._330_data_portals import storable
 from .logging_portal_core_classes import LoggingCodePortal, LoggingFn
 
@@ -51,7 +50,7 @@ class logging(storable):
         Returns:
             LoggingFn: The logging-enabled wrapper for the given function.
         """
-        ensure_single_thread()
+        self._restrict_to_single_thread()
         wrapper = LoggingFn(fn
             , excessive_logging=self._excessive_logging
             , portal=self._portal)

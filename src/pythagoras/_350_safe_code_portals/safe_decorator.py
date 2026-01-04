@@ -2,7 +2,6 @@ from typing import Callable
 
 from persidict import Joker, KEEP_CURRENT
 
-from .._210_basic_portals.single_thread_enforcer import ensure_single_thread
 from .._340_logging_code_portals import logging
 from .safe_portal_core_classes import SafeFn, SafeCodePortal
 
@@ -48,7 +47,7 @@ class safe(logging):
             SafeFn: The wrapped function that can be executed via a portal and
             will record logging information.
         """
-        ensure_single_thread()
+        self._restrict_to_single_thread()
         wrapper = SafeFn(fn
             , portal=self._portal
             , excessive_logging=self._excessive_logging)
