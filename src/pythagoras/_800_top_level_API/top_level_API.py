@@ -1,7 +1,7 @@
 import os
 from urllib.parse import urlparse
 
-from .._390_swarming_portals import SwarmingPortal
+from .._410_swarming_portals import SwarmingPortal
 
 
 def _is_valid_url(url: str) -> bool:

@@ -21,14 +21,14 @@ latency-sensitive workflows.
 
 from ._210_basic_portals import *
 from ._210_basic_portals import _PortalTester
-from ._320_ordinary_code_portals import *
-from ._330_data_portals import *
-from ._340_logging_code_portals import *
-from ._350_safe_code_portals import *
-from ._360_autonomous_code_portals import *
-from ._370_protected_code_portals import *
-from ._380_pure_code_portals import *
-from ._390_swarming_portals import *
+from ._310_ordinary_code_portals import *
+from ._220_data_portals import *
+from ._320_logging_code_portals import *
+from ._330_safe_code_portals import *
+from ._340_autonomous_code_portals import *
+from ._350_protected_code_portals import *
+from ._360_pure_code_portals import *
+from ._410_swarming_portals import *
 from ._800_top_level_API import *
 from ._110_supporting_utilities import *
 
