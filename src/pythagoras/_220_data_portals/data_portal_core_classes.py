@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Type
+
 from persidict import replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
@@ -7,8 +9,7 @@ from .._210_basic_portals import *
 from .._110_supporting_utilities import get_hash_signature, get_node_signature
 
 from .._210_basic_portals.basic_portal_core_classes import (
-    _describe_persistent_characteristic
-    , _describe_runtime_characteristic)
+    _describe_persistent_characteristic)
 from persidict import WriteOnceDict
 
 T = TypeVar('T')
@@ -148,6 +149,7 @@ class DataPortal(BasicPortal):
 
     _value_store: WriteOnceDict | None
     _portal_config_settings: PersiDict | None
+    _node_config_settings: PersiDict | None
     _portal_config_settings_cache: dict
 
     _auxiliary_config_params_at_init: dict[str, Any] | None
@@ -922,7 +924,7 @@ class ValueAddr(HashAddr):
                      , descriptor: str
                      , hash_signature: str
                      , assert_readiness: bool = True
-                     ) -> ValueAddr:
+                     ) -> Self:
         """(Re)construct address from text representations of descriptor and hash"""
 
         address = super().from_strings(
