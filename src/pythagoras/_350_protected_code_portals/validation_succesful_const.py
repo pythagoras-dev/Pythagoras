@@ -1,7 +1,7 @@
-from persidict.singletons import Singleton
+from mixinforge import SingletonMixin
 
 
-class ValidationSuccessFlag(Singleton):
+class ValidationSuccessFlag(SingletonMixin):
     """Marker singleton indicating that validation has succeeded.
 
     This lightweight class is used as a unique sentinel object that signals a
