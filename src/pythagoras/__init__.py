@@ -21,8 +21,9 @@ latency-sensitive workflows.
 
 from ._210_basic_portals import *
 from ._210_basic_portals import _PortalTester
-from ._310_ordinary_code_portals import *
 from ._220_data_portals import *
+from ._230_configurable_portals import *
+from ._310_ordinary_code_portals import *
 from ._320_logging_code_portals import *
 from ._330_safe_code_portals import *
 from ._340_autonomous_code_portals import *

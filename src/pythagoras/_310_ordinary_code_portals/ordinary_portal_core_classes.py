@@ -16,7 +16,8 @@ from persidict import PersiDict, SafeStrTuple
 
 from .function_error_exception import FunctionError
 from .._210_basic_portals import PortalAwareClass
-from .._220_data_portals import DataPortal, ValueAddr, StorableClass
+from .._220_data_portals import DataPortal, ValueAddr
+from .._230_configurable_portals import ConfigurablePortal, ConfigurableStorableClass
 from .code_normalizer import _get_normalized_fn_source_code_str_impl
 from .function_processing import get_function_name_from_source
 from .._110_supporting_utilities import get_hash_signature
@@ -52,7 +53,7 @@ def get_normalized_fn_source_code_str(a_func: OrdinaryFn | Callable | str) -> st
 
 _REGISTERED_FUNCTIONS_TXT = "Registered functions"
 
-class OrdinaryCodePortal(DataPortal):
+class OrdinaryCodePortal(ConfigurablePortal):
     """Portal that manages OrdinaryFn instances and their runtime context.
 
     The portal is responsible for tracking linked OrdinaryFn objects and
@@ -140,7 +141,7 @@ class OrdinaryCodePortal(DataPortal):
         return result
 
 
-class OrdinaryFn(StorableClass):
+class OrdinaryFn(ConfigurableStorableClass):
     """A wrapper around an ordinary function that enables controlled execution.
 
     OrdinaryFn provides a normalized, introspectable representation of regular
@@ -184,7 +185,7 @@ class OrdinaryFn(StorableClass):
             FunctionError: If the function violates ordinarity rules.
             SyntaxError: If source cannot be parsed.
         """
-        StorableClass.__init__(self, portal=portal)
+        ConfigurableStorableClass.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
             self.__setstate__(deepcopy(fn.__getstate__()))
             self._init_finished = False
@@ -458,14 +459,14 @@ class OrdinaryFn(StorableClass):
         return ValueAddr(self)
 
 
-    def _first_visit_to_portal(self, portal: DataPortal) -> None:
+    def _first_visit_to_portal(self, portal: ConfigurablePortal) -> None:
         """Register this function in a new portal and ensure addr is created."""
         super()._first_visit_to_portal(portal)
         with portal:
             _ = self.addr
 
 
-    def _get_config_setting(self, key: SafeStrTuple | str, portal: DataPortal) -> Any:
+    def _get_config_setting(self, key: SafeStrTuple | str, portal: ConfigurablePortal) -> Any:
         """Retrieve a configuration setting for this function from a portal.
 
         Checks portal-wide settings first, then falls back to function-specific
@@ -473,7 +474,7 @@ class OrdinaryFn(StorableClass):
 
         Args:
             key: Configuration key to retrieve.
-            portal: The DataPortal to query.
+            portal: The ConfigurablePortal to query.
 
         Returns:
             The configuration value, or None if not found.
@@ -498,7 +499,7 @@ class OrdinaryFn(StorableClass):
     def _set_config_setting(self
             , key: SafeStrTuple|str
             , value: Any
-            , portal: DataPortal) -> None:
+            , portal: ConfigurablePortal) -> None:
         """Set a function-specific configuration setting in a portal.
 
         Uses addr to create a function-specific key.
@@ -506,7 +507,7 @@ class OrdinaryFn(StorableClass):
         Args:
             key: Configuration key to set.
             value: Value to store.
-            portal: The DataPortal to store the setting in.
+            portal: The ConfigurablePortal to store the setting in.
 
         Raises:
             TypeError: If key is not a SafeStrTuple or string.

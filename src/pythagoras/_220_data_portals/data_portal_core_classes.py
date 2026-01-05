@@ -6,7 +6,7 @@ from persidict import replace_unsafe_chars, DELETE_CURRENT
 from persidict import KEEP_CURRENT, Joker
 
 from .._210_basic_portals import *
-from .._110_supporting_utilities import get_hash_signature, get_node_signature
+from .._110_supporting_utilities import get_hash_signature
 
 from .._210_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
@@ -149,11 +149,6 @@ class DataPortal(BasicPortal):
     """
 
     _value_store: WriteOnceDict | None
-    _portal_config_settings: PersiDict | None
-    _node_config_settings: PersiDict | None
-    _portal_config_settings_cache: dict
-
-    _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self
             , root_dict: PersiDict|str|None = None
@@ -167,28 +162,6 @@ class DataPortal(BasicPortal):
         """
         BasicPortal.__init__(self, root_dict = root_dict)
         del root_dict
-        self._auxiliary_config_params_at_init = dict()
-        self._portal_config_settings_cache = dict()
-
-        portal_config_settings_prototype = self._root_dict.get_subdict("portal_cfg")
-        portal_config_settings_params = portal_config_settings_prototype.get_params()
-        portal_config_settings_params.update(
-            digest_len=0, append_only=False, serialization_format="pkl")
-        portal_config_settings = type(self._root_dict)(**portal_config_settings_params)
-        self._portal_config_settings = portal_config_settings
-
-        node_config_prototype = self._root_dict.get_subdict("node_cfg")
-        node_config_prototype = (
-            node_config_prototype.get_subdict(get_node_signature()[:8])                              )
-        node_config_params = node_config_prototype.get_params()
-        node_config_params.update(
-            digest_len=0, append_only=False, serialization_format="pkl")
-        node_config_settings = type(self._root_dict)(**node_config_params)
-        self._node_config_settings = node_config_settings
-
-
-        #TODO: refactor
-        self._local_node_store = node_config_settings
 
         value_store_prototype = self._root_dict.get_subdict("value_store")
         value_store_params = value_store_prototype.get_params()
@@ -197,113 +170,6 @@ class DataPortal(BasicPortal):
         value_store = type(self._root_dict)(**value_store_params)
         value_store = WriteOnceDict(value_store, 0)
         self._value_store = value_store
-
-
-    def _persist_initial_config_params(self) -> None:
-        """Persist initialization configuration parameters to the portal's config store.
-
-        Writes all auxiliary configuration parameters that were provided during
-        initialization to the persistent config store.
-        """
-        for key, value in self._auxiliary_config_params_at_init.items():
-            self._set_portal_config_setting(key, value)
-
-
-    def __post_init__(self) -> None:
-        """Finalize initialization after __init__ completes across the MRO.
-
-        Ensures that auxiliary configuration parameters are persisted.
-        """
-        super().__post_init__()
-        self._persist_initial_config_params()
-
-
-    def get_params(self) -> dict:
-        """Return the portal's configuration parameters.
-
-        Returns:
-            dict: A sorted dictionary of base parameters augmented with
-            auxiliary config entries defined at initialization.
-        """
-        params = super().get_params()
-        params.update(self._auxiliary_config_params_at_init)
-        sorted_params = sort_dict_by_keys(params)
-        return sorted_params
-
-
-    @property
-    def auxiliary_param_names(self) -> set[str]:
-        """Names of all auxiliary configuration parameters for this portal.
-
-        Returns:
-            Set of parameter names including base parameters and portal-specific
-            auxiliary configuration parameters.
-        """
-        names = super().auxiliary_param_names
-        names.update(self._auxiliary_config_params_at_init)
-        return names
-
-
-    def _get_portal_config_setting(self, key: SafeStrTuple | str) -> Any:
-        """Get a configuration setting from the portal's config store.
-
-        Retrieves settings from cache if available, otherwise loads from persistent
-        storage and caches the result.
-
-        Args:
-            key: Configuration key to retrieve.
-
-        Returns:
-            The configuration value, or None if not found.
-
-        Raises:
-            TypeError: If key is not a SafeStrTuple or string.
-        """
-        if not isinstance(key, (str,SafeStrTuple)):
-            raise TypeError("key must be a SafeStrTuple or a string")
-
-        if key in self._portal_config_settings_cache:
-            value = self._portal_config_settings_cache[key]
-        elif key in self._portal_config_settings:
-            value = self._portal_config_settings[key]
-            self._portal_config_settings_cache[key] = value
-        else:
-            value = None
-            self._portal_config_settings_cache[key] = None
-        return value
-
-
-    def _set_portal_config_setting(self, key: SafeStrTuple | str, value: Any) -> None:
-        """Set a configuration setting in the portal's config store.
-
-        Persists the setting to storage and updates the cache. Handles special
-        Joker values: KEEP_CURRENT leaves existing value unchanged, DELETE_CURRENT
-        removes the setting.
-
-        Args:
-            key: Configuration key to set.
-            value: Value to store, or a Joker for special behavior.
-
-        Raises:
-            TypeError: If key is not a SafeStrTuple or string.
-        """
-        if not isinstance(key, (str,SafeStrTuple)):
-            raise TypeError("key must be a SafeStrTuple or a string")
-
-        if value is KEEP_CURRENT:
-            return
-
-        self._portal_config_settings[key] = value
-        self._portal_config_settings_cache[key] = value
-
-        if value is DELETE_CURRENT:
-            del self._portal_config_settings_cache[key]
-
-
-    def _invalidate_cache(self):
-        """Invalidate the portal's cache"""
-        super()._invalidate_cache()
-        self._portal_config_settings_cache = dict()
 
 
     def describe(self) -> pd.DataFrame:
@@ -324,22 +190,20 @@ class DataPortal(BasicPortal):
         The portal must not be used after this method is called.
         """
         super()._clear()
-        self._auxiliary_config_params_at_init = None
         self._value_store = None
-        self._portal_config_settings = None
 
 
 class StorableClass(PortalAwareClass):
-    """A portal-aware class with config management capabilities.
+    """Minimal portal-aware class for data storage.
 
-    StorableClass provides configuration management for any portal-aware object.
-    It stores auxiliary configuration parameters and provides methods to get/set
-    config settings in the portal. This class does NOT provide content-addressable
-    storage (.addr) - that functionality is added by subclasses that have
-    sufficient structure to be hashed (like OrdinaryFn).
+    StorableClass is a minimal base class for portal-aware objects that work
+    with DataPortal. For configuration management capabilities, see
+    ConfigurableStorableClass in the _230_configurable_portals module.
+
+    This class does NOT provide content-addressable storage (.addr) - that
+    functionality is added by subclasses that have sufficient structure to be
+    hashed (like OrdinaryFn).
     """
-
-    _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self, portal: DataPortal | None = None):
         """Create a storable portal-aware object.
@@ -348,87 +212,23 @@ class StorableClass(PortalAwareClass):
             portal: Optional DataPortal to bind to.
         """
         PortalAwareClass.__init__(self, portal=portal)
-        self._auxiliary_config_params_at_init = dict()
-
-
-    def _first_visit_to_portal(self, portal: DataPortal) -> None:
-        super()._first_visit_to_portal(portal)
-        self._persist_initial_config_params(portal)
-
-
-    def _persist_initial_config_params(self, portal:DataPortal) -> None:
-        """Persist configuration parameters to a portal.
-
-        Args:
-            portal: The DataPortal to store configuration settings in.
-        """
-        for key, value in self._auxiliary_config_params_at_init.items():
-            self._set_config_setting(key, value, portal)
-
 
     @property
     def portal(self) -> DataPortal:
-        return super().portal
-
-
-    def _get_config_setting(self, key: SafeStrTuple | str, portal:DataPortal) -> Any:
-        """Retrieve a configuration setting from a portal.
-
-        Checks portal-wide settings first, then falls back to object-specific
-        settings if available.
-
-        Args:
-            key: Configuration key to retrieve.
-            portal: The DataPortal to query.
+        """The DataPortal associated with this object.
 
         Returns:
-            The configuration value, or None if not found.
-
-        Raises:
-            TypeError: If key is not a SafeStrTuple or string.
+            DataPortal: The portal used by this object's methods.
         """
-        if not isinstance(key, (str,SafeStrTuple)):
-            raise TypeError("key must be a SafeStrTuple or a string")
-
-        portal_wide_value = portal._get_portal_config_setting(key)
-        if portal_wide_value is not None:
-            return portal_wide_value
-
-        # For object-specific settings, we just use the key directly
-        # Subclasses with .addr can override this to use addr-based keys
-        object_specific_value = portal._get_portal_config_setting(key)
-
-        return object_specific_value
-
-
-    def _set_config_setting(self
-            , key: SafeStrTuple|str
-            , value: Any
-            , portal:DataPortal) -> None:
-        """Set a configuration setting in a portal.
-
-        Args:
-            key: Configuration key to set.
-            value: Value to store.
-            portal: The DataPortal to store the setting in.
-
-        Raises:
-            TypeError: If key is not a SafeStrTuple or string.
-        """
-        if not isinstance(key, (SafeStrTuple, str)):
-            raise TypeError("key must be a SafeStrTuple or a string")
-        portal._set_portal_config_setting(key, value)
-
-
-    def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
-        super().__setstate__(state)
-        self._auxiliary_config_params_at_init = dict()
-
+        return super().portal
 
     def __getstate__(self):
         """This method is called when the object is pickled."""
         return super().__getstate__()
+
+    def __setstate__(self, state):
+        """This method is called when the object is unpickled."""
+        super().__setstate__(state)
 
 
 class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
