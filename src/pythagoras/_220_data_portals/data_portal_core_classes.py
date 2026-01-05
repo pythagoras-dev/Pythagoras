@@ -11,6 +11,7 @@ from .._110_supporting_utilities import get_hash_signature, get_node_signature
 from .._210_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
 from persidict import WriteOnceDict
+from .portal_tracker import PortalTracker
 
 T = TypeVar('T')
 
@@ -624,7 +625,7 @@ class ValueAddr(HashAddr):
         - The .ready property checks value availability across all known portals
         - The .get() method retrieves value from any known portal that contains it
     """
-    _containing_portals_fngpts: set[PortalStrFingerprint]
+    _containing_portals_fngpts: PortalTracker
 
     def __init__(self, data: Any, store: bool = True):
         """Create a ValueAddr for an object.
@@ -639,7 +640,7 @@ class ValueAddr(HashAddr):
             ValueError: If data is an uninitialized object (has _init_finished=False).
             TypeError: If data is a HashAddr (must use get_ValueAddr() instead).
         """
-        self._containing_portals_fngpts = set()
+        self._containing_portals_fngpts = PortalTracker()
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
@@ -688,7 +689,7 @@ class ValueAddr(HashAddr):
 
     def _invalidate_cache(self):
         """Invalidate the object's attribute cache."""
-        self._containing_portals_fngpts = set()
+        self._containing_portals_fngpts = PortalTracker()
         super()._invalidate_cache()
 
 
@@ -703,16 +704,15 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _noncontaining_portals_fngpts(self) -> set[PortalStrFingerprint]:
-        """Fingerprints of portals not yet known to contain this value.
+    def _noncontaining_portals_fngpts(self) -> PortalTracker:
+        """Portals not yet known to contain this value.
 
         Returns:
-            Set of portal fingerprints that haven't been checked or confirmed
+            PortalTracker containing portals that haven't been checked or confirmed
             not to contain this value.
         """
-        fingerprints = get_all_known_data_portal_fingerprints()
-        fingerprints -= self._containing_portals_fngpts
-        return fingerprints
+        all_portals = PortalTracker(get_all_known_data_portal_fingerprints())
+        return all_portals - self._containing_portals_fngpts
 
 
 
@@ -839,11 +839,10 @@ class ValueAddr(HashAddr):
         current_portal = get_current_data_portal()
         current_portal_fngpt = current_portal.fingerprint
 
-        for other_portal_fgrpt in self._noncontaining_portals_fngpts:
-            other_portal = get_data_portal_by_fingerprint(other_portal_fgrpt)
+        for other_portal in self._noncontaining_portals_fngpts:
             try:
                 data = other_portal._value_store[self]
-                self._containing_portals_fngpts.add(other_portal_fgrpt)
+                self._containing_portals_fngpts.add(other_portal.fingerprint)
                 current_portal._value_store[self] = data
                 self._containing_portals_fngpts.add(current_portal_fngpt)
                 self._set_cached_properties(value=data)
@@ -916,7 +915,7 @@ class ValueAddr(HashAddr):
         """
         self._invalidate_cache()
         self.strings = state["strings"]
-        self._containing_portals_fngpts = set()
+        self._containing_portals_fngpts = PortalTracker()
 
 
     @classmethod
@@ -931,7 +930,7 @@ class ValueAddr(HashAddr):
             descriptor=descriptor
             , hash_signature=hash_signature
             , assert_readiness=False)
-        address._containing_portals_fngpts = set()
+        address._containing_portals_fngpts = PortalTracker()
         if assert_readiness:
             if not address.ready:
                 raise ValueError("Address is not ready for retrieving data")
