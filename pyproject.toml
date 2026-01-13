@@ -73,3 +73,20 @@ aws = [
 nvidia = [
     "nvidia-ml-py"
 ]
+
+[tool.pytest.ini_options]
+addopts = [
+    "-ra",                    # Show summary of all test outcomes
+    "--strict-markers",       # Raise error on unknown markers
+    "--strict-config",        # Raise error on config issues
+    "--showlocals",           # Show local variables in tracebacks
+    "--verbose",              # Verbose output
+    "--cache-clear",          # Clear cache before each run
+]
+
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_action.py"]
+markers = [
+    """live_actions: marks tests as live actions that operate on the actual project (deselect with '-m \"not live_actions\"')""",
+]
+

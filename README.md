@@ -247,6 +247,19 @@ pip install pythagoras
 * [nvidia-ml-py](https://pypi.org/project/nvidia-ml-py/)
 * [uv](https://docs.astral.sh/uv/)
 
+
+## Project Statistics
+
+<!-- MIXINFORGE_STATS_START -->
+| Metric | Main code | Unit Tests | Total |
+|--------|-----------|------------|-------|
+| Lines Of Code (LOC) | 11536 | 16326 | 27862 |
+| Source Lines Of Code (SLOC) | 4499 | 10013 | 14512 |
+| Classes | 56 | 46 | 102 |
+| Functions / Methods | 484 | 1334 | 1818 |
+| Files | 66 | 225 | 291 |
+<!-- MIXINFORGE_STATS_END -->
+
 ## Contributing
 
 Interested in contributing to Pythagoras? Please see our [Contributing Guidelines](https://github.com/pythagoras-dev/pythagoras/blob/master/CONTRIBUTING.md).
