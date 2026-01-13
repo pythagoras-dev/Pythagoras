@@ -56,9 +56,9 @@ dev = [
     "persidict[dev]",
     "numpy",
     "scipy",
-    "torch",
+#    "torch",
     "keras",
-    "tensorflow",
+#    "tensorflow",
     "boto3",
     "moto",
     "pytest"
