@@ -11,7 +11,6 @@ from .._110_supporting_utilities import get_hash_signature
 from .._210_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
 from persidict import WriteOnceDict
-from .portal_tracker import PortalTracker
 
 T = TypeVar('T')
 
