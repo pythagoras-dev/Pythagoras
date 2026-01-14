@@ -38,7 +38,11 @@ PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
-class BasicPortal(NotPicklableMixin, ParameterizableMixin, SingleThreadEnforcerMixin, CacheablePropertiesMixin, metaclass = GuardedInitMeta):
+class BasicPortal(NotPicklableMixin,
+                  ParameterizableMixin,
+                  SingleThreadEnforcerMixin,
+                  CacheablePropertiesMixin,
+                  metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -70,10 +74,9 @@ class BasicPortal(NotPicklableMixin, ParameterizableMixin, SingleThreadEnforcerM
             root_dict: Root dictionary for persistent storage, path to storage location,
                 or None for default location.
         """
-        self._restrict_to_single_thread()
+        super().__init__()
         self._init_finished = False
         self._entropy_infuser = random.Random()
-        ParameterizableMixin.__init__(self)
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
         if not isinstance(root_dict, PersiDict):
@@ -211,7 +214,6 @@ class BasicPortal(NotPicklableMixin, ParameterizableMixin, SingleThreadEnforcerM
             exc_val: Exception value if an exception occurred, None otherwise.
             exc_tb: Exception traceback if an exception occurred, None otherwise.
         """
-        self._restrict_to_single_thread()
         _PORTAL_REGISTRY.pop_active_portal(self)
 
 
@@ -255,7 +257,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     """
 
     def __init__(self) -> None:
-        self._restrict_to_single_thread()
+        super().__init__()
         self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
         self.active_portals_stack: list[BasicPortal] = []
         self.active_portals_stack_counters: list[int] = []
@@ -863,9 +865,11 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
                 f"Object with id {self.fingerprint} has already been visited "
                 f"and registered in portal {portal.fingerprint}")
 
+
+        # TODO: Recursively visit nested PortalAwareClass objects
         for nested in self._nested_objects:
             if isinstance(nested, PortalAwareClass):
-                nested._first_visit_to_portal(portal)
+                nested._visit_portal(portal)
 
         self._visited_portals.add(portal)
 
@@ -916,6 +920,8 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
         self._linked_portal = None
 
 
+
+    # TODO: double-check this logic
     @property
     def is_registered(self) -> bool:
         """True if the object has been registered in at least one portal."""
