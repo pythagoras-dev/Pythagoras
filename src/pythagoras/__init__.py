@@ -18,6 +18,7 @@ resource-demanding computations. It’s not the best choice for real-time,
 latency-sensitive workflows.
 """
 
+from ._version_info import __version__
 
 from ._210_basic_portals import *
 from ._210_basic_portals import _PortalTester
@@ -32,11 +33,5 @@ from ._360_pure_code_portals import *
 from ._410_swarming_portals import *
 from ._800_top_level_API import *
 from ._110_supporting_utilities import *
-
-from importlib import metadata as _md
-try:
-    __version__ = _md.version("pythagoras")
-except _md.PackageNotFoundError:
-    __version__ = "unknown"
 
 
