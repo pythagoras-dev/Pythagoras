@@ -679,7 +679,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
     """
 
     _linked_portal: BasicPortal | None
-    _visited_portals: PortalTracker
+    _visited_portals: set[BasicPortal]
     _nested_objects:list[Any]
 
     def __init__(self, portal:BasicPortal|None=None):
@@ -695,7 +695,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal = portal
-        self._visited_portals = PortalTracker()
+        self._visited_portals = set()
         self._nested_objects = list()
 
 
@@ -847,7 +847,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
             state: The state dictionary for unpickling.
         """
         self._invalidate_cache()
-        self._visited_portals = PortalTracker()
+        self._visited_portals = set()
         self._nested_objects = list()
         self._linked_portal = None
 
@@ -873,7 +873,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
             return
         _PORTAL_REGISTRY.unregister_object(self)
         self._invalidate_cache()
-        self._visited_portals = PortalTracker()
+        self._visited_portals = set()
         self._nested_objects = list()
         self._init_finished = False
 
@@ -982,142 +982,3 @@ def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = No
         for item in obj:
             _visit_portal_impl(item, portal, seen)
         return
-
-
-
-class PortalTracker(NotPicklableMixin, SingleThreadEnforcerMixin):
-    """A minimal, set-like container that tracks portals.
-
-    This class stores portal instances directly, leveraging BasicPortal's
-    built-in __hash__ and __eq__ from ImmutableParameterizableMixin.
-
-    Attributes:
-        _portals: The set of portal instances being tracked.
-    """
-
-    __slots__ = ("_portals",)
-
-
-    def __init__(self, initial: Iterable[BasicPortal] | None = None) -> None:
-        """Initialize the portal tracker.
-
-        Args:
-            initial: Optional collection of portals to add immediately.
-        """
-        super().__init__()
-        self._portals: set[BasicPortal] = set()
-        self._restrict_to_single_thread()
-        if initial is not None:
-            self.update(initial)
-
-
-    def add(self, portal: BasicPortal) -> None:
-        """Add a single portal to the tracker.
-
-        This operation is idempotent; adding the same portal multiple
-        times has no additional effect.
-
-        Args:
-            portal: A portal instance to track.
-        """
-        if not isinstance(portal, BasicPortal):
-            raise TypeError(
-                f"Expected BasicPortal, but got {type(portal).__name__}"
-            )
-        self._portals.add(portal)
-
-
-    def update(self, portals: Iterable[BasicPortal]) -> None:
-        """Add multiple portals to the tracker.
-
-        Args:
-            portals: An iterable of portal instances.
-        """
-        for portal in portals:
-            self.add(portal)
-
-    def discard(self, portal: BasicPortal) -> None:
-        """Remove a portal if present.
-
-        This operation mirrors set.discard behavior: no error is raised if
-        the item is not currently tracked.
-
-        Args:
-            portal: A portal instance to remove.
-        """
-        self._portals.discard(portal)
-
-    def __contains__(self, portal: BasicPortal) -> bool:
-        """Check whether a portal is being tracked.
-
-        Args:
-            portal: A portal instance to check.
-
-        Returns:
-            True if the portal is tracked, False otherwise.
-        """
-        return portal in self._portals
-
-    def __sub__(self, other: PortalTracker) -> PortalTracker:
-        """Return a new tracker with portals in self but not in other.
-
-        Args:
-            other: The tracker whose portals should be excluded.
-
-        Returns:
-            A new PortalTracker containing the set difference.
-        """
-        if isinstance(other, PortalTracker):
-            result = PortalTracker()
-            result._portals = self._portals - other._portals
-            return result
-        else:
-            return NotImplemented
-
-    def __rsub__(self, other: PortalTracker) -> PortalTracker:
-        """Return a new tracker with portals in other but not in self.
-
-        Args:
-            other: The tracker to subtract from.
-
-        Returns:
-            A new PortalTracker containing the set difference.
-        """
-        if isinstance(other, PortalTracker):
-            return other - self
-        else:
-            return NotImplemented
-
-    def __eq__(self, other: PortalTracker) -> bool:
-        """Check equality based on tracked portals.
-
-        Args:
-            other: The object to compare with.
-
-        Returns:
-            True if both trackers contain the same set of portals,
-            False otherwise.
-        """
-        if not isinstance(other, PortalTracker):
-            return NotImplemented
-        return self._portals == other._portals
-
-    def __iter__(self) -> Iterator[BasicPortal]:
-        """Yield portal instances for all tracked portals.
-
-        Returns:
-            An iterator over BasicPortal instances.
-        """
-        yield from self._portals
-
-    def __len__(self) -> int:
-        """Return the number of tracked portals."""
-        return len(self._portals)
-
-    def __bool__(self) -> bool:
-        """Return True if any portals are being tracked, False otherwise."""
-        return bool(self._portals)
-
-    def __repr__(self) -> str:  # pragma: no cover
-        portals_preview = ", ".join(str(p) for p in self._portals) or "∅"
-        return f"{self.__class__.__name__}({portals_preview})"

@@ -416,7 +416,7 @@ class ValueAddr(HashAddr):
         - The .ready property checks value availability across all known portals
         - The .get() method retrieves value from any known portal that contains it
     """
-    _containing_portals_fngpts: PortalTracker
+    _containing_portals: set[DataPortal]
 
     def __init__(self, data: Any, store: bool = True):
         """Create a ValueAddr for an object.
@@ -431,7 +431,7 @@ class ValueAddr(HashAddr):
             ValueError: If data is an uninitialized object (has _init_finished=False).
             TypeError: If data is a HashAddr (must use get_ValueAddr() instead).
         """
-        self._containing_portals_fngpts = PortalTracker()
+        self._containing_portals = set()
 
         if hasattr(data, "get_ValueAddr"):
             data_value_addr = data.get_ValueAddr()
@@ -459,7 +459,7 @@ class ValueAddr(HashAddr):
         if store:
             portal = get_current_data_portal()
             portal._value_store[self] = data
-            self._containing_portals_fngpts.add(portal)
+            self._containing_portals.add(portal)
 
 
     @cached_property
@@ -480,7 +480,7 @@ class ValueAddr(HashAddr):
 
     def _invalidate_cache(self):
         """Invalidate the object's attribute cache."""
-        self._containing_portals_fngpts = PortalTracker()
+        self._containing_portals = set()
         super()._invalidate_cache()
 
 
@@ -495,15 +495,15 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _noncontaining_portals(self) -> PortalTracker:
+    def _noncontaining_portals(self) -> set[DataPortal]:
         """Portals not yet known to contain this value.
 
         Returns:
-            PortalTracker containing portals that haven't been checked or confirmed
+            Set of portals that haven't been checked or confirmed
             not to contain this value.
         """
-        all_portals = PortalTracker(get_all_known_data_portals())
-        return all_portals - self._containing_portals_fngpts
+        all_portals = set(get_all_known_data_portals())
+        return all_portals - self._containing_portals
 
 
 
@@ -520,14 +520,14 @@ class ValueAddr(HashAddr):
         current_portal = get_current_data_portal()
 
         # Fast path: check if we already know it's in current portal
-        if current_portal in self._containing_portals_fngpts:
+        if current_portal in self._containing_portals:
             data = current_portal._value_store[self]
             self._set_cached_properties(value=data)
             return data, True
 
         # Slow path: check the store directly
         if self in current_portal._value_store:
-            self._containing_portals_fngpts.add(current_portal)
+            self._containing_portals.add(current_portal)
             data = current_portal._value_store[self]
             self._set_cached_properties(value=data)
             return data, True
@@ -548,7 +548,7 @@ class ValueAddr(HashAddr):
             False if not found in any portal.
         """
         # Try to retrieve using the same strategies as get(), just return boolean
-        if get_current_data_portal() in self._containing_portals_fngpts:
+        if get_current_data_portal() in self._containing_portals:
             return True
 
         _, success = self._get_from_cache()
@@ -583,9 +583,9 @@ class ValueAddr(HashAddr):
         data = self._get_cached_property("value")
         current_portal = get_current_data_portal()
 
-        if current_portal not in self._containing_portals_fngpts:
+        if current_portal not in self._containing_portals:
             current_portal._value_store[self] = data
-            self._containing_portals_fngpts.add(current_portal)
+            self._containing_portals.add(current_portal)
 
         return data, True
 
@@ -599,15 +599,15 @@ class ValueAddr(HashAddr):
         Returns:
             Tuple of (data, success) where success is True if data was retrieved.
         """
-        if len(self._containing_portals_fngpts) < 1:
+        if len(self._containing_portals) < 1:
             return None, False
 
-        containing_portal = next(iter(self._containing_portals_fngpts))
+        containing_portal = next(iter(self._containing_portals))
         data = containing_portal._value_store[self]
 
         current_portal = get_current_data_portal()
         current_portal._value_store[self] = data
-        self._containing_portals_fngpts.add(current_portal)
+        self._containing_portals.add(current_portal)
         self._set_cached_properties(value=data)
 
         return data, True
@@ -628,9 +628,9 @@ class ValueAddr(HashAddr):
         for other_portal in self._noncontaining_portals:
             try:
                 data = other_portal._value_store[self]
-                self._containing_portals_fngpts.add(other_portal)
+                self._containing_portals.add(other_portal)
                 current_portal._value_store[self] = data
-                self._containing_portals_fngpts.add(current_portal)
+                self._containing_portals.add(current_portal)
                 self._set_cached_properties(value=data)
                 return data, True
             except Exception:
@@ -701,7 +701,7 @@ class ValueAddr(HashAddr):
         """
         self._invalidate_cache()
         self.strings = state["strings"]
-        self._containing_portals_fngpts = PortalTracker()
+        self._containing_portals = set()
 
 
     @classmethod
@@ -716,7 +716,7 @@ class ValueAddr(HashAddr):
             descriptor=descriptor
             , hash_signature=hash_signature
             , assert_readiness=False)
-        address._containing_portals_fngpts = PortalTracker()
+        address._containing_portals = set()
         if assert_readiness:
             if not address.ready:
                 raise ValueError("Address is not ready for retrieving data")
