@@ -1,6 +1,6 @@
 """Tests for PortalTracker class."""
 import pytest
-from pythagoras._220_data_portals.portal_tracker import PortalTracker
+from pythagoras._210_basic_portals import PortalTracker
 from pythagoras._210_basic_portals import BasicPortal, _PortalTester
 
 

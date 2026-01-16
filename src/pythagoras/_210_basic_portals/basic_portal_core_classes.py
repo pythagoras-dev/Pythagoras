@@ -38,7 +38,11 @@ PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
-class BasicPortal(NotPicklableMixin, ParameterizableMixin, SingleThreadEnforcerMixin, CacheablePropertiesMixin, metaclass = GuardedInitMeta):
+class BasicPortal(NotPicklableMixin,
+                  ParameterizableMixin,
+                  SingleThreadEnforcerMixin,
+                  CacheablePropertiesMixin,
+                  metaclass = GuardedInitMeta):
     """A base class for portal objects that enable access to 'outside' world.
 
     In a Pythagoras-based application, a portal is the application's 'window'
@@ -70,10 +74,9 @@ class BasicPortal(NotPicklableMixin, ParameterizableMixin, SingleThreadEnforcerM
             root_dict: Root dictionary for persistent storage, path to storage location,
                 or None for default location.
         """
-        self._restrict_to_single_thread()
+        super().__init__()
         self._init_finished = False
         self._entropy_infuser = random.Random()
-        ParameterizableMixin.__init__(self)
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
         if not isinstance(root_dict, PersiDict):
@@ -211,7 +214,6 @@ class BasicPortal(NotPicklableMixin, ParameterizableMixin, SingleThreadEnforcerM
             exc_val: Exception value if an exception occurred, None otherwise.
             exc_tb: Exception traceback if an exception occurred, None otherwise.
         """
-        self._restrict_to_single_thread()
         _PORTAL_REGISTRY.pop_active_portal(self)
 
 
@@ -255,7 +257,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     """
 
     def __init__(self) -> None:
-        self._restrict_to_single_thread()
+        super().__init__()
         self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
         self.active_portals_stack: list[BasicPortal] = []
         self.active_portals_stack_counters: list[int] = []
@@ -745,7 +747,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
     """
 
     _linked_portal: BasicPortal | None
-    _visited_portals: set[str]
+    _visited_portals: PortalTracker
     _nested_objects:list[Any]
 
     def __init__(self, portal:BasicPortal|None=None):
@@ -761,7 +763,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal = portal
-        self._visited_portals = set()
+        self._visited_portals = PortalTracker()
         self._nested_objects = list()
 
 
@@ -842,7 +844,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
         Args:
             portal: The portal to visit.
         """
-        if portal.fingerprint not in self._visited_portals:
+        if portal not in self._visited_portals:
             self._first_visit_to_portal(portal)
 
 
@@ -858,16 +860,18 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
                                "_first_visit_to_portal() can't be called.")
-        if portal.fingerprint in self._visited_portals:
+        if portal in self._visited_portals:
             raise RuntimeError(
                 f"Object with id {self.fingerprint} has already been visited "
                 f"and registered in portal {portal.fingerprint}")
 
+
+        # TODO: Recursively visit nested PortalAwareClass objects
         for nested in self._nested_objects:
             if isinstance(nested, PortalAwareClass):
-                nested._first_visit_to_portal(portal)
+                nested._visit_portal(portal)
 
-        self._visited_portals.add(portal.fingerprint)
+        self._visited_portals.add(portal)
 
         if self._linked_portal is not None:
             _PORTAL_REGISTRY.register_linked_object(
@@ -911,11 +915,13 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
             state: The state dictionary for unpickling.
         """
         self._invalidate_cache()
-        self._visited_portals = set()
+        self._visited_portals = PortalTracker()
         self._nested_objects = list()
         self._linked_portal = None
 
 
+
+    # TODO: double-check this logic
     @property
     def is_registered(self) -> bool:
         """True if the object has been registered in at least one portal."""
@@ -935,7 +941,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
             return
         _PORTAL_REGISTRY.unregister_object(self)
         self._invalidate_cache()
-        self._visited_portals = set()
+        self._visited_portals = PortalTracker()
         self._nested_objects = list()
         self._init_finished = False
 
@@ -1044,3 +1050,175 @@ def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = No
         for item in obj:
             _visit_portal_impl(item, portal, seen)
         return
+
+
+
+PortalLike = BasicPortal | PortalStrFingerprint
+
+
+class PortalTracker(NotPicklableMixin, SingleThreadEnforcerMixin):
+    """A minimal, set-like container that tracks portal identifiers.
+
+    This class stores portal fingerprints efficiently to track which portals
+    already contain a particular value. It provides a set-like interface
+    while internally normalizing all portal references to fingerprint strings.
+
+    Attributes:
+        _fingerprints: The set of canonical portal fingerprints being tracked.
+    """
+
+    __slots__ = ("_fingerprints",)
+
+
+    def __init__(self, initial: Iterable[PortalLike] | None = None) -> None:
+        """Initialize the portal tracker.
+
+        Args:
+            initial: Optional collection of portal identifiers to add
+                immediately.
+        """
+        super().__init__()
+        self._fingerprints: set[PortalStrFingerprint] = set()
+        self._restrict_to_single_thread()
+        if initial is not None:
+            self.update(initial)
+
+
+    @staticmethod
+    def _to_fingerprint(item: PortalLike) -> PortalStrFingerprint:
+        """Convert a portal-like item to its canonical fingerprint.
+
+        Args:
+            item: A portal instance or fingerprint string to normalize.
+
+        Returns:
+            The canonical PortalStrFingerprint for the item.
+
+        Raises:
+            TypeError: If item is neither a BasicPortal nor a string.
+        """
+        if isinstance(item, str):
+            return PortalStrFingerprint(item)
+        elif isinstance(item, BasicPortal):
+            return item.fingerprint
+        else:
+            raise TypeError(
+                "Expected BasicPortal or str, "
+                f"but got {type(item).__name__}"
+            )
+
+
+    def add(self, item: PortalLike) -> None:
+        """Add a single portal identifier to the tracker.
+
+        This operation is idempotent; adding the same identifier multiple
+        times has no additional effect.
+
+        Args:
+            item: A portal instance or fingerprint string to track.
+        """
+        self._fingerprints.add(self._to_fingerprint(item))
+
+
+
+    def update(self, items: Iterable[PortalLike]) -> None:
+        """Add multiple portal identifiers to the tracker.
+
+        Args:
+            items: An iterable of portal instances or fingerprint strings.
+        """
+        for element in items:
+            self.add(element)
+
+    def discard(self, item: PortalLike) -> None:
+        """Remove a portal identifier if present.
+
+        This operation mirrors set.discard behavior: no error is raised if
+        the item is not currently tracked.
+
+        Args:
+            item: A portal instance or fingerprint string to remove.
+        """
+        self._fingerprints.discard(self._to_fingerprint(item))
+
+    def __contains__(self, item: PortalLike) -> bool:
+        """Check whether a portal is being tracked.
+
+        Args:
+            item: A portal instance or fingerprint string to check.
+
+        Returns:
+            True if the portal is tracked, False otherwise.
+        """
+        return self._to_fingerprint(item) in self._fingerprints
+
+    def __sub__(self, other: PortalTracker) -> PortalTracker:
+        """Return a new tracker with portals in self but not in other.
+
+        Args:
+            other: The tracker whose portals should be excluded.
+
+        Returns:
+            A new PortalTracker containing the set difference.
+        """
+        if isinstance(other, PortalTracker):
+            resulting_fingerprints = self._fingerprints - other._fingerprints
+            result = PortalTracker(resulting_fingerprints)
+            return result
+        else:
+            return NotImplemented
+
+    def __rsub__(self, other: PortalTracker) -> PortalTracker:
+        """Return a new tracker with portals in other but not in self.
+
+        Args:
+            other: The tracker to subtract from.
+
+        Returns:
+            A new PortalTracker containing the set difference.
+        """
+        if isinstance(other, PortalTracker):
+            return other - self
+        else:
+            return NotImplemented
+
+    def __eq__(self, other: PortalTracker) -> bool:
+        """Check equality based on tracked portal fingerprints.
+
+        Args:
+            other: The object to compare with.
+
+        Returns:
+            True if both trackers contain the same set of portal fingerprints,
+            False otherwise.
+        """
+        if not isinstance(other, PortalTracker):
+            return NotImplemented
+        return self._fingerprints == other._fingerprints
+
+    def __iter__(self) -> Iterator[BasicPortal]:
+        """Yield portal instances for all tracked fingerprints.
+
+        Returns:
+            An iterator over BasicPortal instances corresponding to the stored
+            fingerprints.
+
+        Raises:
+            KeyError: If a stored fingerprint no longer corresponds to a
+                registered portal, such as when the portal was cleared or
+                removed from the global registry.
+        """
+        for fingerprint in list(self._fingerprints):
+            yield _PORTAL_REGISTRY.get_portal_by_fingerprint(fingerprint)
+
+    def __len__(self) -> int:
+        """Return the number of tracked portals."""
+        return len(self._fingerprints)
+
+    def __bool__(self) -> bool:
+        """Return True if any portals are being tracked, False otherwise."""
+        return bool(self._fingerprints)
+
+    def __repr__(self) -> str:  # pragma: no cover
+        fingerprints_preview = ", ".join(sorted(self._fingerprints)) or "∅"
+        return f"{self.__class__.__name__}({fingerprints_preview})"
