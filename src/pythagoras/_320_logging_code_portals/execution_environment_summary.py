@@ -19,7 +19,7 @@ import socket
 from typing import Dict
 from getpass import getuser
 from datetime import datetime
-from .notebook_checker import is_executed_in_notebook
+from mixinforge import is_executed_in_notebook
 from .._210_basic_portals import BasicPortal
 
 

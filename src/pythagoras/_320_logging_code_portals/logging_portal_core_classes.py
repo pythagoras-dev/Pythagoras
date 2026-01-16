@@ -71,7 +71,7 @@ from .._320_logging_code_portals.uncaught_exceptions import \
     register_systemwide_uncaught_exception_handlers
 from persidict import OverlappingMultiDict
 from .._320_logging_code_portals.kw_args import KwArgs, PackedKwArgs
-from .output_capturer import OutputCapturer
+from mixinforge import OutputCapturer
 from .._310_ordinary_code_portals import OrdinaryCodePortal, OrdinaryFn
 from .._110_supporting_utilities.current_date_gmt_str import (
     current_date_gmt_string)
