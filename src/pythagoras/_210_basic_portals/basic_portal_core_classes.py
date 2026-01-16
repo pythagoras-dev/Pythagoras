@@ -12,7 +12,8 @@ import random
 from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
-from typing import TypeVar, Any, NewType, Callable, Mapping, Iterable
+from typing import TypeVar, Any, NewType, Callable, Mapping, Iterable, Iterator
+
 try:
     from typing import Self
 except ImportError:
