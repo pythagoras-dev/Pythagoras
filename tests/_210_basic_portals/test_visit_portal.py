@@ -34,7 +34,7 @@ def test_visit_portal_with_portal_aware_object(tmpdir):
         _visit_portal(obj, portal)
 
         # Now should be registered
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
 
 def test_visit_portal_with_nested_dict(tmpdir):
@@ -56,8 +56,8 @@ def test_visit_portal_with_nested_dict(tmpdir):
         _visit_portal(data, portal)
 
         # Both objects should be registered
-        assert portal.fingerprint in obj1._visited_portals
-        assert portal.fingerprint in obj2._visited_portals
+        assert portal in obj1._visited_portals
+        assert portal in obj2._visited_portals
 
 
 def test_visit_portal_with_nested_list(tmpdir):
@@ -75,9 +75,9 @@ def test_visit_portal_with_nested_list(tmpdir):
         _visit_portal(data, portal)
 
         # All objects should be registered
-        assert portal.fingerprint in obj1._visited_portals
-        assert portal.fingerprint in obj2._visited_portals
-        assert portal.fingerprint in obj3._visited_portals
+        assert portal in obj1._visited_portals
+        assert portal in obj2._visited_portals
+        assert portal in obj3._visited_portals
 
 
 def test_visit_portal_with_circular_reference(tmpdir):
@@ -95,7 +95,7 @@ def test_visit_portal_with_circular_reference(tmpdir):
         _visit_portal(data, portal)
 
         # Object should still be registered
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
 
 def test_visit_portal_skips_strings(tmpdir):
@@ -113,7 +113,7 @@ def test_visit_portal_skips_strings(tmpdir):
         _visit_portal(data, portal)
 
         # Object should be registered
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
 
 def test_visit_portal_skips_special_types(tmpdir):
@@ -134,7 +134,7 @@ def test_visit_portal_skips_special_types(tmpdir):
         _visit_portal(data, portal)
 
         # Object should be registered
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
 
 def test_visit_portal_with_non_portal_aware_objects(tmpdir):
@@ -158,7 +158,7 @@ def test_visit_portal_with_non_portal_aware_objects(tmpdir):
         _visit_portal(data, portal)
 
         # Only portal-aware object should be registered
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
 
 def test_visit_portal_with_empty_structures(tmpdir):
@@ -201,7 +201,7 @@ def test_visit_portal_deep_nesting(tmpdir):
         _visit_portal(data, portal)
 
         # Object should be registered
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
 
 def test_visit_portal_with_mixed_structures(tmpdir):
@@ -225,6 +225,6 @@ def test_visit_portal_with_mixed_structures(tmpdir):
         _visit_portal(data, portal)
 
         # All objects should be registered
-        assert portal.fingerprint in obj1._visited_portals
-        assert portal.fingerprint in obj2._visited_portals
-        assert portal.fingerprint in obj3._visited_portals
+        assert portal in obj1._visited_portals
+        assert portal in obj2._visited_portals
+        assert portal in obj3._visited_portals

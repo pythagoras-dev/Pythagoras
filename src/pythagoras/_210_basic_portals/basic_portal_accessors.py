@@ -1,35 +1,13 @@
 """Accessor functions for retrieving and managing portal objects.
 
 This module provides a public API for accessing portals from the global
-portal registry. Functions allow querying by fingerprint, counting portals,
-and retrieving active/inactive portal lists.
+portal registry. Functions allow counting portals and retrieving
+active/inactive portal lists.
 """
 
 from __future__ import annotations
 
-from .basic_portal_core_classes import _PORTAL_REGISTRY, BasicPortal, PortalType, PortalStrFingerprint
-
-
-def get_portal_by_fingerprint(
-        portal_fingerprint: PortalStrFingerprint,
-        required_portal_type: type[PortalType] = BasicPortal
-        ) -> PortalType:
-    """Get a portal by its fingerprint.
-
-    Args:
-        portal_fingerprint: Fingerprint identifying the portal.
-        required_portal_type: Expected portal type for validation.
-
-    Returns:
-        The portal instance matching the fingerprint.
-
-    Raises:
-        TypeError: If the found portal is not an instance of required_portal_type,
-            or if portal_fingerprint is not a string.
-        KeyError: If no portal with the given fingerprint exists.
-    """
-    return _PORTAL_REGISTRY.get_portal_by_fingerprint(
-        portal_fingerprint,required_portal_type)
+from .basic_portal_core_classes import _PORTAL_REGISTRY, BasicPortal, PortalType
 
 
 def get_number_of_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
@@ -60,23 +38,6 @@ def get_all_known_portals(required_portal_type: type[PortalType] = BasicPortal) 
         TypeError: If any known portal is not an instance of required_portal_type.
     """
     return _PORTAL_REGISTRY.all_portals(required_portal_type)
-
-
-def get_all_known_portal_fingerprints(
-        required_portal_type: type[PortalType] = BasicPortal
-        ) -> set[PortalStrFingerprint]:
-    """Get a set of all known portal fingerprints.
-
-    Args:
-        required_portal_type: Expected portal type for validation.
-
-    Returns:
-        Fingerprints of all portals currently known to the system.
-
-    Raises:
-        TypeError: If any known portal is not an instance of required_portal_type.
-    """
-    return _PORTAL_REGISTRY.all_portal_fingerprints(required_portal_type)
 
 
 def get_number_of_active_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:

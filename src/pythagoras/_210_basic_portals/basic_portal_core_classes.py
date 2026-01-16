@@ -35,7 +35,6 @@ _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
 MAX_NESTED_PORTALS = 999
 
 
-PortalStrFingerprint = NewType("PortalStrFingerprint", str)
 PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
@@ -154,9 +153,7 @@ class BasicPortal(NotPicklableMixin,
     @property
     def is_active(self) -> bool:
         """True if the portal is in the active portal stack."""
-        active_fingerprints = {p.fingerprint for p
-                               in _PORTAL_REGISTRY.active_portals_stack}
-        return self.fingerprint in active_fingerprints
+        return self in _PORTAL_REGISTRY.active_portals_stack
 
 
     def get_params(self) -> dict[str,Any]:
@@ -164,20 +161,6 @@ class BasicPortal(NotPicklableMixin,
         params = dict(root_dict=self._root_dict)
         sorted_params = sort_dict_by_keys(params)
         return sorted_params
-
-
-    @cached_property
-    def fingerprint(self) -> PortalStrFingerprint:
-        """The portal's persistent hash fingerprint.
-
-        This is an internal identifier used by Pythagoras to uniquely identify
-        portals in the registry. It differs from __hash__() and is based on
-        the portal's essential parameters.
-        """
-        if not self._init_finished:
-            raise RuntimeError("Portal is not fully initialized yet, "
-                               "fingerprint is not available.")
-        return PortalStrFingerprint(get_hash_signature(self.get_essential_jsparams()))
 
 
     def describe(self) -> pd.DataFrame:
@@ -248,22 +231,22 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     of active portals, and provides mechanisms for portal lookup and lifecycle management.
 
     Attributes:
-        known_portals: Maps portal fingerprints to portal instances.
+        known_portals: Set of known portal instances.
         active_portals_stack: Stack of currently active portals (nested `with` statements).
         active_portals_stack_counters: Re-entrancy counters for each stack level.
         most_recently_created_portal: Last portal instantiated, used for auto-activation.
-        links_from_objects_to_portals: Maps object fingerprints to their linked portal fingerprints.
+        links_from_objects_to_portals: Maps object fingerprints to their linked portals.
         known_objects: Maps object fingerprints to PortalAwareClass instances.
         default_portal_instantiator: Factory function for creating the default portal.
     """
 
     def __init__(self) -> None:
         super().__init__()
-        self.known_portals: dict[PortalStrFingerprint, BasicPortal] = {}
+        self.known_portals: set[BasicPortal] = set()
         self.active_portals_stack: list[BasicPortal] = []
         self.active_portals_stack_counters: list[int] = []
         self.most_recently_created_portal: BasicPortal | None = None
-        self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, PortalStrFingerprint] = {}
+        self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, BasicPortal] = {}
         self.known_objects: dict[PAwareObjectStrFingerprint, PortalAwareClass] = {}
         self.default_portal_instantiator: Callable[[], None] | None = None
 
@@ -300,35 +283,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             portal: The portal instance to register.
         """
         self._restrict_to_single_thread()
-        self.known_portals[portal.fingerprint] = portal
+        self.known_portals.add(portal)
         self.most_recently_created_portal = portal
-
-
-    def get_portal_by_fingerprint(self, portal_fingerprint: PortalStrFingerprint, required_portal_type: type[PortalType] = BasicPortal) -> BasicPortal:
-        """Get a portal by its fingerprint.
-
-        Args:
-            portal_fingerprint: Portal fingerprint to look up.
-            required_portal_type: Expected portal type for validation.
-
-        Returns:
-            The portal instance matching the fingerprint.
-
-        Raises:
-            TypeError: If portal_fingerprint is not a string or portal type mismatches.
-            KeyError: If no portal with the given fingerprint exists.
-        """
-        _validate_required_portal_type(required_portal_type)
-        if not isinstance(portal_fingerprint, str):
-            raise TypeError(f"Expected PortalStrFingerprint(str), got {type(portal_fingerprint)}")
-        if portal_fingerprint not in self.known_portals:
-            raise KeyError(f"Portal with fingerprint {portal_fingerprint} not found")
-        portal = self.known_portals[portal_fingerprint]
-        if not isinstance(portal, required_portal_type):
-            raise TypeError(
-                f"Found portal {type(portal).__name__} which is not "
-                f"an instance of required {required_portal_type.__name__}")
-        return portal
 
 
     def unregister_portal(self, portal: BasicPortal) -> None:
@@ -337,14 +293,13 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Args:
             portal: The portal instance to unregister.
         """
-        portal_id_to_remove = portal.fingerprint
         all_links = list(self.links_from_objects_to_portals.items())
-        for obj_id, portal_id in all_links:
-            if portal_id == portal_id_to_remove:
+        for obj_id, linked_portal in all_links:
+            if linked_portal == portal:
                 obj = self.known_objects[obj_id]
                 obj._clear()
 
-        self.known_portals.pop(portal.fingerprint, None)
+        self.known_portals.discard(portal)
         if self.most_recently_created_portal is portal:
             self.most_recently_created_portal = None
 
@@ -375,33 +330,11 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any known portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        candidates = list(self.known_portals.values())
+        candidates = list(self.known_portals)
         for p in candidates:
             if not isinstance(p, required_portal_type):
                 raise TypeError(
                     f"Found portal {type(p).__name__} which is not "
-                    f"an instance of required {required_portal_type.__name__}")
-        return candidates
-
-    def all_portal_fingerprints(self, required_portal_type: type[PortalType] = BasicPortal) -> set[PortalStrFingerprint]:
-        """Get a set of all portal fingerprints.
-
-        Args:
-            required_portal_type: Expected portal type for validation.
-
-        Returns:
-            Fingerprints of all portals currently known to the system.
-
-        Raises:
-            TypeError: If any known portal is not an instance of required_portal_type.
-        """
-        _validate_required_portal_type(required_portal_type)
-        candidates = set(self.known_portals.keys())
-        for fingerprint in candidates:
-            portal = self.known_portals[fingerprint]
-            if not isinstance(portal, required_portal_type):
-                raise TypeError(
-                    f"Found portal {type(portal).__name__} which is not "
                     f"an instance of required {required_portal_type.__name__}")
         return candidates
 
@@ -417,7 +350,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self._restrict_to_single_thread()
         if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
             raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
-        if not portal.fingerprint in self.known_portals:
+        if portal not in self.known_portals:
             raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
         if self.active_portals_stack and self.active_portals_stack[-1] is portal:
             self.active_portals_stack_counters[-1] += 1
@@ -439,7 +372,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             RuntimeError: If the portal is unregistered or not at the top of the stack.
         """
         self._restrict_to_single_thread()
-        if not portal.fingerprint in self.known_portals:
+        if portal not in self.known_portals:
             raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
 
         if not self.active_portals_stack or self.active_portals_stack[-1] is not portal:
@@ -497,7 +430,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             True if the portal is current (top of stack), False otherwise.
         """
         return (len(self.active_portals_stack) > 0
-                and self.active_portals_stack[-1].fingerprint == portal.fingerprint)
+                and self.active_portals_stack[-1] == portal)
 
 
     def unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
@@ -561,11 +494,10 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any non-active portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        active_ids = {p.fingerprint for p in self.active_portals_stack}
+        active_portals = set(self.active_portals_stack)
         all_known = self.all_portals(BasicPortal)
 
-        candidates = [p for p in all_known
-            if p.fingerprint not in active_ids]
+        candidates = [p for p in all_known if p not in active_portals]
 
         for p in candidates:
             if not isinstance(p, required_portal_type):
@@ -593,12 +525,12 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any non-current portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        current_id = None
+        current_portal = None
         if len(self.active_portals_stack) > 0:
-            current_id = self.active_portals_stack[-1].fingerprint
+            current_portal = self.active_portals_stack[-1]
 
         all_known = self.all_portals(BasicPortal)
-        candidates = [p for p in all_known if p.fingerprint != current_id]
+        candidates = [p for p in all_known if p != current_portal]
 
         for p in candidates:
             if not isinstance(p, required_portal_type):
@@ -650,9 +582,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             )
 
         obj_id = obj.fingerprint
-        portal_id = portal.fingerprint
         self.known_objects[obj_id] = obj
-        self.links_from_objects_to_portals[obj_id] = portal_id
+        self.links_from_objects_to_portals[obj_id] = portal
 
 
     def unregister_object(self,obj:PortalAwareClass) -> None:
@@ -702,7 +633,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Returns:
             A set of object fingerprints linked to the portal.
         """
-        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal.fingerprint)
+        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal)
 
         if target_class is None:
             return set(obj_ids)
@@ -864,7 +795,7 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
         if portal in self._visited_portals:
             raise RuntimeError(
                 f"Object with id {self.fingerprint} has already been visited "
-                f"and registered in portal {portal.fingerprint}")
+                f"and registered in portal {portal}")
 
 
         # TODO: Recursively visit nested PortalAwareClass objects
@@ -1054,104 +985,78 @@ def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = No
 
 
 
-PortalLike = BasicPortal | PortalStrFingerprint
-
-
 class PortalTracker(NotPicklableMixin, SingleThreadEnforcerMixin):
-    """A minimal, set-like container that tracks portal identifiers.
+    """A minimal, set-like container that tracks portals.
 
-    This class stores portal fingerprints efficiently to track which portals
-    already contain a particular value. It provides a set-like interface
-    while internally normalizing all portal references to fingerprint strings.
+    This class stores portal instances directly, leveraging BasicPortal's
+    built-in __hash__ and __eq__ from ImmutableParameterizableMixin.
 
     Attributes:
-        _fingerprints: The set of canonical portal fingerprints being tracked.
+        _portals: The set of portal instances being tracked.
     """
 
-    __slots__ = ("_fingerprints",)
+    __slots__ = ("_portals",)
 
 
-    def __init__(self, initial: Iterable[PortalLike] | None = None) -> None:
+    def __init__(self, initial: Iterable[BasicPortal] | None = None) -> None:
         """Initialize the portal tracker.
 
         Args:
-            initial: Optional collection of portal identifiers to add
-                immediately.
+            initial: Optional collection of portals to add immediately.
         """
         super().__init__()
-        self._fingerprints: set[PortalStrFingerprint] = set()
+        self._portals: set[BasicPortal] = set()
         self._restrict_to_single_thread()
         if initial is not None:
             self.update(initial)
 
 
-    @staticmethod
-    def _to_fingerprint(item: PortalLike) -> PortalStrFingerprint:
-        """Convert a portal-like item to its canonical fingerprint.
+    def add(self, portal: BasicPortal) -> None:
+        """Add a single portal to the tracker.
 
-        Args:
-            item: A portal instance or fingerprint string to normalize.
-
-        Returns:
-            The canonical PortalStrFingerprint for the item.
-
-        Raises:
-            TypeError: If item is neither a BasicPortal nor a string.
-        """
-        if isinstance(item, str):
-            return PortalStrFingerprint(item)
-        elif isinstance(item, BasicPortal):
-            return item.fingerprint
-        else:
-            raise TypeError(
-                "Expected BasicPortal or str, "
-                f"but got {type(item).__name__}"
-            )
-
-
-    def add(self, item: PortalLike) -> None:
-        """Add a single portal identifier to the tracker.
-
-        This operation is idempotent; adding the same identifier multiple
+        This operation is idempotent; adding the same portal multiple
         times has no additional effect.
 
         Args:
-            item: A portal instance or fingerprint string to track.
+            portal: A portal instance to track.
         """
-        self._fingerprints.add(self._to_fingerprint(item))
+        if not isinstance(portal, BasicPortal):
+            raise TypeError(
+                f"Expected BasicPortal, but got {type(portal).__name__}"
+            )
+        self._portals.add(portal)
 
 
-
-    def update(self, items: Iterable[PortalLike]) -> None:
-        """Add multiple portal identifiers to the tracker.
+    def update(self, portals: Iterable[BasicPortal]) -> None:
+        """Add multiple portals to the tracker.
 
         Args:
-            items: An iterable of portal instances or fingerprint strings.
+            portals: An iterable of portal instances.
         """
-        for element in items:
-            self.add(element)
+        for portal in portals:
+            self.add(portal)
 
-    def discard(self, item: PortalLike) -> None:
-        """Remove a portal identifier if present.
+    def discard(self, portal: BasicPortal) -> None:
+        """Remove a portal if present.
 
         This operation mirrors set.discard behavior: no error is raised if
         the item is not currently tracked.
 
         Args:
-            item: A portal instance or fingerprint string to remove.
+            portal: A portal instance to remove.
         """
-        self._fingerprints.discard(self._to_fingerprint(item))
+        self._portals.discard(portal)
 
-    def __contains__(self, item: PortalLike) -> bool:
+    def __contains__(self, portal: BasicPortal) -> bool:
         """Check whether a portal is being tracked.
 
         Args:
-            item: A portal instance or fingerprint string to check.
+            portal: A portal instance to check.
 
         Returns:
             True if the portal is tracked, False otherwise.
         """
-        return self._to_fingerprint(item) in self._fingerprints
+        return portal in self._portals
 
     def __sub__(self, other: PortalTracker) -> PortalTracker:
         """Return a new tracker with portals in self but not in other.
@@ -1163,8 +1068,8 @@ class PortalTracker(NotPicklableMixin, SingleThreadEnforcerMixin):
             A new PortalTracker containing the set difference.
         """
         if isinstance(other, PortalTracker):
-            resulting_fingerprints = self._fingerprints - other._fingerprints
-            result = PortalTracker(resulting_fingerprints)
+            result = PortalTracker()
+            result._portals = self._portals - other._portals
             return result
         else:
             return NotImplemented
@@ -1184,42 +1089,35 @@ class PortalTracker(NotPicklableMixin, SingleThreadEnforcerMixin):
             return NotImplemented
 
     def __eq__(self, other: PortalTracker) -> bool:
-        """Check equality based on tracked portal fingerprints.
+        """Check equality based on tracked portals.
 
         Args:
             other: The object to compare with.
 
         Returns:
-            True if both trackers contain the same set of portal fingerprints,
+            True if both trackers contain the same set of portals,
             False otherwise.
         """
         if not isinstance(other, PortalTracker):
             return NotImplemented
-        return self._fingerprints == other._fingerprints
+        return self._portals == other._portals
 
     def __iter__(self) -> Iterator[BasicPortal]:
-        """Yield portal instances for all tracked fingerprints.
+        """Yield portal instances for all tracked portals.
 
         Returns:
-            An iterator over BasicPortal instances corresponding to the stored
-            fingerprints.
-
-        Raises:
-            KeyError: If a stored fingerprint no longer corresponds to a
-                registered portal, such as when the portal was cleared or
-                removed from the global registry.
+            An iterator over BasicPortal instances.
         """
-        for fingerprint in list(self._fingerprints):
-            yield _PORTAL_REGISTRY.get_portal_by_fingerprint(fingerprint)
+        yield from self._portals
 
     def __len__(self) -> int:
         """Return the number of tracked portals."""
-        return len(self._fingerprints)
+        return len(self._portals)
 
     def __bool__(self) -> bool:
         """Return True if any portals are being tracked, False otherwise."""
-        return bool(self._fingerprints)
+        return bool(self._portals)
 
     def __repr__(self) -> str:  # pragma: no cover
-        fingerprints_preview = ", ".join(sorted(self._fingerprints)) or "∅"
-        return f"{self.__class__.__name__}({fingerprints_preview})"
+        portals_preview = ", ".join(str(p) for p in self._portals) or "∅"
+        return f"{self.__class__.__name__}({portals_preview})"

@@ -17,7 +17,6 @@ Portal Management:
 
 Accessor Functions:
     get_current_portal: Get the current active portal.
-    get_portal_by_fingerprint: Retrieve a portal by its unique fingerprint.
     get_all_known_portals: List all registered portals.
     get_number_of_known_portals: Count all registered portals.
     get_number_of_active_portals: Count unique portals in the active stack.

@@ -221,11 +221,11 @@ def test_portal_aware_double_first_visit_raises_error(tmpdir):
         obj = SimplePortalAware(100, portal=portal)
 
         # Verify lazy registration: portal not visited until first use
-        assert portal.fingerprint not in obj._visited_portals
+        assert portal not in obj._visited_portals
 
         # Trigger first visit by accessing .portal
         _ = obj.portal
-        assert portal.fingerprint in obj._visited_portals
+        assert portal in obj._visited_portals
 
         # Try to visit again, should raise
         with pytest.raises(RuntimeError, match="has already been visited"):

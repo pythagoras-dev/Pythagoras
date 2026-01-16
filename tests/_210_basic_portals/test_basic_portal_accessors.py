@@ -6,7 +6,6 @@ from pythagoras import (
     BasicPortal,
     get_number_of_known_portals,
     get_all_known_portals,
-    get_all_known_portal_fingerprints,
     get_number_of_active_portals,
     get_depth_of_active_portal_stack,
     get_nonactive_portals,
@@ -65,34 +64,6 @@ def test_get_all_known_portals_content(tmp_path):
         assert p1 in result
         assert p2 in result
         assert all(isinstance(p, BasicPortal) for p in result)
-
-
-def test_get_all_known_portal_fingerprints_returns_set(tmp_path):
-    """Verify get_all_known_portal_fingerprints returns a set."""
-    with _PortalTester():
-        BasicPortal(root_dict=str(tmp_path / "p1"))
-        result = get_all_known_portal_fingerprints()
-        assert isinstance(result, set)
-
-
-def test_get_all_known_portal_fingerprints_empty():
-    """Verify empty set when no portals exist."""
-    with _PortalTester():
-        result = get_all_known_portal_fingerprints()
-        assert result == set()
-
-
-def test_get_all_known_portal_fingerprints_content(tmp_path):
-    """Verify fingerprints correspond to created portals."""
-    with _PortalTester():
-        p1 = BasicPortal(root_dict=str(tmp_path / "p1"))
-        p2 = BasicPortal(root_dict=str(tmp_path / "p2"))
-        result = get_all_known_portal_fingerprints()
-
-        assert len(result) == 2
-        assert p1.fingerprint in result
-        assert p2.fingerprint in result
-        assert all(isinstance(fp, str) for fp in result)
 
 
 def test_get_number_of_active_portals_no_active(tmp_path):

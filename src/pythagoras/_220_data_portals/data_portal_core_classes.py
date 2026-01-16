@@ -16,14 +16,6 @@ T = TypeVar('T')
 
 _TOTAL_VALUES_TXT = "Values, total"
 
-def get_all_known_data_portal_fingerprints() -> set[PortalStrFingerprint]:
-    """Get a set of all known portal fingerprints."""
-    return get_all_known_portal_fingerprints(DataPortal)
-
-def get_data_portal_by_fingerprint(fingerprint: PortalStrFingerprint) -> DataPortal:
-    """Get a DataPortal by its fingerprint."""
-    return get_portal_by_fingerprint(fingerprint, DataPortal)
-
 
 def get_number_of_known_data_portals() -> int:
     """Get the number of known DataPortals.
@@ -467,7 +459,7 @@ class ValueAddr(HashAddr):
         if store:
             portal = get_current_data_portal()
             portal._value_store[self] = data
-            self._containing_portals_fngpts.add(portal.fingerprint)
+            self._containing_portals_fngpts.add(portal)
 
 
     @cached_property
@@ -503,14 +495,14 @@ class ValueAddr(HashAddr):
 
 
     @property
-    def _noncontaining_portals_fngpts(self) -> PortalTracker:
+    def _noncontaining_portals(self) -> PortalTracker:
         """Portals not yet known to contain this value.
 
         Returns:
             PortalTracker containing portals that haven't been checked or confirmed
             not to contain this value.
         """
-        all_portals = PortalTracker(get_all_known_data_portal_fingerprints())
+        all_portals = PortalTracker(get_all_known_data_portals())
         return all_portals - self._containing_portals_fngpts
 
 
@@ -518,7 +510,7 @@ class ValueAddr(HashAddr):
     def _get_from_current_portal(self) -> tuple[Any, bool]:
         """Try to retrieve value from the current portal.
 
-        Uses cached portal fingerprints for fast-path lookup when available,
+        Uses cached portals for fast-path lookup when available,
         falls back to direct store lookup otherwise. Updates cache on success.
 
         Returns:
@@ -526,17 +518,16 @@ class ValueAddr(HashAddr):
             and retrieved.
         """
         current_portal = get_current_data_portal()
-        current_portal_fngpt = current_portal.fingerprint
 
         # Fast path: check if we already know it's in current portal
-        if current_portal_fngpt in self._containing_portals_fngpts:
+        if current_portal in self._containing_portals_fngpts:
             data = current_portal._value_store[self]
             self._set_cached_properties(value=data)
             return data, True
 
         # Slow path: check the store directly
         if self in current_portal._value_store:
-            self._containing_portals_fngpts.add(current_portal_fngpt)
+            self._containing_portals_fngpts.add(current_portal)
             data = current_portal._value_store[self]
             self._set_cached_properties(value=data)
             return data, True
@@ -557,7 +548,7 @@ class ValueAddr(HashAddr):
             False if not found in any portal.
         """
         # Try to retrieve using the same strategies as get(), just return boolean
-        if get_current_data_portal().fingerprint in self._containing_portals_fngpts:
+        if get_current_data_portal() in self._containing_portals_fngpts:
             return True
 
         _, success = self._get_from_cache()
@@ -591,11 +582,10 @@ class ValueAddr(HashAddr):
 
         data = self._get_cached_property("value")
         current_portal = get_current_data_portal()
-        current_portal_fngpt = current_portal.fingerprint
 
-        if current_portal_fngpt not in self._containing_portals_fngpts:
+        if current_portal not in self._containing_portals_fngpts:
             current_portal._value_store[self] = data
-            self._containing_portals_fngpts.add(current_portal_fngpt)
+            self._containing_portals_fngpts.add(current_portal)
 
         return data, True
 
@@ -603,7 +593,7 @@ class ValueAddr(HashAddr):
     def _get_from_known_containing_portal(self) -> tuple[Any, bool]:
         """Try to retrieve value from a known containing portal (not current).
 
-        Retrieves from any portal whose fingerprint is cached, then replicates
+        Retrieves from any cached containing portal, then replicates
         to the current portal.
 
         Returns:
@@ -612,14 +602,12 @@ class ValueAddr(HashAddr):
         if len(self._containing_portals_fngpts) < 1:
             return None, False
 
-        containing_portal_fngpt = next(iter(self._containing_portals_fngpts))
-        portal = get_data_portal_by_fingerprint(containing_portal_fngpt)
-        data = portal._value_store[self]
+        containing_portal = next(iter(self._containing_portals_fngpts))
+        data = containing_portal._value_store[self]
 
         current_portal = get_current_data_portal()
-        current_portal_fngpt = current_portal.fingerprint
         current_portal._value_store[self] = data
-        self._containing_portals_fngpts.add(current_portal_fngpt)
+        self._containing_portals_fngpts.add(current_portal)
         self._set_cached_properties(value=data)
 
         return data, True
@@ -636,14 +624,13 @@ class ValueAddr(HashAddr):
             retrieved and replicated.
         """
         current_portal = get_current_data_portal()
-        current_portal_fngpt = current_portal.fingerprint
 
-        for other_portal in self._noncontaining_portals_fngpts:
+        for other_portal in self._noncontaining_portals:
             try:
                 data = other_portal._value_store[self]
-                self._containing_portals_fngpts.add(other_portal.fingerprint)
+                self._containing_portals_fngpts.add(other_portal)
                 current_portal._value_store[self] = data
-                self._containing_portals_fngpts.add(current_portal_fngpt)
+                self._containing_portals_fngpts.add(current_portal)
                 self._set_cached_properties(value=data)
                 return data, True
             except Exception:

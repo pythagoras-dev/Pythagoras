@@ -50,7 +50,7 @@ def test_pure_fn_registered_on_portal_access(tmpdir):
         assert accessed_portal is portal
         assert portal.get_number_of_linked_functions() == 1
         assert len(pure_fn._visited_portals) == 1
-        assert portal.fingerprint in pure_fn._visited_portals
+        assert portal in pure_fn._visited_portals
 
 
 def test_pure_fn_registered_on_function_call(tmpdir):

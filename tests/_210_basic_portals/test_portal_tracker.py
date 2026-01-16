@@ -26,31 +26,6 @@ def test_initialization_with_portals(tmp_path, portal_count):
             assert portal in tracker
 
 
-def test_initialization_with_fingerprints(tmp_path):
-    """Test initialization with fingerprint strings."""
-    with _PortalTester():
-        portals = [BasicPortal(tmp_path / f"p{i}") for i in range(3)]
-        fingerprints = [p.fingerprint for p in portals]
-        tracker = PortalTracker(fingerprints)
-
-        assert len(tracker) == 3
-        for portal in portals:
-            assert portal in tracker
-
-
-def test_initialization_with_mixed_types(tmp_path):
-    """Test initialization with both portals and fingerprints."""
-    with _PortalTester():
-        p1 = BasicPortal(tmp_path / "p1")
-        p2 = BasicPortal(tmp_path / "p2")
-        mixed = [p1, p2.fingerprint]
-        tracker = PortalTracker(mixed)
-
-        assert len(tracker) == 2
-        assert p1 in tracker
-        assert p2 in tracker
-
-
 def test_add_portal_instance(tmp_path):
     """Test adding a portal instance."""
     with _PortalTester():
@@ -63,19 +38,6 @@ def test_add_portal_instance(tmp_path):
         assert portal in tracker
 
 
-def test_add_fingerprint_string(tmp_path):
-    """Test adding a fingerprint string."""
-    with _PortalTester():
-        portal = BasicPortal(tmp_path)
-        tracker = PortalTracker()
-
-        tracker.add(portal.fingerprint)
-
-        assert len(tracker) == 1
-        assert portal in tracker
-        assert portal.fingerprint in tracker
-
-
 def test_add_duplicate_is_idempotent(tmp_path):
     """Test that adding the same portal multiple times has no extra effect."""
     with _PortalTester():
@@ -84,7 +46,7 @@ def test_add_duplicate_is_idempotent(tmp_path):
 
         tracker.add(portal)
         tracker.add(portal)
-        tracker.add(portal.fingerprint)
+        tracker.add(portal)
 
         assert len(tracker) == 1
         assert portal in tracker
@@ -94,14 +56,17 @@ def test_add_invalid_type_raises_typeerror():
     """Test that adding invalid types raises TypeError."""
     tracker = PortalTracker()
 
-    with pytest.raises(TypeError, match="Expected BasicPortal or str"):
+    with pytest.raises(TypeError, match="Expected BasicPortal"):
         tracker.add(123)
 
-    with pytest.raises(TypeError, match="Expected BasicPortal or str"):
+    with pytest.raises(TypeError, match="Expected BasicPortal"):
         tracker.add(None)
 
-    with pytest.raises(TypeError, match="Expected BasicPortal or str"):
+    with pytest.raises(TypeError, match="Expected BasicPortal"):
         tracker.add([])
+
+    with pytest.raises(TypeError, match="Expected BasicPortal"):
+        tracker.add("some_string")
 
 
 def test_update_with_multiple_portals(tmp_path):
@@ -118,20 +83,6 @@ def test_update_with_multiple_portals(tmp_path):
 
         for portal in portals:
             assert portal in tracker
-
-
-def test_update_with_mixed_types(tmp_path):
-    """Test update with both portals and fingerprints."""
-    with _PortalTester():
-        p1 = BasicPortal(tmp_path / "p1")
-        p2 = BasicPortal(tmp_path / "p2")
-        p3 = BasicPortal(tmp_path / "p3")
-        tracker = PortalTracker([p1])
-
-        tracker.update([p2, p3.fingerprint])
-
-        assert len(tracker) == 3
-        assert all(p in tracker for p in [p1, p2, p3])
 
 
 def test_discard_existing_portal(tmp_path):
@@ -155,22 +106,9 @@ def test_discard_non_existing_no_error(tmp_path):
 
         # Should not raise
         tracker.discard(p2)
-        tracker.discard(p2.fingerprint)
 
         assert len(tracker) == 1
         assert p1 in tracker
-
-
-def test_discard_with_fingerprint_string(tmp_path):
-    """Test discarding using fingerprint string."""
-    with _PortalTester():
-        portal = BasicPortal(tmp_path)
-        tracker = PortalTracker([portal])
-
-        tracker.discard(portal.fingerprint)
-
-        assert len(tracker) == 0
-        assert portal not in tracker
 
 
 def test_contains_with_portal_instance(tmp_path):
@@ -182,17 +120,6 @@ def test_contains_with_portal_instance(tmp_path):
 
         assert p1 in tracker
         assert p2 not in tracker
-
-
-def test_contains_with_fingerprint_string(tmp_path):
-    """Test __contains__ with fingerprint strings."""
-    with _PortalTester():
-        p1 = BasicPortal(tmp_path / "p1")
-        p2 = BasicPortal(tmp_path / "p2")
-        tracker = PortalTracker([p1])
-
-        assert p1.fingerprint in tracker
-        assert p2.fingerprint not in tracker
 
 
 def test_subtraction_operator(tmp_path):
@@ -311,8 +238,8 @@ def test_not_picklable():
         tracker.__setstate__({})
 
 
-def test_repr_shows_fingerprints(tmp_path):
-    """Test that __repr__ includes portal fingerprints."""
+def test_repr(tmp_path):
+    """Test that __repr__ includes portal info."""
     with _PortalTester():
         portals = [BasicPortal(tmp_path / f"p{i}") for i in range(2)]
         tracker = PortalTracker(portals)
@@ -320,9 +247,6 @@ def test_repr_shows_fingerprints(tmp_path):
         repr_str = repr(tracker)
 
         assert "PortalTracker" in repr_str
-        # Should contain fingerprints
-        for portal in portals:
-            assert portal.fingerprint in repr_str
 
 
 def test_repr_empty_tracker():

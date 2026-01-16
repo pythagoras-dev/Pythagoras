@@ -184,44 +184,42 @@ def test_portal_is_active(tmpdir):
         assert not portal2.is_active
 
 
-def test_portal_fingerprint_stability(tmpdir):
-    """Test portal fingerprint is stable and deterministic."""
+def test_portal_identity_key_stability(tmpdir):
+    """Test portal identity_key is stable and deterministic."""
     with _PortalTester():
         portal = BasicPortal(tmpdir.mkdir("p1"))
 
-        # Fingerprint should be stable across multiple accesses
-        fp1 = portal.fingerprint
-        fp2 = portal.fingerprint
-        assert fp1 == fp2
-        assert isinstance(fp1, str)
-        assert len(fp1) > 0
+        # Identity key should be stable across multiple accesses
+        ik1 = portal.identity_key
+        ik2 = portal.identity_key
+        assert ik1 == ik2
 
 
-def test_portal_fingerprint_uniqueness(tmpdir):
-    """Test different portals have different fingerprints."""
+def test_portal_identity_key_uniqueness(tmpdir):
+    """Test different portals have different identity keys."""
     with _PortalTester():
         portal1 = BasicPortal(tmpdir.mkdir("p1"))
         portal2 = BasicPortal(tmpdir.mkdir("p2"))
 
-        # Different portals should have different fingerprints
-        assert portal1.fingerprint != portal2.fingerprint
+        # Different portals should have different identity keys
+        assert portal1.identity_key != portal2.identity_key
 
 
-def test_portal_fingerprint_deterministic(tmpdir):
-    """Test portal fingerprint is deterministic for same parameters."""
+def test_portal_identity_key_deterministic(tmpdir):
+    """Test portal identity_key is deterministic for same parameters."""
     with _PortalTester():
         dir1 = tmpdir.mkdir("same_dir")
         portal1 = BasicPortal(dir1)
-        fp1 = portal1.fingerprint
+        ik1 = portal1.identity_key
 
         _clear_all_portals()
 
         # Create portal with same parameters
         portal2 = BasicPortal(dir1)
-        fp2 = portal2.fingerprint
+        ik2 = portal2.identity_key
 
-        # Should have the same fingerprint
-        assert fp1 == fp2
+        # Should have the same identity key
+        assert ik1 == ik2
 
 
 def test_portal_max_nesting_limit(tmpdir):
