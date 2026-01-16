@@ -19,7 +19,7 @@ try:
 except ImportError:
     from typing_extensions import Self
 import pandas as pd
-from mixinforge import NotPicklableMixin, ParameterizableMixin, sort_dict_by_keys, GuardedInitMeta, \
+from mixinforge import NotPicklableMixin, ImmutableParameterizableMixin, sort_dict_by_keys, GuardedInitMeta, \
     CacheablePropertiesMixin, SingleThreadEnforcerMixin
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
@@ -40,7 +40,7 @@ PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
 class BasicPortal(NotPicklableMixin,
-                  ParameterizableMixin,
+                  ImmutableParameterizableMixin,
                   SingleThreadEnforcerMixin,
                   CacheablePropertiesMixin,
                   metaclass = GuardedInitMeta):

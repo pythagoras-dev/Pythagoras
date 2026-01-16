@@ -54,9 +54,9 @@ def test_portal_nested(tmpdir):
 
     with _PortalTester():
 
-        portal = BasicPortal(tmpdir)
-        portal2 = BasicPortal(tmpdir)
-        portal3 = BasicPortal(tmpdir)
+        portal = BasicPortal(tmpdir.mkdir("p1"))
+        portal2 = BasicPortal(tmpdir.mkdir("p2"))
+        portal3 = BasicPortal(tmpdir.mkdir("p3"))
 
         assert get_most_recently_created_portal() is portal3
 
