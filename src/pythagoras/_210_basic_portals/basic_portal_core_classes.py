@@ -218,6 +218,14 @@ class BasicPortal(NotPicklableMixin,
 PortalType = TypeVar("PortalType", bound=BasicPortal)
 
 def _validate_required_portal_type(required_portal_type: PortalType) -> None:
+    """Validate that the required portal type is a subclass of BasicPortal.
+
+    Args:
+        required_portal_type: The type to validate.
+
+    Raises:
+        TypeError: If required_portal_type is not a subclass of BasicPortal.
+    """
     if not (isinstance(required_portal_type, type) and issubclass(required_portal_type, BasicPortal)):
         raise TypeError(
             "required_portal_type must be BasicPortal or one of its (grand)children")
@@ -873,6 +881,14 @@ class PortalAwareClass(CacheablePropertiesMixin,
 
 
     def get_identity_key(self) -> Any:
+        """Get the identity key (hash signature) of the object.
+
+        Returns:
+            The object's hash signature.
+
+        Raises:
+            RuntimeError: If the object is not fully initialized.
+        """
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
                                "identity_key is not available.")

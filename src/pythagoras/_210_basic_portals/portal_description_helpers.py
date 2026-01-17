@@ -19,7 +19,7 @@ from typing import Any
 import pandas as pd
 
 
-def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
+def _describe_persistent_characteristic(name: str, value: Any) -> pd.DataFrame:
     """Create a one-row DataFrame for a persistent (disk-backed) property.
 
     Args:
@@ -28,10 +28,6 @@ def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
 
     Returns:
         DataFrame with columns `type`, `name`, `value` where `type` is "Disk".
-
-    Example:
-        >>> _describe_persistent_characteristic("Base dir", "/path/to/dir")
-        # Returns: DataFrame with one row: {"type": "Disk", "name": "Base dir", "value": "/path/to/dir"}
     """
     d = dict(
         type="Disk",
@@ -41,7 +37,7 @@ def _describe_persistent_characteristic(name, value) -> pd.DataFrame:
     return pd.DataFrame(d)
 
 
-def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
+def _describe_runtime_characteristic(name: str, value: Any) -> pd.DataFrame:
     """Create a one-row DataFrame for a runtime-computed property.
 
     Args:
@@ -49,7 +45,8 @@ def _describe_runtime_characteristic(name, value) -> pd.DataFrame:
         value: Characteristic value (any pandas-compatible type).
 
     Returns:
-        DataFrame with columns `type`, `name`, `value` where `type` is "Runtime".
+        DataFrame with columns `type`, `name`, `value` where `type` is
+        "Runtime".
     """
     d = dict(
         type="Runtime",
