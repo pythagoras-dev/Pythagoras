@@ -19,8 +19,9 @@ try:
 except ImportError:
     from typing_extensions import Self
 import pandas as pd
-from mixinforge import NotPicklableMixin, ImmutableParameterizableMixin, sort_dict_by_keys, GuardedInitMeta, \
-    CacheablePropertiesMixin, SingleThreadEnforcerMixin
+from mixinforge import (NotPicklableMixin, ImmutableParameterizableMixin,
+    sort_dict_by_keys, GuardedInitMeta, ImmutableMixin,
+    CacheablePropertiesMixin, SingleThreadEnforcerMixin)
 
 from persidict import PersiDict, FileDirDict, SafeStrTuple
 from .._110_supporting_utilities import get_hash_signature
@@ -670,7 +671,10 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
 _PORTAL_REGISTRY = _PortalRegistry()
 
 
-class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, metaclass = GuardedInitMeta):
+class PortalAwareClass(CacheablePropertiesMixin,
+        ImmutableMixin,
+        SingleThreadEnforcerMixin,
+        metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
     Objects work with either the current portal or a linked portal
@@ -823,6 +827,12 @@ class PortalAwareClass(CacheablePropertiesMixin, SingleThreadEnforcerMixin, meta
             raise RuntimeError("Object is not fully initialized yet, "
                                "fingerprint is not available.")
         return PAwareObjectStrFingerprint(get_hash_signature(self))
+
+    def get_identity_key(self) -> Any:
+        if not self._init_finished:
+            raise RuntimeError("Object is not fully initialized yet, "
+                               "identity_key is not available.")
+        return get_hash_signature(self)
 
 
     @abstractmethod
