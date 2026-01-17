@@ -236,8 +236,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         active_portals_stack: Stack of currently active portals (nested `with` statements).
         active_portals_stack_counters: Re-entrancy counters for each stack level.
         most_recently_created_portal: Last portal instantiated, used for auto-activation.
-        links_from_objects_to_portals: Maps object fingerprints to their linked portals.
-        known_objects: Maps object fingerprints to PortalAwareClass instances.
+        links_from_objects_to_portals: Maps PortalAwareClass objects to their linked portals.
+        known_objects: Set of known PortalAwareClass instances.
         default_portal_instantiator: Factory function for creating the default portal.
     """
 
@@ -247,8 +247,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self.active_portals_stack: list[BasicPortal] = []
         self.active_portals_stack_counters: list[int] = []
         self.most_recently_created_portal: BasicPortal | None = None
-        self.links_from_objects_to_portals: dict[PAwareObjectStrFingerprint, BasicPortal] = {}
-        self.known_objects: dict[PAwareObjectStrFingerprint, PortalAwareClass] = {}
+        self.links_from_objects_to_portals: dict[PortalAwareClass, BasicPortal] = {}
+        self.known_objects: set[PortalAwareClass] = set()
         self.default_portal_instantiator: Callable[[], None] | None = None
 
 
@@ -295,9 +295,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             portal: The portal instance to unregister.
         """
         all_links = list(self.links_from_objects_to_portals.items())
-        for obj_id, linked_portal in all_links:
+        for obj, linked_portal in all_links:
             if linked_portal == portal:
-                obj = self.known_objects[obj_id]
                 obj._clear()
 
         self.known_portals.discard(portal)
@@ -553,7 +552,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                 f"object is linked to a portal"
             )
 
-        self.known_objects[obj.fingerprint] = obj
+        self.known_objects.add(obj)
 
     def is_object_registered(self, obj: PortalAwareClass) -> bool:
         """Check if an object is currently registered.
@@ -564,7 +563,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Returns:
             True if the object is registered, False otherwise.
         """
-        return obj.fingerprint in self.known_objects
+        return obj in self.known_objects
 
     def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
         """Link an object to a portal in the registry.
@@ -582,9 +581,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                 f"object is not linked to any portal"
             )
 
-        obj_id = obj.fingerprint
-        self.known_objects[obj_id] = obj
-        self.links_from_objects_to_portals[obj_id] = portal
+        self.known_objects.add(obj)
+        self.links_from_objects_to_portals[obj] = portal
 
 
     def unregister_object(self,obj:PortalAwareClass) -> None:
@@ -593,9 +591,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Args:
             obj: The object instance to unregister.
         """
-        obj_id = obj.fingerprint
-        self.known_objects.pop(obj_id, None)
-        self.links_from_objects_to_portals.pop(obj_id, None)
+        self.known_objects.discard(obj)
+        self.links_from_objects_to_portals.pop(obj, None)
 
 
     def count_linked_objects(self) -> int:
@@ -634,16 +631,12 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Returns:
             A set of object fingerprints linked to the portal.
         """
-        obj_ids = (o for o, p in self.links_from_objects_to_portals.items() if p == portal)
+        objs = (o for o, p in self.links_from_objects_to_portals.items() if p == portal)
 
         if target_class is None:
-            return set(obj_ids)
+            return {o.fingerprint for o in objs}
 
-        result = set()
-        for obj_id in obj_ids:
-            if isinstance(self.known_objects[obj_id], target_class):
-                result.add(obj_id)
-        return result
+        return {o.fingerprint for o in objs if isinstance(o, target_class)}
 
     def linked_objects(self
             , portal: BasicPortal
@@ -659,12 +652,10 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Returns:
             A list of portal-aware objects linked to the portal.
         """
-        obj_ids = self.linked_objects_fingerprints(portal, target_class)
-        result = []
-        for obj_id in obj_ids:
-            obj = self.known_objects.get(obj_id)
-            result.append(obj)
-        return result
+        objs = [o for o, p in self.links_from_objects_to_portals.items() if p == portal]
+        if target_class is None:
+            return objs
+        return [o for o in objs if isinstance(o, target_class)]
 
 
 # Singleton instance used by the rest of the module
@@ -893,7 +884,7 @@ def _clear_all_portals() -> None:
 
     Primarily used for unit test cleanup.
     """
-    objects_to_clear = list(_PORTAL_REGISTRY.known_objects.values())
+    objects_to_clear = list(_PORTAL_REGISTRY.known_objects)
     portals_to_clear = _PORTAL_REGISTRY.all_portals()
 
     for obj in objects_to_clear:
