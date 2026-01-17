@@ -71,17 +71,17 @@ def test_portal_get_linked_functions_ids(tmpdir):
         f2 = OrdinaryFn(sample_func_2, portal=portal)
 
         # Lazy registration - not registered yet
-        ids = portal._get_linked_functions_ids()
-        assert len(ids) == 0
+        funcs = portal._get_linked_functions_set()
+        assert len(funcs) == 0
 
         # Trigger registration
         _ = f1.portal
         _ = f2.portal
 
-        ids = portal._get_linked_functions_ids()
-        assert len(ids) == 2
-        assert f1.fingerprint in ids
-        assert f2.fingerprint in ids
+        funcs = portal._get_linked_functions_set()
+        assert len(funcs) == 2
+        assert f1 in funcs
+        assert f2 in funcs
 
 
 def test_unlinked_function_not_tracked(tmpdir):
@@ -195,17 +195,17 @@ def test_same_function_different_instances(tmpdir):
         # They should have the same hash signature (same source)
         assert f1.hash_signature == f2.hash_signature
 
-        # They should also have the same fingerprint since fingerprint is
+        # They should also have the same identity key since it's
         # computed from the normalized source code (get_hash_signature(self))
         # which would be the same for instances wrapping the same function
-        assert f1.fingerprint == f2.fingerprint
+        assert f1.get_identity_key() == f2.get_identity_key()
 
         # Trigger registration for both
         _ = f1.portal
         _ = f2.portal
 
-        # Since they have the same fingerprint, only one gets tracked
-        # (the second one replaces the first in the registry)
+        # Since they have the same identity key, only one gets tracked
+        # (they are considered equal in the registry set)
         assert portal.get_number_of_linked_functions() == 1
 
 

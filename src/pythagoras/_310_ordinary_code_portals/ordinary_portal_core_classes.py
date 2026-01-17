@@ -70,15 +70,15 @@ class OrdinaryCodePortal(ConfigurablePortal):
         """
         super().__init__(root_dict=root_dict)
 
-    def _get_linked_functions_ids(self, target_class: type | None = None) -> set[str]:
-        """Return IDs for functions linked to this portal.
+    def _get_linked_functions_set(self, target_class: type | None = None) -> set[OrdinaryFn]:
+        """Return functions linked to this portal.
 
         Args:
             target_class: Optional OrdinaryFn subclass filter; defaults to
                 OrdinaryFn.
 
         Returns:
-            Set of string IDs for linked OrdinaryFn instances.
+            Set of linked OrdinaryFn instances.
 
         Raises:
             TypeError: If target_class is not an OrdinaryFn subclass.
@@ -90,7 +90,7 @@ class OrdinaryCodePortal(ConfigurablePortal):
             target_class = target_class.__class__
         if not issubclass(target_class, OrdinaryFn):
             raise TypeError(f"required_portal_type must be a subclass of {OrdinaryFn.__name__}.")
-        return self._get_linked_objects_ids(target_class=target_class)
+        return self._get_linked_objects_set(target_class=target_class)
 
     def get_linked_functions(self, target_class: type | None = None) -> list[OrdinaryFn]:
         """Return linked OrdinaryFn instances managed by this portal.
@@ -121,7 +121,7 @@ class OrdinaryCodePortal(ConfigurablePortal):
         Returns:
             Number of linked functions matching the filter.
         """
-        return len(self._get_linked_functions_ids(target_class=target_class))
+        return len(self._get_linked_functions_set(target_class=target_class))
 
 
     def describe(self) -> pd.DataFrame:

@@ -12,7 +12,7 @@ import random
 from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
-from typing import TypeVar, Any, NewType, Callable, Mapping, Iterable, Iterator
+from typing import TypeVar, Any, Callable, Mapping, Iterable, Iterator
 
 try:
     from typing import Self
@@ -34,9 +34,6 @@ _BASE_DIRECTORY_TXT = "Base directory"
 _BACKEND_TYPE_TXT = "Backend type"
 _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
 MAX_NESTED_PORTALS = 999
-
-
-PAwareObjectStrFingerprint = NewType("PAwareObjectStrFingerprint", str)
 
 
 class BasicPortal(NotPicklableMixin,
@@ -98,17 +95,17 @@ class BasicPortal(NotPicklableMixin,
         _PORTAL_REGISTRY.register_portal(self)
 
 
-    def _get_linked_objects_ids(self
-            , target_class: type | None = None) -> set[PAwareObjectStrFingerprint]:
-        """Get the set of IDs of objects linked to this portal.
+    def _get_linked_objects_set(self
+            , target_class: type | None = None) -> set[PortalAwareClass]:
+        """Get the set of objects linked to this portal.
 
         Args:
             target_class: Optional class type filter.
 
         Returns:
-            IDs of objects linked to this portal, filtered by target_class if provided.
+            Set of PortalAwareClass instances linked to this portal, filtered by target_class if provided.
         """
-        return _PORTAL_REGISTRY.linked_objects_fingerprints(self, target_class)
+        return _PORTAL_REGISTRY.linked_objects_set(self, target_class)
 
 
     def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
@@ -132,7 +129,7 @@ class BasicPortal(NotPicklableMixin,
         Returns:
             Count of portal-aware objects linked to this portal, filtered by target_class if provided.
         """
-        return len(self._get_linked_objects_ids(target_class))
+        return len(self._get_linked_objects_set(target_class))
 
 
     @property
@@ -548,7 +545,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         if obj._linked_portal is not None:
             raise ValueError(
-                f"Cannot register object {obj.fingerprint} as linkfree: "
+                f"Cannot register object {obj} as linkfree: "
                 f"object is linked to a portal"
             )
 
@@ -577,7 +574,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         if obj._linked_portal is None:
             raise ValueError(
-                f"Cannot register object {obj.fingerprint} as linked: "
+                f"Cannot register object {obj} as linked: "
                 f"object is not linked to any portal"
             )
 
@@ -617,11 +614,11 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self.default_portal_instantiator = None
 
 
-    def linked_objects_fingerprints(self
+    def linked_objects_set(self
             , portal: BasicPortal
             , target_class: type | None = None
-            ) -> set[PAwareObjectStrFingerprint]:
-        """Get fingerprints of objects linked to a portal.
+            ) -> set[PortalAwareClass]:
+        """Get the set of objects linked to a portal.
 
         Args:
             portal: The portal to query.
@@ -629,14 +626,14 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                 of this type are included.
 
         Returns:
-            A set of object fingerprints linked to the portal.
+            A set of PortalAwareClass instances linked to the portal.
         """
-        objs = (o for o, p in self.links_from_objects_to_portals.items() if p == portal)
+        objs = {o for o, p in self.links_from_objects_to_portals.items() if p == portal}
 
         if target_class is None:
-            return {o.fingerprint for o in objs}
+            return objs
 
-        return {o.fingerprint for o in objs if isinstance(o, target_class)}
+        return {o for o in objs if isinstance(o, target_class)}
 
     def linked_objects(self
             , portal: BasicPortal
@@ -789,7 +786,7 @@ class PortalAwareClass(CacheablePropertiesMixin,
                                "_first_visit_to_portal() can't be called.")
         if portal in self._visited_portals:
             raise RuntimeError(
-                f"Object with id {self.fingerprint} has already been visited "
+                f"Object {self} has already been visited "
                 f"and registered in portal {portal}")
 
 
@@ -807,24 +804,20 @@ class PortalAwareClass(CacheablePropertiesMixin,
             _PORTAL_REGISTRY.register_linkfree_object(self)
 
 
-    @cached_property
-    def fingerprint(self) -> PAwareObjectStrFingerprint:
-        """The hash fingerprint of the portal-aware object.
-
-        This is an internal identifier used by Pythagoras for object tracking
-        in the registry. It differs from __hash__() and is based on the object itself.
-        """
-        if not self._init_finished:
-            raise RuntimeError("Object is not fully initialized yet, "
-                               "fingerprint is not available.")
-        return PAwareObjectStrFingerprint(get_hash_signature(self))
-
     def get_identity_key(self) -> Any:
         if not self._init_finished:
             raise RuntimeError("Object is not fully initialized yet, "
                                "identity_key is not available.")
         return get_hash_signature(self)
 
+    def __repr__(self) -> str:
+        """Return a string representation of this portal-aware object."""
+        class_name = type(self).__name__
+        if self._init_finished:
+            state = self.__getstate__()
+            return f"{class_name}({state})"
+        else:
+            return f"{class_name}(<initializing>)"
 
     @abstractmethod
     def __getstate__(self):
@@ -860,7 +853,7 @@ class PortalAwareClass(CacheablePropertiesMixin,
         """True if the object has been registered in at least one portal."""
         if len(self._visited_portals) >=1:
             if not _PORTAL_REGISTRY.is_object_registered(self):
-                raise RuntimeError(f"Object with id {self.fingerprint} is expected to be in the activated objects registry")
+                raise RuntimeError(f"Object {self} is expected to be in the activated objects registry")
             return True
         return False
 

@@ -85,22 +85,22 @@ def test_ordinary_fn_pickling(tmpdir):
         assert f_restored.source_code == f.source_code
 
 
-def test_ordinary_fn_fingerprint(tmpdir):
-    """Test OrdinaryFn fingerprint property uniqueness and consistency."""
+def test_ordinary_fn_identity_key(tmpdir):
+    """Test OrdinaryFn identity key uniqueness and consistency."""
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f1 = OrdinaryFn(simple_function, portal=t.portal)
         f2 = OrdinaryFn(simple_function, portal=t.portal)
 
-        # Same function should have same fingerprint
-        assert f1.fingerprint == f2.fingerprint
+        # Same function should have same identity key
+        assert f1.get_identity_key() == f2.get_identity_key()
 
-        # Fingerprint should be a non-empty string
-        assert isinstance(f1.fingerprint, str)
-        assert len(f1.fingerprint) > 0
+        # Identity key should be a non-empty string
+        assert isinstance(f1.get_identity_key(), str)
+        assert len(f1.get_identity_key()) > 0
 
-        # Different functions should have different fingerprints
+        # Different functions should have different identity keys
         f3 = OrdinaryFn(fibonacci, portal=t.portal)
-        assert f1.fingerprint != f3.fingerprint
+        assert f1.get_identity_key() != f3.get_identity_key()
 
 
 def test_ordinary_fn_positional_args_error(tmpdir):

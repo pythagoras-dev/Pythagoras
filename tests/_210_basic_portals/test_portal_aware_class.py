@@ -46,16 +46,16 @@ def test_portal_aware_init_invalid_portal_type():
             SimplePortalAware(portal="not a portal")
 
 
-def test_portal_aware_str_id_works_after_init():
-    """Test that _str_id is accessible after initialization completes."""
+def test_portal_aware_identity_key_works_after_init():
+    """Test that identity_key is accessible after initialization completes."""
     with _PortalTester(BasicPortal) as t:
         obj = SimplePortalAware(42)
-        # After init, _str_id should work
-        str_id = obj.fingerprint
-        assert str_id is not None
-        assert isinstance(str_id, str)
+        # After init, identity_key should work
+        identity_key = obj.get_identity_key()
+        assert identity_key is not None
+        assert isinstance(identity_key, str)
         # Should be consistent
-        assert obj.fingerprint == str_id
+        assert obj.get_identity_key() == identity_key
 
 
 def test_portal_aware_registration_tracking():
@@ -170,21 +170,21 @@ def test_portal_aware_portal_property_uses_current_active(tmpdir):
             assert obj.portal is portal2
 
 
-def test_portal_aware_fingerprint_before_init_raises_error():
-    """Test that accessing fingerprint before initialization raises RuntimeError."""
+def test_portal_aware_identity_key_before_init_raises_error():
+    """Test that accessing identity_key before initialization raises RuntimeError."""
     with _PortalTester(BasicPortal) as t:
-        # This tests the edge case where fingerprint is accessed before _init_finished=True
+        # This tests the edge case where identity_key is accessed before _init_finished=True
 
         class TestClass(PortalAwareClass):
             def __init__(self, portal=None):
                 super().__init__(portal)
-                # Try to access fingerprint before init is finished
+                # Try to access identity_key before init is finished
                 # This should raise because _init_finished is still False
                 try:
-                    _ = self.fingerprint
-                    self.fingerprint_accessed = True
+                    _ = self.get_identity_key()
+                    self.identity_key_accessed = True
                 except RuntimeError:
-                    self.fingerprint_accessed = False
+                    self.identity_key_accessed = False
 
             def __getstate__(self):
                 return {}
@@ -193,8 +193,8 @@ def test_portal_aware_fingerprint_before_init_raises_error():
                 super().__setstate__(state)
 
         obj = TestClass()
-        # The fingerprint access should have failed during __init__
-        assert not obj.fingerprint_accessed
+        # The identity_key access should have failed during __init__
+        assert not obj.identity_key_accessed
 
 
 def test_portal_aware_first_visit_before_init_raises_error():
