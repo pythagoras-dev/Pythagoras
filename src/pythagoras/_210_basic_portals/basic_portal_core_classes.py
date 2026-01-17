@@ -151,7 +151,7 @@ class BasicPortal(NotPicklableMixin,
     @property
     def is_active(self) -> bool:
         """True if the portal is in the active portal stack."""
-        return self in _PORTAL_REGISTRY.active_portals_stack
+        return _PORTAL_REGISTRY.portal_stack.contains(self)
 
 
     def get_params(self) -> dict[str,Any]:
@@ -222,16 +222,112 @@ def _validate_required_portal_type(required_portal_type: PortalType) -> None:
         raise TypeError(
             "required_portal_type must be BasicPortal or one of its (grand)children")
 
+
+class _PortalStack:
+    """Manages the stack of active portals for context manager support.
+
+    Handles pushing/popping portals when entering/exiting `with portal:` blocks,
+    including re-entrancy counting for nested uses of the same portal.
+
+    Attributes:
+        _stack: List of active portals (most recent at end).
+        _counters: Re-entrancy counters matching each stack entry.
+    """
+
+    def __init__(self) -> None:
+        self._stack: list[BasicPortal] = []
+        self._counters: list[int] = []
+
+    def push(self, portal: BasicPortal) -> None:
+        """Push a portal onto the stack, handling re-entrancy.
+
+        Args:
+            portal: The portal to push.
+
+        Raises:
+            RuntimeError: If nesting exceeds MAX_NESTED_PORTALS.
+        """
+        if self.depth() >= MAX_NESTED_PORTALS:
+            raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
+        if self._stack and self._stack[-1] is portal:
+            self._counters[-1] += 1
+        else:
+            self._stack.append(portal)
+            self._counters.append(1)
+        self._check_consistency()
+
+    def pop(self, portal: BasicPortal) -> None:
+        """Pop a portal from the stack.
+
+        Args:
+            portal: The portal to pop (must be at top of stack).
+
+        Raises:
+            RuntimeError: If the portal is not at the top of the stack.
+        """
+        if not self._stack or self._stack[-1] is not portal:
+            raise RuntimeError("Attempt to pop an unexpected portal from the stack")
+        if self._counters[-1] == 1:
+            self._stack.pop()
+            self._counters.pop()
+        else:
+            self._counters[-1] -= 1
+        self._check_consistency()
+
+    def peek(self) -> BasicPortal | None:
+        """Return the portal at the top of the stack, or None if empty."""
+        return self._stack[-1] if self._stack else None
+
+    def is_empty(self) -> bool:
+        """Return True if the stack is empty."""
+        return len(self._stack) == 0
+
+    def depth(self) -> int:
+        """Return total depth including re-entrancy counts."""
+        return sum(self._counters)
+
+    def unique_count(self) -> int:
+        """Return the number of unique portals in the stack."""
+        return len(set(self._stack))
+
+    def contains(self, portal: BasicPortal) -> bool:
+        """Check if the portal is anywhere in the stack."""
+        return portal in self._stack
+
+    def is_top(self, portal: BasicPortal) -> bool:
+        """Check if the portal is at the top of the stack."""
+        return bool(self._stack) and self._stack[-1] is portal
+
+    def iter_unique(self) -> Iterator[BasicPortal]:
+        """Iterate over unique portals in the stack."""
+        return iter(set(self._stack))
+
+    def as_set(self) -> set[BasicPortal]:
+        """Return the set of unique portals in the stack."""
+        return set(self._stack)
+
+    def clear(self) -> None:
+        """Clear the stack."""
+        self._stack.clear()
+        self._counters.clear()
+
+    def _check_consistency(self) -> None:
+        """Verify stack and counters are in sync."""
+        if len(self._stack) != len(self._counters):
+            raise RuntimeError(
+                "Internal error: _stack and _counters are out of sync")
+
+
 class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     """Registry maintaining all portal bookkeeping and state for Pythagoras.
 
-    This singleton tracks all portals and portal-aware objects, manages the stack
-    of active portals, and provides mechanisms for portal lookup and lifecycle management.
+    This singleton tracks all portals and portal-aware objects, delegates stack
+    management to _PortalStack, and provides mechanisms for portal lookup and
+    lifecycle management.
 
     Attributes:
         known_portals: Set of known portal instances.
-        active_portals_stack: Stack of currently active portals (nested `with` statements).
-        active_portals_stack_counters: Re-entrancy counters for each stack level.
+        portal_stack: Stack manager for active portals (nested `with` statements).
         most_recently_created_portal: Last portal instantiated, used for auto-activation.
         links_from_objects_to_portals: Maps PortalAwareClass objects to their linked portals.
         known_objects: Set of known PortalAwareClass instances.
@@ -241,8 +337,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     def __init__(self) -> None:
         super().__init__()
         self.known_portals: set[BasicPortal] = set()
-        self.active_portals_stack: list[BasicPortal] = []
-        self.active_portals_stack_counters: list[int] = []
+        self.portal_stack: _PortalStack = _PortalStack()
         self.most_recently_created_portal: BasicPortal | None = None
         self.links_from_objects_to_portals: dict[PortalAwareClass, BasicPortal] = {}
         self.known_objects: set[PortalAwareClass] = set()
@@ -345,18 +440,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             RuntimeError: If nesting exceeds MAX_NESTED_PORTALS or portal is unregistered.
         """
         self._restrict_to_single_thread()
-        if self.active_portals_stack_depth() >= MAX_NESTED_PORTALS:
-            raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
         if portal not in self.known_portals:
             raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
-        if self.active_portals_stack and self.active_portals_stack[-1] is portal:
-            self.active_portals_stack_counters[-1] += 1
-        else:
-            self.active_portals_stack.append(portal)
-            self.active_portals_stack_counters.append(1)
-
-        if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
-            raise RuntimeError("Internal error: active_stack and active_counters are out of sync")
+        self.portal_stack.push(portal)
 
 
     def pop_active_portal(self, portal: BasicPortal) -> None:
@@ -371,18 +457,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self._restrict_to_single_thread()
         if portal not in self.known_portals:
             raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
-
-        if not self.active_portals_stack or self.active_portals_stack[-1] is not portal:
-            raise RuntimeError("Attempt to pop an unexpected portal from the stack")
-
-        if self.active_portals_stack_counters[-1] == 1:
-            self.active_portals_stack.pop()
-            self.active_portals_stack_counters.pop()
-        else:
-            self.active_portals_stack_counters[-1] -= 1
-
-        if len(self.active_portals_stack) != len(self.active_portals_stack_counters):
-            raise RuntimeError("Internal error: active_portals_stack and active_portals_stack_counters are out of sync")
+        self.portal_stack.pop(portal)
 
 
     def current_portal(self) -> BasicPortal:
@@ -394,8 +469,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Returns:
             The current portal instance.
         """
-        if self.active_portals_stack:
-            return self.active_portals_stack[-1]
+        top = self.portal_stack.peek()
+        if top is not None:
+            return top
 
         if self.most_recently_created_portal is None:
             if self.default_portal_instantiator is not None:
@@ -412,8 +488,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                     "No portal is active and no default portal instantiator was set "
                     "using _set_default_portal_instantiator()")
 
-        self.active_portals_stack.append(self.most_recently_created_portal)
-        self.active_portals_stack_counters.append(1)
+        self.portal_stack.push(self.most_recently_created_portal)
         return self.most_recently_created_portal
 
 
@@ -426,8 +501,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Returns:
             True if the portal is current (top of stack), False otherwise.
         """
-        return (len(self.active_portals_stack) > 0
-                and self.active_portals_stack[-1] == portal)
+        return self.portal_stack.is_top(portal)
 
 
     def unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
@@ -443,10 +517,10 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any active portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        unique_active = {p for p in self.active_portals_stack}
+        unique_active = self.portal_stack.as_set()
         for p in unique_active:
             if not isinstance(p, required_portal_type):
-                raise TypeError( f"Found active portal {type(p).__name__} which is not "
+                raise TypeError(f"Found active portal {type(p).__name__} which is not "
                     f"an instance of required {required_portal_type.__name__}")
         return len(unique_active)
 
@@ -466,15 +540,12 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any active portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        
-        total_depth = 0
-        for portal, count in zip(self.active_portals_stack, self.active_portals_stack_counters):
+        for portal in self.portal_stack.iter_unique():
             if not isinstance(portal, required_portal_type):
                 raise TypeError(
                     f"Found active portal {type(portal).__name__} which is not "
                     f"an instance of required {required_portal_type.__name__}")
-            total_depth += count
-        return total_depth
+        return self.portal_stack.depth()
 
     def nonactive_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
         """Get a list of all portals that are not in the active stack.
@@ -491,7 +562,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any non-active portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        active_portals = set(self.active_portals_stack)
+        active_portals = self.portal_stack.as_set()
         all_known = self.all_portals(BasicPortal)
 
         candidates = [p for p in all_known if p not in active_portals]
@@ -522,9 +593,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any non-current portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        current_portal = None
-        if len(self.active_portals_stack) > 0:
-            current_portal = self.active_portals_stack[-1]
+        current_portal = self.portal_stack.peek()
 
         all_known = self.all_portals(BasicPortal)
         candidates = [p for p in all_known if p != current_portal]
@@ -606,8 +675,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Primarily used for unit test cleanup.
         """
         self.known_portals.clear()
-        self.active_portals_stack.clear()
-        self.active_portals_stack_counters.clear()
+        self.portal_stack.clear()
         self.most_recently_created_portal = None
         self.links_from_objects_to_portals.clear()
         self.known_objects.clear()
