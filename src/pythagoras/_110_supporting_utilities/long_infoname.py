@@ -3,19 +3,26 @@
 Provides a function to build detailed identifier strings that include
 module, class, and object name information.
 """
-import types
-from typing import Any, Union
+from typing import Any
 import functools
 
 from persidict import replace_unsafe_chars
 
 
-def _safe_getattr(obj: Any, name:str):
+def _safe_getattr(obj: Any, name: str):
     """Safely retrieve an attribute, returning None if any error occurs.
 
     This function catches all Exceptions during attribute access to handle
     properties or descriptors that might raise errors (e.g., during inspection
     of partially initialized objects).
+
+    Args:
+        obj: The object to inspect.
+        name: The name of the attribute to retrieve.
+
+    Returns:
+        The attribute value, or None if the attribute is missing or accessing
+        it raises an exception.
     """
     try:
         return getattr(obj, name, None)
