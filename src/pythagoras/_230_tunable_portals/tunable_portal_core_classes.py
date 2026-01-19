@@ -1,7 +1,7 @@
-"""Core classes for configuration management in Pythagoras portals.
+"""Core classes for work sith portal/object settings in Pythagoras .
 
-This module provides TunablePortal and TunableClass,
-which add configuration parameter management capabilities to portals and
+This module provides TunablePortal and TunableObject classes    ,
+which add settings management capabilities to portals and
 portal-aware objects.
 """
 
@@ -18,15 +18,13 @@ from .._110_supporting_utilities import get_node_signature
 
 
 class TunablePortal(DataPortal):
-    """A portal that manages configuration parameters.
+    """A portal that provides tools for storing / retrieving settings.
 
-    TunablePortal extends DataPortal with persistent configuration storage
-    capabilities. It maintains two types of configuration:
-    - Portal-wide configuration: Settings shared across all nodes
-    - Node-specific configuration: Settings specific to the current compute node
+    TunablePortal extends DataPortal with persistent storage for settings.
+    It maintains two types of settings:
+    - Portal-wide: Settings shared across all nodes in a portal
+    - Node-specific: Settings known / applicable to the current compute node
 
-    Configuration settings are cached for performance and can include auxiliary
-    parameters specified during initialization.
 
     Attributes:
         _portal_config_settings: Portal-wide persistent configuration store.
