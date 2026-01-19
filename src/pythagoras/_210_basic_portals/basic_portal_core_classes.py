@@ -114,7 +114,7 @@ class BasicPortal(NotPicklableMixin,
         return _PORTAL_REGISTRY.get_linked_objects(self, target_class)
 
 
-    def get_number_of_linked_objects(self, target_class: type | None = None) -> int:
+    def count_linked_objects(self, target_class: type | None = None) -> int:
         """Get the number of objects linked to this portal.
 
         Args:
@@ -409,9 +409,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Raises:
             TypeError: If any known portal is not an instance of required_portal_type.
         """
-        return len(self.get_all_portals(required_portal_type))
+        return len(self.get_known_portals(required_portal_type))
 
-    def get_all_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
+    def get_known_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
         """Get a list of all portals registered in the system.
 
         Args:
@@ -506,7 +506,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return self.portal_stack.is_top(portal)
 
 
-    def get_unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
+    def count_unique_active_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
         """Count unique portals currently in the active stack.
 
         Args:
@@ -527,9 +527,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return len(unique_active)
 
 
-    def get_active_portals_stack_depth(self,
-                                       required_portal_type: type[PortalType] = BasicPortal
-                                       ) -> int:
+    def measure_active_portals_stack_depth(self,
+                                           required_portal_type: type[PortalType] = BasicPortal
+                                           ) -> int:
         """Calculate the total depth of the active portal stack.
 
         Args:
@@ -565,7 +565,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         _validate_required_portal_type(required_portal_type)
         active_portals = self.portal_stack.as_set()
-        all_known = self.get_all_portals(BasicPortal)
+        all_known = self.get_known_portals(BasicPortal)
 
         candidates = {p for p in all_known if p not in active_portals}
 
@@ -597,7 +597,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         _validate_required_portal_type(required_portal_type)
         current_portal = self.portal_stack.peek()
 
-        all_known = self.get_all_portals(BasicPortal)
+        all_known = self.get_known_portals(BasicPortal)
         candidates = {p for p in all_known if p != current_portal}
 
         for p in candidates:
@@ -937,7 +937,7 @@ def _clear_all_portals() -> None:
     Primarily used for unit test cleanup.
     """
     objects_to_clear = list(_PORTAL_REGISTRY.known_objects)
-    portals_to_clear = _PORTAL_REGISTRY.get_all_portals()
+    portals_to_clear = _PORTAL_REGISTRY.get_known_portals()
 
     for obj in objects_to_clear:
         obj._clear()
@@ -979,7 +979,7 @@ def _set_default_portal_instantiator(instantiator: Callable[[], None]) -> None:
     _PORTAL_REGISTRY.register_default_portal_instantiator(instantiator)
 
 
-def get_number_of_linked_portal_aware_objects() -> int:
+def count_linked_portal_aware_objects() -> int:
     """Get the count of portal-aware objects currently linked to portals.
 
     Returns:

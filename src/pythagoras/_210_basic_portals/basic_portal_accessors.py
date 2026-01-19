@@ -37,7 +37,7 @@ def get_all_known_portals(required_portal_type: type[PortalType] = BasicPortal) 
     Raises:
         TypeError: If any known portal is not an instance of required_portal_type.
     """
-    return _PORTAL_REGISTRY.get_all_portals(required_portal_type)
+    return _PORTAL_REGISTRY.get_known_portals(required_portal_type)
 
 
 def get_number_of_active_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
@@ -52,7 +52,7 @@ def get_number_of_active_portals(required_portal_type: type[PortalType] = BasicP
     Raises:
         TypeError: If any active portal is not an instance of required_portal_type.
     """
-    return _PORTAL_REGISTRY.get_unique_active_portals_count(required_portal_type)
+    return _PORTAL_REGISTRY.count_unique_active_portals(required_portal_type)
 
 
 def get_depth_of_active_portal_stack(required_portal_type: type[PortalType] = BasicPortal) -> int:
@@ -67,7 +67,7 @@ def get_depth_of_active_portal_stack(required_portal_type: type[PortalType] = Ba
     Raises:
         TypeError: If any active portal is not an instance of required_portal_type.
     """
-    return _PORTAL_REGISTRY.get_active_portals_stack_depth(required_portal_type)
+    return _PORTAL_REGISTRY.measure_active_portals_stack_depth(required_portal_type)
 
 
 def get_current_portal() -> PortalType:

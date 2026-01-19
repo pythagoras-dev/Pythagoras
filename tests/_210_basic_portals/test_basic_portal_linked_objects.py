@@ -61,7 +61,7 @@ def test_get_linked_objects_no_filter(tmpdir):
         obj_b1 = TypeB(3, portal)
 
         # Verify lazy registration: objects not registered until first use
-        assert portal.get_number_of_linked_objects() == 0
+        assert portal.count_linked_objects() == 0
 
         # Trigger registration by accessing .portal
         _ = obj_a1.portal
@@ -69,7 +69,7 @@ def test_get_linked_objects_no_filter(tmpdir):
         _ = obj_b1.portal
 
         # Now objects should be registered
-        assert portal.get_number_of_linked_objects() == 3
+        assert portal.count_linked_objects() == 3
 
         linked = portal.get_linked_objects()
         assert len(linked) == 3
@@ -88,7 +88,7 @@ def test_get_linked_objects_with_type_filter(tmpdir):
         obj_b1 = TypeB(3, portal)
 
         # Verify lazy registration: objects not registered until first use
-        assert portal.get_number_of_linked_objects() == 0
+        assert portal.count_linked_objects() == 0
 
         # Trigger registration by accessing .portal
         _ = obj_a1.portal
@@ -112,25 +112,25 @@ def test_get_number_of_linked_objects_no_filter(tmpdir):
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
         portal = t.portal
 
-        assert portal.get_number_of_linked_objects() == 0
+        assert portal.count_linked_objects() == 0
 
         # Verify lazy registration for first object
         obj1 = TypeA(1, portal)
-        assert portal.get_number_of_linked_objects() == 0  # Not registered yet
+        assert portal.count_linked_objects() == 0  # Not registered yet
         _ = obj1.portal  # Trigger registration
-        assert portal.get_number_of_linked_objects() == 1  # Now registered
+        assert portal.count_linked_objects() == 1  # Now registered
 
         # Verify lazy registration for second object
         obj2 = TypeA(2, portal)
-        assert portal.get_number_of_linked_objects() == 1  # Still only first registered
+        assert portal.count_linked_objects() == 1  # Still only first registered
         _ = obj2.portal  # Trigger registration
-        assert portal.get_number_of_linked_objects() == 2  # Now both registered
+        assert portal.count_linked_objects() == 2  # Now both registered
 
         # Verify lazy registration for third object
         obj3 = TypeB(3, portal)
-        assert portal.get_number_of_linked_objects() == 2  # Still only first two registered
+        assert portal.count_linked_objects() == 2  # Still only first two registered
         _ = obj3.portal  # Trigger registration
-        assert portal.get_number_of_linked_objects() == 3  # All three registered
+        assert portal.count_linked_objects() == 3  # All three registered
 
 
 def test_get_number_of_linked_objects_with_type_filter(tmpdir):
@@ -143,8 +143,8 @@ def test_get_number_of_linked_objects_with_type_filter(tmpdir):
         obj_b1 = TypeB(3, portal)
 
         # Verify lazy registration: objects not registered until first use
-        assert portal.get_number_of_linked_objects(target_class=TypeA) == 0
-        assert portal.get_number_of_linked_objects(target_class=TypeB) == 0
+        assert portal.count_linked_objects(target_class=TypeA) == 0
+        assert portal.count_linked_objects(target_class=TypeB) == 0
 
         # Trigger registration by accessing .portal
         _ = obj_a1.portal
@@ -152,8 +152,8 @@ def test_get_number_of_linked_objects_with_type_filter(tmpdir):
         _ = obj_b1.portal
 
         # Now objects should be registered
-        assert portal.get_number_of_linked_objects(target_class=TypeA) == 2
-        assert portal.get_number_of_linked_objects(target_class=TypeB) == 1
+        assert portal.count_linked_objects(target_class=TypeA) == 2
+        assert portal.count_linked_objects(target_class=TypeB) == 1
 
 
 def test_entropy_infuser_property(tmpdir):
