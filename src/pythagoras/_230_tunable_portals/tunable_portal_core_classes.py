@@ -200,7 +200,7 @@ class TunablePortal(DataPortal):
 class TunableObject(PortalAwareObject):
     """A portal-aware class with config management capabilities.
 
-    ConfigurableStorableClass provides configuration management for any portal-aware object.
+    TunableObject provides configuration management for any portal-aware object.
     It stores auxiliary configuration parameters and provides methods to get/set
     config settings in the portal. This class does NOT provide content-addressable
     storage (.addr) - that functionality is added by subclasses that have

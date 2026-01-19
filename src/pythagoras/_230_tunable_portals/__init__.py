@@ -19,5 +19,5 @@ Exports
 - ConfigurableStorableClass: Base class for storable objects with config support
 """
 
-from .configurable_portal_core_classes import (
+from .tunable_portal_core_classes import (
     TunablePortal, TunableObject)

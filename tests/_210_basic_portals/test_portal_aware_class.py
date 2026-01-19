@@ -1,11 +1,11 @@
-"""Tests for PortalAwareClass functionality and contracts."""
+"""Tests for PortalAwareObject functionality and contracts."""
 import pickle
 import pytest
 from pythagoras import BasicPortal, PortalAwareObject, _PortalTester
 
 
 class SimplePortalAware(PortalAwareObject):
-    """Minimal PortalAwareClass implementation for testing."""
+    """Minimal PortalAwareObject implementation for testing."""
     
     def __init__(self, value=0, portal=None):
         super().__init__(portal)
@@ -252,7 +252,7 @@ def test_portal_aware_is_registered_consistency(tmpdir):
 
 
 def test_portal_aware_abstract_getstate_not_implemented():
-    """Test that PortalAwareClass without __getstate__ cannot be instantiated."""
+    """Test that PortalAwareObject without __getstate__ cannot be instantiated."""
 
     class IncompletePortalAware(PortalAwareObject):
         """Portal-aware class that doesn't implement __getstate__."""
@@ -271,7 +271,7 @@ def test_portal_aware_abstract_getstate_not_implemented():
 
 
 def test_portal_aware_abstract_setstate_not_implemented():
-    """Test that PortalAwareClass without __setstate__ cannot be instantiated."""
+    """Test that PortalAwareObject without __setstate__ cannot be instantiated."""
 
     class IncompletePortalAware2(PortalAwareObject):
         """Portal-aware class that doesn't implement __setstate__."""

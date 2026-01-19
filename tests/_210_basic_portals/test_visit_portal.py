@@ -21,7 +21,7 @@ class SimplePortalAware(PortalAwareObject):
 
 
 def test_visit_portal_with_portal_aware_object(tmpdir):
-    """Test _visit_portal registers a PortalAwareClass object."""
+    """Test _visit_portal registers a PortalAwareObject object."""
     with _PortalTester():
         portal = BasicPortal(tmpdir)
 

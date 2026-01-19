@@ -6,7 +6,7 @@ for managing portal lifecycle and access.
 Classes:
     BasicPortal: Base class for all portal types. Manages lifecycle and
         registration of portal-aware objects. Not intended for direct use.
-    PortalAwareClass: Base class for objects that require portal access.
+    PortalAwareObject: Base class for objects that require portal access.
         May be linked to a specific portal or use the current portal.
 
 Portal Management:

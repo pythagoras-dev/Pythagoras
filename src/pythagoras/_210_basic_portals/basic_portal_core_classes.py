@@ -103,7 +103,7 @@ class BasicPortal(NotPicklableMixin,
             target_class: Optional class type filter.
 
         Returns:
-            Set of PortalAwareClass instances linked to this portal, filtered by target_class if provided.
+            Set of PortalAwareObjec instances linked to this portal, filtered by target_class if provided.
         """
         return _PORTAL_REGISTRY.linked_objects_set(self, target_class)
 
@@ -115,7 +115,7 @@ class BasicPortal(NotPicklableMixin,
             target_class: Optional class type filter.
 
         Returns:
-            PortalAwareClass instances linked to this portal, filtered by target_class if provided.
+            PortalAwareObject instances linked to this portal, filtered by target_class if provided.
         """
         return _PORTAL_REGISTRY.linked_objects(self, target_class)
 
@@ -337,8 +337,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         known_portals: Set of known portal instances.
         portal_stack: Stack manager for active portals (nested `with` statements).
         most_recently_created_portal: Last portal instantiated, used for auto-activation.
-        links_from_objects_to_portals: Maps PortalAwareClass objects to their linked portals.
-        known_objects: Set of known PortalAwareClass instances.
+        links_from_objects_to_portals: Maps PortalAwareObject instances to their linked portals.
+        known_objects: Set of known PortalAwareObject instances.
         default_portal_instantiator: Factory function for creating the default portal.
     """
 
@@ -702,7 +702,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                 of this type are included.
 
         Returns:
-            A set of PortalAwareClass instances linked to the portal.
+            A set of PortalAwareObject instances linked to the portal.
         """
         objs = {o for o, p in self.links_from_objects_to_portals.items() if p == portal}
 
@@ -751,7 +751,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
     _nested_objects:list[Any]
 
     def __init__(self, portal:BasicPortal|None=None):
-        """Initialize a PortalAwareClass instance.
+        """Initialize a PortalAwareObject instance.
 
         Args:
             portal: The portal to link this object to, or None to use
@@ -866,7 +866,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
                 f"and registered in portal {portal}")
 
 
-        # TODO: Recursively visit nested PortalAwareClass objects
+        # TODO: Recursively visit nested PortalAwareObject instances
         for nested in self._nested_objects:
             if isinstance(nested, PortalAwareObject):
                 nested._visit_portal(portal)
@@ -911,7 +911,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
         information is NOT included in the pickled state.
         """
         raise NotImplementedError(
-            "PortalAwareClass objects are not picklable. "
+            "PortalAwareObject instances are not picklable. "
             "Method __getstate__() must be overridden in subclasses.")
 
 
@@ -1014,7 +1014,7 @@ def get_number_of_linked_portal_aware_objects() -> int:
 
 
 def _visit_portal(obj:Any, portal:BasicPortal) -> None:
-    """Register all PortalAwareClass instances nested within an object.
+    """Register all PortalAwareObject instances nested within an object.
 
     Recursively traverses the object structure and registers any found
     portal-aware objects with the specified portal.
@@ -1027,7 +1027,7 @@ def _visit_portal(obj:Any, portal:BasicPortal) -> None:
 
 
 def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = None) -> None:
-    """Recursively traverse an object and register PortalAwareClass instances.
+    """Recursively traverse an object and register PortalAwareObject instances.
 
     Args:
         obj: The object to check and traverse.
