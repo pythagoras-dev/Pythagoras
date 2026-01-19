@@ -12,7 +12,7 @@ import random
 from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
-from typing import TypeVar, Any, Callable, Iterator
+from typing import TypeVar, Any, Callable, Iterator, Mapping, Iterable
 
 try:
     from typing import Self
@@ -992,8 +992,21 @@ def count_linked_portal_aware_objects() -> int:
     """
     return _PORTAL_REGISTRY.count_linked_objects()
 
+#
+# def _visit_portal(obj: Any, portal: BasicPortal) -> None:
+#     """Register all PortalAwareObject instances nested within an object.
+#
+#     Recursively traverses the object structure and registers any found
+#     portal-aware objects with the specified portal.
+#
+#     Args:
+#         obj: The object structure to traverse.
+#         portal: The portal to register found objects with.
+#     """
+#     for pao in find_instances_inside_composite_object(obj, PortalAwareObject):
+#         pao._visit_portal(portal)
 
-def _visit_portal(obj: Any, portal: BasicPortal) -> None:
+def _visit_portal(obj:Any, portal:BasicPortal) -> None:
     """Register all PortalAwareObject instances nested within an object.
 
     Recursively traverses the object structure and registers any found
@@ -1003,7 +1016,42 @@ def _visit_portal(obj: Any, portal: BasicPortal) -> None:
         obj: The object structure to traverse.
         portal: The portal to register found objects with.
     """
-    for pao in find_instances_inside_composite_object(obj, PortalAwareObject):
-        pao._visit_portal(portal)
+    return _visit_portal_impl(obj, portal=portal)
+
+
+def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = None) -> None:
+    """Recursively traverse an object and register PortalAwareObject instances.
+
+    Args:
+        obj: The object to check and traverse.
+        portal: The portal to register with.
+        seen: Set of object IDs already visited to handle cycles.
+    """
+
+    if seen is None:
+        seen = set()
+
+    if id(obj) in seen:
+        return
+
+    if isinstance(obj, (str, range, bytearray, bytes, SafeStrTuple)):
+        return
+
+    seen.add(id(obj))
+
+    if isinstance(obj, PortalAwareObject):
+        obj._visit_portal(portal)
+        return
+
+    if isinstance(obj, Mapping):
+        for key, value in obj.items():
+            _visit_portal_impl(key, portal, seen)
+            _visit_portal_impl(value, portal, seen)
+        return
+
+    if isinstance(obj, Iterable):
+        for item in obj:
+            _visit_portal_impl(item, portal, seen)
+        return
 
 
