@@ -62,8 +62,8 @@ def test_portal_tracks_linked_functions(tmpdir):
         assert f3 in linked
 
 
-def test_portal_get_linked_functions_ids(tmpdir):
-    """Test portal._get_linked_functions_ids() method."""
+def test_portal_get_linked_functions_returns_set(tmpdir):
+    """Test portal.get_linked_functions() returns a set."""
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         portal = t.portal
 
@@ -71,14 +71,16 @@ def test_portal_get_linked_functions_ids(tmpdir):
         f2 = OrdinaryFn(sample_func_2, portal=portal)
 
         # Lazy registration - not registered yet
-        funcs = portal._get_linked_functions_set()
+        funcs = portal.get_linked_functions()
+        assert isinstance(funcs, set)
         assert len(funcs) == 0
 
         # Trigger registration
         _ = f1.portal
         _ = f2.portal
 
-        funcs = portal._get_linked_functions_set()
+        funcs = portal.get_linked_functions()
+        assert isinstance(funcs, set)
         assert len(funcs) == 2
         assert f1 in funcs
         assert f2 in funcs

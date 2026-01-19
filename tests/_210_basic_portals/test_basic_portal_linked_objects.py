@@ -33,6 +33,24 @@ class TypeB(PortalAwareObject):
         self.value = state["value"]
 
 
+def test_get_linked_objects_returns_set(tmpdir):
+    """Verify get_linked_objects returns a set, not a list."""
+    with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:
+        portal = t.portal
+
+        # Empty portal returns empty set
+        result = portal.get_linked_objects()
+        assert isinstance(result, set)
+        assert len(result) == 0
+
+        # With objects, still returns set
+        obj = TypeA(1, portal)
+        _ = obj.portal
+        result = portal.get_linked_objects()
+        assert isinstance(result, set)
+        assert obj in result
+
+
 def test_get_linked_objects_no_filter(tmpdir):
     """Test getting all linked objects without type filtering."""
     with _PortalTester(BasicPortal, root_dict=str(tmpdir)) as t:

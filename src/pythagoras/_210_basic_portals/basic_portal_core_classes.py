@@ -35,6 +35,8 @@ _BACKEND_TYPE_TXT = "Backend type"
 _PYTHAGORAS_VERSION_TXT = "Pythagoras version"
 MAX_NESTED_PORTALS = 999
 
+PortalAwareObjectType = TypeVar("PortalAwareObjectType", bound="PortalAwareObject")
+
 
 class BasicPortal(NotPicklableMixin,
                   ImmutableParameterizableMixin,
@@ -95,30 +97,21 @@ class BasicPortal(NotPicklableMixin,
         _PORTAL_REGISTRY.register_portal(self)
 
 
-    def _get_linked_objects_set(self
-            , target_class: type | None = None) -> set[PortalAwareObject]:
+    def get_linked_objects(self
+            , target_class: type[PortalAwareObjectType] = None
+            ) -> set[PortalAwareObjectType]:
         """Get the set of objects linked to this portal.
 
         Args:
-            target_class: Optional class type filter.
+            target_class: Optional class type filter. Defaults to PortalAwareObject.
 
         Returns:
             Set of PortalAwareObject instances linked to this portal,
             filtered by target_class if provided.
         """
-        return _PORTAL_REGISTRY.linked_objects_set(self, target_class)
-
-
-    def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareObject]:
-        """Get the list of objects linked to this portal.
-
-        Args:
-            target_class: Optional class type filter.
-
-        Returns:
-            PortalAwareObject instances linked to this portal, filtered by target_class if provided.
-        """
-        return _PORTAL_REGISTRY.linked_objects(self, target_class)
+        if target_class is None:
+            target_class = PortalAwareObject
+        return _PORTAL_REGISTRY.get_linked_objects(self, target_class)
 
 
     def get_number_of_linked_objects(self, target_class: type | None = None) -> int:
@@ -130,7 +123,7 @@ class BasicPortal(NotPicklableMixin,
         Returns:
             Count of portal-aware objects linked to this portal, filtered by target_class if provided.
         """
-        return len(self._get_linked_objects_set(target_class))
+        return len(self.get_linked_objects(target_class))
 
 
     @property
@@ -691,10 +684,10 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self.default_portal_instantiator = None
 
 
-    def linked_objects_set(self
+    def get_linked_objects(self
             , portal: BasicPortal
-            , target_class: type | None = None
-            ) -> set[PortalAwareObject]:
+            , target_class: type[PortalAwareObjectType] = None
+            ) -> set[PortalAwareObjectType]:
         """Get the set of objects linked to a portal.
 
         Args:
@@ -711,25 +704,6 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             return objs
 
         return {o for o in objs if isinstance(o, target_class)}
-
-    def linked_objects(self
-            , portal: BasicPortal
-            , target_class: type | None = None
-            ) -> list[PortalAwareObject]:
-        """Get objects linked to a portal.
-
-        Args:
-            portal: The portal to query.
-            target_class: Optional class filter. If provided, only objects
-                of this type are included.
-
-        Returns:
-            A list of portal-aware objects linked to the portal.
-        """
-        objs = [o for o, p in self.links_from_objects_to_portals.items() if p == portal]
-        if target_class is None:
-            return objs
-        return [o for o in objs if isinstance(o, target_class)]
 
 
 # Singleton instance used by the rest of the module

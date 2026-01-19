@@ -9,7 +9,7 @@ from __future__ import annotations
 import ast
 from copy import deepcopy
 from functools import cached_property
-from typing import Callable, Any
+from typing import Callable, Any, TypeVar
 
 import pandas as pd
 from persidict import PersiDict, SafeStrTuple
@@ -53,6 +53,9 @@ def get_normalized_fn_source_code_str(a_func: OrdinaryFn | Callable | str) -> st
 
 _REGISTERED_FUNCTIONS_TXT = "Registered functions"
 
+OrdinaryFnType = TypeVar("OrdinaryFnType", bound="OrdinaryFn")
+
+
 class OrdinaryCodePortal(TunablePortal):
     """Portal that manages OrdinaryFn instances and their runtime context.
 
@@ -70,8 +73,10 @@ class OrdinaryCodePortal(TunablePortal):
         """
         super().__init__(root_dict=root_dict)
 
-    def _get_linked_functions_set(self, target_class: type | None = None) -> set[OrdinaryFn]:
-        """Return functions linked to this portal.
+    def get_linked_functions(self
+            , target_class: type[OrdinaryFnType] = None
+            ) -> set[OrdinaryFnType]:
+        """Return linked OrdinaryFn instances managed by this portal.
 
         Args:
             target_class: Optional OrdinaryFn subclass filter; defaults to
@@ -89,26 +94,7 @@ class OrdinaryCodePortal(TunablePortal):
             # in case an instance is passed by mistake
             target_class = target_class.__class__
         if not issubclass(target_class, OrdinaryFn):
-            raise TypeError(f"required_portal_type must be a subclass of {OrdinaryFn.__name__}.")
-        return self._get_linked_objects_set(target_class=target_class)
-
-    def get_linked_functions(self, target_class: type | None = None) -> list[OrdinaryFn]:
-        """Return linked OrdinaryFn instances managed by this portal.
-
-        Args:
-            target_class: Optional OrdinaryFn subclass filter; defaults to
-                OrdinaryFn.
-
-        Returns:
-            List of linked OrdinaryFn instances.
-
-        Raises:
-            TypeError: If target_class is not an OrdinaryFn subclass.
-        """
-        if target_class is None:
-            target_class = OrdinaryFn
-        if not issubclass(target_class, OrdinaryFn):
-            raise TypeError(f"required_portal_type must be a subclass of {OrdinaryFn.__name__}.")
+            raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
         return self.get_linked_objects(target_class=target_class)
 
     def get_number_of_linked_functions(self, target_class: type | None = None) -> int:
@@ -121,7 +107,7 @@ class OrdinaryCodePortal(TunablePortal):
         Returns:
             Number of linked functions matching the filter.
         """
-        return len(self._get_linked_functions_set(target_class=target_class))
+        return len(self.get_linked_functions(target_class=target_class))
 
 
     def describe(self) -> pd.DataFrame:
