@@ -46,6 +46,7 @@ dependencies = [
     "moto",
     "uv",
     "mixinforge",
+    "uv-publish"
 ]
 
 [project.urls]
