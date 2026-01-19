@@ -992,66 +992,49 @@ def count_linked_portal_aware_objects() -> int:
     """
     return _PORTAL_REGISTRY.count_linked_objects()
 
-#
-# def _visit_portal(obj: Any, portal: BasicPortal) -> None:
-#     """Register all PortalAwareObject instances nested within an object.
-#
-#     Recursively traverses the object structure and registers any found
-#     portal-aware objects with the specified portal.
-#
-#     Args:
-#         obj: The object structure to traverse.
-#         portal: The portal to register found objects with.
-#     """
-#     for pao in find_instances_inside_composite_object(obj, PortalAwareObject):
-#         pao._visit_portal(portal)
 
-def _visit_portal(obj:Any, portal:BasicPortal) -> None:
+def _visit_portal(obj: Any, portal: BasicPortal) -> None:
     """Register all PortalAwareObject instances nested within an object.
 
     Recursively traverses the object structure and registers any found
-    portal-aware objects with the specified portal.
+    portal-aware objects with the specified portal. Stops traversal at
+    PortalAwareObject boundaries to avoid infinite recursion.
 
     Args:
         obj: The object structure to traverse.
         portal: The portal to register found objects with.
     """
-    return _visit_portal_impl(obj, portal=portal)
+    seen = set()
+    stack = [obj]
+    while stack:
+        current = stack.pop()
+        
+        if id(current) in seen:
+            continue
+        
+        if isinstance(current, (str, range, bytearray, bytes, SafeStrTuple)):
+            continue
+            
+        seen.add(id(current))
+
+        if isinstance(current, PortalAwareObject):
+            current._visit_portal(portal)
+            continue
+            
+        if isinstance(current, Mapping):
+            stack.extend(current.keys())
+            stack.extend(current.values())
+        elif isinstance(current, Iterable):
+            stack.extend(current)
+        elif hasattr(current, "__dict__"):
+            stack.extend(current.__dict__.values())
+        elif hasattr(current, "__slots__"):
+            for slot in current.__slots__:
+                try:
+                    stack.append(getattr(current, slot))
+                except AttributeError:
+                    pass
 
 
-def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = None) -> None:
-    """Recursively traverse an object and register PortalAwareObject instances.
-
-    Args:
-        obj: The object to check and traverse.
-        portal: The portal to register with.
-        seen: Set of object IDs already visited to handle cycles.
-    """
-
-    if seen is None:
-        seen = set()
-
-    if id(obj) in seen:
-        return
-
-    if isinstance(obj, (str, range, bytearray, bytes, SafeStrTuple)):
-        return
-
-    seen.add(id(obj))
-
-    if isinstance(obj, PortalAwareObject):
-        obj._visit_portal(portal)
-        return
-
-    if isinstance(obj, Mapping):
-        for key, value in obj.items():
-            _visit_portal_impl(key, portal, seen)
-            _visit_portal_impl(value, portal, seen)
-        return
-
-    if isinstance(obj, Iterable):
-        for item in obj:
-            _visit_portal_impl(item, portal, seen)
-        return
 
 
