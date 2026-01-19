@@ -1,6 +1,6 @@
 """Core classes for configuration management in Pythagoras portals.
 
-This module provides ConfigurablePortal and ConfigurableStorableClass,
+This module provides TunablePortal and TunableClass,
 which add configuration parameter management capabilities to portals and
 portal-aware objects.
 """
@@ -20,7 +20,7 @@ from .._110_supporting_utilities import get_node_signature
 class TunablePortal(DataPortal):
     """A portal that manages configuration parameters.
 
-    ConfigurablePortal extends DataPortal with persistent configuration storage
+    TunablePortal extends DataPortal with persistent configuration storage
     capabilities. It maintains two types of configuration:
     - Portal-wide configuration: Settings shared across all nodes
     - Node-specific configuration: Settings specific to the current compute node
@@ -43,7 +43,7 @@ class TunablePortal(DataPortal):
     _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self, root_dict: PersiDict | str | None = None):
-        """Initialize a ConfigurablePortal.
+        """Initialize a TunablePortal.
 
         Args:
             root_dict: Prototype PersiDict or a path/URI used to create
@@ -213,17 +213,17 @@ class TunableObject(PortalAwareObject):
         """Create a configurable storable portal-aware object.
 
         Args:
-            portal: Optional ConfigurablePortal to bind to.
+            portal: Optional TunablePortal to bind to.
         """
         PortalAwareObject.__init__(self, portal=portal)
         self._auxiliary_config_params_at_init = dict()
 
 
     def _first_visit_to_portal(self, portal: TunablePortal) -> None:
-        """Handle first visit to a portal by persisting config params.
+        """Handle first visit to a portal.
 
         Args:
-            portal: The ConfigurablePortal being visited for the first time.
+            portal: The TunablePortal being visited for the first time.
         """
         super()._first_visit_to_portal(portal)
         self._persist_initial_config_params(portal)
@@ -233,7 +233,7 @@ class TunableObject(PortalAwareObject):
         """Persist configuration parameters to a portal.
 
         Args:
-            portal: The ConfigurablePortal to store configuration settings in.
+            portal: The TunablePortal to store configuration settings in.
         """
         for key, value in self._auxiliary_config_params_at_init.items():
             self._set_config_setting(key, value, portal)
@@ -241,7 +241,7 @@ class TunableObject(PortalAwareObject):
 
     @property
     def portal(self) -> TunablePortal:
-        """The ConfigurablePortal associated with this object.
+        """The TunablePortal associated with this object.
 
         Returns:
             TunablePortal: The portal used by this object's methods.
@@ -257,7 +257,7 @@ class TunableObject(PortalAwareObject):
 
         Args:
             key: Configuration key to retrieve.
-            portal: The ConfigurablePortal to query.
+            portal: The TunablePortal to query.
 
         Returns:
             The configuration value, or None if not found.
@@ -288,7 +288,7 @@ class TunableObject(PortalAwareObject):
         Args:
             key: Configuration key to set.
             value: Value to store.
-            portal: The ConfigurablePortal to store the setting in.
+            portal: The TunablePortal to store the setting in.
 
         Raises:
             TypeError: If key is not a SafeStrTuple or string.

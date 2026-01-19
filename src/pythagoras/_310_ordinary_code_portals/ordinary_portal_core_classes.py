@@ -474,7 +474,7 @@ class OrdinaryFn(TunableObject):
 
         Args:
             key: Configuration key to retrieve.
-            portal: The ConfigurablePortal to query.
+            portal: The TunablePortal to query.
 
         Returns:
             The configuration value, or None if not found.
@@ -507,7 +507,7 @@ class OrdinaryFn(TunableObject):
         Args:
             key: Configuration key to set.
             value: Value to store.
-            portal: The ConfigurablePortal to store the setting in.
+            portal: The TunablePortal to store the setting in.
 
         Raises:
             TypeError: If key is not a SafeStrTuple or string.
