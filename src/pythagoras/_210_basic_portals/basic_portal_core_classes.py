@@ -733,6 +733,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
                 current active portals for operations. Registration happens
                 lazily on first `portal` property access.
         """
+        super().__init__()
         self._restrict_to_single_thread()
         self._init_finished = False
         if not (portal is None or isinstance(portal, BasicPortal)):
@@ -885,9 +886,10 @@ class PortalAwareObject(CacheablePropertiesMixin,
         This method must be overridden in subclasses to ensure that portal
         information is NOT included in the pickled state.
         """
-        raise NotImplementedError(
-            "PortalAwareObject instances are not picklable. "
-            "Method __getstate__() must be overridden in subclasses.")
+        if type(self) is PortalAwareObject:
+            raise NotImplementedError(
+                "PortalAwareObject instances are not picklable. "
+                "Method __getstate__() must be overridden in subclasses.")
 
 
     @abstractmethod
