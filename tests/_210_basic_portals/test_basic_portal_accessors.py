@@ -43,14 +43,14 @@ def test_get_all_known_portals_returns_list(tmp_path):
     with _PortalTester():
         BasicPortal(root_dict=str(tmp_path / "p1"))
         result = get_all_known_portals()
-        assert isinstance(result, list)
+        assert isinstance(result, set)
 
 
 def test_get_all_known_portals_empty():
     """Verify empty list when no portals exist."""
     with _PortalTester():
         result = get_all_known_portals()
-        assert result == []
+        assert len(result) == 0
 
 
 def test_get_all_known_portals_content(tmp_path):
@@ -152,7 +152,7 @@ def test_get_nonactive_portals_all_active(tmp_path):
         p1 = BasicPortal(root_dict=str(tmp_path / "p1"))
         with p1:
             result = get_nonactive_portals()
-            assert result == []
+            assert len(result) == 0
 
 
 def test_get_nonactive_portals_mixed(tmp_path):

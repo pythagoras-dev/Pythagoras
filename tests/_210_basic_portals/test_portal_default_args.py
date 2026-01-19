@@ -18,11 +18,11 @@ def test_default_args_behavior(tmpdir):
     
     # Check default arg (should count p1)
     assert get_number_of_known_portals() == 1
-    assert get_all_known_portals() == [p1]
+    assert get_all_known_portals() == {p1}
     
     # Check explicit BasicPortal arg
     assert get_number_of_known_portals(BasicPortal) == 1
-    assert get_all_known_portals(BasicPortal) == [p1]
+    assert get_all_known_portals(BasicPortal) == {p1}
     
     # Check that None is NOT allowed anymore (raises TypeError from validation)
     with pytest.raises(TypeError):

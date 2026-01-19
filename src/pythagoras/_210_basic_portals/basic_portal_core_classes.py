@@ -409,9 +409,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         Raises:
             TypeError: If any known portal is not an instance of required_portal_type.
         """
-        return len(self.all_portals(required_portal_type))
+        return len(self.get_all_portals(required_portal_type))
 
-    def all_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
+    def get_all_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
         """Get a list of all portals registered in the system.
 
         Args:
@@ -424,7 +424,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
             TypeError: If any known portal is not an instance of required_portal_type.
         """
         _validate_required_portal_type(required_portal_type)
-        candidates = list(self.known_portals)
+        candidates = set(self.known_portals)
         for p in candidates:
             if not isinstance(p, required_portal_type):
                 raise TypeError(
@@ -462,7 +462,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self.portal_stack.pop(portal)
 
 
-    def current_portal(self) -> BasicPortal:
+    def get_current_portal(self) -> BasicPortal:
         """Get the current portal object.
 
         Returns the top portal from the active stack, or activates the most recently
@@ -506,7 +506,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return self.portal_stack.is_top(portal)
 
 
-    def unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
+    def get_unique_active_portals_count(self, required_portal_type: type[PortalType] = BasicPortal) -> int:
         """Count unique portals currently in the active stack.
 
         Args:
@@ -527,9 +527,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return len(unique_active)
 
 
-    def active_portals_stack_depth(self,
-            required_portal_type: type[PortalType] = BasicPortal
-            ) -> int:
+    def get_active_portals_stack_depth(self,
+                                       required_portal_type: type[PortalType] = BasicPortal
+                                       ) -> int:
         """Calculate the total depth of the active portal stack.
 
         Args:
@@ -549,7 +549,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                     f"an instance of required {required_portal_type.__name__}")
         return self.portal_stack.depth()
 
-    def nonactive_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+    def get_nonactive_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[BasicPortal]:
         """Get a list of all portals that are not in the active stack.
 
         Args:
@@ -565,9 +565,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         _validate_required_portal_type(required_portal_type)
         active_portals = self.portal_stack.as_set()
-        all_known = self.all_portals(BasicPortal)
+        all_known = self.get_all_portals(BasicPortal)
 
-        candidates = [p for p in all_known if p not in active_portals]
+        candidates = {p for p in all_known if p not in active_portals}
 
         for p in candidates:
             if not isinstance(p, required_portal_type):
@@ -597,7 +597,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         _validate_required_portal_type(required_portal_type)
         current_portal = self.portal_stack.peek()
 
-        all_known = self.all_portals(BasicPortal)
+        all_known = self.get_all_portals(BasicPortal)
         candidates = [p for p in all_known if p != current_portal]
 
         for p in candidates:
@@ -808,7 +808,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
         """
         portal_to_use = self.linked_portal
         if portal_to_use is None:
-            portal_to_use = _PORTAL_REGISTRY.current_portal()
+            portal_to_use = _PORTAL_REGISTRY.get_current_portal()
         self._visit_portal(portal_to_use)
         return portal_to_use
 
@@ -937,7 +937,7 @@ def _clear_all_portals() -> None:
     Primarily used for unit test cleanup.
     """
     objects_to_clear = list(_PORTAL_REGISTRY.known_objects)
-    portals_to_clear = _PORTAL_REGISTRY.all_portals()
+    portals_to_clear = _PORTAL_REGISTRY.get_all_portals()
 
     for obj in objects_to_clear:
         obj._clear()
