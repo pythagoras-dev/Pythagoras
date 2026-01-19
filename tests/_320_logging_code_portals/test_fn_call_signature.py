@@ -12,8 +12,8 @@ def plus(x, y):
     print("TEST")
     return x+y
 
-@pytest.mark.parametrize("pr",[0,0.5,1])
-def test_fn_call_signature_attributes(tmpdir,pr):
+
+def test_fn_call_signature_attributes(tmpdir):
     # tmpdir = "FN_CALL_SIGNATURE_ATTRIBUTES_" + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
             ) as p:

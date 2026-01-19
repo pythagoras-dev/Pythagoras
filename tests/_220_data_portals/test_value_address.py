@@ -12,8 +12,8 @@ from pythagoras._220_data_portals import *
 values_to_test = [1, 10, 10.0, "ten", "10", 10j
     , True, None, [1,2,3],(1,2,3), {1,2,3}, {"zxcvbn":2, "qwerty":4, "b": "c"}]
 
-@pytest.mark.parametrize("p",[1,0.5,0])
-def test_value_address_basic(tmpdir,p):
+
+def test_value_address_basic(tmpdir):
     # tmpdir = 3*"VALUE_ADDRESS_BASIC_" + str(int(time.time())) + "_" + str(p)
     counter = 0
 
@@ -30,8 +30,7 @@ def test_value_address_basic(tmpdir,p):
         assert len(get_current_portal()._value_store) == counter
 
 
-@pytest.mark.parametrize("p",[1,0.5,0])
-def test_value_address_with_typechecks(tmpdir,p):
+def test_value_address_with_typechecks(tmpdir):
     # tmpdir = 2*"VALUE_ADDRESS_WITH_TYPECHECKS_" + str(int(time.time())) + "_" + str(p)
 
     with _PortalTester(DataPortal,tmpdir) as t:

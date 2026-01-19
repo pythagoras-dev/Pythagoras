@@ -8,8 +8,7 @@ from pythagoras._310_ordinary_code_portals import OrdinaryCodePortal, OrdinaryFn
 def f():
     return 42
 
-@pytest.mark.parametrize("p",[1,0.5,0])
-def test_value_address_storablefn(tmpdir,p):
+def test_value_address_storablefn(tmpdir):
     # tmpdir = 3*"VALUE_ADDRESS_STORABLEFN_" + str(int(time.time())) + "_" + str(p)
 
     with (_PortalTester(OrdinaryCodePortal,tmpdir) as t):

@@ -25,8 +25,7 @@ def test_odd_even_no_decorators_logging(tmpdir):
         assert isEven(n=4, isOdd=isOdd, isEven=isEven) == True
 
 
-@pytest.mark.parametrize("pr",[0,0.5,1])
-def test_odd_even_two_decorators_logging(tmpdir,pr):
+def test_odd_even_two_decorators_logging(tmpdir):
     # tmpdir = "ODD_EVEN_TWO_DECORATORS_LOGGING_" + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, root_dict=tmpdir
             ) as l:

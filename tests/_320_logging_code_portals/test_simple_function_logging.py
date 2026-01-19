@@ -37,11 +37,9 @@ def test_simple_function_single_call_very_basic(tmpdir):
             assert len(p.portal._run_history.json) == i+1
 
 
-@pytest.mark.parametrize("pr",[0,0.5,1])
-def test_simple_function_single_call(tmpdir,pr):
+def test_simple_function_single_call(tmpdir):
     # tmpdir = "SIMPLE_FUNCTION_SINGLE_CALL_"*2 +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir+str(pr)
-            ) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir) as p:
         for i in range(3):
             global simple_function
             simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
@@ -60,8 +58,7 @@ def test_simple_function_single_call(tmpdir,pr):
             assert len(p.portal._run_history.txt) == i+1
             assert len(p.portal._run_history.json) == i+1
 
-@pytest.mark.parametrize("pr",[0,0.5,1])
-def test_simple_function_single_call_no_logs(tmpdir,pr):
+def test_simple_function_single_call_no_logs(tmpdir):
     # tmpdir = "SIMPLE_FUNCTION_SINGLE_CALL_NO_LOGS_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
             ) as p:
@@ -83,11 +80,9 @@ def test_simple_function_single_call_no_logs(tmpdir,pr):
         assert len(p.portal._run_history.json) == 0
 
 
-@pytest.mark.parametrize("pr",[0,0.5,1])
-def test_simple_function_double_call(tmpdir,pr):
+def test_simple_function_double_call(tmpdir):
     # tmpdir = "SIMPLE_FUNCTION_DOUBLE_CALL_"*2 +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir+str(pr)
-            ) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir) as p:
         for i in range(1,5):
             global simple_function
             simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
