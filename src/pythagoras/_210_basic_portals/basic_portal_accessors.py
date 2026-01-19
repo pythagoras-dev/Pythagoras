@@ -10,7 +10,7 @@ from __future__ import annotations
 from .basic_portal_core_classes import _PORTAL_REGISTRY, BasicPortal, PortalType
 
 
-def get_number_of_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
+def count_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
     """Get the number of portals currently in the system.
 
     Args:
@@ -25,7 +25,7 @@ def get_number_of_known_portals(required_portal_type: type[PortalType] = BasicPo
     return _PORTAL_REGISTRY.count_known_portals(required_portal_type)
 
 
-def get_all_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
+def get_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
     """Get a list of all known portals.
 
     Args:
@@ -40,7 +40,7 @@ def get_all_known_portals(required_portal_type: type[PortalType] = BasicPortal) 
     return _PORTAL_REGISTRY.get_known_portals(required_portal_type)
 
 
-def get_number_of_active_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
+def count_active_portals(required_portal_type: type[PortalType] = BasicPortal) -> int:
     """Get the number of unique portals in the active stack.
 
     Args:
@@ -55,7 +55,7 @@ def get_number_of_active_portals(required_portal_type: type[PortalType] = BasicP
     return _PORTAL_REGISTRY.count_unique_active_portals(required_portal_type)
 
 
-def get_depth_of_active_portal_stack(required_portal_type: type[PortalType] = BasicPortal) -> int:
+def measure_active_portals_stack(required_portal_type: type[PortalType] = BasicPortal) -> int:
     """Get the depth of the active portal stack.
 
     Args:
@@ -88,7 +88,7 @@ def get_current_portal() -> PortalType:
     return _PORTAL_REGISTRY.get_current_portal()
 
 
-def get_nonactive_portals(required_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
+def get_nonactive_portals(required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
     """Get a list of all portals that are not in the active stack.
 
     Args:
@@ -103,7 +103,7 @@ def get_nonactive_portals(required_portal_type: type[PortalType] = BasicPortal) 
     return _PORTAL_REGISTRY.get_nonactive_portals(required_portal_type)
 
 
-def get_noncurrent_portals(required_portal_type: type[PortalType] = BasicPortal) -> list[PortalType]:
+def get_noncurrent_portals(required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
     """Get a list of all portals that are not the current portal.
 
     Args:

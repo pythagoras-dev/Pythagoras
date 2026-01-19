@@ -23,7 +23,7 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from mixinforge import *
 
-from .._210_basic_portals import get_all_known_portals
+from .._210_basic_portals import get_known_portals
 from .._350_protected_code_portals import (VALIDATION_SUCCESSFUL,
                                            get_unused_ram_mb, get_unused_cpu_cores)
 from .._210_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
@@ -660,7 +660,7 @@ def _terminate_all_portals_descendant_processes():
     Registered via atexit during first SwarmingPortal initialization. Prevents
     orphaned worker processes.
     """
-    for portal in get_all_known_portals():
+    for portal in get_known_portals():
         try:
             portal._terminate_descendant_processes()
         except Exception:

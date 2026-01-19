@@ -4,10 +4,10 @@ import pytest
 
 from pythagoras import (
     BasicPortal,
-    get_number_of_known_portals,
-    get_all_known_portals,
-    get_number_of_active_portals,
-    get_depth_of_active_portal_stack,
+    count_known_portals,
+    get_known_portals,
+    count_active_portals,
+    measure_active_portals_stack,
     get_nonactive_portals,
     _PortalTester,
 )
@@ -16,7 +16,7 @@ from pythagoras import (
 def test_get_number_of_known_portals_no_portals():
     """Verify count is zero when no portals exist."""
     with _PortalTester():
-        count = get_number_of_known_portals()
+        count = count_known_portals()
         assert count == 0
 
 
@@ -24,7 +24,7 @@ def test_get_number_of_known_portals_single_portal(tmp_path):
     """Verify count is correct with one portal."""
     with _PortalTester():
         portal = BasicPortal(root_dict=str(tmp_path / "p1"))
-        count = get_number_of_known_portals()
+        count = count_known_portals()
         assert count == 1
 
 
@@ -34,7 +34,7 @@ def test_get_number_of_known_portals_multiple_portals(tmp_path):
         BasicPortal(root_dict=str(tmp_path / "p1"))
         BasicPortal(root_dict=str(tmp_path / "p2"))
         BasicPortal(root_dict=str(tmp_path / "p3"))
-        count = get_number_of_known_portals()
+        count = count_known_portals()
         assert count == 3
 
 
@@ -42,14 +42,14 @@ def test_get_all_known_portals_returns_list(tmp_path):
     """Verify get_all_known_portals returns a list."""
     with _PortalTester():
         BasicPortal(root_dict=str(tmp_path / "p1"))
-        result = get_all_known_portals()
+        result = get_known_portals()
         assert isinstance(result, set)
 
 
 def test_get_all_known_portals_empty():
     """Verify empty list when no portals exist."""
     with _PortalTester():
-        result = get_all_known_portals()
+        result = get_known_portals()
         assert len(result) == 0
 
 
@@ -58,7 +58,7 @@ def test_get_all_known_portals_content(tmp_path):
     with _PortalTester():
         p1 = BasicPortal(root_dict=str(tmp_path / "p1"))
         p2 = BasicPortal(root_dict=str(tmp_path / "p2"))
-        result = get_all_known_portals()
+        result = get_known_portals()
 
         assert len(result) == 2
         assert p1 in result
@@ -71,7 +71,7 @@ def test_get_number_of_active_portals_no_active(tmp_path):
     with _PortalTester():
         # Create portal but don't activate it
         BasicPortal(root_dict=str(tmp_path / "p1"))
-        count = get_number_of_active_portals()
+        count = count_active_portals()
         assert count == 0
 
 
@@ -80,7 +80,7 @@ def test_get_number_of_active_portals_single_active(tmp_path):
     with _PortalTester():
         portal = BasicPortal(root_dict=str(tmp_path / "p1"))
         with portal:
-            count = get_number_of_active_portals()
+            count = count_active_portals()
             assert count == 1
 
 
@@ -91,7 +91,7 @@ def test_get_number_of_active_portals_nested_same_portal(tmp_path):
         with portal:
             with portal:
                 # Should still count as 1 unique portal
-                count = get_number_of_active_portals()
+                count = count_active_portals()
                 assert count == 1
 
 
@@ -102,7 +102,7 @@ def test_get_number_of_active_portals_multiple_unique(tmp_path):
         p2 = BasicPortal(root_dict=str(tmp_path / "p2"))
         with p1:
             with p2:
-                count = get_number_of_active_portals()
+                count = count_active_portals()
                 assert count == 2
 
 
@@ -110,7 +110,7 @@ def test_get_depth_of_active_portal_stack_empty(tmp_path):
     """Verify depth is zero when no portals are active."""
     with _PortalTester():
         BasicPortal(root_dict=str(tmp_path / "p1"))
-        depth = get_depth_of_active_portal_stack()
+        depth = measure_active_portals_stack()
         assert depth == 0
 
 
@@ -119,7 +119,7 @@ def test_get_depth_of_active_portal_stack_single_activation(tmp_path):
     with _PortalTester():
         portal = BasicPortal(root_dict=str(tmp_path / "p1"))
         with portal:
-            depth = get_depth_of_active_portal_stack()
+            depth = measure_active_portals_stack()
             assert depth == 1
 
 
@@ -128,9 +128,9 @@ def test_get_depth_of_active_portal_stack_nested_same_portal(tmp_path):
     with _PortalTester():
         portal = BasicPortal(root_dict=str(tmp_path / "p1"))
         with portal:
-            depth1 = get_depth_of_active_portal_stack()
+            depth1 = measure_active_portals_stack()
             with portal:
-                depth2 = get_depth_of_active_portal_stack()
+                depth2 = measure_active_portals_stack()
                 assert depth1 == 1
                 assert depth2 == 2
 
@@ -142,7 +142,7 @@ def test_get_depth_of_active_portal_stack_multiple_portals(tmp_path):
         p2 = BasicPortal(root_dict=str(tmp_path / "p2"))
         with p1:
             with p2:
-                depth = get_depth_of_active_portal_stack()
+                depth = measure_active_portals_stack()
                 assert depth == 2
 
 

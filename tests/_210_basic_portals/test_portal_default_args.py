@@ -2,10 +2,10 @@
 import pytest
 from pythagoras._210_basic_portals.basic_portal_core_classes import _clear_all_portals, BasicPortal
 from pythagoras import (
-    get_number_of_known_portals,
-    get_all_known_portals,
-    get_number_of_active_portals,
-    get_depth_of_active_portal_stack,
+    count_known_portals,
+    get_known_portals,
+    count_active_portals,
+    measure_active_portals_stack,
     get_current_portal,
     get_nonactive_portals,
     get_noncurrent_portals
@@ -17,25 +17,25 @@ def test_default_args_behavior(tmpdir):
     p1 = BasicPortal(tmpdir)
     
     # Check default arg (should count p1)
-    assert get_number_of_known_portals() == 1
-    assert get_all_known_portals() == {p1}
+    assert count_known_portals() == 1
+    assert get_known_portals() == {p1}
     
     # Check explicit BasicPortal arg
-    assert get_number_of_known_portals(BasicPortal) == 1
-    assert get_all_known_portals(BasicPortal) == {p1}
+    assert count_known_portals(BasicPortal) == 1
+    assert get_known_portals(BasicPortal) == {p1}
     
     # Check that None is NOT allowed anymore (raises TypeError from validation)
     with pytest.raises(TypeError):
-        get_number_of_known_portals(None)
+        count_known_portals(None)
         
     with p1:
-        assert get_number_of_active_portals() == 1
-        assert get_number_of_active_portals(BasicPortal) == 1
-        assert get_depth_of_active_portal_stack() == 1
+        assert count_active_portals() == 1
+        assert count_active_portals(BasicPortal) == 1
+        assert measure_active_portals_stack() == 1
         assert get_current_portal() == p1
         
         with pytest.raises(TypeError):
-            get_number_of_active_portals(None)
+            count_active_portals(None)
             
     # Check non-active/non-current
     # Need another portal

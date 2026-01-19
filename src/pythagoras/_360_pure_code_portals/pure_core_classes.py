@@ -515,7 +515,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
     def drop_execution_request(self):
         """Remove execution request from all known portals."""
-        for portal in get_all_known_portals():
+        for portal in get_known_portals():
             with portal:
                 portal._execution_requests.delete_if_exists(self)
 

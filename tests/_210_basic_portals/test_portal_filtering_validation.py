@@ -3,10 +3,10 @@ import pytest
 from pythagoras import (
     BasicPortal,
     _PortalTester,
-    get_number_of_known_portals,
-    get_all_known_portals,
-    get_number_of_active_portals,
-    get_depth_of_active_portal_stack,
+    count_known_portals,
+    get_known_portals,
+    count_active_portals,
+    measure_active_portals_stack,
     get_current_portal,
     get_nonactive_portals,
     get_noncurrent_portals
@@ -32,10 +32,10 @@ def test_validation_errors(tmpdir):
         ]
 
         functions_to_test = [
-            get_number_of_known_portals,
-            get_all_known_portals,
-            get_number_of_active_portals,
-            get_depth_of_active_portal_stack,
+            count_known_portals,
+            get_known_portals,
+            count_active_portals,
+            measure_active_portals_stack,
             get_nonactive_portals,
             get_noncurrent_portals
         ]

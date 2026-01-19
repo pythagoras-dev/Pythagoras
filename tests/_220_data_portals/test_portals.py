@@ -1,8 +1,8 @@
 from pythagoras._210_basic_portals import (
     get_current_portal
-    , get_number_of_known_portals
-    , get_number_of_active_portals
-    , get_depth_of_active_portal_stack)
+    , count_known_portals
+    , count_active_portals
+    , measure_active_portals_stack)
 from pythagoras._220_data_portals import ValueAddr
 from pythagoras._220_data_portals.data_portal_core_classes import DataPortal
 
@@ -34,47 +34,47 @@ def test_nested_portals_whitebox(tmpdir):
         tmpdir2 = tmpdir + "/t2"
         tmpdir3 = tmpdir + "/t3"
 
-        assert get_number_of_known_portals() == 0
+        assert count_known_portals() == 0
         portal1 = DataPortal(tmpdir1)
-        assert get_number_of_known_portals() == 1
+        assert count_known_portals() == 1
         portal2 = DataPortal(tmpdir2)
-        assert get_number_of_known_portals() == 2
+        assert count_known_portals() == 2
         portal3 = DataPortal(tmpdir3)
-        assert get_number_of_known_portals() == 3
-        assert get_number_of_active_portals() == 0
+        assert count_known_portals() == 3
+        assert count_active_portals() == 0
 
         with portal1:
-            assert get_number_of_known_portals() == 3
-            assert get_number_of_active_portals() == 1
-            assert get_depth_of_active_portal_stack() == 1
+            assert count_known_portals() == 3
+            assert count_active_portals() == 1
+            assert measure_active_portals_stack() == 1
             with portal2:
-                assert get_number_of_known_portals() == 3
-                assert get_number_of_active_portals() == 2
-                assert get_depth_of_active_portal_stack() == 2
+                assert count_known_portals() == 3
+                assert count_active_portals() == 2
+                assert measure_active_portals_stack() == 2
                 with portal3:
-                    assert get_number_of_known_portals() == 3
-                    assert get_number_of_active_portals() == 3
-                    assert get_depth_of_active_portal_stack() == 3
+                    assert count_known_portals() == 3
+                    assert count_active_portals() == 3
+                    assert measure_active_portals_stack() == 3
 
         with portal1:
-            assert get_number_of_active_portals() == 1
-            assert get_depth_of_active_portal_stack() == 1
+            assert count_active_portals() == 1
+            assert measure_active_portals_stack() == 1
             with portal2:
-                assert get_number_of_active_portals() == 2
-                assert get_depth_of_active_portal_stack() == 2
+                assert count_active_portals() == 2
+                assert measure_active_portals_stack() == 2
                 with portal2:
-                    assert get_number_of_active_portals() == 2
-                    assert get_depth_of_active_portal_stack() == 3
+                    assert count_active_portals() == 2
+                    assert measure_active_portals_stack() == 3
                     with portal3:
-                        assert get_number_of_active_portals() == 3
-                        assert get_depth_of_active_portal_stack() == 4
+                        assert count_active_portals() == 3
+                        assert measure_active_portals_stack() == 4
                         with portal1:
-                            assert get_number_of_active_portals() == 3
-                            assert get_depth_of_active_portal_stack() == 5
-                assert get_number_of_active_portals() == 2
-                assert get_depth_of_active_portal_stack() == 2
-            assert get_number_of_active_portals() == 1
-            assert get_depth_of_active_portal_stack() == 1
+                            assert count_active_portals() == 3
+                            assert measure_active_portals_stack() == 5
+                assert count_active_portals() == 2
+                assert measure_active_portals_stack() == 2
+            assert count_active_portals() == 1
+            assert measure_active_portals_stack() == 1
 
 
 def test_find_portal_basic(tmpdir):

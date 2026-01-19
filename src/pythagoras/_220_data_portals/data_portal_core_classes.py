@@ -17,7 +17,7 @@ T = TypeVar('T')
 _TOTAL_VALUES_TXT = "Values, total"
 
 
-def get_number_of_known_data_portals() -> int:
+def count_known_data_portals() -> int:
     """Get the number of known DataPortals.
 
     Returns:
@@ -26,7 +26,7 @@ def get_number_of_known_data_portals() -> int:
     Raises:
         TypeError: If any known portal is not an instance of DataPortal.
     """
-    return get_number_of_known_portals(DataPortal)
+    return count_known_portals(DataPortal)
 
 
 def get_all_known_data_portals() -> list[DataPortal]:
@@ -38,7 +38,7 @@ def get_all_known_data_portals() -> list[DataPortal]:
     Raises:
         TypeError: If any known portal is not an instance of DataPortal.
     """
-    return get_all_known_portals(DataPortal)
+    return get_known_portals(DataPortal)
 
 
 def get_number_of_active_data_portals() -> int:
@@ -50,7 +50,7 @@ def get_number_of_active_data_portals() -> int:
     Raises:
         TypeError: If any active portal is not an instance of DataPortal.
     """
-    return get_number_of_active_portals(DataPortal)
+    return count_active_portals(DataPortal)
 
 
 def get_depth_of_active_data_portal_stack() -> int:
@@ -62,7 +62,7 @@ def get_depth_of_active_data_portal_stack() -> int:
     Raises:
         TypeError: If any active portal is not an instance of DataPortal.
     """
-    return get_depth_of_active_portal_stack(DataPortal)
+    return measure_active_portals_stack(DataPortal)
 
 
 def get_current_data_portal() -> DataPortal:

@@ -13,25 +13,25 @@ def test_portal(tmpdir):
         portal = BasicPortal(tmpdir.mkdir("awer"))
         assert portal is not None
         assert get_most_recently_created_portal() is portal
-        assert get_number_of_known_portals() == 1
-        assert get_number_of_active_portals() == 0
-        assert get_depth_of_active_portal_stack() == 0
+        assert count_known_portals() == 1
+        assert count_active_portals() == 0
+        assert measure_active_portals_stack() == 0
         assert count_linked_portal_aware_objects() == 0
 
         assert get_current_portal() is portal
 
-        assert get_number_of_known_portals() == 1
-        assert get_number_of_active_portals() == 1
-        assert get_depth_of_active_portal_stack() == 1
+        assert count_known_portals() == 1
+        assert count_active_portals() == 1
+        assert measure_active_portals_stack() == 1
 
         portal2 = BasicPortal(tmpdir.mkdir("awasder"))
         portal3 = BasicPortal(tmpdir.mkdir("aadfgggr"))
 
         assert get_current_portal() is portal
         assert get_most_recently_created_portal() is portal3
-        assert get_number_of_known_portals() == 3
-        assert get_number_of_active_portals() == 1
-        assert get_depth_of_active_portal_stack() == 1
+        assert count_known_portals() == 3
+        assert count_active_portals() == 1
+        assert measure_active_portals_stack() == 1
         assert count_linked_portal_aware_objects() == 0
 
 
@@ -43,9 +43,9 @@ def test_clear_all_portals(tmpdir):
         portal3 = BasicPortal(tmpdir)
         _clear_all_portals()
         assert get_most_recently_created_portal() is None
-        assert get_number_of_known_portals() == 0
-        assert get_number_of_active_portals() == 0
-        assert get_depth_of_active_portal_stack() == 0
+        assert count_known_portals() == 0
+        assert count_active_portals() == 0
+        assert measure_active_portals_stack() == 0
         assert count_linked_portal_aware_objects() == 0
 
 
@@ -62,36 +62,36 @@ def test_portal_nested(tmpdir):
 
         with portal:
             assert get_current_portal() == portal
-            assert get_number_of_active_portals() == 1
-            assert get_depth_of_active_portal_stack() == 1
+            assert count_active_portals() == 1
+            assert measure_active_portals_stack() == 1
             assert count_linked_portal_aware_objects() == 0
             with portal2:
                 assert get_current_portal() == portal2
-                assert get_number_of_active_portals() == 2
-                assert get_depth_of_active_portal_stack() == 2
+                assert count_active_portals() == 2
+                assert measure_active_portals_stack() == 2
                 assert count_linked_portal_aware_objects() == 0
                 with portal3:
                     assert get_current_portal() == portal3
-                    assert get_number_of_active_portals() == 3
-                    assert get_depth_of_active_portal_stack() == 3
+                    assert count_active_portals() == 3
+                    assert measure_active_portals_stack() == 3
                     assert count_linked_portal_aware_objects() == 0
                     with portal2:
                         assert get_current_portal() == portal2
-                        assert get_number_of_active_portals() == 3
-                        assert get_depth_of_active_portal_stack() == 4
+                        assert count_active_portals() == 3
+                        assert measure_active_portals_stack() == 4
                         assert count_linked_portal_aware_objects() == 0
                         assert get_most_recently_created_portal() is portal3
                     assert get_current_portal() == portal3
-                    assert get_number_of_active_portals() == 3
-                    assert get_depth_of_active_portal_stack() == 3
+                    assert count_active_portals() == 3
+                    assert measure_active_portals_stack() == 3
                     assert count_linked_portal_aware_objects() == 0
                 assert get_current_portal() == portal2
-                assert get_number_of_active_portals() == 2
-                assert get_depth_of_active_portal_stack() == 2
+                assert count_active_portals() == 2
+                assert measure_active_portals_stack() == 2
                 assert count_linked_portal_aware_objects() == 0
             assert get_current_portal() == portal
-            assert get_number_of_active_portals() == 1
-            assert get_depth_of_active_portal_stack() == 1
+            assert count_active_portals() == 1
+            assert measure_active_portals_stack() == 1
             assert count_linked_portal_aware_objects() == 0
 
 

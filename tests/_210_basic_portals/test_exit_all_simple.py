@@ -1,4 +1,4 @@
-from pythagoras import BasicPortal, _PortalTester, get_depth_of_active_portal_stack
+from pythagoras import BasicPortal, _PortalTester, measure_active_portals_stack
 from pythagoras._210_basic_portals.basic_portal_core_classes import _clear_all_portals
 
 def test_exit_all_simple(tmpdir):
@@ -6,6 +6,6 @@ def test_exit_all_simple(tmpdir):
         for i in range(3):
             portal = BasicPortal(str(tmpdir)+"_"+str(i))
             portal.__enter__()
-        assert get_depth_of_active_portal_stack() == 3
+        assert measure_active_portals_stack() == 3
         _clear_all_portals()
-        assert get_depth_of_active_portal_stack() == 0
+        assert measure_active_portals_stack() == 0

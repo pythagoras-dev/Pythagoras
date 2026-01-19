@@ -3,10 +3,10 @@ import pytest
 from pythagoras import (
     BasicPortal,
     _PortalTester,
-    get_all_known_portals,
-    get_number_of_known_portals,
-    get_number_of_active_portals,
-    get_depth_of_active_portal_stack,
+    get_known_portals,
+    count_known_portals,
+    count_active_portals,
+    measure_active_portals_stack,
     get_nonactive_portals,
     get_noncurrent_portals
 )
@@ -23,10 +23,10 @@ def test_strict_type_checking(tmpdir):
         
         # Should raise because pB is not PortalA
         with pytest.raises(TypeError):
-             get_all_known_portals(required_portal_type=PortalA)
+             get_known_portals(required_portal_type=PortalA)
              
         with pytest.raises(TypeError):
-             get_number_of_known_portals(required_portal_type=PortalA)
+             count_known_portals(required_portal_type=PortalA)
              
         # Non-active check (both are inactive)
         with pytest.raises(TypeError):
@@ -43,12 +43,12 @@ def test_strict_type_checking(tmpdir):
              
              # Stack has pA. required=PortalB. pA is not PortalB. Raise.
              with pytest.raises(TypeError):
-                 get_number_of_active_portals(required_portal_type=PortalB)
+                 count_active_portals(required_portal_type=PortalB)
                  
              with pytest.raises(TypeError):
-                 get_depth_of_active_portal_stack(required_portal_type=PortalB)
+                 measure_active_portals_stack(required_portal_type=PortalB)
 
              # stack has pA(PortalA). required=PortalA. OK.
-             assert get_number_of_active_portals(required_portal_type=PortalA) == 1
-             assert get_depth_of_active_portal_stack(required_portal_type=PortalA) == 1
+             assert count_active_portals(required_portal_type=PortalA) == 1
+             assert measure_active_portals_stack(required_portal_type=PortalA) == 1
 
