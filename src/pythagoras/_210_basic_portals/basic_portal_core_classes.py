@@ -881,7 +881,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
             return f"{class_name}(<initializing>)"
 
     @abstractmethod
-    def __getstate__(self):
+    def __getstate__(self) -> dict[str, Any]:
         """Prepare the object's state for pickling.
 
         This method must be overridden in subclasses to ensure that portal
@@ -891,6 +891,8 @@ class PortalAwareObject(CacheablePropertiesMixin,
             raise NotImplementedError(
                 "PortalAwareObject instances are not picklable. "
                 "Method __getstate__() must be overridden in subclasses.")
+        else:
+            return dict()
 
 
     @abstractmethod
