@@ -53,7 +53,7 @@ def get_number_of_active_data_portals() -> int:
     return count_active_portals(DataPortal)
 
 
-def get_depth_of_active_data_portal_stack() -> int:
+def measure_depth_of_active_data_portals_stack() -> int:
     """Get the depth of the active DataPortal stack.
 
     Returns:
@@ -212,14 +212,6 @@ class StorableObject(PortalAwareObject):
             DataPortal: The portal used by this object's methods.
         """
         return super().portal
-
-    def __getstate__(self):
-        """This method is called when the object is pickled."""
-        return super().__getstate__()
-
-    def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
-        super().__setstate__(state)
 
 
 class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
