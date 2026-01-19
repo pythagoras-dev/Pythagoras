@@ -53,7 +53,7 @@ class BasicPortal(NotPicklableMixin,
     across multiple runs of the application, and across multiple computers.
 
     A Pythagoras-based application can have multiple portals,
-    and there is usually a current active one, accessible via
+    and there is usually a current one, accessible via
     get_current_portal().
 
     BasicPortal is a base class for all portal objects.
@@ -332,7 +332,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         known_portals: Set of known portal instances.
         portal_stack: Stack manager for active portals (nested `with` statements).
         most_recently_created_portal: Last portal instantiated, used for auto-activation.
-        links_from_objects_to_portals: Maps PortalAwareObject instances to their linked portals.
+        links_from_objects_to_portals: Maps linked PortalAwareObject instances to their portals.
         known_objects: Set of known PortalAwareObject instances.
         default_portal_instantiator: Factory function for creating the default portal.
     """

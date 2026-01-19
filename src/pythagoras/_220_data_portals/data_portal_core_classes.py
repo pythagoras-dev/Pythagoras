@@ -163,6 +163,16 @@ class DataPortal(BasicPortal):
         self._value_store = value_store
 
 
+    @property
+    def value_store(self) -> WriteOnceDict:
+        """The portal's persistent content-addressable storeage.
+
+        Returns:
+            WriteOnceDict: The persistent dictionary storing values by address.
+        """
+        return self._value_store
+
+
     def describe(self) -> pd.DataFrame:
         """Get a DataFrame describing the portal's current state"""
         all_params = [super().describe()]
