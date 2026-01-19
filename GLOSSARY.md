@@ -16,17 +16,19 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ## 2. Portals
 
-- **Portal:** A persistent gateway connecting your local code to the distributed Pythagoras environment. It acts as a remote operating system for your Python functions. It manages resources, schedules execution, handles I/O (via storage), and enforces security policies. Just as a process lives in an OS, a Pythagoras function lives in a Portal, relying on it for all interactions with the outside world. Different portal types add capabilities progressively (basic → ordinary → data → logging → safe → autonomous → protected → pure → swarming).
+- **Portal:** A persistent gateway connecting your local code to the distributed Pythagoras environment. It acts as a remote operating system for your Python functions. It manages resources, schedules execution, handles I/O (via storage), and enforces security policies. Just as a process lives in an OS, a Pythagoras function lives in a Portal, relying on it for all interactions with the outside world. Different portal types add capabilities progressively (basic → data → tunable → ordinary → logging → safe → autonomous → protected → pure → swarming).
 
 ### 2.1. Portal Classes
 
 - **BasicPortal:** The foundational portal class that manages lifecycle and registration of portal-aware objects.
 
-- **OrdinaryCodePortal:** Extends `BasicPortal` to work with decorated ordinary functions (no persistence/logging yet).
+- **DataPortal:** Extends `BasicPortal` with persistent storage for inputs, outputs, and metadata using `persidict`.
 
-- **DataPortal:** Extends `OrdinaryCodePortal` with persistent storage for inputs, outputs, and metadata using `persidict`.
+- **TunablePortal:** Extends `DataPortal` with support for storing / retrieving settings that can be tuned per portal or per object.
 
-- **LoggingCodePortal:** Extends `DataPortal` with application-level and function-level logging (events, crashes, frames), capturing stdout/stderr.
+- **OrdinaryCodePortal:** Extends `TunablePortal` to work with decorated ordinary functions.
+
+- **LoggingCodePortal:** Extends `OrdinaryCodePortal` with application-level and function-level logging (events, crashes, frames), capturing stdout/stderr.
 
 - **SafeCodePortal:** Extends `LoggingCodePortal` with safer defaults for argument handling and execution bookkeeping.
 
@@ -54,7 +56,6 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Function Decorators:** A family of decorators that create portal-bound callable wrappers with progressively more features:
   - `ordinary`: Basic wrapper around a Python function.
-  - `storable`: Adds persistence of inputs/outputs (`DataPortal`).
   - `logging`: Adds execution logging and output capture (`LoggingCodePortal`).
   - `safe`: Safer execution defaults (`SafeCodePortal`).
   - `autonomous`: Enables autonomous scheduling (`AutonomousCodePortal`).
@@ -63,7 +64,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
   *Note: There is no `swarming` decorator. Swarming capabilities are provided by `SwarmingPortal` and the `.swarm()` method on pure functions.*
 
-- **Function Wrappers (OrdinaryFn / StorableFn / LoggingFn / SafeFn / AutonomousFn / ProtectedFn / PureFn):** The classes created by the corresponding decorators. `PureFn` is the most feature-rich and is the typical user-facing class for deterministic computation.
+- **Function Wrappers (OrdinaryFn / LoggingFn / SafeFn / AutonomousFn / ProtectedFn / PureFn):** The classes created by the corresponding decorators. `PureFn` is the most feature-rich and is the typical user-facing class for deterministic computation.
 
 - **Call Signature:** An immutable description of a specific function call (function identity plus normalized/packed keyword arguments) used for caching, addressing, and logging.
 
