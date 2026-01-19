@@ -1,22 +1,22 @@
 """Fine-tuning layer for Pythagoras portals.
 
-This subpackage provides auxiliary parameter management for portals and
-portal-aware objects.
+This subpackage provides infrastructure for behavior adjustment for portals and
+portal-aware objects via settings stored in persistent storage.
 
 Core Concepts
 -------------
-**TunablePortal**: Extends DataPortal with persistent configuration storage
-and management capabilities. Provides portal-wide and node-specific configuration
-settings with caching for efficient access.
+**TunablePortal**: Extends DataPortal with persistent storage
+for configuration settings. Provides tools for storage and retrieval
+of portal-wide and node-щтдн configuration settings.
 
-**TunableObject**: Base class for portal-aware objects that need
-configuration management. Provides methods to get/set configuration settings
-in the portal, with support for both portal-wide and object-specific settings.
+**TunableObject**: Base class for portal-aware objects that can save and retrieve
+instance-level settings. Provides methods to get/set instance-level settings,
+ with support for both portal-wide and node-only settings.
 
 Exports
 -------
-- TunablePortal: Portal with configuration management capabilities
-- TunableObject: Base class for storable objects with config support
+- TunablePortal: Base class for portals that support tunable settings
+- TunableObject: Base class for objects that support tunable settings
 """
 
 from .tunable_portal_core_classes import (
