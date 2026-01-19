@@ -13,11 +13,11 @@ from persidict import PersiDict, SafeStrTuple, KEEP_CURRENT, DELETE_CURRENT, Jok
 from mixinforge import sort_dict_by_keys
 
 from .._220_data_portals import DataPortal
-from .._210_basic_portals import PortalAwareClass
+from .._210_basic_portals import PortalAwareObject
 from .._110_supporting_utilities import get_node_signature
 
 
-class ConfigurablePortal(DataPortal):
+class TunablePortal(DataPortal):
     """A portal that manages configuration parameters.
 
     ConfigurablePortal extends DataPortal with persistent configuration storage
@@ -197,7 +197,7 @@ class ConfigurablePortal(DataPortal):
         self._local_node_store = None
 
 
-class ConfigurableStorableClass(PortalAwareClass):
+class TunableObject(PortalAwareObject):
     """A portal-aware class with config management capabilities.
 
     ConfigurableStorableClass provides configuration management for any portal-aware object.
@@ -209,17 +209,17 @@ class ConfigurableStorableClass(PortalAwareClass):
 
     _auxiliary_config_params_at_init: dict[str, Any] | None
 
-    def __init__(self, portal: ConfigurablePortal | None = None):
+    def __init__(self, portal: TunablePortal | None = None):
         """Create a configurable storable portal-aware object.
 
         Args:
             portal: Optional ConfigurablePortal to bind to.
         """
-        PortalAwareClass.__init__(self, portal=portal)
+        PortalAwareObject.__init__(self, portal=portal)
         self._auxiliary_config_params_at_init = dict()
 
 
-    def _first_visit_to_portal(self, portal: ConfigurablePortal) -> None:
+    def _first_visit_to_portal(self, portal: TunablePortal) -> None:
         """Handle first visit to a portal by persisting config params.
 
         Args:
@@ -229,7 +229,7 @@ class ConfigurableStorableClass(PortalAwareClass):
         self._persist_initial_config_params(portal)
 
 
-    def _persist_initial_config_params(self, portal: ConfigurablePortal) -> None:
+    def _persist_initial_config_params(self, portal: TunablePortal) -> None:
         """Persist configuration parameters to a portal.
 
         Args:
@@ -240,16 +240,16 @@ class ConfigurableStorableClass(PortalAwareClass):
 
 
     @property
-    def portal(self) -> ConfigurablePortal:
+    def portal(self) -> TunablePortal:
         """The ConfigurablePortal associated with this object.
 
         Returns:
-            ConfigurablePortal: The portal used by this object's methods.
+            TunablePortal: The portal used by this object's methods.
         """
         return super().portal
 
 
-    def _get_config_setting(self, key: SafeStrTuple | str, portal: ConfigurablePortal) -> Any:
+    def _get_config_setting(self, key: SafeStrTuple | str, portal: TunablePortal) -> Any:
         """Retrieve a configuration setting from a portal.
 
         Checks portal-wide settings first, then falls back to object-specific
@@ -280,9 +280,9 @@ class ConfigurableStorableClass(PortalAwareClass):
 
 
     def _set_config_setting(self
-            , key: SafeStrTuple | str
-            , value: Any
-            , portal: ConfigurablePortal) -> None:
+                            , key: SafeStrTuple | str
+                            , value: Any
+                            , portal: TunablePortal) -> None:
         """Set a configuration setting in a portal.
 
         Args:

@@ -1,9 +1,9 @@
 """Tests for BasicPortal linked objects functionality."""
 import pytest
-from pythagoras import BasicPortal, PortalAwareClass, _PortalTester
+from pythagoras import BasicPortal, PortalAwareObject, _PortalTester
 
 
-class TypeA(PortalAwareClass):
+class TypeA(PortalAwareObject):
     """Test class of type A."""
     
     def __init__(self, value, portal=None):
@@ -18,7 +18,7 @@ class TypeA(PortalAwareClass):
         self.value = state["value"]
 
 
-class TypeB(PortalAwareClass):
+class TypeB(PortalAwareObject):
     """Test class of type B."""
     
     def __init__(self, value, portal=None):

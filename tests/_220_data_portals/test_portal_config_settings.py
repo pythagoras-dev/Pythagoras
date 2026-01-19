@@ -1,25 +1,25 @@
 import pytest
 
-from pythagoras import ConfigurablePortal, _PortalTester
+from pythagoras import TunablePortal, _PortalTester
 from persidict import KEEP_CURRENT, DELETE_CURRENT
 
 
 def test_get_portal_config_setting_rejects_invalid_key_type(tmpdir):
-    with _PortalTester(ConfigurablePortal, tmpdir) as pt:
+    with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
         with pytest.raises(TypeError, match="key must be a SafeStrTuple or a string"):
             portal._get_portal_config_setting(123)
 
 
 def test_set_portal_config_setting_rejects_invalid_key_type(tmpdir):
-    with _PortalTester(ConfigurablePortal, tmpdir) as pt:
+    with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
         with pytest.raises(TypeError, match="key must be a SafeStrTuple or a string"):
             portal._set_portal_config_setting(123, "value")
 
 
 def test_set_portal_config_setting_keep_current_noop(tmpdir):
-    with _PortalTester(ConfigurablePortal, tmpdir) as pt:
+    with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
 
         portal._set_portal_config_setting("a", KEEP_CURRENT)
@@ -33,7 +33,7 @@ def test_set_portal_config_setting_keep_current_noop(tmpdir):
 
 
 def test_set_portal_config_setting_delete_current_removes_entries(tmpdir):
-    with _PortalTester(ConfigurablePortal, tmpdir) as pt:
+    with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
 
         portal._set_portal_config_setting("a", 1)
@@ -47,7 +47,7 @@ def test_set_portal_config_setting_delete_current_removes_entries(tmpdir):
 
 
 def test_get_portal_config_setting_prefers_cache_until_invalidated(tmpdir):
-    with _PortalTester(ConfigurablePortal, tmpdir) as pt:
+    with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
 
         portal._set_portal_config_setting("a", 1)
@@ -61,7 +61,7 @@ def test_get_portal_config_setting_prefers_cache_until_invalidated(tmpdir):
 
 
 def test_get_portal_config_setting_caches_none_until_invalidated(tmpdir):
-    with _PortalTester(ConfigurablePortal, tmpdir) as pt:
+    with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
 
         assert portal._get_portal_config_setting("missing") is None

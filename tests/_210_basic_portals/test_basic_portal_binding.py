@@ -1,7 +1,7 @@
 import pytest
-from pythagoras import BasicPortal, _PortalTester, PortalAwareClass
+from pythagoras import BasicPortal, _PortalTester, PortalAwareObject
 
-class SimplePortalAware(PortalAwareClass):
+class SimplePortalAware(PortalAwareObject):
     def __getstate__(self):
         return {}
     def __setstate__(self, state):

@@ -96,7 +96,7 @@ class BasicPortal(NotPicklableMixin,
 
 
     def _get_linked_objects_set(self
-            , target_class: type | None = None) -> set[PortalAwareClass]:
+            , target_class: type | None = None) -> set[PortalAwareObject]:
         """Get the set of objects linked to this portal.
 
         Args:
@@ -108,7 +108,7 @@ class BasicPortal(NotPicklableMixin,
         return _PORTAL_REGISTRY.linked_objects_set(self, target_class)
 
 
-    def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareClass]:
+    def get_linked_objects(self, target_class: type | None = None) -> list[PortalAwareObject]:
         """Get the list of objects linked to this portal.
 
         Args:
@@ -347,8 +347,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self.known_portals: set[BasicPortal] = set()
         self.portal_stack: _PortalStack = _PortalStack()
         self.most_recently_created_portal: BasicPortal | None = None
-        self.links_from_objects_to_portals: dict[PortalAwareClass, BasicPortal] = {}
-        self.known_objects: set[PortalAwareClass] = set()
+        self.links_from_objects_to_portals: dict[PortalAwareObject, BasicPortal] = {}
+        self.known_objects: set[PortalAwareObject] = set()
         self.default_portal_instantiator: Callable[[], None] | None = None
 
 
@@ -614,7 +614,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
 
         return candidates
 
-    def register_linkfree_object(self, obj: PortalAwareClass) -> None:
+    def register_linkfree_object(self, obj: PortalAwareObject) -> None:
         """Register a portal-aware object in the global registry.
 
         Args:
@@ -628,7 +628,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
 
         self.known_objects.add(obj)
 
-    def is_object_registered(self, obj: PortalAwareClass) -> bool:
+    def is_object_registered(self, obj: PortalAwareObject) -> bool:
         """Check if an object is currently registered.
 
         Args:
@@ -639,7 +639,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         return obj in self.known_objects
 
-    def register_linked_object(self, portal: BasicPortal, obj:PortalAwareClass) -> None:
+    def register_linked_object(self, portal: BasicPortal, obj:PortalAwareObject) -> None:
         """Link an object to a portal in the registry.
 
         The linked object will use the portal for all its operations
@@ -659,7 +659,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self.links_from_objects_to_portals[obj] = portal
 
 
-    def unregister_object(self,obj:PortalAwareClass) -> None:
+    def unregister_object(self, obj:PortalAwareObject) -> None:
         """Remove an object from the registry.
 
         Args:
@@ -693,7 +693,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     def linked_objects_set(self
             , portal: BasicPortal
             , target_class: type | None = None
-            ) -> set[PortalAwareClass]:
+            ) -> set[PortalAwareObject]:
         """Get the set of objects linked to a portal.
 
         Args:
@@ -714,7 +714,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     def linked_objects(self
             , portal: BasicPortal
             , target_class: type | None = None
-            ) -> list[PortalAwareClass]:
+            ) -> list[PortalAwareObject]:
         """Get objects linked to a portal.
 
         Args:
@@ -735,10 +735,10 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
 _PORTAL_REGISTRY = _PortalRegistry()
 
 
-class PortalAwareClass(CacheablePropertiesMixin,
-        ImmutableMixin,
-        SingleThreadEnforcerMixin,
-        metaclass = GuardedInitMeta):
+class PortalAwareObject(CacheablePropertiesMixin,
+                        ImmutableMixin,
+                        SingleThreadEnforcerMixin,
+                        metaclass = GuardedInitMeta):
     """A base class for objects that need to access a portal.
 
     Objects work with either the current portal or a linked portal
@@ -868,7 +868,7 @@ class PortalAwareClass(CacheablePropertiesMixin,
 
         # TODO: Recursively visit nested PortalAwareClass objects
         for nested in self._nested_objects:
-            if isinstance(nested, PortalAwareClass):
+            if isinstance(nested, PortalAwareObject):
                 nested._visit_portal(portal)
 
         self._visited_portals.add(portal)
@@ -1046,7 +1046,7 @@ def _visit_portal_impl(obj: Any, portal: BasicPortal, seen: set[int] | None = No
 
     seen.add(id(obj))
 
-    if isinstance(obj, PortalAwareClass):
+    if isinstance(obj, PortalAwareObject):
         obj._visit_portal(portal)
         return
 

@@ -50,6 +50,6 @@ Utilities:
 
 
 from .data_portal_core_classes import (
-    DataPortal, HashAddr, ValueAddr, StorableClass)
+    DataPortal, HashAddr, ValueAddr, StorableObject)
 from .ready_and_get import ready, get
 

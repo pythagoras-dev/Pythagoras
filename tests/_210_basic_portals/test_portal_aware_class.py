@@ -1,10 +1,10 @@
 """Tests for PortalAwareClass functionality and contracts."""
 import pickle
 import pytest
-from pythagoras import BasicPortal, PortalAwareClass, _PortalTester
+from pythagoras import BasicPortal, PortalAwareObject, _PortalTester
 
 
-class SimplePortalAware(PortalAwareClass):
+class SimplePortalAware(PortalAwareObject):
     """Minimal PortalAwareClass implementation for testing."""
     
     def __init__(self, value=0, portal=None):
@@ -175,7 +175,7 @@ def test_portal_aware_identity_key_before_init_raises_error():
     with _PortalTester(BasicPortal) as t:
         # This tests the edge case where identity_key is accessed before _init_finished=True
 
-        class TestClass(PortalAwareClass):
+        class TestClass(PortalAwareObject):
             def __init__(self, portal=None):
                 super().__init__(portal)
                 # Try to access identity_key before init is finished
@@ -254,7 +254,7 @@ def test_portal_aware_is_registered_consistency(tmpdir):
 def test_portal_aware_abstract_getstate_not_implemented():
     """Test that PortalAwareClass without __getstate__ cannot be instantiated."""
 
-    class IncompletePortalAware(PortalAwareClass):
+    class IncompletePortalAware(PortalAwareObject):
         """Portal-aware class that doesn't implement __getstate__."""
         def __init__(self, portal=None):
             super().__init__(portal)
@@ -273,7 +273,7 @@ def test_portal_aware_abstract_getstate_not_implemented():
 def test_portal_aware_abstract_setstate_not_implemented():
     """Test that PortalAwareClass without __setstate__ cannot be instantiated."""
 
-    class IncompletePortalAware2(PortalAwareClass):
+    class IncompletePortalAware2(PortalAwareObject):
         """Portal-aware class that doesn't implement __setstate__."""
         def __init__(self, portal=None):
             super().__init__(portal)

@@ -184,12 +184,12 @@ class DataPortal(BasicPortal):
         self._value_store = None
 
 
-class StorableClass(PortalAwareClass):
+class StorableObject(PortalAwareObject):
     """Minimal portal-aware class for data storage.
 
     StorableClass is a minimal base class for portal-aware objects that work
     with DataPortal. For configuration management capabilities, see
-    ConfigurableStorableClass in the _230_configurable_portals module.
+    ConfigurableStorableClass in the _230_tunable_portals module.
 
     This class does NOT provide content-addressable storage (.addr) - that
     functionality is added by subclasses that have sufficient structure to be
@@ -202,7 +202,7 @@ class StorableClass(PortalAwareClass):
         Args:
             portal: Optional DataPortal to bind to.
         """
-        PortalAwareClass.__init__(self, portal=portal)
+        PortalAwareObject.__init__(self, portal=portal)
 
     @property
     def portal(self) -> DataPortal:

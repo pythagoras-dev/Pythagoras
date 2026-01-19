@@ -20,4 +20,4 @@ Exports
 """
 
 from .configurable_portal_core_classes import (
-    ConfigurablePortal, ConfigurableStorableClass)
+    TunablePortal, TunableObject)

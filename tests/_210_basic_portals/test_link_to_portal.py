@@ -1,9 +1,9 @@
 """Tests for PortalAwareClass.link_to_portal() method."""
 import pytest
-from pythagoras import BasicPortal, PortalAwareClass, _PortalTester
+from pythagoras import BasicPortal, PortalAwareObject, _PortalTester
 
 
-class SimplePortalAware(PortalAwareClass):
+class SimplePortalAware(PortalAwareObject):
     """Minimal PortalAwareClass implementation for testing."""
 
     def __init__(self, value=0, portal=None):
