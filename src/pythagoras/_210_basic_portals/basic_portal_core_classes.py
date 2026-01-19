@@ -103,7 +103,8 @@ class BasicPortal(NotPicklableMixin,
             target_class: Optional class type filter.
 
         Returns:
-            Set of PortalAwareObjec instances linked to this portal, filtered by target_class if provided.
+            Set of PortalAwareObject instances linked to this portal,
+            filtered by target_class if provided.
         """
         return _PORTAL_REGISTRY.linked_objects_set(self, target_class)
 
