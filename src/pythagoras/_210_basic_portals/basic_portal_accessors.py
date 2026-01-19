@@ -115,4 +115,4 @@ def get_noncurrent_portals(required_portal_type: type[PortalType] = BasicPortal)
     Raises:
         TypeError: If any non-current portal is not an instance of required_portal_type.
     """
-    return _PORTAL_REGISTRY.noncurrent_portals(required_portal_type)
+    return _PORTAL_REGISTRY.get_noncurrent_portals(required_portal_type)

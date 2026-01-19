@@ -577,7 +577,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
 
         return candidates
 
-    def noncurrent_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> list[BasicPortal]:
+    def get_noncurrent_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[BasicPortal]:
         """Get a list of all known portals that are not the current portal.
 
         The current portal is the one at the top of the active stack.
@@ -598,7 +598,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         current_portal = self.portal_stack.peek()
 
         all_known = self.get_all_portals(BasicPortal)
-        candidates = [p for p in all_known if p != current_portal]
+        candidates = {p for p in all_known if p != current_portal}
 
         for p in candidates:
             if not isinstance(p, required_portal_type):
