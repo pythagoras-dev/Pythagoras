@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from functools import cached_property
 from typing import Type
 
 from persidict import replace_unsafe_chars, DELETE_CURRENT
@@ -198,12 +199,7 @@ class StorableObject(PortalAwareObject):
     """Minimal portal-aware class for data storage.
 
     StorableClass is a minimal base class for portal-aware objects that work
-    with DataPortal. For configuration management capabilities, see
-    ConfigurableStorableClass in the _230_tunable_portals module.
-
-    This class does NOT provide content-addressable storage (.addr) - that
-    functionality is added by subclasses that have sufficient structure to be
-    hashed (like OrdinaryFn).
+    with DataPortal.
     """
 
     def __init__(self, portal: DataPortal | None = None):
@@ -212,7 +208,7 @@ class StorableObject(PortalAwareObject):
         Args:
             portal: Optional DataPortal to bind to.
         """
-        super().__init__(self, portal=portal)
+        super().__init__(portal=portal)
 
     @property
     def portal(self) -> DataPortal:
@@ -222,6 +218,17 @@ class StorableObject(PortalAwareObject):
             DataPortal: The portal used by this object's methods.
         """
         return super().portal
+
+    @cached_property
+    def addr(self) -> ValueAddr:
+        """The content-derived address of this object.
+
+        Returns:
+            ValueAddr uniquely identifying this object based on its content.
+        """
+        if not hasattr(self, "_init_finished") or not self._init_finished:
+            raise ValueError("Cannot get address of an uninitialized object")
+        return ValueAddr(self)
 
 
 class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
