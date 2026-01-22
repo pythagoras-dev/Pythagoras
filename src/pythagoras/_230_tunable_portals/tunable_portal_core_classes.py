@@ -26,17 +26,17 @@ class TunablePortal(DataPortal):
     - Node-specific: Settings known / applicable to the current compute node
 
     Attributes:
-        _portal_config_settings: Portal-wide persistent configuration store.
-        _node_config_settings: Node-specific persistent configuration store.
-        _local_node_store: Alias to _node_config_settings for convenience.
-        _portal_config_settings_cache: In-memory cache for config values.
+        _global_portal_settings: Portal-wide persistent configuration store.
+        _local_node_settings: Node-specific persistent configuration store.
+        _local_node_value_store: Alias to _local_node_settings for convenience.
+        _global_portal_settings_cache: In-memory cache for config values.
         _auxiliary_config_params_at_init: Config parameters from initialization.
     """
 
-    _portal_config_settings: PersiDict | None
-    _node_config_settings: PersiDict | None
-    _local_node_store: PersiDict | None
-    _portal_config_settings_cache: dict
+    _global_portal_settings: PersiDict | None
+    _local_node_settings: PersiDict | None
+    _local_node_value_store: PersiDict | None
+    _global_portal_settings_cache: dict
     _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self, root_dict: PersiDict | str | None = None):
@@ -51,7 +51,7 @@ class TunablePortal(DataPortal):
         del root_dict
 
         self._auxiliary_config_params_at_init = dict()
-        self._portal_config_settings_cache = dict()
+        self._global_portal_settings_cache = dict()
 
         # Create portal-wide configuration store
         portal_config_settings_prototype = self._root_dict.get_subdict("portal_cfg")
@@ -59,7 +59,7 @@ class TunablePortal(DataPortal):
         portal_config_settings_params.update(
             digest_len=0, append_only=False, serialization_format="pkl")
         portal_config_settings = type(self._root_dict)(**portal_config_settings_params)
-        self._portal_config_settings = portal_config_settings
+        self._global_portal_settings = portal_config_settings
 
         # Create node-specific configuration store
         node_config_prototype = self._root_dict.get_subdict("node_cfg")
@@ -69,10 +69,40 @@ class TunablePortal(DataPortal):
         node_config_params.update(
             digest_len=0, append_only=False, serialization_format="pkl")
         node_config_settings = type(self._root_dict)(**node_config_params)
-        self._node_config_settings = node_config_settings
+        self._local_node_settings = node_config_settings
 
         # TODO: refactor
-        self._local_node_store = node_config_settings
+        self._local_node_value_store = node_config_settings
+
+
+    @property
+    def global_portal_settings(self) -> PersiDict:
+        """Portal-wide persistent configuration store.
+
+        Returns:
+            PersiDict: The persistent dictionary storing portal-wide settings.
+        """
+        return self._global_portal_settings
+
+
+    @property
+    def local_node_settings(self) -> PersiDict:
+        """Node-specific persistent configuration store.
+
+        Returns:
+            PersiDict: The persistent dictionary storing node-specific settings.
+        """
+        return self._local_node_settings
+
+
+    @property
+    def local_node_value_store(self) -> PersiDict:
+        """Local node value store (alias to local_node_settings).
+
+        Returns:
+            PersiDict: The persistent dictionary for local node values.
+        """
+        return self._local_node_value_store
 
 
     def _persist_initial_config_params(self) -> None:
@@ -138,14 +168,14 @@ class TunablePortal(DataPortal):
         if not isinstance(key, (str, SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
 
-        if key in self._portal_config_settings_cache:
-            value = self._portal_config_settings_cache[key]
-        elif key in self._portal_config_settings:
-            value = self._portal_config_settings[key]
-            self._portal_config_settings_cache[key] = value
+        if key in self._global_portal_settings_cache:
+            value = self._global_portal_settings_cache[key]
+        elif key in self.global_portal_settings:
+            value = self.global_portal_settings[key]
+            self._global_portal_settings_cache[key] = value
         else:
             value = None
-            self._portal_config_settings_cache[key] = None
+            self._global_portal_settings_cache[key] = None
         return value
 
 
@@ -169,17 +199,17 @@ class TunablePortal(DataPortal):
         if value is KEEP_CURRENT:
             return
 
-        self._portal_config_settings[key] = value
-        self._portal_config_settings_cache[key] = value
+        self.global_portal_settings[key] = value
+        self._global_portal_settings_cache[key] = value
 
         if value is DELETE_CURRENT:
-            del self._portal_config_settings_cache[key]
+            del self._global_portal_settings_cache[key]
 
 
     def _invalidate_cache(self):
         """Invalidate the portal's cache."""
         super()._invalidate_cache()
-        self._portal_config_settings_cache = dict()
+        self._global_portal_settings_cache = dict()
 
 
     def _clear(self) -> None:
@@ -189,9 +219,9 @@ class TunablePortal(DataPortal):
         """
         super()._clear()
         self._auxiliary_config_params_at_init = None
-        self._portal_config_settings = None
-        self._node_config_settings = None
-        self._local_node_store = None
+        self._global_portal_settings = None
+        self._local_node_settings = None
+        self._local_node_value_store = None
 
 
 class TunableObject(PortalAwareObject):

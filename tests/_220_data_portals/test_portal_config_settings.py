@@ -23,13 +23,13 @@ def test_set_portal_config_setting_keep_current_noop(tmpdir):
         portal = pt.portal
 
         portal._set_portal_config_setting("a", KEEP_CURRENT)
-        assert "a" not in portal._portal_config_settings
-        assert "a" not in portal._portal_config_settings_cache
+        assert "a" not in portal.global_portal_settings
+        assert "a" not in portal._global_portal_settings_cache
 
         portal._set_portal_config_setting("a", 1)
         portal._set_portal_config_setting("a", KEEP_CURRENT)
-        assert portal._portal_config_settings["a"] == 1
-        assert portal._portal_config_settings_cache["a"] == 1
+        assert portal.global_portal_settings["a"] == 1
+        assert portal._global_portal_settings_cache["a"] == 1
 
 
 def test_set_portal_config_setting_delete_current_removes_entries(tmpdir):
@@ -37,12 +37,12 @@ def test_set_portal_config_setting_delete_current_removes_entries(tmpdir):
         portal = pt.portal
 
         portal._set_portal_config_setting("a", 1)
-        assert "a" in portal._portal_config_settings
-        assert portal._portal_config_settings_cache["a"] == 1
+        assert "a" in portal.global_portal_settings
+        assert portal._global_portal_settings_cache["a"] == 1
 
         portal._set_portal_config_setting("a", DELETE_CURRENT)
-        assert "a" not in portal._portal_config_settings
-        assert "a" not in portal._portal_config_settings_cache
+        assert "a" not in portal.global_portal_settings
+        assert "a" not in portal._global_portal_settings_cache
         assert portal._get_portal_config_setting("a") is None
 
 
@@ -53,7 +53,7 @@ def test_get_portal_config_setting_prefers_cache_until_invalidated(tmpdir):
         portal._set_portal_config_setting("a", 1)
         assert portal._get_portal_config_setting("a") == 1
 
-        portal._portal_config_settings["a"] = 2
+        portal.global_portal_settings["a"] = 2
         assert portal._get_portal_config_setting("a") == 1
 
         portal._invalidate_cache()
@@ -65,9 +65,9 @@ def test_get_portal_config_setting_caches_none_until_invalidated(tmpdir):
         portal = pt.portal
 
         assert portal._get_portal_config_setting("missing") is None
-        assert portal._portal_config_settings_cache["missing"] is None
+        assert portal._global_portal_settings_cache["missing"] is None
 
-        portal._portal_config_settings["missing"] = 5
+        portal.global_portal_settings["missing"] = 5
         assert portal._get_portal_config_setting("missing") is None
 
         portal._invalidate_cache()

@@ -162,7 +162,7 @@ class SwarmingPortal(PureCodePortal):
         self._ancestor_process_id = ancestor_process_id
         self._ancestor_process_start_time = ancestor_process_start_time
 
-        self._all_workers = self._local_node_store.get_subdict("all_workers")
+        self._all_workers = self.local_node_value_store.get_subdict("all_workers")
 
 
     @property
