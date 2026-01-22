@@ -982,7 +982,7 @@ class LoggingCodePortal(OrdinaryCodePortal):
         Returns:
             bool: True if excessive logging is enabled, False otherwise.
         """
-        return bool(self._get_portal_config_setting("excessive_logging"))
+        return bool(self.get_effective_setting("excessive_logging"))
 
 
     def describe(self) -> pd.DataFrame:

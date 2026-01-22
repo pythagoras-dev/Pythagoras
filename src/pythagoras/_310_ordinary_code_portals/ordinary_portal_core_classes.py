@@ -434,17 +434,6 @@ class OrdinaryFn(TunableObject):
         return descriptor
 
 
-    @cached_property
-    def addr(self) -> ValueAddr:
-        """The content-derived address of this function.
-
-        Returns:
-            ValueAddr uniquely identifying this function based on its normalized
-            source code.
-        """
-        return ValueAddr(self)
-
-
     def _first_visit_to_portal(self, portal: TunablePortal) -> None:
         """Register this function in a new portal and ensure addr is created."""
         super()._first_visit_to_portal(portal)
@@ -456,7 +445,7 @@ class OrdinaryFn(TunableObject):
         """Retrieve a configuration setting for this function from a portal.
 
         Checks portal-wide settings first, then falls back to function-specific
-        settings if available (using addr for function-specific keys).
+        settings if available.
 
         Args:
             key: Configuration key to retrieve.
@@ -471,15 +460,12 @@ class OrdinaryFn(TunableObject):
         if not isinstance(key, (str, SafeStrTuple)):
             raise TypeError("key must be a SafeStrTuple or a string")
 
-        portal_wide_value = portal._get_portal_config_setting(key)
+        portal_wide_value = portal.get_effective_setting(key)
         if portal_wide_value is not None:
             return portal_wide_value
 
-        # Use addr for function-specific settings
-        function_specific_value = portal._get_portal_config_setting(
-            self.addr + key)
-
-        return function_specific_value
+        # Use function-specific settings (via TunableObject mechanism)
+        return self.get_effective_setting(key)
 
 
     def _set_config_setting(self
@@ -488,7 +474,7 @@ class OrdinaryFn(TunableObject):
                             , portal: TunablePortal) -> None:
         """Set a function-specific configuration setting in a portal.
 
-        Uses addr to create a function-specific key.
+        Uses TunableObject's storage mechanism (scoped by addr/identity).
 
         Args:
             key: Configuration key to set.
@@ -500,4 +486,4 @@ class OrdinaryFn(TunableObject):
         """
         if not isinstance(key, (SafeStrTuple, str)):
             raise TypeError("key must be a SafeStrTuple or a string")
-        portal._set_portal_config_setting(ValueAddr(self) + key, value)
+        self.global_portal_settings[key] = value

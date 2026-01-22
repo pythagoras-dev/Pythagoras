@@ -235,17 +235,17 @@ class SwarmingPortal(PureCodePortal):
     @property
     def max_n_workers(self) -> int:
         """Maximum number of background workers to spawn."""
-        return self._get_portal_config_setting("max_n_workers")
+        return self.get_effective_setting("max_n_workers")
 
     @property
     def min_n_workers(self) -> int:
         """Minimum number of background workers to maintain."""
-        return self._get_portal_config_setting("min_n_workers")
+        return self.get_effective_setting("min_n_workers")
 
     @property
     def exact_n_workers(self) -> int:
         """Fixed number of workers when set, overriding min/max bounds."""
-        return self._get_portal_config_setting("exact_n_workers")
+        return self.get_effective_setting("exact_n_workers")
 
 
     def get_active_descendant_process_counter(self,
