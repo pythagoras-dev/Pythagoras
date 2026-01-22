@@ -329,7 +329,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
     lifecycle management.
 
     Attributes:
-        known_portals: Set of known portal instances.
+        known_portals: Set of known (existing in the system) portal instances.
         portal_stack: Stack manager for active portals (nested `with` statements).
         most_recently_created_portal: Last portal instantiated, used for auto-activation.
         links_from_objects_to_portals: Maps linked PortalAwareObject instances to their portals.
