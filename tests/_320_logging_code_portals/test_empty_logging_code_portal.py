@@ -17,7 +17,7 @@ def test_empty_logging_code_portal(tmpdir):
 
         assert p.portal.get_number_of_linked_functions() == 0
 
-        assert len(p.portal._value_store) == 0
+        assert len(p.portal.global_value_store) == 0
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0

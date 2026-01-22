@@ -41,19 +41,19 @@ def test_sortedkwargs_2portals(tmpdir):
         p2 = DataPortal(root_dict=tmpdir.mkdir("t2"))
         sampe_dict = dict2
         pka = KwArgs(**sampe_dict).pack()
-        assert len(p1._value_store) == 4
-        assert len(p2._value_store) == 0
+        assert len(p1.global_value_store) == 4
+        assert len(p2.global_value_store) == 0
 
         with p2:
             pka = KwArgs(**sampe_dict).pack()
-        assert len(p1._value_store) == 4
-        assert len(p2._value_store) == 4
+        assert len(p1.global_value_store) == 4
+        assert len(p2.global_value_store) == 4
 
         pka = KwArgs(**pka).pack()
         pka = KwArgs(**pka).pack()
 
-        assert len(p1._value_store) == 4
-        assert len(p2._value_store) == 4
+        assert len(p1.global_value_store) == 4
+        assert len(p2.global_value_store) == 4
 
 def test_sortedkwargs_save_load(tmpdir):
     """Test PackedKwArgs constructor and basic functionality."""
@@ -63,8 +63,8 @@ def test_sortedkwargs_save_load(tmpdir):
             portal = t.portal
             sampe_dict = { "e": 0, "c":1, "b":2, "a":3}
             pka = KwArgs(**sampe_dict).pack()
-            portal._value_store["PKA"] = pka
-            new_pka = portal._value_store["PKA"]
+            portal.global_value_store["PKA"] = pka
+            new_pka = portal.global_value_store["PKA"]
             assert new_pka == pka
             assert type(new_pka) == type(pka) == PackedKwArgs
 

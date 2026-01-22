@@ -25,7 +25,6 @@ class TunablePortal(DataPortal):
     - Portal-wide: Settings shared across all nodes in a portal
     - Node-specific: Settings known / applicable to the current compute node
 
-
     Attributes:
         _portal_config_settings: Portal-wide persistent configuration store.
         _node_config_settings: Node-specific persistent configuration store.

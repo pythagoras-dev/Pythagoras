@@ -23,8 +23,8 @@ def test_stored_values(tmpdir):
     with _PortalTester(DataPortal
             , tmpdir
             ) as t:
-        t.portal._value_store["a"] = 100
-        t.portal._value_store["b"] = 200
+        t.portal.global_value_store["a"] = 100
+        t.portal.global_value_store["b"] = 200
         description = t.portal.describe()
         assert description.shape == (4, 3)
         assert _get_description_value_by_key(description

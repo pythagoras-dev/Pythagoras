@@ -24,16 +24,16 @@ def test_date_portal_params(tmpdir):
 def test_data_portal_params_multiprocessing(tmpdir):
     with _PortalTester():
         portal = DataPortal(tmpdir.mkdir("awer"))
-        assert len(portal._value_store) == 0
+        assert len(portal.global_value_store) == 0
         portal_params_json = mixinforge.dumpjs(portal)
         ctx = get_context("spawn")
         p = ctx.Process(target=_update_data_portal_in_a_subprocess
                     , args=(portal_params_json,))
         p.start()
         p.join()
-        assert len(portal._value_store) == 1
+        assert len(portal.global_value_store) == 1
 
 
 def _update_data_portal_in_a_subprocess(portal_init_params):
     portal = mixinforge.loadjs(portal_init_params)
-    portal._value_store["abcd"] = 1234
+    portal.global_value_store["abcd"] = 1234

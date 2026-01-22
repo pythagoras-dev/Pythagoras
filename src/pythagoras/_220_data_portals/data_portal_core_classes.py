@@ -139,7 +139,7 @@ class DataPortal(BasicPortal):
 
     """
 
-    _value_store: WriteOnceDict | None
+    _global_value_store: WriteOnceDict | None
 
     def __init__(self
             , root_dict: PersiDict|str|None = None
@@ -160,17 +160,17 @@ class DataPortal(BasicPortal):
             digest_len=0, append_only=True, serialization_format = "pkl")
         value_store = type(self._root_dict)(**value_store_params)
         value_store = WriteOnceDict(value_store, 0)
-        self._value_store = value_store
+        self._global_value_store = value_store
 
 
     @property
-    def value_store(self) -> WriteOnceDict:
+    def global_value_store(self) -> WriteOnceDict:
         """The portal's persistent content-addressable storeage.
 
         Returns:
             WriteOnceDict: The persistent dictionary storing values by address.
         """
-        return self._value_store
+        return self._global_value_store
 
 
     def describe(self) -> pd.DataFrame:
@@ -178,7 +178,7 @@ class DataPortal(BasicPortal):
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
-            _TOTAL_VALUES_TXT, len(self._value_store)))
+            _TOTAL_VALUES_TXT, len(self.global_value_store)))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
@@ -191,7 +191,7 @@ class DataPortal(BasicPortal):
         The portal must not be used after this method is called.
         """
         super()._clear()
-        self._value_store = None
+        self._global_value_store = None
 
 
 class StorableObject(PortalAwareObject):
@@ -460,7 +460,7 @@ class ValueAddr(HashAddr):
 
         if store:
             portal = get_current_data_portal()
-            portal._value_store[self] = data
+            portal.global_value_store[self] = data
             self._containing_portals.add(portal)
 
 
@@ -523,14 +523,14 @@ class ValueAddr(HashAddr):
 
         # Fast path: check if we already know it's in current portal
         if current_portal in self._containing_portals:
-            data = current_portal._value_store[self]
+            data = current_portal.global_value_store[self]
             self._set_cached_properties(value=data)
             return data, True
 
         # Slow path: check the store directly
-        if self in current_portal._value_store:
+        if self in current_portal.global_value_store:
             self._containing_portals.add(current_portal)
-            data = current_portal._value_store[self]
+            data = current_portal.global_value_store[self]
             self._set_cached_properties(value=data)
             return data, True
 
@@ -586,7 +586,7 @@ class ValueAddr(HashAddr):
         current_portal = get_current_data_portal()
 
         if current_portal not in self._containing_portals:
-            current_portal._value_store[self] = data
+            current_portal.global_value_store[self] = data
             self._containing_portals.add(current_portal)
 
         return data, True
@@ -605,10 +605,10 @@ class ValueAddr(HashAddr):
             return None, False
 
         containing_portal = next(iter(self._containing_portals))
-        data = containing_portal._value_store[self]
+        data = containing_portal.global_value_store[self]
 
         current_portal = get_current_data_portal()
-        current_portal._value_store[self] = data
+        current_portal.global_value_store[self] = data
         self._containing_portals.add(current_portal)
         self._set_cached_properties(value=data)
 
@@ -629,9 +629,9 @@ class ValueAddr(HashAddr):
 
         for other_portal in self._noncontaining_portals:
             try:
-                data = other_portal._value_store[self]
+                data = other_portal.global_value_store[self]
                 self._containing_portals.add(other_portal)
-                current_portal._value_store[self] = data
+                current_portal.global_value_store[self] = data
                 self._containing_portals.add(current_portal)
                 self._set_cached_properties(value=data)
                 return data, True

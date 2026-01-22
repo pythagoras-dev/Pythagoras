@@ -24,8 +24,8 @@ def test_value_address_basic(tmpdir):
                 addr = ValueAddr(10)
                 addr = ValueAddr(12)
 
-        assert len(portal1._value_store) == 1
-        assert len(portal2._value_store) == 2
+        assert len(portal1.global_value_store) == 1
+        assert len(portal2.global_value_store) == 2
 
 
 def test_nested_portals_whitebox(tmpdir):

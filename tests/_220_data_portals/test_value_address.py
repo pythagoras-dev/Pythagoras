@@ -20,14 +20,14 @@ def test_value_address_basic(tmpdir):
     with _PortalTester(DataPortal,tmpdir) as t:
         portal = t.portal
         for v in values_to_test:
-            assert len(get_current_portal()._value_store) == counter
+            assert len(get_current_portal().global_value_store) == counter
             assert ValueAddr(v).get() == v
             assert ValueAddr(v).get() == v
             counter += 1
-            assert len(get_current_portal()._value_store) == counter
+            assert len(get_current_portal().global_value_store) == counter
 
     with _PortalTester(DataPortal,tmpdir):
-        assert len(get_current_portal()._value_store) == counter
+        assert len(get_current_portal().global_value_store) == counter
 
 
 def test_value_address_with_typechecks(tmpdir):
@@ -59,14 +59,14 @@ def test_nested_value_addrs(tmpdir):
 
     with _PortalTester(DataPortal,tmpdir):
         for v in values_to_test:
-            assert len(get_current_portal()._value_store) == counter
+            assert len(get_current_portal().global_value_store) == counter
             assert ValueAddr([ValueAddr(v)]).get()[0].get() == v
             assert ValueAddr([ValueAddr(v)]).get()[0].get() == v
             counter += 2
-            assert len(get_current_portal()._value_store) == counter
+            assert len(get_current_portal().global_value_store) == counter
 
     with _PortalTester(DataPortal,tmpdir):
-        assert len(get_current_portal()._value_store) == counter
+        assert len(get_current_portal().global_value_store) == counter
 
 
 def test_value_address_constructor_with_two_portals(tmpdir):
@@ -83,21 +83,21 @@ def test_value_address_constructor_with_two_portals(tmpdir):
                 addr2_hihi = ValueAddr("hihi")
 
 
-            assert len(portal1._value_store) == 1
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 1
+            assert len(portal2.global_value_store) == 3
 
             assert addr1_10.get() == 10
-            assert len(portal1._value_store) == 1
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 1
+            assert len(portal2.global_value_store) == 3
 
             assert addr2_hihi.get() == "hihi"
-            assert len(portal1._value_store) == 2
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 2
+            assert len(portal2.global_value_store) == 3
 
             # with portal2:
             #     assert addr1_10.get() == 10
-            #     assert len(portal1._value_store) == 2
-            #     assert len(portal2._value_store) == 4
+            #     assert len(portal1.global_value_store) == 2
+            #     assert len(portal2.global_value_store) == 4
 
 
 
@@ -114,21 +114,21 @@ def test_value_address_ready_with_two_portals(tmpdir):
                 addr2_20 = ValueAddr(20)
                 addr2_hihi = ValueAddr("hihi")
 
-            assert len(portal1._value_store) == 1
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 1
+            assert len(portal2.global_value_store) == 3
 
             addr1_10_new = copy(addr1_10)
-            assert len(portal1._value_store) == 1
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 1
+            assert len(portal2.global_value_store) == 3
 
             addr1_hihi = copy(addr2_hihi)
             addr1_hihi._portal = portal1
-            assert len(portal1._value_store) == 1
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 1
+            assert len(portal2.global_value_store) == 3
 
             assert addr1_hihi.ready
-            assert len(portal1._value_store) == 2
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 2
+            assert len(portal2.global_value_store) == 3
 
 
 def test_value_address_get_with_two_portals(tmpdir):
@@ -145,20 +145,20 @@ def test_value_address_get_with_two_portals(tmpdir):
                 addr2_hihi = ValueAddr("hihi")
 
             assert addr2_hihi.get() == "hihi"
-            assert len(portal1._value_store) == 2
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 2
+            assert len(portal2.global_value_store) == 3
 
             addr1_10_new = copy(addr1_10)
-            assert len(portal1._value_store) == 2
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 2
+            assert len(portal2.global_value_store) == 3
 
             addr1_hihi = copy(addr2_hihi)
-            assert len(portal1._value_store) == 2
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 2
+            assert len(portal2.global_value_store) == 3
 
             assert addr1_hihi.get() == "hihi"
-            assert len(portal1._value_store) == 2
-            assert len(portal2._value_store) == 3
+            assert len(portal1.global_value_store) == 2
+            assert len(portal2.global_value_store) == 3
 
 
 def test_value_addr_rejects_uninitialized_object(tmpdir):

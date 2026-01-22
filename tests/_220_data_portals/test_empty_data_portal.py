@@ -14,4 +14,4 @@ def test_empty_data_portal(tmpdir):
         # So it has linked_objects, not specifically linked_functions
         assert p.portal.count_linked_objects() == 0
 
-        assert len(p.portal._value_store) == 0
+        assert len(p.portal.global_value_store) == 0

@@ -38,7 +38,7 @@ def test_value_address_storablefn(tmpdir):
 
         assert id(f_new) != id(f_new_restored)
 
-        assert len(portal._value_store) == 1
+        assert len(portal.global_value_store) == 1
         assert portal.get_number_of_linked_functions() == 0
         assert len(portal.get_linked_functions()) == 0
 
@@ -47,7 +47,7 @@ def test_value_address_storablefn(tmpdir):
         # # assert f_new._linked_portal is portal
         # assert f_new_restored._linked_portal is portal
         #
-        # assert len(portal._value_store) == 1
+        # assert len(portal.global_value_store) == 1
         # assert portal.get_number_of_linked_functions() == 1
         # assert len(portal.get_linked_functions()) == 1
 

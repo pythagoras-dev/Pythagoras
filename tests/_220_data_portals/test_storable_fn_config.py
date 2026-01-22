@@ -84,7 +84,7 @@ def test_storable_fn_first_visit_creates_addr(tmpdir):
         fn = OrdinaryFn(simple_function)
 
         # Before visit, function may not have registered addr
-        initial_store_len = len(portal._value_store)
+        initial_store_len = len(portal.global_value_store)
 
         # Trigger first visit
         fn._first_visit_to_portal(portal)

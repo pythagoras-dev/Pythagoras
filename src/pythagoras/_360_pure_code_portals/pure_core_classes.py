@@ -460,10 +460,10 @@ class PureFnExecutionResultAddr(HashAddr):
                     addr = another_portal._execution_results[self]
                     with self.fn.portal as active_portal:
                         active_portal._execution_results[self] = addr
-                        if not addr in active_portal._value_store:
-                            data = another_portal._value_store[addr]
+                        if not addr in active_portal.global_value_store:
+                            data = another_portal.global_value_store[addr]
                             self._result_cache = data
-                            active_portal._value_store[addr] = data
+                            active_portal.global_value_store[addr] = data
                     return True
         return False
 
@@ -565,7 +565,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
             if self.ready:
                 result_addr = portal._execution_results[self]
-                self._result_cache = portal._value_store[result_addr]
+                self._result_cache = portal.global_value_store[result_addr]
                 return self._result_cache
 
             self.request_execution()
@@ -580,7 +580,7 @@ class PureFnExecutionResultAddr(HashAddr):
             while True:
                 if self.ready:
                     result_addr = portal._execution_results[self]
-                    self._result_cache = portal._value_store[result_addr]
+                    self._result_cache = portal.global_value_store[result_addr]
                     self.drop_execution_request()
                     return self._result_cache
                 else:

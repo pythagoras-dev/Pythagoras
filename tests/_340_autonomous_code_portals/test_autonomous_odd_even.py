@@ -46,9 +46,9 @@ def test_odd_even_two_decorators_autonomous(tmpdir):
             isEven = oldIsEven
             isOdd = oldIsOdd
 
-        assert len([k for k in l.portal._value_store.keys() if k[2]=="bool"]) == 2
-        assert len([k for k in l.portal._value_store.keys() if k[2]=="int"]) == N
-        assert len([k for k in l.portal._value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
+        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="bool"]) == 2
+        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="int"]) == N
+        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
 
 
 
@@ -77,6 +77,6 @@ def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir):
             isOdd = oldIsOdd
 
         assert l.portal.get_number_of_linked_functions() == 4
-        assert len([k for k in l.portal._value_store.keys() if k[2]=="bool"]) == 2
-        assert len([k for k in l.portal._value_store.keys() if k[2]=="int"]) == N
-        assert len([k for k in l.portal._value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
+        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="bool"]) == 2
+        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="int"]) == N
+        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="packedkwargs_len_3"]) == N

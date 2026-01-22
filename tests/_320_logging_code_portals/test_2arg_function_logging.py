@@ -20,7 +20,7 @@ def test_2args_function_single_call(tmpdir):
         # two_arg_function.portal = p.portal
         # assert p.portal.get_number_of_linked_functions() == 1
 
-        assert len(p.portal._value_store) == 6
+        assert len(p.portal.global_value_store) == 6
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0
@@ -46,7 +46,7 @@ def test_2args_function_2similar_calls(tmpdir):
 
         assert p.portal.get_number_of_linked_functions() == 1
 
-        assert len(p.portal._value_store) == 6
+        assert len(p.portal.global_value_store) == 6
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0
@@ -70,7 +70,7 @@ def test_2args_function_2different_calls(tmpdir):
 
         assert p.portal.get_number_of_linked_functions() == 1
 
-        assert len(p.portal._value_store) == 10
+        assert len(p.portal.global_value_store) == 10
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0
@@ -90,7 +90,7 @@ def test_2args_function_single_call_no_logs(tmpdir):
 
         assert p.portal.get_number_of_linked_functions() == 1
 
-        assert len(p.portal._value_store) == 5
+        assert len(p.portal.global_value_store) == 5
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0
@@ -111,7 +111,7 @@ def test_2args_function_2similar_calls_no_logs(tmpdir):
 
         assert p.portal.get_number_of_linked_functions() == 1
 
-        assert len(p.portal._value_store) == 5
+        assert len(p.portal.global_value_store) == 5
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0
@@ -132,7 +132,7 @@ def test_2args_function_2different_calls_no_logs(tmpdir):
 
         assert p.portal.get_number_of_linked_functions() == 1
 
-        assert len(p.portal._value_store) == 8
+        assert len(p.portal.global_value_store) == 8
 
         assert len(p.portal._crash_history) == 0
         assert len(p.portal._event_history) == 0
