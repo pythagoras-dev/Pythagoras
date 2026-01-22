@@ -212,7 +212,7 @@ class StorableObject(PortalAwareObject):
         Args:
             portal: Optional DataPortal to bind to.
         """
-        PortalAwareObject.__init__(self, portal=portal)
+        super().__init__(self, portal=portal)
 
     @property
     def portal(self) -> DataPortal:
