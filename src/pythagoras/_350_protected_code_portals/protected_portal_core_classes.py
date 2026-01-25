@@ -31,7 +31,7 @@ from .validation_succesful_const import VALIDATION_SUCCESSFUL, ValidationSuccess
 from .._310_ordinary_code_portals import FunctionError
 from .._220_data_portals import ValueAddr
 from .._220_data_portals import DataPortal
-from .._320_logging_code_portals import KwArgs
+from .._220_data_portals import KwArgs
 from .._340_autonomous_code_portals import *
 
 

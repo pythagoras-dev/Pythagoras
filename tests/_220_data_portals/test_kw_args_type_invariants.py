@@ -7,12 +7,12 @@ type boundaries and maintain documented invariants through pack/unpack cycles.
 import pytest
 
 from pythagoras import KwArgs, PackedKwArgs, UnpackedKwArgs, ValueAddr
-from pythagoras import LoggingCodePortal, _PortalTester
+from pythagoras import DataPortal, _PortalTester
 
 
 def test_base_kwargs_rejects_nested_base_kwargs(tmpdir):
     """Base KwArgs rejects other base KwArgs to prevent ambiguous nesting."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         parent = KwArgs()
         child = KwArgs(x=1, y=2)
         with pytest.raises(ValueError, match="Nested KwArgs are not allowed"):
@@ -27,7 +27,7 @@ def test_base_kwargs_rejects_nested_base_kwargs(tmpdir):
 ])
 def test_base_kwargs_allows_non_base_kwargs_values(tmpdir, value_factory):
     """Base KwArgs allows PackedKwArgs, UnpackedKwArgs, dicts, and ValueAddr as values."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         parent = KwArgs()
         value = value_factory()
         parent['data'] = value
@@ -36,7 +36,7 @@ def test_base_kwargs_allows_non_base_kwargs_values(tmpdir, value_factory):
 
 def test_packed_kwargs_only_accepts_value_addr(tmpdir):
     """PackedKwArgs enforces that all values are ValueAddr instances."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         packed = KwArgs(a=1).pack()
 
         # Should reject non-ValueAddr values
@@ -53,14 +53,14 @@ def test_packed_kwargs_only_accepts_value_addr(tmpdir):
 
 def test_packed_kwargs_from_pack_contains_only_value_addr(tmpdir):
     """PackedKwArgs created via pack() has only ValueAddr values."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         packed = KwArgs(a=1, b='hello', c=[1, 2, 3]).pack()
         assert all(isinstance(v, ValueAddr) for v in packed.values())
 
 
 def test_unpacked_kwargs_rejects_value_addr_and_base_kwargs(tmpdir):
     """UnpackedKwArgs rejects ValueAddr and base KwArgs to ensure raw values only."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         unpacked = KwArgs(a=1).pack().unpack()
 
         with pytest.raises(ValueError, match="UnpackedKwArgs cannot contain ValueAddr"):
@@ -80,7 +80,7 @@ def test_unpacked_kwargs_rejects_value_addr_and_base_kwargs(tmpdir):
 ])
 def test_unpacked_kwargs_allows_regular_and_snapshot_values(tmpdir, value_factory):
     """UnpackedKwArgs allows raw values and KwArgs snapshots (Packed/Unpacked)."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         unpacked = KwArgs(a=1).pack().unpack()
         value = value_factory()
         unpacked['data'] = value
@@ -89,7 +89,7 @@ def test_unpacked_kwargs_allows_regular_and_snapshot_values(tmpdir, value_factor
 
 def test_unpacked_kwargs_from_unpack_contains_no_value_addr(tmpdir):
     """UnpackedKwArgs created via unpack() has no ValueAddr values."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         packed = KwArgs(a=1, b='hello', c=[1, 2, 3]).pack()
         unpacked = packed.unpack()
         assert not any(isinstance(v, ValueAddr) for v in unpacked.values())
@@ -97,7 +97,7 @@ def test_unpacked_kwargs_from_unpack_contains_no_value_addr(tmpdir):
 
 def test_kwargs_snapshots_survive_pack_unpack_cycle(tmpdir):
     """PackedKwArgs and UnpackedKwArgs as values survive pack/unpack cycles."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # PackedKwArgs as value
         inner_packed = KwArgs(x=1, y=2).pack()
         outer = KwArgs(data=inner_packed)
@@ -115,7 +115,7 @@ def test_kwargs_snapshots_survive_pack_unpack_cycle(tmpdir):
 
 def test_validator_scenario_with_packed_kwargs_as_argument(tmpdir):
     """Scenario from failing tests: validator receives packed_kwargs as data."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Function arguments are packed
         function_args = KwArgs(a=1, b=2).pack()
         fn_addr = ValueAddr('some_function')
@@ -136,7 +136,7 @@ def test_validator_scenario_with_packed_kwargs_as_argument(tmpdir):
 @pytest.mark.parametrize("n_packs", [2, 3, 5])
 def test_multiple_pack_operations_are_safe(tmpdir, n_packs):
     """Multiple pack() calls create equivalent PackedKwArgs with same content."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         result = KwArgs(x=1, y=2)
         for _ in range(n_packs):
             result = result.pack()
@@ -149,7 +149,7 @@ def test_multiple_pack_operations_are_safe(tmpdir, n_packs):
 @pytest.mark.parametrize("n_unpacks", [2, 3, 5])
 def test_multiple_unpack_operations_are_safe(tmpdir, n_unpacks):
     """Multiple unpack() calls create equivalent UnpackedKwArgs with same content."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         result = KwArgs(a=10, b=20).pack()
         for _ in range(n_unpacks):
             result = result.unpack()
@@ -161,7 +161,7 @@ def test_multiple_unpack_operations_are_safe(tmpdir, n_unpacks):
 
 def test_pack_unpack_cycles_preserve_values(tmpdir):
     """Alternating pack/unpack cycles preserve original values."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         original = KwArgs(data=42)
 
         # Multiple pack/unpack cycles
@@ -173,7 +173,7 @@ def test_pack_unpack_cycles_preserve_values(tmpdir):
 
 def test_pack_is_content_idempotent(tmpdir):
     """pack().pack() produces equivalent content to pack()."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         original = KwArgs(x=1, y=2, z=3)
 
         single_pack = original.pack()
@@ -185,7 +185,7 @@ def test_pack_is_content_idempotent(tmpdir):
 
 def test_unpack_is_content_idempotent(tmpdir):
     """unpack().unpack() produces equivalent content to unpack()."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         packed = KwArgs(a=10, b=20, c=30).pack()
 
         single_unpack = packed.unpack()
@@ -199,7 +199,7 @@ def test_packed_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
     """PackedKwArgs with same content but different insertion order produce identical pickles."""
     import pickle
 
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Create PackedKwArgs with same content but different insertion orders
         pk1 = KwArgs(x=1).pack()
         pk1['a'] = ValueAddr(1)
@@ -229,7 +229,7 @@ def test_unpacked_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
     """UnpackedKwArgs with same content but different insertion order produce identical pickles."""
     import pickle
 
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Create UnpackedKwArgs with same content but different insertion orders
         uk1 = KwArgs(x=1).pack().unpack()
         uk1['a'] = 1
@@ -259,7 +259,7 @@ def test_base_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
     """Base KwArgs with same content but different insertion order produce identical pickles."""
     import pickle
 
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Create KwArgs with same content but different insertion orders
         k1 = KwArgs(x=1)
         k1['a'] = 1
@@ -292,7 +292,7 @@ def test_base_kwargs_pickle_stable_regardless_of_insertion_order(tmpdir):
 ])
 def test_kwargs_equality_independent_of_insertion_order(tmpdir, kwargs_type, factory):
     """KwArgs instances with same content are equal regardless of insertion order."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         obj1 = factory()
         obj2 = factory()
 
@@ -318,7 +318,7 @@ def test_kwargs_equality_independent_of_insertion_order(tmpdir, kwargs_type, fac
 
 def test_kwargs_copy_returns_correct_type(tmpdir):
     """KwArgs.copy() returns the correct class type for each variant."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Base KwArgs
         kwargs = KwArgs(x=1, y=2)
         kwargs_copy = kwargs.copy()
@@ -340,7 +340,7 @@ def test_kwargs_copy_returns_correct_type(tmpdir):
 
 def test_kwargs_copy_creates_independent_instance(tmpdir):
     """Modifications to the copy don't affect the original."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Base KwArgs
         original = KwArgs(a=1, b=2)
         copy = original.copy()
@@ -367,7 +367,7 @@ def test_kwargs_copy_creates_independent_instance(tmpdir):
 
 def test_kwargs_copy_preserves_equality(tmpdir):
     """Copy is equal to original but not the same object."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Base KwArgs
         kwargs = KwArgs(x=1, y='hello', z=[1, 2, 3])
         kwargs_copy = kwargs.copy()
@@ -390,7 +390,7 @@ def test_kwargs_copy_preserves_equality(tmpdir):
 
 def test_kwargs_copy_preserves_type_invariants(tmpdir):
     """Copy enforces the same type invariants as original."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # PackedKwArgs copy only accepts ValueAddr
         packed = KwArgs(a=1).pack()
         packed_copy = packed.copy()
@@ -415,7 +415,7 @@ def test_kwargs_copy_preserves_type_invariants(tmpdir):
 
 def test_kwargs_copy_maintains_sorted_keys(tmpdir):
     """Copy maintains deterministic key ordering."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Create with unsorted keys via dict
         unsorted_dict = {'z': 3, 'a': 1, 'm': 2}
         kwargs = KwArgs(unsorted_dict)
@@ -429,7 +429,7 @@ def test_kwargs_copy_maintains_sorted_keys(tmpdir):
 
 def test_kwargs_copy_with_complex_values(tmpdir):
     """Copy works correctly with complex nested values."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # KwArgs with nested structures
         kwargs = KwArgs(
             list_val=[1, 2, 3],
@@ -455,7 +455,7 @@ def test_kwargs_copy_with_complex_values(tmpdir):
 
 def test_kwargs_copy_empty_instance(tmpdir):
     """Copy works correctly with empty KwArgs."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         # Empty base KwArgs
         empty = KwArgs()
         empty_copy = empty.copy()
@@ -471,7 +471,7 @@ def test_kwargs_copy_empty_instance(tmpdir):
 
 def test_kwargs_copy_with_single_item(tmpdir):
     """Copy works with single-item KwArgs."""
-    with _PortalTester(LoggingCodePortal, root_dict=tmpdir):
+    with _PortalTester(DataPortal, root_dict=tmpdir):
         kwargs = KwArgs(only_key='only_value')
         kwargs_copy = kwargs.copy()
 

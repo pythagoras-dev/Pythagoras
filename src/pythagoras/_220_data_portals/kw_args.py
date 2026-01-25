@@ -21,8 +21,8 @@ Design Rationale:
 from __future__ import annotations
 
 from .._210_basic_portals import get_current_portal
-from .._220_data_portals.data_portal_core_classes import _visit_portal
-from .._220_data_portals import ValueAddr
+from .data_portal_core_classes import _visit_portal
+from .data_portal_core_classes import ValueAddr
 from mixinforge import sort_dict_by_keys
 
 class KwArgs(dict):

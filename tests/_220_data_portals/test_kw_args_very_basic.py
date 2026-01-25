@@ -1,7 +1,7 @@
 
 import pytest
 
-from pythagoras._320_logging_code_portals import KwArgs
+from pythagoras import KwArgs
 
 
 @pytest.fixture

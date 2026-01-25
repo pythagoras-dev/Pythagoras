@@ -51,5 +51,6 @@ Utilities:
 
 from .data_portal_core_classes import (
     DataPortal, HashAddr, ValueAddr, StorableObject)
+from .kw_args import KwArgs, PackedKwArgs, UnpackedKwArgs
 from .ready_and_get import ready, get
 
