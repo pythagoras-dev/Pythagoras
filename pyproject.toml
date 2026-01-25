@@ -40,13 +40,10 @@ dependencies = [
     "autopep8",
     "deepdiff",
     "numpy",
-    "pytest",
     "persidict",
     "boto3",
-    "moto",
     "uv",
-    "mixinforge",
-    "uv-publish"
+    "mixinforge"
 ]
 
 [project.urls]
@@ -57,12 +54,13 @@ dev = [
     "persidict[dev]",
     "numpy",
     "scipy",
-#    "torch",
     "keras",
-#    "tensorflow",
     "boto3",
     "moto",
-    "pytest"
+    "pytest",
+    "uv-publish",
+    "ruff",
+    "coverage"
 ]
 
 aws = [
@@ -91,3 +89,9 @@ markers = [
     """live_actions: marks tests as live actions that operate on the actual project (deselect with '-m \"not live_actions\"')""",
 ]
 
+[tool.coverage.run]
+source = ["src/persidict"]
+branch = true
+
+[tool.ruff]
+lint.ignore = ["F403", "F405"]
