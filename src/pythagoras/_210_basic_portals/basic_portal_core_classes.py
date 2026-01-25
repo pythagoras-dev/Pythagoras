@@ -12,7 +12,7 @@ import random
 from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
-from typing import TypeVar, Any, Callable, Iterator, Mapping, Iterable
+from typing import TypeVar, Any, Callable, Iterator
 
 try:
     from typing import Self
@@ -22,9 +22,8 @@ import pandas as pd
 from mixinforge import (NotPicklableMixin, ImmutableParameterizableMixin,
     sort_dict_by_keys, GuardedInitMeta, ImmutableMixin,
     CacheablePropertiesMixin, SingleThreadEnforcerMixin)
-from mixinforge.utility_functions import find_instances_inside_composite_object
 
-from persidict import PersiDict, FileDirDict, SafeStrTuple
+from persidict import PersiDict, FileDirDict
 from .._110_supporting_utilities import get_hash_signature
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
@@ -991,49 +990,6 @@ def count_linked_portal_aware_objects() -> int:
         The number of linked objects in the registry.
     """
     return _PORTAL_REGISTRY.count_linked_objects()
-
-
-def _visit_portal(obj: Any, portal: BasicPortal) -> None:
-    """Register all PortalAwareObject instances nested within an object.
-
-    Recursively traverses the object structure and registers any found
-    portal-aware objects with the specified portal. Stops traversal at
-    PortalAwareObject boundaries to avoid infinite recursion.
-
-    Args:
-        obj: The object structure to traverse.
-        portal: The portal to register found objects with.
-    """
-    seen = set()
-    stack = [obj]
-    while stack:
-        current = stack.pop()
-        
-        if id(current) in seen:
-            continue
-        
-        if isinstance(current, (str, range, bytearray, bytes, SafeStrTuple)):
-            continue
-            
-        seen.add(id(current))
-
-        if isinstance(current, PortalAwareObject):
-            current._visit_portal(portal)
-            continue
-            
-        if isinstance(current, Mapping):
-            stack.extend(current.keys())
-            stack.extend(current.values())
-        elif isinstance(current, Iterable):
-            stack.extend(current)
-        elif hasattr(current, "__dict__"):
-            stack.extend(current.__dict__.values())
-        elif hasattr(current, "__slots__"):
-            for slot in current.__slots__:
-                try:
-                    stack.append(getattr(current, slot))
-                except AttributeError:
-                    pass
 
 
 

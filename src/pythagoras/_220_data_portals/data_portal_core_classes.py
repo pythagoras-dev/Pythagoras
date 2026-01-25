@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Type
+from typing import Type, Any, Mapping, Iterable
 
-from persidict import replace_unsafe_chars, DELETE_CURRENT
+from persidict import replace_unsafe_chars, DELETE_CURRENT, SafeStrTuple
 from persidict import KEEP_CURRENT, Joker
 
+from .. import BasicPortal, PortalAwareObject
 from .._210_basic_portals import *
 from .._110_supporting_utilities import get_hash_signature
 
@@ -730,3 +731,46 @@ class ValueAddr(HashAddr):
             if not address.ready:
                 raise ValueError("Address is not ready for retrieving data")
         return address
+
+
+def _visit_portal(obj: Any, portal: DataPortal) -> None:
+    """Register all PortalAwareObject instances nested within an object.
+
+    Recursively traverses the object structure and registers any found
+    portal-aware objects with the specified portal. Stops traversal at
+    PortalAwareObject boundaries to avoid infinite recursion.
+
+    Args:
+        obj: The object structure to traverse.
+        portal: The portal to register found objects with.
+    """
+    seen = set()
+    stack = [obj]
+    while stack:
+        current = stack.pop()
+
+        if id(current) in seen:
+            continue
+
+        if isinstance(current, (str, range, bytearray, bytes, SafeStrTuple)):
+            continue
+
+        seen.add(id(current))
+
+        if isinstance(current, PortalAwareObject):
+            current._visit_portal(portal)
+            continue
+
+        if isinstance(current, Mapping):
+            stack.extend(current.keys())
+            stack.extend(current.values())
+        elif isinstance(current, Iterable):
+            stack.extend(current)
+        elif hasattr(current, "__dict__"):
+            stack.extend(current.__dict__.values())
+        elif hasattr(current, "__slots__"):
+            for slot in current.__slots__:
+                try:
+                    stack.append(getattr(current, slot))
+                except AttributeError:
+                    pass
