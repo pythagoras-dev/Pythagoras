@@ -20,10 +20,16 @@ Design Rationale:
 
 from __future__ import annotations
 
-from .._210_basic_portals import get_current_portal
-from .data_portal_core_classes import _visit_portal
-from .data_portal_core_classes import ValueAddr
+from typing import Any
+
+from .._210_basic_portals import (
+    get_current_portal,
+    PortalAwareObject,
+    BasicPortal,
+    )
+from .data_portal_core_classes import ValueAddr, DataPortal, HashAddr
 from mixinforge import sort_dict_by_keys
+from mixinforge.utility_functions import find_instances_inside_composite_object
 
 class KwArgs(dict):
     """Container for keyword arguments with deterministic ordering and packing.
@@ -318,3 +324,52 @@ class UnpackedKwArgs(KwArgs):
         if isinstance(value, ValueAddr) or type(value) is KwArgs:
             raise ValueError("UnpackedKwArgs cannot contain ValueAddr or base KwArgs instances.")
         dict.__setitem__(self, key, value)
+
+
+def _visit_portal(obj: Any, portal: DataPortal) -> None:
+    """Traverse an object structure and register all found PortalAwareObjects with the portal.
+
+    This function makes sure the object, including all its (recursively)
+    nested/referenced PortalAwareObject (sub)objects, has completed all necessary
+    registration steps with the given portal, so it can be safely used within
+    the context of the portal. This includes copying the object, its subobjects,
+    and any data referenced by HashAddr instances to the portal's storage backend.
+
+    Args:
+        obj: The object structure to traverse.
+        portal: The portal to register found objects with.
+    """
+    all_items:dict[int, Any] = dict()
+    queued_items_ids:set[int] = set()
+    processed_items_ids:set[int] = set()
+
+    def pre_process_object(obj: Any) -> None:
+        for item in find_instances_inside_composite_object(
+                obj, (PortalAwareObject,BasicPortal, HashAddr), deep_search=False):
+            if not id(item) in all_items:
+                all_items[id(item)] = item
+                queued_items_ids.add(id(item))
+
+    pre_process_object(obj)
+
+    while queued_items_ids:
+        for work_item_id in list(queued_items_ids):
+            queued_items_ids.remove(work_item_id)
+
+            if work_item_id in processed_items_ids:
+                continue
+            else:
+                processed_items_ids.add(work_item_id)
+
+            work_item = all_items[work_item_id]
+            if isinstance(work_item, BasicPortal):
+                continue
+            elif isinstance(work_item, PortalAwareObject):
+                work_item._visit_portal(portal)
+            elif isinstance(work_item, HashAddr):
+                if work_item.ready:
+                    with portal:
+                        # Ensure the item will be copied to the current portal
+                        # if retrieved from a different one
+                        work_item = work_item.get()
+                    pre_process_object(work_item)
