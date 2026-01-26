@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import builtins
 
+from .._220_data_portals.kw_args import _visit_portal
 from .._310_ordinary_code_portals import FunctionError
 
 
@@ -312,7 +313,7 @@ class AutonomousFn(SafeFn):
         return new_fn
 
 
-    def _first_visit_to_portal(self, portal: DataPortal) -> None:
+    def _first_visit_to_portal(self, portal: AutonomousCodePortal) -> None:
         """Lifecycle hook invoked when the function first encounters a portal.
 
         Ensures that fixed kwargs are properly materialized in the portal's
@@ -327,6 +328,7 @@ class AutonomousFn(SafeFn):
                 _ = KwArgs(**self._fixed_kwargs).pack()
             elif self._packed_fixed_kwargs is not None:
                 _ = self._packed_fixed_kwargs.unpack()
+        _visit_portal(self.packed_fixed_kwargs, portal=portal)
 
 
     def __getstate__(self):
