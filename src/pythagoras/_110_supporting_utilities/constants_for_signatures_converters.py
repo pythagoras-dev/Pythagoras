@@ -38,5 +38,5 @@ PTH_APP_NAME: Final[str] = "pythagoras"
 SMBIOS_UUID_PATH: Final[str] = "/sys/class/dmi/id/product_uuid"
 # Hardware product UUID path on Linux systems.
 
-PTH_NODE_SIGNATURE_VERSION: Final[str] = "version 2"
+PTH_NODE_SIGNATURE_VERSION: Final[str] = "version_2"
 # Version tag mixed into node-signature payload (enables future evolution).
