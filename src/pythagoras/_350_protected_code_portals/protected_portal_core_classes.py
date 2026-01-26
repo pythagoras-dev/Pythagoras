@@ -20,12 +20,11 @@ from copy import copy
 from functools import cached_property
 from typing import Callable, Any
 
-from mixinforge import sort_dict_by_keys
+from mixinforge import sort_dict_by_keys, flatten_nested_collection
 from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._220_data_portals.kw_args import _visit_portal
-from .iterative_flattener import flatten_iterative
 from .validation_succesful_const import VALIDATION_SUCCESSFUL, ValidationSuccessFlag
 
 from .._310_ordinary_code_portals import FunctionError
@@ -290,7 +289,7 @@ class ProtectedFn(AutonomousFn):
                 validators = [validators]
         if not isinstance(validators, list):
             raise TypeError(f"validators must be a list or compatible item(s); got type {get_long_infoname(validators)}")
-        validators = flatten_iterative(validators)
+        validators = list(flatten_nested_collection(validators))
         new_validators = []
         for validator in validators:
             if not isinstance(validator, validator_type):
