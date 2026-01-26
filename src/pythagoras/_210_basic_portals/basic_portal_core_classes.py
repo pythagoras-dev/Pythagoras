@@ -13,18 +13,14 @@ from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
 from typing import TypeVar, Any, Callable, Iterator
-
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
+from typing import Self
 import pandas as pd
 from mixinforge import (NotPicklableMixin, ImmutableParameterizableMixin,
     sort_dict_by_keys, GuardedInitMeta, ImmutableMixin,
     CacheablePropertiesMixin, SingleThreadEnforcerMixin)
 
 from persidict import PersiDict, FileDirDict
-from .._110_supporting_utilities import get_hash_signature
+from .._110_supporting_utilities import get_hash_signature, get_long_infoname
 from .portal_description_helpers import (
     _describe_persistent_characteristic,
     _describe_runtime_characteristic)
@@ -222,7 +218,8 @@ def _validate_required_portal_type(required_portal_type: PortalType) -> None:
     """
     if not (isinstance(required_portal_type, type) and issubclass(required_portal_type, BasicPortal)):
         raise TypeError(
-            "required_portal_type must be BasicPortal or one of its (grand)children")
+            f"required_portal_type must be BasicPortal or one of its subclasses, "
+            f"got {get_long_infoname(required_portal_type)}")
 
 
 class _PortalStack:
@@ -250,7 +247,9 @@ class _PortalStack:
             RuntimeError: If nesting exceeds MAX_NESTED_PORTALS.
         """
         if self.depth() >= MAX_NESTED_PORTALS:
-            raise RuntimeError(f"Too many nested portals: {MAX_NESTED_PORTALS}")
+            raise RuntimeError(
+                f"Too many nested portals: current depth is {self.depth()}, "
+                f"max allowed is {MAX_NESTED_PORTALS}")
         if self._stack and self._stack[-1] is portal:
             self._counters[-1] += 1
         else:
@@ -268,7 +267,9 @@ class _PortalStack:
             RuntimeError: If the portal is not at the top of the stack.
         """
         if not self._stack or self._stack[-1] is not portal:
-            raise RuntimeError("Attempt to pop an unexpected portal from the stack")
+            expected = self._stack[-1] if self._stack else None
+            raise RuntimeError(
+                f"Cannot pop portal from stack: expected {expected}, got {portal}")
         if self._counters[-1] == 1:
             self._stack.pop()
             self._counters.pop()
@@ -317,7 +318,8 @@ class _PortalStack:
         """Verify stack and counters are in sync."""
         if len(self._stack) != len(self._counters):
             raise RuntimeError(
-                "Internal error: _stack and _counters are out of sync")
+                f"Internal error: _stack and _counters are out of sync "
+                f"(stack length={len(self._stack)}, counters length={len(self._counters)})")
 
 
 class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
@@ -360,7 +362,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         self._restrict_to_single_thread()
         if not callable(instantiator):
             raise TypeError(
-                f"Default portal instantiator must be callable, got {type(instantiator)}")
+                f"Default portal instantiator must be callable, "
+                f"got {get_long_infoname(instantiator)}")
 
         if self.default_portal_instantiator is not None:
             raise RuntimeError(
@@ -443,7 +446,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         self._restrict_to_single_thread()
         if portal not in self.known_portals:
-            raise RuntimeError(f"Attempt to push an unregistered portal onto the stack")
+            raise RuntimeError(
+                f"Cannot push unregistered portal {portal} onto stack. "
+                f"Known portals: {len(self.known_portals)}")
         self.portal_stack.push(portal)
 
 
@@ -458,7 +463,9 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         self._restrict_to_single_thread()
         if portal not in self.known_portals:
-            raise RuntimeError(f"Attempt to pop an unregistered portal from the stack")
+            raise RuntimeError(
+                f"Cannot pop unregistered portal {portal} from stack. "
+                f"Known portals: {len(self.known_portals)}")
         self.portal_stack.pop(portal)
 
 
@@ -483,7 +490,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
                 elif not isinstance(self.most_recently_created_portal, BasicPortal):
                     raise RuntimeError(
                         f"Default portal instantiator created an object of type "
-                        f"{type(self.most_recently_created_portal).__name__}, "
+                        f"{get_long_infoname(self.most_recently_created_portal)}, "
                         f"expected BasicPortal")
             else:
                 raise RuntimeError(
@@ -522,7 +529,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         unique_active = self.portal_stack.as_set()
         for p in unique_active:
             if not isinstance(p, required_portal_type):
-                raise TypeError(f"Found active portal {type(p).__name__} which is not "
+                raise TypeError(
+                    f"Found active portal {get_long_infoname(p)} which is not "
                     f"an instance of required {required_portal_type.__name__}")
         return len(unique_active)
 
@@ -545,7 +553,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         for portal in self.portal_stack.iter_unique():
             if not isinstance(portal, required_portal_type):
                 raise TypeError(
-                    f"Found active portal {type(portal).__name__} which is not "
+                    f"Found active portal {get_long_infoname(portal)} which is not "
                     f"an instance of required {required_portal_type.__name__}")
         return self.portal_stack.depth()
 
@@ -572,7 +580,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         for p in candidates:
             if not isinstance(p, required_portal_type):
                 raise TypeError(
-                    f"Found non-active portal {type(p).__name__} which is not "
+                    f"Found non-active portal {get_long_infoname(p)} which is not "
                     f"an instance of required {required_portal_type.__name__}")
 
         return candidates
@@ -603,7 +611,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         for p in candidates:
             if not isinstance(p, required_portal_type):
                 raise TypeError(
-                    f"Found non-current portal {type(p).__name__} which is not "
+                    f"Found non-current portal {get_long_infoname(p)} which is not "
                     f"an instance of required {required_portal_type.__name__}")
 
         return candidates
@@ -617,7 +625,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         if obj._linked_portal is not None:
             raise ValueError(
                 f"Cannot register object {obj} as linkfree: "
-                f"object is linked to a portal"
+                f"object is already linked to portal {obj._linked_portal}"
             )
 
         self.known_objects.add(obj)
@@ -646,7 +654,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         if obj._linked_portal is None:
             raise ValueError(
                 f"Cannot register object {obj} as linked: "
-                f"object is not linked to any portal"
+                f"object has _linked_portal=None"
             )
 
         self.known_objects.add(obj)
@@ -736,7 +744,9 @@ class PortalAwareObject(CacheablePropertiesMixin,
         self._restrict_to_single_thread()
         self._init_finished = False
         if not (portal is None or isinstance(portal, BasicPortal)):
-            raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
+            raise TypeError(
+                f"portal must be a BasicPortal or None, "
+                f"got {get_long_infoname(portal)}")
         self._linked_portal = portal
         self._visited_portals = set()
 
@@ -761,7 +771,8 @@ class PortalAwareObject(CacheablePropertiesMixin,
             raise RuntimeError("Cannot link an uninitialized object to a portal")
 
         if not isinstance(portal, BasicPortal):
-            raise TypeError(f"portal must be a BasicPortal, got {type(portal).__name__}")
+            raise TypeError(
+                f"portal must be a BasicPortal, got {get_long_infoname(portal)}")
 
         # Return self if already linked to the same portal
         if self._linked_portal is portal:
@@ -814,7 +825,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
 
 
     def _visit_portal(self, portal: BasicPortal) -> None:
-        """Register the object with the portal on the first visit.
+        """Register the object with the portal if it's the first visit.
 
         Args:
             portal: The portal to visit.

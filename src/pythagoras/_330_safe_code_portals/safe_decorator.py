@@ -3,6 +3,7 @@ from typing import Callable
 from persidict import Joker, KEEP_CURRENT
 
 from .._320_logging_code_portals import logging
+from .._110_supporting_utilities import get_long_infoname
 from .safe_portal_core_classes import SafeFn, SafeCodePortal
 
 
@@ -31,7 +32,7 @@ class safe(logging):
                 None, the active portal (if any) may be used by lower layers.
         """
         if not (isinstance(portal, SafeCodePortal) or portal is None):
-            raise TypeError(f"portal must be a SafeCodePortal or None, got {type(portal).__name__}")
+            raise TypeError(f"portal must be a SafeCodePortal or None, got {get_long_infoname(portal)}")
         logging.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging)

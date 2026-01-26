@@ -7,6 +7,7 @@ and cleanup between tests. Not intended for application code.
 from __future__ import annotations
 from .basic_portal_core_classes import (
     BasicPortal, PortalType, _clear_all_portals)
+from .._110_supporting_utilities import get_long_infoname
 
 
 class _PortalTester:
@@ -42,7 +43,9 @@ class _PortalTester:
 
         if portal_class is not None:
             if not issubclass(portal_class, BasicPortal):
-                raise TypeError(f"portal_class must be a subclass of BasicPortal, got {portal_class}")
+                raise TypeError(
+                    f"portal_class must be a subclass of BasicPortal, "
+                    f"got {get_long_infoname(portal_class)}")
         self.portal_class = portal_class
         self.args = args
         self.kwargs = kwargs

@@ -77,6 +77,7 @@ from .._110_supporting_utilities.current_date_gmt_str import (
     current_date_gmt_string)
 from .._320_logging_code_portals.execution_environment_summary import (
     build_execution_environment_summary, add_execution_environment_summary)
+from .._110_supporting_utilities import get_long_infoname
 from .._110_supporting_utilities.random_signatures import (
     get_random_signature)
 
@@ -217,7 +218,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
 
     def __init__(self, fn:LoggingFn, arguments:dict):
         if not isinstance(fn, LoggingFn):
-            raise TypeError(f"fn must be an instance of LoggingFn, got {type(fn).__name__}")
+            raise TypeError(f"fn must be an instance of LoggingFn, got {get_long_infoname(fn)}")
         isinstance(arguments, dict)
         arguments = KwArgs(**arguments)
         with fn.portal:

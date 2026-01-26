@@ -33,6 +33,7 @@ from .._220_data_portals import ValueAddr
 from .._220_data_portals import DataPortal
 from .._220_data_portals import KwArgs
 from .._340_autonomous_code_portals import *
+from .._110_supporting_utilities import get_long_infoname
 
 
 class ProtectedCodePortal(AutonomousCodePortal):
@@ -288,7 +289,7 @@ class ProtectedFn(AutonomousFn):
                     or isinstance(validators, str)):
                 validators = [validators]
         if not isinstance(validators, list):
-            raise TypeError(f"validators must be a list or compatible item(s); got type {type(validators).__name__}")
+            raise TypeError(f"validators must be a list or compatible item(s); got type {get_long_infoname(validators)}")
         validators = flatten_iterative(validators)
         new_validators = []
         for validator in validators:
@@ -341,9 +342,9 @@ class ProtectedFnCallSignature(AutonomousFnCallSignature):
             arguments: Keyword arguments to be passed at execution time.
         """
         if not isinstance(fn, ProtectedFn):
-            raise TypeError(f"fn must be a ProtectedFn instance, got {type(fn).__name__}")
+            raise TypeError(f"fn must be a ProtectedFn instance, got {get_long_infoname(fn)}")
         if not isinstance(arguments, dict):
-            raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
+            raise TypeError(f"arguments must be a dict, got {get_long_infoname(arguments)}")
         super().__init__(fn, arguments)
 
     @cached_property

@@ -10,6 +10,7 @@ from typing import Callable, Any
 from mixinforge import SingleThreadEnforcerMixin
 
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
+from .._110_supporting_utilities import get_long_infoname
 
 
 class ordinary(SingleThreadEnforcerMixin):
@@ -40,7 +41,7 @@ class ordinary(SingleThreadEnforcerMixin):
         """
         self._restrict_to_single_thread()
         if not (portal is None or isinstance(portal, OrdinaryCodePortal)):
-            raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {type(portal).__name__}")
+            raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {get_long_infoname(portal)}")
         self._portal = portal
 
     def __call__(self, fn: Callable) -> OrdinaryFn:

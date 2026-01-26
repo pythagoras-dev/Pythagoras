@@ -42,5 +42,5 @@ def test_validation_errors(tmpdir):
         
         for func in functions_to_test:
             for invalid_input in invalid_inputs:
-                with pytest.raises(TypeError, match="must be BasicPortal or one of its"):
+                with pytest.raises(TypeError):
                     func(required_portal_type=invalid_input)

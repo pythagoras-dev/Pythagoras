@@ -14,6 +14,7 @@ It will be done soon by integrating https://pypi.org/project/RestrictedPython/
 from __future__ import annotations
 
 from .._320_logging_code_portals.logging_portal_core_classes import *
+from .._110_supporting_utilities import get_long_infoname
 
 
 class SafeCodePortal(LoggingCodePortal):
@@ -67,9 +68,9 @@ class SafeFnCallSignature(LoggingFnCallSignature):
             arguments: The keyword arguments to use for the call.
         """
         if not isinstance(fn, SafeFn):
-            raise TypeError(f"fn must be a SafeFn instance, got {type(fn).__name__}")
+            raise TypeError(f"fn must be a SafeFn instance, got {get_long_infoname(fn)}")
         if not isinstance(arguments, dict):
-            raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
+            raise TypeError(f"arguments must be a dict, got {get_long_infoname(arguments)}")
         super().__init__(fn, arguments)
 
     @cached_property

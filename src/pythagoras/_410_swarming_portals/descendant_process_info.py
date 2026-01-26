@@ -8,6 +8,8 @@ reused by the operating system.
 import psutil
 from datetime import datetime, timezone
 
+from .._110_supporting_utilities import get_long_infoname
+
 # Unix timestamp for 2026-01-01 00:00:00 UTC - reasonable minimum for modern processes
 MIN_VALID_TIMESTAMP = 1735689600
 _min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d')
@@ -29,12 +31,12 @@ def process_is_alive(process_id: int, process_start_time: int) -> bool:
         its actual start time matches the expected start time.
     """
     if not isinstance(process_id, int):
-        raise TypeError(f"process_id must be an integer, got {type(process_id).__name__}")
+        raise TypeError(f"process_id must be an integer, got {get_long_infoname(process_id)}")
     if process_id <= 0:
         raise ValueError(f"process_id must be positive, got {process_id}")
 
     if not isinstance(process_start_time, int):
-        raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
+        raise TypeError(f"process_start_time must be an integer, got {get_long_infoname(process_start_time)}")
     if process_start_time < MIN_VALID_TIMESTAMP:
         min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
         raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
@@ -87,27 +89,27 @@ class DescendantProcessInfo:
             ValueError: If any parameter has invalid value.
         """
         if not isinstance(process_id, int):
-            raise TypeError(f"process_id must be an integer, got {type(process_id).__name__}")
+            raise TypeError(f"process_id must be an integer, got {get_long_infoname(process_id)}")
         if process_id <= 0:
             raise ValueError(f"process_id must be positive, got {process_id}")
 
         if not isinstance(process_start_time, int):
-            raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
+            raise TypeError(f"process_start_time must be an integer, got {get_long_infoname(process_start_time)}")
         if process_start_time < MIN_VALID_TIMESTAMP:
             raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {process_start_time}")
 
         if not isinstance(ancestor_process_id, int):
-            raise TypeError(f"ancestor_process_id must be an integer, got {type(ancestor_process_id).__name__}")
+            raise TypeError(f"ancestor_process_id must be an integer, got {get_long_infoname(ancestor_process_id)}")
         if ancestor_process_id <= 0:
             raise ValueError(f"ancestor_process_id must be positive, got {ancestor_process_id}")
 
         if not isinstance(ancestor_process_start_time, int):
-            raise TypeError(f"ancestor_process_start_time must be an integer, got {type(ancestor_process_start_time).__name__}")
+            raise TypeError(f"ancestor_process_start_time must be an integer, got {get_long_infoname(ancestor_process_start_time)}")
         if ancestor_process_start_time < MIN_VALID_TIMESTAMP:
             raise ValueError(f"ancestor_process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {ancestor_process_start_time}")
 
         if not isinstance(process_type, str):
-            raise TypeError(f"process_type must be a string, got {type(process_type).__name__}")
+            raise TypeError(f"process_type must be a string, got {get_long_infoname(process_type)}")
         if not process_type:
             raise ValueError("process_type cannot be empty")
 

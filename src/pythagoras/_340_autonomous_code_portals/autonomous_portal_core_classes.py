@@ -10,6 +10,7 @@ from .._340_autonomous_code_portals.names_usage_analyzer import (
     _analyze_names_in_function)
 
 from .._330_safe_code_portals.safe_portal_core_classes import *
+from .._110_supporting_utilities import get_long_infoname
 
 class AutonomousCodePortal(SafeCodePortal):
     """Portal for managing and executing autonomous functions with self-containment enforcement.
@@ -76,9 +77,9 @@ class AutonomousFnCallSignature(SafeFnCallSignature):
             arguments: The call-time arguments mapping (already validated).
         """
         if not isinstance(fn, AutonomousFn):
-            raise TypeError(f"fn must be AutonomousFn, got {type(fn).__name__}")
+            raise TypeError(f"fn must be AutonomousFn, got {get_long_infoname(fn)}")
         if not isinstance(arguments, dict):
-            raise TypeError(f"arguments must be dict, got {type(arguments).__name__}")
+            raise TypeError(f"arguments must be dict, got {get_long_infoname(arguments)}")
         super().__init__(fn, arguments)
 
     @cached_property

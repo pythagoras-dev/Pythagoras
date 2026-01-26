@@ -7,7 +7,7 @@ from mixinforge.utility_functions import find_instances_inside_composite_object
 from persidict import replace_unsafe_chars, SafeStrTuple
 
 from .._210_basic_portals import *
-from .._110_supporting_utilities import get_hash_signature
+from .._110_supporting_utilities import get_hash_signature, get_long_infoname
 
 from .._210_basic_portals.basic_portal_core_classes import (
     _describe_persistent_characteristic)
@@ -83,7 +83,7 @@ def get_current_data_portal() -> DataPortal:
     """
     portal = get_current_portal()
     if not isinstance(portal, DataPortal):
-        raise TypeError(f"The current portal is {type(portal).__name__}, "
+        raise TypeError(f"The current portal is {get_long_infoname(portal)}, "
                            f"but a DataPortal was expected.")
     return portal
 

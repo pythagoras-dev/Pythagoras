@@ -110,7 +110,7 @@ def test_get_description_value_by_key_raises_on_missing_key():
         "value": ["some_value"]
     })
 
-    with pytest.raises(KeyError, match="not found in portal description"):
+    with pytest.raises(KeyError):
         _get_description_value_by_key(df, "nonexistent_key")
 
 

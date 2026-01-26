@@ -139,7 +139,7 @@ def _extract_fn_name_and_source_code(a_func: Callable | str) -> tuple[str | None
         fn_name_for_error_messages = get_function_name_from_source(fn_source_code)
         return fn_name_for_error_messages, fn_source_code
     else:
-        raise TypeError(f"a_func must be a callable or a string, got {type(a_func).__name__}")
+        raise TypeError(f"a_func must be a callable or a string, got {get_long_infoname(a_func)}")
 
 
 def _dedent_and_clean_empty_lines(
@@ -194,13 +194,13 @@ def _parse_and_validate_function_ast(
     code_ast = ast.parse(code_clean_version)
 
     if not isinstance(code_ast, ast.Module):
-        raise TypeError(f"Expected AST Module for {fn_name_for_error_messages}, got {type(code_ast).__name__}")
+        raise TypeError(f"Expected AST Module for {fn_name_for_error_messages}, got {get_long_infoname(code_ast)}")
 
     if not code_ast.body:
         raise ValueError(f"Empty AST body for function {fn_name_for_error_messages}")
 
     if not isinstance(code_ast.body[0], (ast.FunctionDef)):
-        raise ValueError(f"Top-level node is not a FunctionDef for {fn_name_for_error_messages}; got {type(code_ast.body[0]).__name__}")
+        raise ValueError(f"Top-level node is not a FunctionDef for {fn_name_for_error_messages}; got {get_long_infoname(code_ast.body[0])}")
 
     return code_ast
 

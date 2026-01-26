@@ -2,6 +2,8 @@ from collections.abc import Iterable
 from typing import Any, Iterator
 from collections import deque
 
+from .._110_supporting_utilities import get_long_infoname
+
 _ATOMIC_TYPES = (str, bytes, bytearray, memoryview
     , int, float, complex, bool, type(None))
 
@@ -56,7 +58,7 @@ def flatten_iterative(nested_iterative: Iterable[Any]) -> list[Any]:
     """
     if not isinstance(nested_iterative, Iterable):
         raise TypeError(
-            f"Expected an iterable, got {type(nested_iterative).__name__}"
+            f"Expected an iterable, got {get_long_infoname(nested_iterative)}"
         )
 
     flattened: list[Any] = []

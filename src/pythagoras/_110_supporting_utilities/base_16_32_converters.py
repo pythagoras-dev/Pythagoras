@@ -10,6 +10,7 @@ Notes:
 
 from .constants_for_signatures_converters import PTH_BASE32_ALLOWED
 from .constants_for_signatures_converters import PTH_BASE32_ALPHABET
+from .long_infoname import get_long_infoname
 
 
 def convert_base16_to_base32(hexdigest: str) -> str:
@@ -54,7 +55,7 @@ def convert_int_to_base32(n: int) -> str:
         The base-32 string representation of the integer.
     """
     if not isinstance(n, int):
-        raise TypeError(f"n must be an int, got {type(n).__name__}")
+        raise TypeError(f"n must be an int, got {get_long_infoname(n)}")
     if n < 0:
         raise ValueError("n must be non-negative")
     if n == 0:

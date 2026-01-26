@@ -11,6 +11,7 @@ from persidict import Joker, KEEP_CURRENT
 
 from .._310_ordinary_code_portals import ordinary
 from .logging_portal_core_classes import LoggingCodePortal, LoggingFn
+from .._110_supporting_utilities import get_long_infoname
 
 class logging(ordinary):
     """Decorator that converts a Python function into a LoggingFn.
@@ -35,9 +36,9 @@ class logging(ordinary):
                 If None, the active portal at execution time is used.
         """
         if not isinstance(excessive_logging, (bool, Joker)):
-            raise TypeError(f"excessive_logging must be bool or Joker, got {type(excessive_logging).__name__}")
+            raise TypeError(f"excessive_logging must be bool or Joker, got {get_long_infoname(excessive_logging)}")
         if not (isinstance(portal, LoggingCodePortal) or portal is None):
-            raise TypeError(f"portal must be LoggingCodePortal or None, got {type(portal).__name__}")
+            raise TypeError(f"portal must be LoggingCodePortal or None, got {get_long_infoname(portal)}")
         ordinary.__init__(self=self, portal=portal)
         self._excessive_logging = excessive_logging
 

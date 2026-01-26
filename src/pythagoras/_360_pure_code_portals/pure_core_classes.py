@@ -33,6 +33,7 @@ from .._210_basic_portals.basic_portal_core_classes import (
 from .._220_data_portals import HashAddr, ValueAddr
 
 from .._350_protected_code_portals import *
+from .._110_supporting_utilities import get_long_infoname
 
 def get_noncurrent_pure_portals() -> list[PureCodePortal]:
     """Get all known PureCodePortals except the currentl one.
@@ -140,9 +141,9 @@ class PureFnCallSignature(ProtectedFnCallSignature):
             arguments: Keyword arguments passed to the function.
         """
         if not isinstance(fn, PureFn):
-            raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
+            raise TypeError(f"fn must be a PureFn instance, got {get_long_infoname(fn)}")
         if not isinstance(arguments, dict):
-            raise TypeError(f"arguments must be a dict, got {type(arguments).__name__}")
+            raise TypeError(f"arguments must be a dict, got {get_long_infoname(arguments)}")
         super().__init__(fn, arguments)
 
     @cached_property
@@ -287,10 +288,10 @@ class PureFn(ProtectedFn):
             Result addresses in the same order as input.
         """
         if not isinstance(list_of_kwargs, (list, tuple)):
-            raise TypeError(f"list_of_kwargs must be a list or tuple, got {type(list_of_kwargs).__name__}")
+            raise TypeError(f"list_of_kwargs must be a list or tuple, got {get_long_infoname(list_of_kwargs)}")
         for kwargs in list_of_kwargs:
             if not isinstance(kwargs, dict):
-                raise TypeError(f"Each item in list_of_kwargs must be a dict, got {type(kwargs).__name__}")
+                raise TypeError(f"Each item in list_of_kwargs must be a dict, got {get_long_infoname(kwargs)}")
         with self.portal:
             list_to_return = []
             list_to_swarm = []
@@ -374,7 +375,7 @@ class PureFnExecutionResultAddr(HashAddr):
             arguments: Keyword arguments for the call.
         """
         if not isinstance(fn, PureFn):
-            raise TypeError(f"fn must be a PureFn instance, got {type(fn).__name__}")
+            raise TypeError(f"fn must be a PureFn instance, got {get_long_infoname(fn)}")
         with fn.portal as portal:
             kwargs = KwArgs(**arguments)
             signature = PureFnCallSignature(fn, kwargs)

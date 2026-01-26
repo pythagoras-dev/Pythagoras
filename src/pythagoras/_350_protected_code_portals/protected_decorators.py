@@ -12,6 +12,7 @@ time while keeping function logic clean and focused.
 
 from .protected_portal_core_classes import *
 from persidict import Joker, KEEP_CURRENT
+from .._110_supporting_utilities import get_long_infoname
 
 class protected(autonomous):
     """Decorator for protected functions with pre/post validation.
@@ -65,9 +66,9 @@ class protected(autonomous):
                 inferred when fuction is called.
         """
         if not (isinstance(portal, ProtectedCodePortal) or portal is None):
-            raise TypeError(f"portal must be a ProtectedCodePortal or None, got {type(portal).__name__}")
+            raise TypeError(f"portal must be a ProtectedCodePortal or None, got {get_long_infoname(portal)}")
         if not (isinstance(fixed_kwargs, dict) or fixed_kwargs is None):
-            raise TypeError(f"fixed_kwargs must be a dict or None, got {type(fixed_kwargs).__name__}")
+            raise TypeError(f"fixed_kwargs must be a dict or None, got {get_long_infoname(fixed_kwargs)}")
         autonomous.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging

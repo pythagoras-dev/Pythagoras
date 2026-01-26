@@ -38,6 +38,7 @@ from .system_processes_info_getters import *
 
 
 from .._410_swarming_portals.output_suppressor import OutputSuppressor
+from .._110_supporting_utilities import get_long_infoname
 
 
 _MAX_BACKGROUND_WORKERS_TXT = "Max Background workers"
@@ -117,13 +118,13 @@ class SwarmingPortal(PureCodePortal):
 
         if not isinstance(max_n_workers, (int, Joker, type(None))):
             raise TypeError(f"max_n_workers must be int or Joker or None, "
-                            f"got {type(max_n_workers).__name__}")
+                            f"got {get_long_infoname(max_n_workers)}")
         if not isinstance(min_n_workers, (int, Joker, type(None))):
             raise TypeError(f"min_n_workers must be int or Joker or None, "
-                            f"got {type(min_n_workers).__name__}")
+                            f"got {get_long_infoname(min_n_workers)}")
         if not isinstance(exact_n_workers, (int, type(None))):
             raise TypeError(f"exact_n_workers must be int or None, "
-                            f"got {type(exact_n_workers).__name__}")
+                            f"got {get_long_infoname(exact_n_workers)}")
 
 
         if max_n_workers not in (None, KEEP_CURRENT) and max_n_workers < 0:
@@ -187,17 +188,17 @@ class SwarmingPortal(PureCodePortal):
         """
         # Validate inputs
         if not isinstance(process_type, str):
-            raise TypeError(f"process_type must be a string, got {type(process_type).__name__}")
+            raise TypeError(f"process_type must be a string, got {get_long_infoname(process_type)}")
         if not process_type:
             raise ValueError("process_type cannot be empty")
 
         if not isinstance(process_id, int):
-            raise TypeError(f"process_id must be an integer, got {type(process_id).__name__}")
+            raise TypeError(f"process_id must be an integer, got {get_long_infoname(process_id)}")
         if process_id <= 0:
             raise ValueError(f"process_id must be positive, got {process_id}")
 
         if not isinstance(process_start_time, int):
-            raise TypeError(f"process_start_time must be an integer, got {type(process_start_time).__name__}")
+            raise TypeError(f"process_start_time must be an integer, got {get_long_infoname(process_start_time)}")
         if process_start_time < MIN_VALID_TIMESTAMP:
             raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {process_start_time}")
 
@@ -287,7 +288,7 @@ class SwarmingPortal(PureCodePortal):
                                    f"{worker_address}")
             if not isinstance(worker, DescendantProcessInfo):
                 raise RuntimeError(f"Unexpected worker type: "
-                                   f"{type(worker).__name__}")
+                                   f"{get_long_infoname(worker)}")
 
             if not worker.is_alive():
                 dead_addresses.append(worker_address)
@@ -548,7 +549,7 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
 
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
-        raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
+        raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
     # summary = build_execution_environment_summary()
     # portal._compute_nodes.json[portal._execution_environment_address] = summary
 
@@ -588,7 +589,7 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
     """
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
-        raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
+        raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
     with portal:
         ctx = get_context("spawn")
         with OutputSuppressor():
@@ -615,7 +616,7 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
     """
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
-        raise TypeError(f"Expected SwarmingPortal, got {type(portal).__name__}")
+        raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
     with portal:
         call_signature:PureFnCallSignature|None = None
         while True:
