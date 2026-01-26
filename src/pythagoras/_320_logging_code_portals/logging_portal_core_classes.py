@@ -98,8 +98,6 @@ class LoggingFn(OrdinaryFn):
             when provided.
     """
 
-    # _excessive_logging_at_init: bool | Joker
-
     def __init__(self
             , fn: Callable | str
             , excessive_logging: bool|Joker = KEEP_CURRENT
@@ -905,7 +903,6 @@ class LoggingCodePortal(OrdinaryCodePortal):
     _crash_history: PersiDict | None
     _event_history: PersiDict | None
 
-    _excessive_logging_at_init: bool | Joker
 
     def __init__(self, root_dict:PersiDict|str|None = None
             , excessive_logging: bool|Joker = KEEP_CURRENT
