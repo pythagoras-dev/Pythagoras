@@ -3,10 +3,9 @@ from __future__ import annotations
 from functools import cached_property
 from typing import Type, Any, Mapping, Iterable
 
-from persidict import replace_unsafe_chars, DELETE_CURRENT, SafeStrTuple
-from persidict import KEEP_CURRENT, Joker
+from mixinforge.utility_functions import find_instances_inside_composite_object
+from persidict import replace_unsafe_chars, SafeStrTuple
 
-from .. import BasicPortal, PortalAwareObject
 from .._210_basic_portals import *
 from .._110_supporting_utilities import get_hash_signature
 
@@ -733,44 +732,76 @@ class ValueAddr(HashAddr):
         return address
 
 
-def _visit_portal(obj: Any, portal: DataPortal) -> None:
-    """Register all PortalAwareObject instances nested within an object.
+# def _visit_portal(obj: Any, portal: DataPortal) -> None:
+#     """Register all PortalAwareObject instances nested within an object.
+#
+#     Recursively traverses the object structure and registers any found
+#     portal-aware objects with the specified portal. Stops traversal at
+#     PortalAwareObject boundaries to avoid infinite recursion.
+#
+#     Args:
+#         obj: The object structure to traverse.
+#         portal: The portal to register found objects with.
+#     """
+#     seen = set()
+#     stack = [obj]
+#     while stack:
+#         current = stack.pop()
+#
+#         if id(current) in seen:
+#             continue
+#
+#         if isinstance(current, (str, range, bytearray, bytes, SafeStrTuple)):
+#             continue
+#
+#         seen.add(id(current))
+#
+#         if isinstance(current, PortalAwareObject):
+#             current._visit_portal(portal)
+#             continue
+#
+#         if isinstance(current, Mapping):
+#             stack.extend(current.keys())
+#             stack.extend(current.values())
+#         elif isinstance(current, Iterable):
+#             stack.extend(current)
+#         elif hasattr(current, "__dict__"):
+#             stack.extend(current.__dict__.values())
+#         elif hasattr(current, "__slots__"):
+#             for slot in current.__slots__:
+#                 try:
+#                     stack.append(getattr(current, slot))
+#                 except AttributeError:
+#                     pass
 
-    Recursively traverses the object structure and registers any found
-    portal-aware objects with the specified portal. Stops traversal at
-    PortalAwareObject boundaries to avoid infinite recursion.
+
+def _visit_portal(obj: Any, portal: DataPortal) -> None:
+    """
 
     Args:
         obj: The object structure to traverse.
         portal: The portal to register found objects with.
     """
-    seen = set()
-    stack = [obj]
-    while stack:
-        current = stack.pop()
+    all_items:dict[int, Any] = dict()
+    queued_items_ids:set[int] = set()
+    processed_items_ids:set[int] = set()
 
-        if id(current) in seen:
-            continue
+    for item in find_instances_inside_composite_object(
+            obj, (PortalAwareObject,BasicPortal), deep_search=False):
+        all_items[id(item)] = item
+        queued_items_ids.add(id(item))
 
-        if isinstance(current, (str, range, bytearray, bytes, SafeStrTuple)):
-            continue
+    while queued_items_ids:
+        for work_item_id in list(queued_items_ids):
+            queued_items_ids.remove(work_item_id)
 
-        seen.add(id(current))
+            if work_item_id in processed_items_ids:
+                continue
+            else:
+                processed_items_ids.add(work_item_id)
 
-        if isinstance(current, PortalAwareObject):
-            current._visit_portal(portal)
-            continue
-
-        if isinstance(current, Mapping):
-            stack.extend(current.keys())
-            stack.extend(current.values())
-        elif isinstance(current, Iterable):
-            stack.extend(current)
-        elif hasattr(current, "__dict__"):
-            stack.extend(current.__dict__.values())
-        elif hasattr(current, "__slots__"):
-            for slot in current.__slots__:
-                try:
-                    stack.append(getattr(current, slot))
-                except AttributeError:
-                    pass
+            work_item = all_items[work_item_id]
+            if isinstance(work_item, BasicPortal):
+                continue
+            elif isinstance(work_item, PortalAwareObject):
+                work_item._visit_portal(portal)
