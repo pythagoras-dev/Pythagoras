@@ -12,7 +12,7 @@ import random
 from abc import abstractmethod
 from functools import cached_property
 from importlib import metadata
-from typing import TypeVar, Any, Callable, Iterator
+from typing import TypeVar, Any, Callable, Iterator, Final
 from typing import Self
 import pandas as pd
 from mixinforge import (NotPicklableMixin, ImmutableParameterizableMixin,
@@ -26,10 +26,10 @@ from .portal_description_helpers import (
     _describe_runtime_characteristic)
 from .default_portal_base_dir import get_default_portal_base_dir
 
-_BASE_DIRECTORY_TXT = "Base directory"
-_BACKEND_TYPE_TXT = "Backend type"
-_PYTHAGORAS_VERSION_TXT = "Pythagoras version"
-MAX_NESTED_PORTALS = 999
+_BASE_DIRECTORY_TXT: Final[str] = "Base directory"
+_BACKEND_TYPE_TXT: Final[str] = "Backend type"
+_PYTHAGORAS_VERSION_TXT: Final[str] = "Pythagoras version"
+MAX_NESTED_PORTALS: Final[int] = 999
 
 PortalAwareObjectType = TypeVar("PortalAwareObjectType", bound="PortalAwareObject")
 
