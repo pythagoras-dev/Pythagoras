@@ -1,3 +1,5 @@
+from typing import Final
+
 from mixinforge import SingletonMixin
 
 
@@ -13,4 +15,4 @@ class ValidationSuccessFlag(SingletonMixin):
 
 # A canonical, importable singleton value representing a successful validation.
 # Use identity checks (``is VALIDATION_SUCCESSFUL``) rather than equality.
-VALIDATION_SUCCESSFUL = ValidationSuccessFlag()
+VALIDATION_SUCCESSFUL: Final[ValidationSuccessFlag] = ValidationSuccessFlag()

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import time
 
-from typing import Callable, Any, TypeAlias
+from typing import Callable, Any, TypeAlias, Final
 
 
 from persidict import WriteOnceDict
@@ -47,8 +47,8 @@ def get_noncurrent_pure_portals() -> list[PureCodePortal]:
     return get_noncurrent_portals(PureCodePortal)
 
 
-_CACHED_EXECUTION_RESULTS_TXT = "Cached execution results"
-_EXECUTION_QUEUE_SIZE_TXT = "Execution queue size"
+_CACHED_EXECUTION_RESULTS_TXT: Final[str] = "Cached execution results"
+_EXECUTION_QUEUE_SIZE_TXT: Final[str] = "Execution queue size"
 
 class PureCodePortal(ProtectedCodePortal):
     """Portal managing execution and persistent caching for pure functions.

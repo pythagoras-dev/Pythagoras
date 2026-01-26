@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import atexit
 from time import sleep
+from typing import Final
 
 import pandas as pd
 import mixinforge
@@ -41,11 +42,11 @@ from .._410_swarming_portals.output_suppressor import OutputSuppressor
 from .._110_supporting_utilities import get_long_infoname
 
 
-_MAX_BACKGROUND_WORKERS_TXT = "Max Background workers"
-_MIN_BACKGROUND_WORKERS_TXT = "Min Background workers"
-_EXACT_BACKGROUND_WORKERS_TXT = "Exact Background workers"
-_ANCESTOR_PROCESS_ID_TXT = "Ancestor Process ID"
-_ANCESTOR_PROCESS_START_TIME_TXT = "Ancestor Process Start Time"
+_MAX_BACKGROUND_WORKERS_TXT: Final[str] = "Max Background workers"
+_MIN_BACKGROUND_WORKERS_TXT: Final[str] = "Min Background workers"
+_EXACT_BACKGROUND_WORKERS_TXT: Final[str] = "Exact Background workers"
+_ANCESTOR_PROCESS_ID_TXT: Final[str] = "Ancestor Process ID"
+_ANCESTOR_PROCESS_START_TIME_TXT: Final[str] = "Ancestor Process Start Time"
 
 
 class SwarmingPortal(PureCodePortal):

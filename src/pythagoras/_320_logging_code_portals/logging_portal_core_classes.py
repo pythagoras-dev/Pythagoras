@@ -54,7 +54,7 @@ from __future__ import annotations
 import sys
 import traceback
 from functools import cached_property
-from typing import Callable, Any
+from typing import Callable, Any, Final
 
 import pandas as pd
 from mixinforge import NotPicklableMixin, CacheablePropertiesMixin, SingleThreadEnforcerMixin
@@ -874,9 +874,9 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             LoggingFnExecutionFrame.call_stack.pop()
 
 
-_EXCEPTIONS_TOTAL_TXT = "Exceptions, total"
-_EXCEPTIONS_TODAY_TXT = "Exceptions, today"
-_EXCESSIVE_LOGGING_TXT = "Excessive logging"
+_EXCEPTIONS_TOTAL_TXT: Final[str] = "Exceptions, total"
+_EXCEPTIONS_TODAY_TXT: Final[str] = "Exceptions, today"
+_EXCESSIVE_LOGGING_TXT: Final[str] = "Excessive logging"
 
 class LoggingCodePortal(OrdinaryCodePortal):
     """A portal that supports function-level logging for events and exceptions.

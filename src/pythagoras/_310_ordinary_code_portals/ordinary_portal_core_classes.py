@@ -9,7 +9,7 @@ from __future__ import annotations
 import ast
 from copy import deepcopy
 from functools import cached_property
-from typing import Callable, Any, TypeVar
+from typing import Callable, Any, TypeVar, Final
 
 import pandas as pd
 from persidict import PersiDict, SafeStrTuple
@@ -51,7 +51,7 @@ def get_normalized_fn_source_code_str(a_func: OrdinaryFn | Callable | str) -> st
             a_func, drop_pth_decorators=True)
 
 
-_REGISTERED_FUNCTIONS_TXT = "Registered functions"
+_REGISTERED_FUNCTIONS_TXT: Final[str] = "Registered functions"
 
 OrdinaryFnType = TypeVar("OrdinaryFnType", bound="OrdinaryFn")
 
