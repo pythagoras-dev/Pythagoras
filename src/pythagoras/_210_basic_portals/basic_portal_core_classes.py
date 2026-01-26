@@ -723,7 +723,6 @@ class PortalAwareObject(CacheablePropertiesMixin,
 
     _linked_portal: BasicPortal | None
     _visited_portals: set[BasicPortal]
-    _nested_objects:list[Any]
 
     def __init__(self, portal:BasicPortal|None=None):
         """Initialize a PortalAwareObject instance.
@@ -740,7 +739,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
             raise TypeError(f"portal must be a BasicPortal or None, got {type(portal).__name__}")
         self._linked_portal = portal
         self._visited_portals = set()
-        self._nested_objects = list()
+
 
 
     def link_to_portal(self, portal: BasicPortal) -> Self:
@@ -842,11 +841,6 @@ class PortalAwareObject(CacheablePropertiesMixin,
                 f"and registered in portal {portal}")
 
 
-        # TODO: Recursively visit nested PortalAwareObject instances
-        for nested in self._nested_objects:
-            if isinstance(nested, PortalAwareObject):
-                nested._visit_portal(portal)
-
         self._visited_portals.add(portal)
 
         if self._linked_portal is not None:
@@ -905,7 +899,6 @@ class PortalAwareObject(CacheablePropertiesMixin,
         """
         self._invalidate_cache()
         self._visited_portals = set()
-        self._nested_objects = list()
         self._linked_portal = None
 
 
@@ -931,7 +924,6 @@ class PortalAwareObject(CacheablePropertiesMixin,
         _PORTAL_REGISTRY.unregister_object(self)
         self._invalidate_cache()
         self._visited_portals = set()
-        self._nested_objects = list()
         self._init_finished = False
 
 
