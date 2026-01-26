@@ -13,7 +13,6 @@ from persidict import PersiDict, NonEmptySafeStrTuple
 from mixinforge import sort_dict_by_keys
 
 from .._220_data_portals import DataPortal, StorableObject
-from .._210_basic_portals import PortalAwareObject
 from .._110_supporting_utilities import get_node_signature
 
 
@@ -172,62 +171,6 @@ class TunablePortal(DataPortal):
         return names
 
 
-    # def _get_portal_config_setting(self, key: SafeStrTuple | str) -> Any:
-    #     """Get a configuration setting from the portal's config store.
-    #
-    #     Retrieves settings from cache if available, otherwise loads from persistent
-    #     storage and caches the result.
-    #
-    #     Args:
-    #         key: Configuration key to retrieve.
-    #
-    #     Returns:
-    #         The configuration value, or None if not found.
-    #
-    #     Raises:
-    #         TypeError: If key is not a SafeStrTuple or string.
-    #     """
-    #     if not isinstance(key, (str, SafeStrTuple)):
-    #         raise TypeError("key must be a SafeStrTuple or a string")
-    #
-    #     if key in self._global_portal_settings_cache:
-    #         value = self._global_portal_settings_cache[key]
-    #     elif key in self.global_portal_settings:
-    #         value = self.global_portal_settings[key]
-    #         self._global_portal_settings_cache[key] = value
-    #     else:
-    #         value = None
-    #         self._global_portal_settings_cache[key] = None
-    #     return value
-
-
-    # def _set_portal_config_setting(self, key: SafeStrTuple | str, value: Any) -> None:
-    #     """Set a configuration setting in the portal's config store.
-    #
-    #     Persists the setting to storage and updates the cache. Handles special
-    #     Joker values: KEEP_CURRENT leaves existing value unchanged, DELETE_CURRENT
-    #     removes the setting.
-    #
-    #     Args:
-    #         key: Configuration key to set.
-    #         value: Value to store, or a Joker for special behavior.
-    #
-    #     Raises:
-    #         TypeError: If key is not a SafeStrTuple or string.
-    #     """
-    #     if not isinstance(key, (str, SafeStrTuple)):
-    #         raise TypeError("key must be a SafeStrTuple or a string")
-    #
-    #     if value is KEEP_CURRENT:
-    #         return
-    #
-    #     self.global_portal_settings[key] = value
-    #     self._global_portal_settings_cache[key] = value
-    #
-    #     if value is DELETE_CURRENT:
-    #         del self._global_portal_settings_cache[key]
-
-
     def _invalidate_cache(self):
         """Invalidate the portal's cache."""
         super()._invalidate_cache()
@@ -339,15 +282,6 @@ class TunableObject(StorableObject):
         for key, value in self._auxiliary_config_params_at_init.items():
             local_node_settings[key] = value
 
-    # def _persist_initial_config_params(self, portal: TunablePortal) -> None:
-    #     """Persist configuration parameters to a portal.
-    #
-    #     Args:
-    #         portal: The TunablePortal to store configuration settings in.
-    #     """
-    #     for key, value in self._auxiliary_config_params_at_init.items():
-    #         portal.local_node_settings[self,key] = value
-
 
     @property
     def portal(self) -> TunablePortal:
@@ -357,55 +291,6 @@ class TunableObject(StorableObject):
             TunablePortal: The portal used by this object's methods.
         """
         return super().portal
-
-
-    # def _get_config_setting(self, key: SafeStrTuple | str, portal: TunablePortal) -> Any:
-    #     """Retrieve a configuration setting from a portal.
-    #
-    #     Checks portal-wide settings first, then falls back to object-specific
-    #     settings if available.
-    #
-    #     Args:
-    #         key: Configuration key to retrieve.
-    #         portal: The TunablePortal to query.
-    #
-    #     Returns:
-    #         The configuration value, or None if not found.
-    #
-    #     Raises:
-    #         TypeError: If key is not a SafeStrTuple or string.
-    #     """
-    #     if not isinstance(key, (str, SafeStrTuple)):
-    #         raise TypeError("key must be a SafeStrTuple or a string")
-    #
-    #     portal_wide_value = portal._get_portal_config_setting(key)
-    #     if portal_wide_value is not None:
-    #         return portal_wide_value
-    #
-    #     # For object-specific settings, we just use the key directly
-    #     # Subclasses with .addr can override this to use addr-based keys
-    #     object_specific_value = portal._get_portal_config_setting(key)
-    #
-    #     return object_specific_value
-
-
-    # def _set_config_setting(self
-    #                         , key: SafeStrTuple | str
-    #                         , value: Any
-    #                         , portal: TunablePortal) -> None:
-    #     """Set a configuration setting in a portal.
-    #
-    #     Args:
-    #         key: Configuration key to set.
-    #         value: Value to store.
-    #         portal: The TunablePortal to store the setting in.
-    #
-    #     Raises:
-    #         TypeError: If key is not a SafeStrTuple or string.
-    #     """
-    #     if not isinstance(key, (SafeStrTuple, str)):
-    #         raise TypeError("key must be a SafeStrTuple or a string")
-    #     portal._set_portal_config_setting(key, value)
 
 
     def __setstate__(self, state):
