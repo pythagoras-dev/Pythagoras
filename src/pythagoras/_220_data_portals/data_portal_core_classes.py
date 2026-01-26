@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Type, Any, Mapping, Iterable
+from typing import Type, Any, Mapping, Iterable, Final
 
 from mixinforge.utility_functions import find_instances_inside_composite_object
 from persidict import replace_unsafe_chars, SafeStrTuple
@@ -15,7 +15,7 @@ from persidict import WriteOnceDict
 
 T = TypeVar('T')
 
-_TOTAL_VALUES_TXT = "Values, total"
+_TOTAL_VALUES_TXT: Final[str] = "Values, total"
 
 
 def count_known_data_portals() -> int:
