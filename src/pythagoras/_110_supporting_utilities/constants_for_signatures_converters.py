@@ -26,17 +26,17 @@ PTH_HASH_TYPE: Final[str] = "sha256"
 PTH_BASE32_ALPHABET: Final[str] = string.digits + string.ascii_lowercase[:22]
 PTH_BASE32_ALLOWED: Final[set[str]] = set(PTH_BASE32_ALPHABET)
 
-PTH_METADATA_TIMEOUT: float = 2
+PTH_METADATA_TIMEOUT: Final[float] = 2
 # Timeout (seconds) for metadata/OS calls where applicable.
 
-PTH_METADATA_READ_LIMIT: int = 4096
+PTH_METADATA_READ_LIMIT: Final[int] = 4096
 # Max bytes to read from files/sockets to avoid pathological memory use.
 
-PTH_APP_NAME: str = "pythagoras"
+PTH_APP_NAME: Final[str] = "pythagoras"
 # Namespace used for system/user-level config directories.
 
-SMBIOS_UUID_PATH: str = "/sys/class/dmi/id/product_uuid"
+SMBIOS_UUID_PATH: Final[str] = "/sys/class/dmi/id/product_uuid"
 # Hardware product UUID path on Linux systems.
 
-PTH_NODE_SIGNATURE_VERSION: str = "version 2"
+PTH_NODE_SIGNATURE_VERSION: Final[str] = "version 2"
 # Version tag mixed into node-signature payload (enables future evolution).
