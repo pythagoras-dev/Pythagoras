@@ -6,7 +6,7 @@
 [![Downloads](https://img.shields.io/pypi/dm/Pythagoras?color=blue)](https://pypistats.org/packages/pythagoras)
 [![Code style: pep8](https://img.shields.io/badge/code_style-pep8-blue.svg)](https://peps.python.org/pep-0008/)
 [![Docstring Style: Google](https://img.shields.io/badge/docstrings_style-Google-blue)](https://sphinxcontrib-napoleon.readthedocs.io/en/latest/example_google.html)
-
+[![Ruff](https://github.com/pythagoras-dev/Pythagoras/actions/workflows/ruff.yml/badge.svg?branch=master)](https://github.com/pythagoras-dev/Pythagoras/actions/workflows/ruff.yml)
 
 
 Planet-scale distributed computing in Python.
@@ -253,8 +253,8 @@ pip install pythagoras
 <!-- MIXINFORGE_STATS_START -->
 | Metric | Main code | Unit Tests | Total |
 |--------|-----------|------------|-------|
-| Lines Of Code (LOC) | 11070 | 16149 | 27219 |
-| Source Lines Of Code (SLOC) | 4270 | 9868 | 14138 |
+| Lines Of Code (LOC) | 10955 | 16149 | 27104 |
+| Source Lines Of Code (SLOC) | 4264 | 9868 | 14132 |
 | Classes | 53 | 46 | 99 |
 | Functions / Methods | 464 | 1302 | 1766 |
 | Files | 63 | 225 | 288 |
