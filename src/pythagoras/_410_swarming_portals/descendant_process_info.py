@@ -7,11 +7,12 @@ reused by the operating system.
 
 import psutil
 from datetime import datetime, timezone
+from typing import Final
 
 from .._110_supporting_utilities import get_long_infoname
 
 # Unix timestamp for 2026-01-01 00:00:00 UTC - reasonable minimum for modern processes
-MIN_VALID_TIMESTAMP = 1735689600
+MIN_VALID_TIMESTAMP: Final[int] = 1735689600
 _min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d')
 
 
