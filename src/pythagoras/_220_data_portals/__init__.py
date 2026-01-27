@@ -17,10 +17,8 @@ storage. Provides the foundation for content-addressable retrieval.
 **ValueAddr**: Address type for values stored in persistent storage. Derived
 from the value's content, ensuring identical objects produce identical addresses.
 
-**StorableClass**: Base class for portal-aware objects with config management.
-Provides auxiliary configuration parameter storage and get/set methods for
-portal-based configuration. Does not provide content-addressable storage (.addr)
-- that is added by subclasses like OrdinaryFn.
+**StorableObject**: Minimal portal-aware base class for objects that work with
+DataPortal. Provides the .addr property for content-addressable storage.
 
 Address Structure
 -----------------
@@ -41,7 +39,7 @@ Core classes:
 - DataPortal: Portal with persistent storage via persidict
 - HashAddr: Base class for hash-based addresses
 - ValueAddr: Content-derived address for immutable values
-- StorableClass: Base class for storable portal-aware objects
+- StorableObject: Minimal base class for storable portal-aware objects
 
 Utilities:
 - ready: Check if all addresses in a structure are available

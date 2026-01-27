@@ -1,22 +1,14 @@
-"""
-ready_and_get.py – utilities for HashAddr-aware tree traversal
---------------------------------------------------------------
+"""Utilities for HashAddr-aware object graph traversal.
 
-This module offers two convenience helpers that can walk arbitrary
-Python object graphs looking for ``HashAddr`` / ``ValueAddr`` objects
-defined in *pythagoras* data-portals:
+This module provides convenience helpers for working with object graphs
+that contain HashAddr/ValueAddr instances:
 
-• ready(obj) – depth-first check that *every* address embedded in
-  ``obj`` is ``ready`` (i.e. its value can be fetched from at least one
-  known portal).
+- ready(obj): Check if all addresses in a structure are retrievable
+- get(obj): Deep-copy with all addresses replaced by their values
 
-• get(obj)   – deep-copy of ``obj`` where every address is replaced by
-  its resolved value (via ``.get()``).  Container topology and identity
-  are preserved and cycles are handled correctly.
-
-The functions leverage mixinforge utility functions for traversal,
-supporting a wide range of container types including custom Mapping,
-Sequence, and objects with __dict__ or __slots__.
+The functions support arbitrary container types including Mapping,
+Sequence, and objects with __dict__ or __slots__. Cycles are handled
+correctly.
 """
 from __future__ import annotations
 
@@ -31,7 +23,15 @@ from .data_portal_core_classes import HashAddr
 
 
 def ready(obj: Any) -> bool:
-    """Recursively verify that **all** HashAddr objects inside *obj* are ready."""
+    """Check if all HashAddr instances in an object graph are retrievable.
+
+    Args:
+        obj: Object structure to check, may contain nested HashAddr instances.
+
+    Returns:
+        True if every HashAddr in obj has its value available in at least
+        one known portal, False otherwise.
+    """
     for addr in find_instances_inside_composite_object(obj, HashAddr):
         if not addr.ready:
             return False
@@ -39,7 +39,15 @@ def ready(obj: Any) -> bool:
 
 
 def get(obj: Any) -> Any:
-    """Return a deep copy of *obj* with every HashAddr replaced by its value."""
+    """Deep-copy an object graph, resolving all HashAddr instances to values.
+
+    Args:
+        obj: Object structure to copy, may contain nested HashAddr instances.
+
+    Returns:
+        A deep copy of obj where every HashAddr is replaced by the value
+        it references. Container topology and object identity are preserved.
+    """
     return transform_instances_inside_composite_object(
         obj,
         HashAddr,

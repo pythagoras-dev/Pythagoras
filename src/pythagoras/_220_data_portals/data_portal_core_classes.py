@@ -126,8 +126,6 @@ class DataPortal(BasicPortal):
     - Transparent fetch and replication: if a value is not present in the
       active portal but exists in any other known portal, it is fetched
       and copied into the active portal on demand.
-    - Config settings: portal-specific and function-specific settings are
-      persisted in a dedicated config store.
 
     Note:
         Use the portal as a context manager whenever code performs I/O with
@@ -165,16 +163,16 @@ class DataPortal(BasicPortal):
 
     @property
     def global_value_store(self) -> WriteOnceDict:
-        """The portal's persistent content-addressable storeage.
+        """The portal's persistent content-addressable storage.
 
         Returns:
-            WriteOnceDict: The persistent dictionary storing values by address.
+            The persistent dictionary storing values by address.
         """
         return self._global_value_store
 
 
     def describe(self) -> pd.DataFrame:
-        """Get a DataFrame describing the portal's current state"""
+        """Get a DataFrame describing the portal's current state."""
         all_params = [super().describe()]
 
         all_params.append(_describe_persistent_characteristic(
@@ -195,11 +193,7 @@ class DataPortal(BasicPortal):
 
 
 class StorableObject(PortalAwareObject):
-    """Minimal portal-aware class for data storage.
-
-    StorableClass is a minimal base class for portal-aware objects that work
-    with DataPortal.
-    """
+    """Minimal portal-aware base class for objects that work with DataPortal."""
 
     def __init__(self, portal: DataPortal | None = None):
         """Create a storable portal-aware object.
@@ -247,8 +241,6 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
     The three-part hash split addresses filesystem limitations (max files
     per directory) and optimizes cloud storage access patterns (S3 prefix
     distribution).
-
-
     """
 
     def __init__(self, descriptor:str
@@ -392,7 +384,18 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
 
     @abstractmethod
     def get(self, timeout: int | None = None, expected_type:Type[T]= Any) -> T:
-        """Retrieve value, referenced by the address"""
+        """Retrieve the value referenced by this address.
+
+        Args:
+            timeout: Maximum wait time in seconds, or None for no timeout.
+            expected_type: Expected type of the retrieved value for validation.
+
+        Returns:
+            The value stored at this address.
+
+        Raises:
+            NotImplementedError: Must be implemented by subclasses.
+        """
         raise NotImplementedError
 
 
@@ -669,7 +672,23 @@ class ValueAddr(HashAddr):
             , timeout:int|None = None
             , expected_type:Type[T]= Any
             ) -> T:
-        """Retrieve value, referenced by the address from any available portal"""
+        """Retrieve the value referenced by this address from any available portal.
+
+        Searches through cache, current portal, known containing portals, and
+        other portals in order. If found in a non-current portal, the value is
+        automatically replicated to the current portal.
+
+        Args:
+            timeout: Unused.
+            expected_type: Expected type of the retrieved value for validation.
+
+        Returns:
+            The value stored at this address.
+
+        Raises:
+            KeyError: If the value cannot be found in any known portal.
+            TypeError: If the retrieved value doesn't match expected_type.
+        """
         # Try to retrieve data through various strategies
         data, success = self._get_from_cache()
         if not success:
@@ -718,8 +737,21 @@ class ValueAddr(HashAddr):
                      , hash_signature: str
                      , assert_readiness: bool = True
                      ) -> Self:
-        """(Re)construct address from text representations of descriptor and hash"""
+        """Reconstruct a ValueAddr from its string components.
 
+        Args:
+            descriptor: Human-readable type/shape information.
+            hash_signature: Base-32 encoded hash.
+            assert_readiness: If True, verify the value is retrievable.
+
+        Returns:
+            Reconstructed ValueAddr instance.
+
+        Raises:
+            TypeError: If descriptor or hash_signature are not strings.
+            ValueError: If either is empty, or if assert_readiness is True
+                and the value cannot be found in any known portal.
+        """
         address = super().from_strings(
             descriptor=descriptor
             , hash_signature=hash_signature
