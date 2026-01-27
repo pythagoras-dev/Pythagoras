@@ -65,7 +65,8 @@ def test_sortedkwargs_save_load(tmpdir):
             portal.global_value_store["PKA"] = pka
             new_pka = portal.global_value_store["PKA"]
             assert new_pka == pka
-            assert type(new_pka) == type(pka) == PackedKwArgs
+            assert isinstance(new_pka, PackedKwArgs)
+            assert isinstance(pka, PackedKwArgs)
 
 def test_hierarchy():
     assert issubclass(KwArgs, dict)

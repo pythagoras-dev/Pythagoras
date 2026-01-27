@@ -20,7 +20,7 @@ def test_value_address_basic(tmpdir):
                     "something else")
                 assert ValueAddr(sample).ready
                 restored_sample = deepcopy(ValueAddr(sample).get())
-                if type(sample) == pd.DataFrame:
+                if isinstance(sample, pd.DataFrame):
                     assert sample.equals(restored_sample)
                 else:
                     assert ValueAddr(sample).get() == sample
