@@ -1,9 +1,8 @@
 from __future__ import annotations
 
 from functools import cached_property
-from typing import Type, Any, Mapping, Iterable, Final
+from typing import Type, Any, Final
 
-from mixinforge.utility_functions import find_instances_inside_composite_object
 from persidict import replace_unsafe_chars, SafeStrTuple
 
 from .._210_basic_portals import *
@@ -399,7 +398,7 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
 
     def __eq__(self, other) -> bool:
         """Return self==other. """
-        return type(self) == type(other) and self.strings == other.strings
+        return type(self) is type(other) and self.strings == other.strings
 
 
     def __ne__(self, other) -> bool:
