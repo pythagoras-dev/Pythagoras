@@ -1,4 +1,14 @@
+from typing import TYPE_CHECKING
+
 from pythagoras import autonomous, _PortalTester, AutonomousCodePortal
+
+# The functions below use `self` which is injected into their global namespace
+# at runtime by the portal framework when the decorated function is executed.
+# This TYPE_CHECKING declaration makes `self` visible to static analysis tools
+# (ruff, mypy, IDEs) without affecting runtime behavior.
+if TYPE_CHECKING:
+    from typing import Any
+    self: Any = ...
 
 
 def simple_p_function(a:int,b:int)->int:
@@ -17,4 +27,3 @@ def test_simple(tmpdir):
 
         another_p_function = autonomous()(another_p_function)
         assert another_p_function()=="another_p_function"
-
