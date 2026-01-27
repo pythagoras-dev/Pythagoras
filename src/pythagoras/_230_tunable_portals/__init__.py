@@ -19,5 +19,4 @@ Exports
 - TunableObject: Base class for objects that support tunable settings
 """
 
-from .tunable_portal_core_classes import (
-    TunablePortal, TunableObject)
+from .tunable_portal_core_classes import *
