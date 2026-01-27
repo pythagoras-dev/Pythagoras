@@ -376,7 +376,7 @@ class PureFnExecutionResultAddr(HashAddr):
         """
         if not isinstance(fn, PureFn):
             raise TypeError(f"fn must be a PureFn instance, got {get_long_infoname(fn)}")
-        with fn.portal as portal:
+        with fn.portal:
             kwargs = KwArgs(**arguments)
             signature = PureFnCallSignature(fn, kwargs)
             self._set_cached_properties(call_signature = signature

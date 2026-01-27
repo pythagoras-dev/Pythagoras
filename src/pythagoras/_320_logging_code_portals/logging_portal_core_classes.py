@@ -456,7 +456,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
         Returns:
             Any: Latest exception payload dict, or None if no crashes exist.
         """
-        with self.portal as portal:
+        with self.portal:
             crashes = self.crashes
             timeline = crashes.newest_values(1)
             if not len(timeline):
