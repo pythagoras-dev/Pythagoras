@@ -1,4 +1,3 @@
-import pytest
 from pythagoras import TunablePortal, _PortalTester
 
 def test_get_effective_setting_precedence(tmpdir):

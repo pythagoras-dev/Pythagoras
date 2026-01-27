@@ -1,5 +1,4 @@
 """Tests for BasicPortal linked objects functionality."""
-import pytest
 from pythagoras import BasicPortal, PortalAwareObject, _PortalTester
 
 

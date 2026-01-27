@@ -1,4 +1,3 @@
-import pytest
 
 from pythagoras import ValueAddr, LoggingFnCallSignature
 from pythagoras._210_basic_portals.portal_tester import _PortalTester

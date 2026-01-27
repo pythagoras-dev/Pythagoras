@@ -1,6 +1,4 @@
-import pytest
 from pythagoras import TunableObject, TunablePortal, _PortalTester, ValueAddr
-from persidict import SafeStrTuple
 
 class ConcreteTunable(TunableObject):
     def __init__(self, portal=None):

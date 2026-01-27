@@ -1,6 +1,4 @@
 
-import sys
-import types
 import pytest
 from pythagoras import get_long_infoname
 

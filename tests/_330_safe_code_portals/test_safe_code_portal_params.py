@@ -1,6 +1,6 @@
 import mixinforge
 
-from pythagoras import _PortalTester, DataPortal, LoggingCodePortal, SafeCodePortal
+from pythagoras import _PortalTester, SafeCodePortal
 
 
 def test_portal(tmpdir):

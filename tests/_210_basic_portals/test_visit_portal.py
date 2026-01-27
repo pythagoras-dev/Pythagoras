@@ -1,5 +1,4 @@
 """Tests for _visit_portal functionality."""
-import pytest
 from pythagoras import BasicPortal, PortalAwareObject, _PortalTester
 from pythagoras._220_data_portals.kw_args import _visit_portal
 from persidict import SafeStrTuple

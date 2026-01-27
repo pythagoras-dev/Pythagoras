@@ -1,4 +1,3 @@
-import time
 
 import pytest
 from persidict import KEEP_CURRENT

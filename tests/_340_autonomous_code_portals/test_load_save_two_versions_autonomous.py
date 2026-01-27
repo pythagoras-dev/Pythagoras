@@ -3,7 +3,6 @@ from pythagoras._210_basic_portals.portal_tester import _PortalTester
 from pythagoras._220_data_portals import ValueAddr
 from pythagoras._340_autonomous_code_portals import *
 
-import pytest
 
 def test_load_save_two_versions_autonomous(tmpdir):
     with _PortalTester(

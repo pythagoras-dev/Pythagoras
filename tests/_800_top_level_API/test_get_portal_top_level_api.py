@@ -1,4 +1,3 @@
-from pathlib import Path
 
 from pythagoras.core import get_portal
 from pythagoras import SwarmingPortal, _PortalTester

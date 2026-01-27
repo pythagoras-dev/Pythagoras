@@ -1,6 +1,6 @@
 import mixinforge
 
-from pythagoras import _PortalTester, ProtectedCodePortal, PureCodePortal
+from pythagoras import _PortalTester, PureCodePortal
 
 
 def test_pure_portal_params(tmpdir):

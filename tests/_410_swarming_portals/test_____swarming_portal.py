@@ -1,6 +1,5 @@
 from pythagoras import SwarmingPortal
 from pythagoras import _PortalTester
-from pythagoras import get_current_process_id, get_current_process_start_time
 import time
 
 

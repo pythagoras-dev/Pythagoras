@@ -1,4 +1,3 @@
-import pytest
 
 from pythagoras import ValueAddr, DataPortal, PackedKwArgs, get_random_signature, UnpackedKwArgs
 from pythagoras import _PortalTester

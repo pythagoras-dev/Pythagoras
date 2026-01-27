@@ -1,4 +1,3 @@
-import pytest
 from collections.abc import Mapping, Sequence
 from pythagoras._220_data_portals import get, HashAddr
 

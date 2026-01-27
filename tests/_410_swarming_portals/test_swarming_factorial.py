@@ -2,7 +2,6 @@ from pythagoras._210_basic_portals.portal_tester import _PortalTester
 from pythagoras._410_swarming_portals.swarming_portals import (
     SwarmingPortal)
 import pythagoras as pth
-import pytest, time
 
 
 def factorial(n: int) -> int:

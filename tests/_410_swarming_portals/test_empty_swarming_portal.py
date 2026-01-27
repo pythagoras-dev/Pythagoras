@@ -1,6 +1,5 @@
 from pythagoras import SwarmingPortal
 from pythagoras import _PortalTester
-import time
 
 
 def test_empty_swarming_portal(tmpdir):

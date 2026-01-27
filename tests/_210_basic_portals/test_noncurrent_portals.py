@@ -1,5 +1,4 @@
 from pythagoras import _PortalTester, BasicPortal, get_noncurrent_portals
-import pytest
 
 
 class HelperPortal(BasicPortal):

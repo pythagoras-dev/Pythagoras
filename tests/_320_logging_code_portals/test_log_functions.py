@@ -4,8 +4,6 @@ This module tests the global logging functions that route events and exceptions
 to the appropriate function's log when called from within a LoggingFn execution.
 """
 
-import sys
-import pytest
 import pythagoras as pth
 from pythagoras._210_basic_portals import _PortalTester
 from pythagoras._320_logging_code_portals import LoggingCodePortal, logging

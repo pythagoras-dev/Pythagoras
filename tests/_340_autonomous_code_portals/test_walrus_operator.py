@@ -1,6 +1,5 @@
 """Test walrus operator (:=) handling in names_usage_analyzer."""
 
-import pytest
 from pythagoras._340_autonomous_code_portals.names_usage_analyzer import _analyze_names_in_function
 
 

@@ -1,12 +1,5 @@
-import random
-import sys
-from copy import copy
-from typing import Any
 
-import pytest
 
-from pythagoras._210_basic_portals import (
-    get_current_portal, _PortalTester)
 from pythagoras._220_data_portals import *
 
 #

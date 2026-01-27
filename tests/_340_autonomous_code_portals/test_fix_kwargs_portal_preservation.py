@@ -1,6 +1,5 @@
 """Tests to verify that fix_kwargs() preserves the linked portal."""
 
-import pytest
 from pythagoras._210_basic_portals.portal_tester import _PortalTester
 from pythagoras._340_autonomous_code_portals import (
     AutonomousCodePortal, AutonomousFn)

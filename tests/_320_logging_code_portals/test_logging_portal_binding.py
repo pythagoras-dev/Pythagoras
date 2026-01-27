@@ -1,4 +1,3 @@
-import pytest
 
 from pythagoras import LoggingCodePortal
 from pythagoras import _PortalTester

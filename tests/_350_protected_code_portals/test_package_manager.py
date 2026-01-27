@@ -11,7 +11,6 @@ import pytest
 from pythagoras._350_protected_code_portals.package_manager import (
     install_package,
     uninstall_package,
-    _install_uv_and_pip,
 )
 
 

@@ -1,6 +1,6 @@
 import mixinforge
 
-from pythagoras import _PortalTester, ProtectedCodePortal, PureCodePortal, SwarmingPortal
+from pythagoras import _PortalTester, SwarmingPortal
 
 
 def test_swarming_portal_params(tmpdir):

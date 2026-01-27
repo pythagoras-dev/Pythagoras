@@ -1,4 +1,3 @@
-import sys
 
 from pythagoras import _PortalTester, PureCodePortal
 from pythagoras.core import *

@@ -1,4 +1,4 @@
-from pythagoras import _PortalTester, PureCodePortal
+from pythagoras import _PortalTester
 from pythagoras.core import *
 
 @pure(pre_validators=[recursive_parameters("n")])

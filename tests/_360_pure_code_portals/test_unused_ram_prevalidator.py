@@ -1,6 +1,6 @@
 import pytest
 
-from pythagoras import pure, installed_packages, _PortalTester, PureCodePortal, unused_ram
+from pythagoras import pure, _PortalTester, PureCodePortal, unused_ram
 from pythagoras._350_protected_code_portals.package_manager import *
 
 @pure(pre_validators = [unused_ram(Gb=1)] )

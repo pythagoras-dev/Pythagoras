@@ -1,6 +1,4 @@
-import time
 
-import pytest
 from pythagoras._210_basic_portals.portal_tester import _PortalTester
 from pythagoras._410_swarming_portals.swarming_portals import (
     SwarmingPortal)

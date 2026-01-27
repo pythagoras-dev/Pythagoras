@@ -1,4 +1,3 @@
-import pytest
 
 from pythagoras import DataPortal
 from pythagoras import _PortalTester

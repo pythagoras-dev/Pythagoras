@@ -7,7 +7,6 @@ from pythagoras import (
     get_known_portals,
     count_active_portals,
     measure_active_portals_stack,
-    get_current_portal,
     get_nonactive_portals,
     get_noncurrent_portals
 )

@@ -1,6 +1,5 @@
 """Tests for basic portal accessor functions."""
 
-import pytest
 
 from pythagoras import (
     BasicPortal,

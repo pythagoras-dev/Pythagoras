@@ -1,4 +1,3 @@
-import pytest
 
 from pythagoras._210_basic_portals.portal_tester import _PortalTester
 from pythagoras._330_safe_code_portals import *

@@ -11,8 +11,7 @@ from pathlib import Path
 
 from mixinforge.command_line_tools.project_analyzer import analyze_project
 from mixinforge.command_line_tools._cli_entry_points import (
-    _update_readme_if_possible,
-    _update_rst_docs_if_possible
+    _update_readme_if_possible
 )
 
 

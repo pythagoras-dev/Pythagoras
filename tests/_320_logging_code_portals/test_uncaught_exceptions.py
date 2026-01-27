@@ -5,7 +5,6 @@ uncaught exceptions and logs them to the active LoggingCodePortal.
 """
 
 import sys
-import pytest
 from pythagoras._210_basic_portals import _PortalTester
 from pythagoras._320_logging_code_portals import LoggingCodePortal
 from pythagoras._320_logging_code_portals.uncaught_exceptions import (
