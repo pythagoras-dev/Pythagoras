@@ -10,7 +10,7 @@ def test_exception_inside_with(tmpdir):
         try:
             with p.portal:
                 x = 1/0
-        except:
+        except Exception:
             pass
         assert len(p.portal._crash_history) == 1
 
@@ -22,13 +22,13 @@ def test_sequential_exceptions_inside_with(tmpdir):
         try:
             with p.portal:
                 x = 1/0
-        except:
+        except Exception:
             pass
 
         try:
             with p.portal:
                 x = 1 / 0
-        except:
+        except Exception:
             pass
 
         assert len(p.portal._crash_history) == 2
@@ -39,7 +39,7 @@ def test_exceptions_2_exceptions(tmpdir):
         try:
             with p.portal:
                 x = 1/0
-        except:
+        except Exception:
             pass
 
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
@@ -48,7 +48,7 @@ def test_exceptions_2_exceptions(tmpdir):
         try:
             with p.portal:
                 x = 2/0
-        except:
+        except Exception:
             pass
 
         assert len(p.portal._crash_history) == 2
@@ -64,7 +64,7 @@ def test_exception_inside_nested_with_same_portal(tmpdir):
                             with p.portal:
                                 with p.portal:
                                     x = 1/0
-        except:
+        except Exception:
             pass
         assert len(p.portal._crash_history) == 1
 
@@ -85,7 +85,7 @@ def test_fn_exception_inside_nested_with_same_portal(tmpdir):
                             with p.portal:
                                 with p.portal:
                                     yyy()
-        except:
+        except Exception:
             pass
 
         assert len(p.portal._crash_history) == 1
@@ -103,7 +103,7 @@ def test_exception_inside_nested_with(tmpdir):
             try:
                 with p.portal:
                     raise Exception("This is a test exception")
-            except:
+            except Exception:
                 pass
             assert len(p.portal._crash_history) == 1
             assert len(portal2._crash_history) == 0

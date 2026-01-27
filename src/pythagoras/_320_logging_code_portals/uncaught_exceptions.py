@@ -132,7 +132,7 @@ def register_systemwide_uncaught_exception_handlers() -> None:
         try:
             from IPython import get_ipython
             get_ipython().set_custom_exc((BaseException,), pth_excepthandler)
-        except:
+        except Exception:
             _previous_excepthook = sys.excepthook
             sys.excepthook = pth_excepthook
 
@@ -164,5 +164,5 @@ def unregister_systemwide_uncaught_exception_handlers() -> None:
         try:
             from IPython import get_ipython
             get_ipython().set_custom_exc((BaseException,), None)
-        except:
+        except Exception:
             pass

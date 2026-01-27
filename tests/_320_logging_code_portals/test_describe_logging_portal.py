@@ -34,7 +34,7 @@ def test_exceptions_very_basics(tmpdir):
 
         try:
             y()
-        except:
+        except Exception:
             pass
 
         signature = LoggingFnCallSignature(y, {})
@@ -67,7 +67,7 @@ def test_exceptions_basics_no_excessive_logging(tmpdir):
 
         try:
             y()
-        except:
+        except Exception:
             pass
 
         signature = LoggingFnCallSignature(y, {})
@@ -98,7 +98,7 @@ def test_exceptions_basics_portal_level_logging(tmpdir):
 
         try:
             y()
-        except:
+        except Exception:
             pass
 
         signature = LoggingFnCallSignature(y, {})

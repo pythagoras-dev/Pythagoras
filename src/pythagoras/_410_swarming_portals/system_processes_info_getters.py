@@ -26,7 +26,7 @@ def get_process_start_time(pid: int) -> int:
     try:
         process = psutil.Process(pid)
         return int(process.create_time())
-    except:
+    except Exception:
         return 0
 
 

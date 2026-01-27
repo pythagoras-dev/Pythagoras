@@ -149,7 +149,7 @@ def _check_python_package_and_install_if_needed(
     try:
         importlib.import_module(package_name)
         return pth.VALIDATION_SUCCESSFUL
-    except:
+    except Exception:
         portal = self.portal
         address = ("installation_attempts", package_name)
         # allow installation retries every 10 minutes

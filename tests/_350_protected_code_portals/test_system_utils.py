@@ -57,7 +57,7 @@ def test_nvidia_gpu_value_is_within_bounds():
             gpu_count = pynvml.nvmlDeviceGetCount()
         finally:
             pynvml.nvmlShutdown()
-    except:
+    except Exception:
         pass
 
     unused = get_unused_nvidia_gpus()

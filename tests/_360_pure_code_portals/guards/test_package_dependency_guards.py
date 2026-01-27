@@ -12,7 +12,7 @@ def test_real_package_installation_via_guard(tmpdir):
 
         try:
             uninstall_package("nothing")
-        except:
+        except Exception:
             pass
 
 
@@ -25,7 +25,7 @@ def test_real_package_installation_via_guard(tmpdir):
         def check_nothing(**kwargs):
             try:
                 import nothing
-            except:
+            except Exception:
                 pth.install_package("nothing")
             import nothing
             assert nothing
@@ -40,7 +40,7 @@ def test_real_package_installation_via_guard(tmpdir):
 
         try:
             uninstall_package("nothing")
-        except:
+        except Exception:
             pass
 
         with pytest.raises(ImportError):
@@ -55,7 +55,7 @@ def test_fake_package_installation_via_guard(tmpdir):
 
         try:
             uninstall_package("p1q9m2x8d3h8r56TTT")
-        except:
+        except Exception:
             pass
 
 
@@ -63,7 +63,7 @@ def test_fake_package_installation_via_guard(tmpdir):
         def check_nonexisting(**kwargs):
             try:
                 import p1q9m2x8d3h8r56TTT
-            except:
+            except Exception:
                 pth.install_package("p1q9m2x8d3h8r56TTT")
             import p1q9m2x8d3h8r56TTT
             _ = p1q9m2x8d3h8r56TTT
@@ -80,5 +80,5 @@ def test_fake_package_installation_via_guard(tmpdir):
 
         try:
             uninstall_package("p1q9m2x8d3h8r56TTT")
-        except:
+        except Exception:
             pass

@@ -16,5 +16,5 @@ def test_aut_factorial(tmpdir):
             global factorial
             factorial = autonomous()(factorial)
             assert factorial(n=5) == 120
-    except:
+    except Exception:
         assert len(crash_history) == 1

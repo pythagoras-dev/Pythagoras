@@ -126,7 +126,7 @@ def test_install_and_uninstall_real_package(use_uv):
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, use_uv=use_uv, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 
@@ -150,7 +150,7 @@ def test_install_with_version_pinning(use_uv):
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, use_uv=use_uv, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 
@@ -172,7 +172,7 @@ def test_install_with_upgrade_flag(use_uv):
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, use_uv=use_uv, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 
@@ -196,7 +196,7 @@ def test_install_without_verification():
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 
@@ -222,7 +222,7 @@ def test_uninstall_without_verification():
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 
@@ -243,7 +243,7 @@ def test_idempotent_install(use_uv):
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, use_uv=use_uv, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 
@@ -300,7 +300,7 @@ def test_uninstall_with_verification_detects_remaining_module():
         # Ensure cleanup even if test fails
         try:
             uninstall_package(package, verify_uninstall=False)
-        except:
+        except Exception:
             pass
 
 

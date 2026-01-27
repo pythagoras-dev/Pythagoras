@@ -425,9 +425,8 @@ class SwarmingPortal(PureCodePortal):
                 address = (str(worker.process_id), str(worker.process_start_time))
                 worker.terminate()
                 self._all_workers.discard(address)
-            except:
+            except Exception:
                 # Best-effort: ensure we don't keep stale tracking records
-                # Bare except is intentional here
                 pass
 
 
@@ -573,8 +572,7 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
                         "_background_worker",
                         worker_pid,
                         worker_start_time)
-                except:
-                    # Bare except is intentional here
+                except Exception:
                     pass
             portal._randomly_delay_execution(p=1)
 

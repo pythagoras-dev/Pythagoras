@@ -87,5 +87,5 @@ def get_unused_nvidia_gpus() -> float:
         try:
             import pynvml
             pynvml.nvmlShutdown()
-        except:
+        except Exception:
             pass  # Safe cleanup even if initialization failed
