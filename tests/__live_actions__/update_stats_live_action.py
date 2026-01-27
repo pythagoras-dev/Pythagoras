@@ -44,8 +44,6 @@ def test_live_stats_update(pytestconfig):
     markdown_content = analysis.to_markdown()
     rst_content = analysis.to_rst()
 
-    # Store original content to verify updates actually happen
-    original_readme = readme_content
     # original_index_rst = index_rst_content
 
     # Attempt to update README.md
