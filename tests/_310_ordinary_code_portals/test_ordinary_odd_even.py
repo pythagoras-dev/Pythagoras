@@ -19,8 +19,8 @@ def isOdd(n, isEven, isOdd):
 
 def test_odd_even_no_decorators_ordinary(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir):
-        assert isOdd(n=4, isEven=isEven, isOdd=isOdd) == False
-        assert isEven(n=4, isOdd=isOdd, isEven=isEven) == True
+        assert not isOdd(n=4, isEven=isEven, isOdd=isOdd)
+        assert isEven(n=4, isOdd=isOdd, isEven=isEven)
 
 
 def test_odd_even_two_decorators_ordinary(tmpdir):
@@ -34,8 +34,8 @@ def test_odd_even_two_decorators_ordinary(tmpdir):
         isOdd = ordinary()(isOdd)
         assert isinstance(isOdd, OrdinaryFn)
 
-        assert isOdd(n=4, isEven=isEven, isOdd=isOdd) == False
-        assert isEven(n=4, isEven=isEven, isOdd=isOdd) == True
+        assert not isOdd(n=4, isEven=isEven, isOdd=isOdd)
+        assert isEven(n=4, isEven=isEven, isOdd=isOdd)
 
         isEven = oldIsEven
         isOdd = oldIsOdd

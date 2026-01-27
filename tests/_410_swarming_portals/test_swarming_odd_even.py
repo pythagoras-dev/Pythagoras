@@ -21,8 +21,8 @@ def isOdd(n,isOdd, isEven):
 def test_no_decorators(tmpdir):
     with _PortalTester(SwarmingPortal
             , tmpdir, max_n_workers=0):
-        assert isOdd(n=400,isOdd= isOdd, isEven= isEven) == False
-        assert isEven(n=400,isOdd= isOdd, isEven= isEven) == True
+        assert not isOdd(n=400,isOdd= isOdd, isEven= isEven)
+        assert isEven(n=400,isOdd= isOdd, isEven= isEven)
 
 def test_two_decorators(tmpdir):
     global isEven, isOdd
@@ -36,4 +36,4 @@ def test_two_decorators(tmpdir):
     with _PortalTester(SwarmingPortal
             , tmpdir, max_n_workers=8):
         addr._invalidate_cache()
-        assert addr.get() == True
+        assert addr.get()

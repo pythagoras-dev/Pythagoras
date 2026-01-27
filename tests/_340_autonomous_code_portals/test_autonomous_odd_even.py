@@ -20,8 +20,8 @@ def isOdd(n, isEven, isOdd):
 
 def test_odd_even_no_decorators_logging(tmpdir):
     with _PortalTester(AutonomousCodePortal, root_dict=tmpdir):
-        assert isOdd(n=4, isEven=isEven, isOdd=isOdd) == False
-        assert isEven(n=4, isOdd=isOdd, isEven=isEven) == True
+        assert not isOdd(n=4, isEven=isEven, isOdd=isOdd)
+        assert isEven(n=4, isOdd=isOdd, isEven=isEven)
 
 
 def test_odd_even_two_decorators_autonomous(tmpdir):

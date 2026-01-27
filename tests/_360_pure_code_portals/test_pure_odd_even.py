@@ -20,8 +20,8 @@ def isOdd(n, isEven, isOdd):
 
 def test_no_decorators(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir):
-        assert isOdd(n=4,isEven=isEven, isOdd=isOdd) == False
-        assert isEven(n=4,isEven=isEven, isOdd=isOdd) == True
+        assert not isOdd(n=4,isEven=isEven, isOdd=isOdd)
+        assert isEven(n=4,isEven=isEven, isOdd=isOdd)
 
 
 # def test_one_decorator_odd(tmpdir):
@@ -63,15 +63,15 @@ def test_two_decorators(tmpdir):
         isEven = pure()(isEven)
         isOdd = pure()(isOdd)
         for i in range(4):
-            assert isOdd(n=24, isEven=isEven, isOdd=isOdd) == False
-            assert isEven(n=24, isEven=isEven, isOdd=isOdd) == True
+            assert not isOdd(n=24, isEven=isEven, isOdd=isOdd)
+            assert isEven(n=24, isEven=isEven, isOdd=isOdd)
 
         isEven, isOdd = (isEven.fix_kwargs(isEven=isEven, isOdd=isOdd)
                          , isOdd.fix_kwargs(isEven=isEven, isOdd=isOdd))
 
         for i in range(3):
-            assert isOdd(n=24) == False
-            assert isEven(n=24) == True
+            assert not isOdd(n=24)
+            assert isEven(n=24)
 
         isEven = old_isEven
         isOdd = old_isOdd
