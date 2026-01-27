@@ -28,6 +28,7 @@ def test_real_package_installation_via_guard(tmpdir):
             except:
                 pth.install_package("nothing")
             import nothing
+            assert nothing
             return pth.VALIDATION_SUCCESSFUL
 
 
@@ -65,6 +66,7 @@ def test_fake_package_installation_via_guard(tmpdir):
             except:
                 pth.install_package("p1q9m2x8d3h8r56TTT")
             import p1q9m2x8d3h8r56TTT
+            _ = p1q9m2x8d3h8r56TTT
             return pth.VALIDATION_SUCCESSFUL
 
 
