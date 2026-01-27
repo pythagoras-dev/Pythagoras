@@ -20,8 +20,18 @@ Conventions:
   identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
 """
 
+from typing import TYPE_CHECKING
+
 from .._350_protected_code_portals import SimplePreValidatorFn
 from .validation_succesful_const import ValidationSuccessFlag
+
+# The validator functions below use `pth` and `self` which are injected into
+# their global namespace at runtime by the portal framework (see module docstring).
+# These TYPE_CHECKING declarations make the names visible to static analysis tools
+# (ruff, mypy, IDEs) without importing anything at runtime.
+if TYPE_CHECKING:
+    import pythagoras as pth
+    self = None
 
 
 def _at_least_X_CPU_cores_free_check(n: int) -> ValidationSuccessFlag | None:
