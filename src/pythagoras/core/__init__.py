@@ -52,9 +52,9 @@ Notes
       lower‑level APIs, import directly from the corresponding subpackages.
 """
 
-from .._220_data_portals import ready, get
-from .._340_autonomous_code_portals import autonomous
+from .._220_data_portals import ready as ready, get as get
+from .._340_autonomous_code_portals import autonomous as autonomous
 from .._350_protected_code_portals.basic_pre_validators import *
-from .._360_pure_code_portals import pure, recursive_parameters, PureFn
-from .._410_swarming_portals import SwarmingPortal
-from .._800_top_level_API import get_portal
+from .._360_pure_code_portals import pure as pure, recursive_parameters as recursive_parameters, PureFn as PureFn
+from .._410_swarming_portals import SwarmingPortal as SwarmingPortal
+from .._800_top_level_API import get_portal as get_portal

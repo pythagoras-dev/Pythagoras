@@ -18,10 +18,10 @@ resource-demanding computations. It’s not the best choice for real-time,
 latency-sensitive workflows.
 """
 
-from ._version_info import __version__
+from ._version_info import __version__ as __version__
 
 from ._210_basic_portals import *
-from ._210_basic_portals import _PortalTester
+from ._210_basic_portals import _PortalTester as _PortalTester
 from ._220_data_portals import *
 from ._230_tunable_portals import *
 from ._310_ordinary_code_portals import *
