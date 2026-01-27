@@ -7,6 +7,7 @@ output in base16 (hex) or the project's base32 alphabet (``0-9`` then ``a-v``).
 from typing import Any
 
 import joblib.hashing
+import importlib.util
 
 from .base_16_32_converters import convert_base16_to_base32
 from .constants_for_signatures_and_converters import PTH_MAX_SIGNATURE_LENGTH, PTH_HASH_TYPE
@@ -32,10 +33,9 @@ def get_base16_hash_signature(x: Any) -> str:
         - joblib hashing operates on object content/structure, not memory
           addresses.
     """
-    try:
-        import numpy
+    if importlib.util.find_spec("numpy"):
         hasher = joblib.hashing.NumpyHasher(hash_name=PTH_HASH_TYPE)
-    except ImportError:
+    else:
         hasher = joblib.hashing.Hasher(hash_name=PTH_HASH_TYPE)
     hash_signature = hasher.hash(x)
     return str(hash_signature)
