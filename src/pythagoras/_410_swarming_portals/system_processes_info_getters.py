@@ -5,6 +5,8 @@ and start times, used to uniquely identify process instances across the
 swarm lifecycle.
 """
 
+from time import sleep
+
 import psutil
 
 
