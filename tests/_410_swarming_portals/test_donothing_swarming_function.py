@@ -14,7 +14,7 @@ def test_donothing_swarmig(tmpdir):
     """Test if package installer installs a package.
     """
 
-    with _PortalTester(SwarmingPortal, tmpdir, exact_n_workers = 2) as t:
+    with _PortalTester(SwarmingPortal, tmpdir, exact_n_workers = 2):
 
         sync_res= very_donothing_swarming_function(n=1)
         assert sync_res == 12345

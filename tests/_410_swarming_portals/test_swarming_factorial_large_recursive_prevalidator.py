@@ -12,7 +12,7 @@ def factorial(n:int) -> int:
 
 def test_swarming_pure_factorial_large(tmpdir):
     # tmpdir = "TEST_PURE_FACTORIAL_LARGE"
-    with _PortalTester(SwarmingPortal,tmpdir) as t:
+    with _PortalTester(SwarmingPortal,tmpdir):
         result_addr = factorial.swarm(n=10)
         assert get(result_addr) == 3628800
 

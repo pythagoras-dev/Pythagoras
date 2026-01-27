@@ -18,7 +18,7 @@
 # def test_data_portal_get_params_1(tmpdir):
 #     with _PortalTester(DataPortal
 #             , root_dict = tmpdir
-#             ) as t:
+#             ):
 #         portal = t.portal
 #         params = portal.get_params()
 #         assert params["p_consistency_checks"] == 0.5

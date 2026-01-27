@@ -5,6 +5,6 @@
 #
 #
 # def test_basic_portal_get_params(tmpdir):
-#     with _PortalTester(DataPortal, root_dict = tmpdir) as t:
+#     with _PortalTester(DataPortal, root_dict = tmpdir):
 #         smoketest_parameterizable_class(DataPortal)
 #

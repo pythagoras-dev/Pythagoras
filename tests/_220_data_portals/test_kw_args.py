@@ -15,7 +15,7 @@ def test_sortedkwargs(tmpdir):
     """Test PackedKwArgs constructor and basic functionality."""
 
     with _PortalTester(DataPortal, root_dict=tmpdir
-            ) as t:
+            ):
 
         for i in range(4):
             for sample_dict in dicts_to_test:

@@ -15,7 +15,7 @@ def test_pure_double_pandas_dataframe(tmpdir):
     # tmpdir = 2*"PURE_DOUBLE_PANDAS_DATAFRAME_" + str(int(time.time()))
     with _PortalTester(PureCodePortal
             , tmpdir
-            ) as t:
+            ):
         global double
         double_pure = pure()(double)
         df = pd.DataFrame(np.random.randn(10, 20))

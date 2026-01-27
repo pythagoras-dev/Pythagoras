@@ -7,7 +7,7 @@ from pythagoras._360_pure_code_portals.pure_decorator import pure
 
 def test_run_list(tmpdir):
 
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         @pure()
         def dbl(x: float) -> float:

@@ -5,7 +5,7 @@ from pythagoras._360_pure_code_portals.pure_decorator import pure
 
 
 def test_nested_from_import(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         @pure()
         def f(x:float)->float:
@@ -16,7 +16,7 @@ def test_nested_from_import(tmpdir):
 
 
 def test_nested_import_as(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         @pure()
         def f(x:float)->float:
@@ -26,7 +26,7 @@ def test_nested_import_as(tmpdir):
         assert f(x=0) == 0
 
 def test_nested_from_import_as(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         @pure()
         def f(x:float)->float:

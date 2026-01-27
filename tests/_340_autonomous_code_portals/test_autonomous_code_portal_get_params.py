@@ -17,7 +17,7 @@
 #
 # def test_autonomous_data_portal_get_params_1(tmpdir):
 #     with _PortalTester(AutonomousCodePortal
-#             , root_dict = tmpdir) as t:
+#             , root_dict = tmpdir):
 #         portal = t.portal
 #         params = portal.get_params()
 #         exportable_params = portal.get_portable_params()

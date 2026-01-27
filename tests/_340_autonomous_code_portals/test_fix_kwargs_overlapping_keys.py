@@ -7,7 +7,7 @@ from pythagoras._340_autonomous_code_portals import *
 
 def test_fix_kwargs_rejects_overlapping_keys():
     """Test that fix_kwargs raises ValueError when trying to fix already-fixed kwargs."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def add_three(a, b, c):
             return a + b + c
@@ -22,7 +22,7 @@ def test_fix_kwargs_rejects_overlapping_keys():
 
 def test_execute_rejects_overlapping_with_fixed_kwargs():
     """Test that execute raises ValueError when call-time kwargs overlap with fixed kwargs."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def multiply(x, y):
             return x * y
@@ -41,7 +41,7 @@ def test_execute_rejects_overlapping_with_fixed_kwargs():
 
 def test_fix_kwargs_chain_with_distinct_keys():
     """Test that fix_kwargs can be chained multiple times with distinct keys."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def compute(a, b, c, d):
             return a + b * c - d
@@ -61,7 +61,7 @@ def test_fix_kwargs_chain_with_distinct_keys():
 
 def test_fix_kwargs_partial_overlap_in_chain():
     """Test that partial overlap in fix_kwargs chain is detected at each step."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def subtract(x, y):
             return x - y

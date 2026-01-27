@@ -20,7 +20,7 @@ def test_basic_addr(tmpdir):
 
     addr._invalidate_cache()
 
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
         del do_nothing_pure
         del do_nothing
         result = addr.execute()

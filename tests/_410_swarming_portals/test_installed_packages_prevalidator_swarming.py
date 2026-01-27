@@ -15,7 +15,7 @@ def test_polars_package(tmpdir):
     """Test if package installer installs a package.
     """
 
-    with _PortalTester(SwarmingPortal, tmpdir+"qrtr") as t:
+    with _PortalTester(SwarmingPortal, tmpdir+"qrtr"):
         polars_package_name = "polars"
 
         uninstall_package(polars_package_name, use_uv=False)

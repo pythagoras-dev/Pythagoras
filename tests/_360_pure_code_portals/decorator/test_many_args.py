@@ -9,7 +9,7 @@ def f_before(**kwargs):
     return sum(kwargs.values())
 
 def test_basics_pure_decorator_many_args(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         f_after = pure()(f_before)
 

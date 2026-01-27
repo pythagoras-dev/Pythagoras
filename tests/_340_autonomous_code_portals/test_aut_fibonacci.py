@@ -14,7 +14,7 @@ def test_aut_fibonacci(tmpdir):
             AutonomousCodePortal
             , root_dict=tmpdir
             
-            ) as t:
+            ):
         global fibonacci
         fibonacci_a = autonomous()(fibonacci)
         assert fibonacci_a(n=10) == 55

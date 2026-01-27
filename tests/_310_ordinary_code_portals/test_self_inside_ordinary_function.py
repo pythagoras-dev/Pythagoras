@@ -8,6 +8,6 @@ def simple_o_function(a:int,b:int)->int:
 
 def test_simple(tmpdir):
     global simple_o_function
-    with pth._PortalTester(pth.OrdinaryCodePortal, root_dict=tmpdir) as t:
+    with pth._PortalTester(pth.OrdinaryCodePortal, root_dict=tmpdir):
         simple_o_function = ordinary()(simple_o_function)
         assert simple_o_function(a=11,b=1100)==1111

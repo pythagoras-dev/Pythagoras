@@ -8,7 +8,7 @@ from pythagoras._220_data_portals.data_portal_core_classes import _TOTAL_VALUES_
 
 def test_portal(tmpdir):
 
-    with _PortalTester():
+    with _PortalTester() as t:
         portal = DataPortal(tmpdir)
         description = portal.describe()
         assert description.shape == (4, 3)

@@ -12,7 +12,7 @@ def factorial(n: int) -> int:
 
 def get_factorial_address(n:int, dir):
     with _PortalTester(SwarmingPortal
-            , dir, max_n_workers=0) as t:
+            , dir, max_n_workers=0):
         new_factorial = pth.pure()(factorial)
         address = new_factorial.swarm(n=n)
         address._invalidate_cache()

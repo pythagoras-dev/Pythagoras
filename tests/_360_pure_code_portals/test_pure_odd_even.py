@@ -19,13 +19,13 @@ def isOdd(n, isEven, isOdd):
 
 
 def test_no_decorators(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
         assert isOdd(n=4,isEven=isEven, isOdd=isOdd) == False
         assert isEven(n=4,isEven=isEven, isOdd=isOdd) == True
 
 
 # def test_one_decorator_odd(tmpdir):
-#     with _PortalTester(PureCodePortal, tmpdir) as t:
+#     with _PortalTester(PureCodePortal, tmpdir):
 #         global isEven,  isOdd
 #         old_isOdd = isOdd
 #         old_isEven = isEven
@@ -39,7 +39,7 @@ def test_no_decorators(tmpdir):
 #
 #
 # def test_one_decorator_even(tmpdir):
-#     with _PortalTester(PureCodePortal, tmpdir) as t:
+#     with _PortalTester(PureCodePortal, tmpdir):
 #         global isEven,  isOdd
 #         old_isOdd = isOdd
 #         old_isEven = isEven
@@ -55,7 +55,7 @@ def test_two_decorators(tmpdir):
     # tmpdir = "YIYIYIYIYIYIYIYIYIYIYIYIYIYIYIY"
     with _PortalTester(PureCodePortal
             , tmpdir.mkdir("asd")
-            ) as t:
+            ):
         global isEven, isOdd
         old_isOdd = isOdd
         old_isEven = isEven

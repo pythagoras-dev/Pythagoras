@@ -15,12 +15,12 @@ def test_swarming_fibonacci(tmpdir):
     global fibonacci
     address = None
     with _PortalTester(SwarmingPortal
-            , tmpdir, max_n_workers=0) as t:
+            , tmpdir, max_n_workers=0):
         fibonacci = pure()(fibonacci)
         address = fibonacci.swarm(n=50)
         address._invalidate_cache()
 
     with _PortalTester(SwarmingPortal
-            , tmpdir, max_n_workers=5) as t:
+            , tmpdir, max_n_workers=5):
         address._invalidate_cache()
         assert address.get() == 12586269025

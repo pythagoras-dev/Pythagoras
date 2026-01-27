@@ -14,7 +14,7 @@ def good_f(a):
     return a
 
 def test_positional_args(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         global bad_f, good_f
 

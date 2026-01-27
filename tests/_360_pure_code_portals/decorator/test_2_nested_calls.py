@@ -13,7 +13,7 @@ def g_nstd(f_nstd):
 
 def test_2_nested_calls(tmpdir):
     global f_nstd, g_nstd
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
         assert g_nstd(f_nstd=f_nstd) == 5
         g_nstd = pure()(g_nstd)
         f_nstd = pure()(f_nstd)

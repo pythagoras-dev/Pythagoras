@@ -14,7 +14,7 @@ def f_i(f_a):
 
 def test_2_mixed_calls(tmpdir):
     global f_a, f_i
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
         assert f_a() == 5
         assert f_i(f_a) == 5
         f_a = autonomous()(f_a)

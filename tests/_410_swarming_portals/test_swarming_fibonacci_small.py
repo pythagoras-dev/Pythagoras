@@ -17,13 +17,13 @@ def test_swarming_fibonacci_small(tmpdir):
     global fibonacci
     address = None
     with _PortalTester(SwarmingPortal
-            , tmpdir, max_n_workers=0) as t:
+            , tmpdir, max_n_workers=0):
         fibonacci_new = pure()(fibonacci)
         address = fibonacci_new.swarm(n=8)
 
     with _PortalTester(SwarmingPortal
             , tmpdir, max_n_workers=7
-            ) as t:
+            ):
         address._invalidate_cache()
         result = address.get()
         assert result == 21

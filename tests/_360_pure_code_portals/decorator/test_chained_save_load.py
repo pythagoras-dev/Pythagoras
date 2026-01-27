@@ -18,7 +18,7 @@ def f4(f3,f2,f1):
     return f3(f2=f2,f1=f1)*4
 
 def test_chained_save_load(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         global f1, f2, f3, f4
 
@@ -44,7 +44,7 @@ def test_chained_save_load(tmpdir):
     address_2 = address_2.get_ValueAddr()
     address_1 = address_1.get_ValueAddr()
 
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
         del f1, f2, f3, f4
 
         new_f3 = address_3.get()

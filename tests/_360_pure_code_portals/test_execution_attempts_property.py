@@ -6,7 +6,7 @@ from pythagoras._360_pure_code_portals.pure_decorator import pure
 
 def test_execution_attempts_simple(tmpdir):
 
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         @pure(excessive_logging=True)
         def simple_func()->int:
@@ -20,7 +20,7 @@ def test_execution_attempts_simple(tmpdir):
 
 # def test_execution_attempts_weird(tmpdir):
 #
-#     with _PortalTester(PureCodePortal, tmpdir) as t:
+#     with _PortalTester(PureCodePortal, tmpdir):
 #
 #         @pure()
 #         def weird_func()->int:

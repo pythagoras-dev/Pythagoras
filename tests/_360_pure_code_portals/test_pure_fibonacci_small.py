@@ -14,7 +14,7 @@ def test_pure_fibonacci(tmpdir):
     # tmpdir = "YIYIYIYIYIYIYIYIYIYIYIYIYIYIYIYIY"
     with _PortalTester(PureCodePortal
             , tmpdir
-            ) as t:
+            ):
         global fibonacci
         fibonacci_decorated = pure()(fibonacci)
         for i in range(5):

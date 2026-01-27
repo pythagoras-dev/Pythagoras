@@ -12,7 +12,7 @@ def factorial(n:int) -> int:
         return n * factorial(n=n-1)
 
 def test_pure_factorial(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         global factorial
         factorial = pure()(factorial)

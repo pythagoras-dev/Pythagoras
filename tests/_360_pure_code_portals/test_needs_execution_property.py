@@ -12,7 +12,7 @@ def factorial(n:int) -> int:
 
 def test_needs_execution(tmpdir):
 
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
     # initialize(base_dir="TTTTTTTTTTTTTTTTTTTTT")
 
         global factorial

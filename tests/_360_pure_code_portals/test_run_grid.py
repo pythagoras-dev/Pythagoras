@@ -1,7 +1,7 @@
 
 
 # def test_run_grid(tmpdir):
-#     with _PortalTester(PureCodePortal, tmpdir) as t:
+#     with _PortalTester(PureCodePortal, tmpdir):
 #
 #         @pure()
 #         def my_sum(x: float, y:float) -> float:

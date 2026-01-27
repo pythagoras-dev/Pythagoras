@@ -14,5 +14,5 @@ def factorial(n:int) -> int:
 def test_pure_factorial_w_recursion_prevalidator(tmpdir):
     # tmpdir = "TEST_PURE_FACTORIAL_LARGE"
     with _PortalTester(PureCodePortal
-            , tmpdir) as t:
+            , tmpdir):
         assert factorial(n=10) == 3628800

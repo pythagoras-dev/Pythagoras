@@ -6,7 +6,7 @@ from pythagoras._340_autonomous_code_portals import *
 
 def test_empty_autonomous_function():
     """Test that an autonomous function with only pass statement works."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def do_nothing():
             pass
@@ -18,7 +18,7 @@ def test_empty_autonomous_function():
 
 def test_autonomous_function_with_only_docstring():
     """Test that an autonomous function with only a docstring works."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def documented():
             """This function does nothing but has a docstring."""
@@ -30,7 +30,7 @@ def test_autonomous_function_with_only_docstring():
 
 def test_autonomous_function_returning_none_explicitly():
     """Test autonomous function that explicitly returns None."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def return_none():
             return None
@@ -41,7 +41,7 @@ def test_autonomous_function_returning_none_explicitly():
 
 def test_autonomous_function_with_multiple_return_statements():
     """Test autonomous function with multiple return paths."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def conditional_return(x):
             if x > 0:
@@ -58,7 +58,7 @@ def test_autonomous_function_with_multiple_return_statements():
 
 def test_autonomous_function_with_only_literals():
     """Test autonomous function that only uses literals."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def return_constants():
             return [1, 2, 3, "hello", True, None]
@@ -69,7 +69,7 @@ def test_autonomous_function_with_only_literals():
 
 def test_autonomous_function_with_builtin_types():
     """Test autonomous function using only builtin type constructors."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def use_builtins(x):
             return {
@@ -94,7 +94,7 @@ def test_autonomous_function_with_builtin_types():
 
 def test_autonomous_function_single_expression():
     """Test autonomous function with single expression (no statements)."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def triple(x):
             return x * 3
@@ -104,7 +104,7 @@ def test_autonomous_function_single_expression():
 
 def test_autonomous_function_with_all_builtin_collections():
     """Test autonomous function creating all built-in collection types."""
-    with _PortalTester(AutonomousCodePortal) as t:
+    with _PortalTester(AutonomousCodePortal):
         @autonomous()
         def make_collections(n):
             return {

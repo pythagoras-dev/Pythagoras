@@ -14,7 +14,7 @@ def c(b,a):
     return b(a=a)*2
 
 def test_2_nested_calls(tmpdir):
-    with _PortalTester(PureCodePortal, tmpdir) as t:
+    with _PortalTester(PureCodePortal, tmpdir):
 
         global a, b, c
 
