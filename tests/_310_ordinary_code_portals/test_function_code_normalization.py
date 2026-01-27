@@ -62,9 +62,12 @@ def test_inclosed():
 
 
 def a3(x): # a sample function to test
-    if x>0: return x*x*x
-    elif x<100_000_000: return -x*x*x
-    else: return 0
+    if x>0:
+        return x*x*x
+    elif x<100_000_000:
+        return -x*x*x
+    else:
+        return 0
 
 def test_inclosed2():
     global a3
@@ -110,8 +113,10 @@ def a4(x:int)->float:
     if x>0:
         result:float =  x*x*x
         return result
-    elif x<100_000_000: return -x*x*x
-    else: return 0
+    elif x<100_000_000:
+        return -x*x*x
+    else:
+        return 0
 
 def test_type_annotations():
     global a4

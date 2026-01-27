@@ -24,8 +24,10 @@ def test_basic_save_load_pure_decorator_fn(tmpdir):
 
         assert len(t.portal.global_value_store) == 4
 
-        for i in range(3): address = ValueAddr(my_function)
-        for i in range(3): assert address.get()() == 2024
+        for i in range(3):
+            address = ValueAddr(my_function)
+        for i in range(3):
+            assert address.get()() == 2024
 
         assert len(t.portal.global_value_store) == 4
         assert len(t.portal._execution_results) == 1

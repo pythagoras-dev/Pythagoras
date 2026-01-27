@@ -11,8 +11,12 @@ from pythagoras import (
     get_noncurrent_portals
 )
 
-class PortalA(BasicPortal): pass
-class PortalB(BasicPortal): pass
+class PortalA(BasicPortal):
+    pass
+
+
+class PortalB(BasicPortal):
+    pass
 
 def test_strict_type_checking(tmpdir):
     with _PortalTester():

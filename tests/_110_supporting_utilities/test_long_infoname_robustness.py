@@ -53,7 +53,10 @@ def test_function_uniqueness():
     assert "foo" in name
     
 def test_class_uniqueness():
-    class MyClass: pass
+
+    class MyClass:
+        pass
+
     name = get_long_infoname(MyClass)
     
     # Checks for module name
