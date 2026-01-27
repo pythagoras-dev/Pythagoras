@@ -1,11 +1,16 @@
+"""Tests for get_noncurrent_portals function."""
 from pythagoras import _PortalTester, BasicPortal, get_noncurrent_portals
 
 
 class HelperPortal(BasicPortal):
+    """BasicPortal subclass for testing."""
+
     def __init__(self, path="default"):
         super().__init__(root_dict=path)
 
+
 def test_get_noncurrent_portals_logic(tmp_path):
+    """Verify get_noncurrent_portals returns correct portals in various states."""
     with _PortalTester():
         # Case 1: No portals
         assert len(get_noncurrent_portals()) == 0

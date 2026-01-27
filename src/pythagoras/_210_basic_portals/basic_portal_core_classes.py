@@ -415,13 +415,13 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return len(self.get_known_portals(required_portal_type))
 
     def get_known_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
-        """Get a list of all portals registered in the system.
+        """Get all portals registered in the system.
 
         Args:
             required_portal_type: Expected portal type for validation.
 
         Returns:
-            All portal instances currently known to the system.
+            Set of all portal instances currently known to the system.
 
         Raises:
             TypeError: If any known portal is not an instance of required_portal_type.
@@ -558,15 +558,13 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return self.portal_stack.depth()
 
     def get_nonactive_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[BasicPortal]:
-        """Get a list of all portals that are not in the active stack.
+        """Get all portals that are not in the active stack.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any non-active portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
-            A list of portal instances that are not currently in the active portal stack.
+            Set of portal instances not currently in the active portal stack.
 
         Raises:
             TypeError: If any non-active portal is not an instance of required_portal_type.
@@ -586,18 +584,16 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return candidates
 
     def get_noncurrent_portals(self, required_portal_type: type[PortalType] = BasicPortal) -> set[BasicPortal]:
-        """Get a list of all known portals that are not the current portal.
+        """Get all known portals that are not the current portal.
 
         The current portal is the one at the top of the active stack.
         If the stack is empty, all known portals are returned.
 
         Args:
-            required_portal_type: Class to validate portals. Default is BasicPortal.
-                If any non-current portal is not an instance of this class (or subclass),
-                a TypeError is raised.
+            required_portal_type: Expected portal type for validation.
 
         Returns:
-            A list of all known portal instances but the current one.
+            Set of all known portal instances except the current one.
 
         Raises:
             TypeError: If any non-current portal is not an instance of required_portal_type.
@@ -759,8 +755,8 @@ class PortalAwareObject(CacheablePropertiesMixin,
             portal: The portal to link the new object to.
 
         Returns:
-            Self if the portal is already linked to this object, otherwise
-            a new instance of this object linked to the specified portal.
+            This instance if already linked to the specified portal, otherwise
+            a new instance linked to the specified portal.
 
         Raises:
             TypeError: If portal is not a BasicPortal instance.

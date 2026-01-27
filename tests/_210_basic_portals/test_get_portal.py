@@ -1,3 +1,4 @@
+"""Tests for get_current_portal function."""
 from pythagoras import (
     BasicPortal,
     _PortalTester,
@@ -7,7 +8,7 @@ import pytest
 
 
 def test_portal_nested(tmpdir):
-
+    """Verify get_current_portal returns correct portal in nested contexts."""
     with _PortalTester():
 
         portal = BasicPortal(tmpdir.mkdir("p1"))

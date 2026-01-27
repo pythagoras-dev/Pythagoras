@@ -1,4 +1,4 @@
-
+"""Tests for strict portal type checking in accessor functions."""
 import pytest
 from pythagoras import (
     BasicPortal,
@@ -11,14 +11,19 @@ from pythagoras import (
     get_noncurrent_portals
 )
 
+
 class PortalA(BasicPortal):
+    """Test portal subclass A."""
     pass
 
 
 class PortalB(BasicPortal):
+    """Test portal subclass B."""
     pass
 
+
 def test_strict_type_checking(tmpdir):
+    """Verify accessor functions enforce strict portal type matching."""
     with _PortalTester():
         pA = PortalA(tmpdir + "/a")
         pB = PortalB(tmpdir + "/b")

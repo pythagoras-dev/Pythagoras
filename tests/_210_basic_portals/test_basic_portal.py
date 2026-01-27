@@ -1,3 +1,4 @@
+"""Tests for BasicPortal core functionality."""
 from pythagoras._210_basic_portals import *
 from pythagoras._210_basic_portals import _PortalTester
 from pythagoras._210_basic_portals.basic_portal_core_classes import (
@@ -7,6 +8,7 @@ import pytest
 
 
 def test_portal(tmpdir):
+    """Verify basic portal creation, registration, and activation."""
     with _PortalTester():
 
         portal = BasicPortal(tmpdir.mkdir("awer"))
@@ -36,6 +38,7 @@ def test_portal(tmpdir):
 
 
 def test_clear_all_portals(tmpdir):
+    """Verify _clear_all_portals resets all portal state."""
     with _PortalTester():
         portal = BasicPortal(tmpdir)
         portal2 = BasicPortal(tmpdir)
@@ -50,7 +53,7 @@ def test_clear_all_portals(tmpdir):
 
 
 def test_portal_nested(tmpdir):
-
+    """Verify nested portal contexts track active/current state correctly."""
     with _PortalTester():
 
         portal = BasicPortal(tmpdir.mkdir("p1"))

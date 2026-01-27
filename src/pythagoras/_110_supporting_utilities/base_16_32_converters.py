@@ -27,7 +27,7 @@ def convert_base16_to_base32(hexdigest: str) -> str:
     Raises:
         ValueError: If ``hexdigest`` is not a valid hexadecimal string.
 
-    Examples:
+    Example:
         >>> convert_base16_to_base32("ff")
         '7v'
     """
@@ -53,6 +53,10 @@ def convert_int_to_base32(n: int) -> str:
 
     Returns:
         The base-32 string representation of the integer.
+
+    Raises:
+        TypeError: If n is not an integer.
+        ValueError: If n is negative.
     """
     if not isinstance(n, int):
         raise TypeError(f"n must be an int, got {get_long_infoname(n)}")

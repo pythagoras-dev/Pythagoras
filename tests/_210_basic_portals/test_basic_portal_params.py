@@ -1,9 +1,11 @@
+"""Tests for BasicPortal parameter serialization via mixinforge."""
 import mixinforge
 
 from pythagoras import _PortalTester, BasicPortal
 
 
 def test_portal(tmpdir):
+    """Verify portal parameters serialize and deserialize correctly."""
     with _PortalTester():
 
         portal1 = BasicPortal(tmpdir.mkdir("awer"))

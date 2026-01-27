@@ -1,4 +1,4 @@
-
+"""Tests for portal type validation in accessor functions."""
 import pytest
 from pythagoras import (
     BasicPortal,
@@ -11,10 +11,14 @@ from pythagoras import (
     get_noncurrent_portals
 )
 
+
 class NotAPortal:
+    """Non-portal class for testing type validation."""
     pass
 
+
 def test_validation_errors(tmpdir):
+    """Verify accessor functions raise TypeError for invalid portal types."""
     with _PortalTester():
         # Prepare some invalid inputs
         # We need a portal instance for one of the checks

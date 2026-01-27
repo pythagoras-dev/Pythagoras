@@ -1,3 +1,4 @@
+"""Tests for BasicPortal.describe() method."""
 from pythagoras import BasicPortal
 from pythagoras import _PortalTester
 from pythagoras._210_basic_portals.basic_portal_core_classes import (
@@ -7,7 +8,7 @@ from importlib import metadata
 
 
 def test_portal(tmpdir):
-
+    """Verify describe() returns DataFrame with correct shape and values."""
     with _PortalTester():
         portal = BasicPortal(tmpdir)
         description = portal.describe()

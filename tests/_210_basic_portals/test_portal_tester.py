@@ -1,3 +1,4 @@
+"""Tests for _PortalTester context manager."""
 import pytest
 
 from pythagoras import (
@@ -11,6 +12,7 @@ from pythagoras import (
 
 
 def test_portal_tester_no_params(tmpdir):
+    """Verify _PortalTester clears and restores registry state without parameters."""
     portal1 = BasicPortal(tmpdir)
     portal1.__enter__()
     with _PortalTester():
@@ -32,6 +34,7 @@ def test_portal_tester_no_params(tmpdir):
     assert measure_active_portals_stack() == 0
 
 def test_portal_tester_with_params(tmpdir):
+    """Verify _PortalTester creates and manages portal when given parameters."""
     portal1 = BasicPortal(tmpdir)
     portal1.__enter__()
     with _PortalTester(BasicPortal, tmpdir) as portal_tester:
@@ -50,6 +53,7 @@ def test_portal_tester_with_params(tmpdir):
     assert measure_active_portals_stack() == 0
 
 def test_nested_portal_testers(tmpdir):
+    """Verify nested _PortalTester instances raise an exception."""
     with _PortalTester(BasicPortal, tmpdir) as t1:
         with pytest.raises(Exception):
             with _PortalTester(BasicPortal, tmpdir) as t2:

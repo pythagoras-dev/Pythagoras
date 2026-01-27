@@ -59,7 +59,10 @@ from .hash_signature import get_hash_signature
 # --- helpers ------------------------------------------------------
 
 def _read_first(path: str) -> str | None:
-    """Safely read the first PTH_METADATA_READ_LIMIT bytes from a file."""
+    """Read up to PTH_METADATA_READ_LIMIT bytes from a file.
+
+    Returns None if the file cannot be read or is empty.
+    """
     try:
         with open(path, "r", encoding="utf-8", errors="ignore") as fh:
             return fh.read(PTH_METADATA_READ_LIMIT).strip() or None
@@ -67,7 +70,7 @@ def _read_first(path: str) -> str | None:
         return None
 
 def _run(cmd: list[str]) -> str | None:
-    """Execute a command with timeout and return its stdout."""
+    """Execute a command and return its stdout, or None on any failure."""
     try:
         result = subprocess.check_output(cmd, text=True, timeout=PTH_METADATA_TIMEOUT)
         result = result.strip()

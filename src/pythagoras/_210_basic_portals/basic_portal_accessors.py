@@ -26,13 +26,13 @@ def count_known_portals(required_portal_type: type[PortalType] = BasicPortal) ->
 
 
 def get_known_portals(required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
-    """Get a list of all known portals.
+    """Get all known portals.
 
     Args:
         required_portal_type: Expected portal type for validation.
 
     Returns:
-        All portal instances currently known to the system.
+        Set of all portal instances currently known to the system.
 
     Raises:
         TypeError: If any known portal is not an instance of required_portal_type.
@@ -89,13 +89,13 @@ def get_current_portal() -> PortalType:
 
 
 def get_nonactive_portals(required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
-    """Get a list of all portals that are not in the active stack.
+    """Get all portals that are not in the active stack.
 
     Args:
         required_portal_type: Expected portal type for validation.
 
     Returns:
-        Portal instances that are not currently in the active portal stack.
+        Set of portal instances not currently in the active portal stack.
 
     Raises:
         TypeError: If any non-active portal is not an instance of required_portal_type.
@@ -104,13 +104,13 @@ def get_nonactive_portals(required_portal_type: type[PortalType] = BasicPortal) 
 
 
 def get_noncurrent_portals(required_portal_type: type[PortalType] = BasicPortal) -> set[PortalType]:
-    """Get a list of all portals that are not the current portal.
+    """Get all portals that are not the current portal.
 
     Args:
         required_portal_type: Expected portal type for validation.
 
     Returns:
-        Portal instances that are not currently the active/current portal.
+        Set of all known portal instances of a given type, that are not the current portal.
 
     Raises:
         TypeError: If any non-current portal is not an instance of required_portal_type.

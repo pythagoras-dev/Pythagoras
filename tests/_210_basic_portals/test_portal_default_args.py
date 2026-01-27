@@ -1,4 +1,4 @@
-
+"""Tests for portal accessor functions with default arguments."""
 import pytest
 from pythagoras._210_basic_portals.basic_portal_core_classes import _clear_all_portals, BasicPortal
 from pythagoras import (
@@ -11,7 +11,9 @@ from pythagoras import (
     get_noncurrent_portals
 )
 
+
 def test_default_args_behavior(tmpdir):
+    """Verify accessor functions work correctly with default arguments."""
     _clear_all_portals()
     # Create a portal
     p1 = BasicPortal(tmpdir)
