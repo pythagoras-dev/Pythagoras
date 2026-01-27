@@ -6,7 +6,6 @@ from multiprocessing import get_context
 
 
 def test_date_portal_params(tmpdir):
-    the_dir = tmpdir
     with _PortalTester():
 
         portal1 = DataPortal(tmpdir.mkdir("awer"))

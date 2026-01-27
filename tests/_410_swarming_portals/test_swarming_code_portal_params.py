@@ -4,7 +4,6 @@ from pythagoras import _PortalTester, SwarmingPortal
 
 
 def test_swarming_portal_params(tmpdir):
-    the_dir = tmpdir
     with _PortalTester():
 
         portal1 = SwarmingPortal(root_dict=tmpdir.mkdir("pure"), max_n_workers=0)

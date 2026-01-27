@@ -7,7 +7,6 @@ import pytest
 
 
 def test_portal(tmpdir):
-    the_dir = tmpdir
     with _PortalTester():
 
         portal = BasicPortal(tmpdir.mkdir("awer"))

@@ -4,7 +4,6 @@ from pythagoras import _PortalTester, LoggingCodePortal
 
 
 def test_portal(tmpdir):
-    the_dir = tmpdir
     with _PortalTester():
 
         portal1 = LoggingCodePortal(tmpdir.mkdir("awer"))

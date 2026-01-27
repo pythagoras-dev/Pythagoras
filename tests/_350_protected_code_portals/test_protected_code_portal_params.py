@@ -4,7 +4,6 @@ from pythagoras import _PortalTester, ProtectedCodePortal
 
 
 def test_portal(tmpdir):
-    the_dir = tmpdir
     with _PortalTester():
 
         portal1 = ProtectedCodePortal(tmpdir.mkdir("edede"))
