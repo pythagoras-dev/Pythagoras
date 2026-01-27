@@ -1,4 +1,5 @@
-import inspect, autopep8
+import inspect
+import autopep8
 
 from pythagoras import _PortalTester
 from pythagoras._310_ordinary_code_portals import get_normalized_fn_source_code_str

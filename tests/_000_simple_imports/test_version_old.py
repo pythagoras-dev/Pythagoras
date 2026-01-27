@@ -26,7 +26,8 @@ def test_version_not_empty():
 
 def test_version_format():
     """Test that __version__ follows semantic versioning format (X.Y.Z or X.Y.Z.something)."""
-    import pythagoras, re
+    import pythagoras
+    import re
     version_pattern = r'^\d+\.\d+\.\d+(?:\.\w+|\w+\d*)?$'
     assert re.match(version_pattern, pythagoras.__version__), f"Version '{pythagoras.__version__}' does not match expected format"
 
