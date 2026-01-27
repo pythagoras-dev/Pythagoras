@@ -346,7 +346,7 @@ def _visit_portal(obj: Any, portal: DataPortal) -> None:
     def pre_process_object(obj: Any) -> None:
         for item in find_instances_inside_composite_object(
                 obj, (PortalAwareObject,BasicPortal, HashAddr), deep_search=False):
-            if not id(item) in all_items:
+            if id(item) not in all_items:
                 all_items[id(item)] = item
                 queued_items_ids.add(id(item))
 
