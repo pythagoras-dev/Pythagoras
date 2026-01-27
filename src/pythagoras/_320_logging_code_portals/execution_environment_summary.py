@@ -20,7 +20,6 @@ from typing import Dict
 from getpass import getuser
 from datetime import datetime
 from mixinforge import is_executed_in_notebook
-from .._210_basic_portals import BasicPortal
 
 
 def build_execution_environment_summary() -> Dict:

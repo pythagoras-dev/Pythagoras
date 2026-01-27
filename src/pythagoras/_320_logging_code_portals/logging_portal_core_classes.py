@@ -52,7 +52,6 @@ Excessive Logging Mode:
 from __future__ import annotations
 
 import sys
-import traceback
 from functools import cached_property
 from typing import Callable, Any, Final
 

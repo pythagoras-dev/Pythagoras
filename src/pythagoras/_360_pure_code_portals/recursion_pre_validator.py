@@ -5,7 +5,6 @@ recursive calls, e.g., Fibonacci-like functions. The pre-validator returns
 either a success flag (skip execution), a call signature to be executed first,
 or None to proceed as usual.
 """
-from unittest import result
 
 import pythagoras as pth
 from .._220_data_portals import *

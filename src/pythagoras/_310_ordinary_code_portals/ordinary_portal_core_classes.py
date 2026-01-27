@@ -15,8 +15,6 @@ import pandas as pd
 from persidict import PersiDict, SafeStrTuple
 
 from .function_error_exception import FunctionError
-from .._210_basic_portals import PortalAwareObject
-from .._220_data_portals import DataPortal, ValueAddr
 from .._230_tunable_portals import TunablePortal, TunableObject
 from .code_normalizer import _get_normalized_fn_source_code_str_impl
 from .function_processing import get_function_name_from_source

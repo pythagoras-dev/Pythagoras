@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import time
 
-from typing import Callable, Any, TypeAlias, Final
+from typing import Callable, Any, Final
 
 
 from persidict import WriteOnceDict
