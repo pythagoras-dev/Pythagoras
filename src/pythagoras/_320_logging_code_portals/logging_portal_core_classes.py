@@ -785,12 +785,12 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             LoggingFnExecutionFrame: This frame instance for use as a context var.
         """
         if self.context_used:
-            raise RuntimeError(f"An instance of LoggingFnExecutionFrame can be used only once.")
+            raise RuntimeError("An instance of LoggingFnExecutionFrame can be used only once.")
         self.context_used = True
         if self.exception_counter != 0:
-            raise RuntimeError(f"An instance of LoggingFnExecutionFrame can be used only once.")
+            raise RuntimeError("An instance of LoggingFnExecutionFrame can be used only once.")
         if self.event_counter != 0:
-            raise RuntimeError(f"An instance of LoggingFnExecutionFrame can be used only once.")
+            raise RuntimeError("An instance of LoggingFnExecutionFrame can be used only once.")
         self.portal.__enter__()
         if isinstance(self.output_capturer, OutputCapturer):
             self.output_capturer.__enter__()

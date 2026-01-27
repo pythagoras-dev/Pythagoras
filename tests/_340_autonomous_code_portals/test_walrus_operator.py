@@ -33,7 +33,7 @@ def test_walrus_in_while_condition():
 
     # item should be recognized as a local variable
     assert 'item' in analyzer.names.local, f"Expected 'item' in locals, got: {analyzer.names.local}"
-    assert 'item' not in analyzer.names.unclassified_deep, f"'item' should not be unclassified"
+    assert 'item' not in analyzer.names.unclassified_deep, "'item' should not be unclassified"
 
 
 def test_walrus_in_list_comprehension():
@@ -75,7 +75,7 @@ def test_walrus_simple_assignment():
 
     # x should be recognized as a local variable
     assert 'x' in analyzer.names.local, f"Expected 'x' in locals, got: {analyzer.names.local}"
-    assert 'x' not in analyzer.names.unclassified_deep, f"'x' should not be unclassified"
+    assert 'x' not in analyzer.names.unclassified_deep, "'x' should not be unclassified"
 
 
 def test_walrus_multiple_assignments():

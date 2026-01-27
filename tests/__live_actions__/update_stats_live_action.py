@@ -76,7 +76,7 @@ def test_live_stats_update(pytestconfig):
     print("=" * 70)
     print("📊 STATS UPDATE (Live Action on Project)")
     print("=" * 70)
-    print(f"✓ Validation successful:")
+    print("✓ Validation successful:")
     print(f"  • README.md: {status_readme}")
     # print(f"  • index.rst: {status_rst}")
     print("=" * 70)

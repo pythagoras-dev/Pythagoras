@@ -27,7 +27,7 @@ def test_odd_even_no_decorators_logging(tmpdir):
 def test_odd_even_two_decorators_autonomous(tmpdir):
     # tmpdir = "ODD_EVEN_TWO_DECORATORS_LOGGING_" + str(int(time.time()))
     with _PortalTester(AutonomousCodePortal, root_dict=tmpdir
-            ) as l:
+            ) as t:
         global isEven, isOdd
         N=5
         for i in range(N):
@@ -45,24 +45,24 @@ def test_odd_even_two_decorators_autonomous(tmpdir):
             isEven = oldIsEven
             isOdd = oldIsOdd
 
-        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="bool"]) == 2
-        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="int"]) == N
-        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
+        assert len([k for k in t.portal.global_value_store.keys() if k[2]=="bool"]) == 2
+        assert len([k for k in t.portal.global_value_store.keys() if k[2]=="int"]) == N
+        assert len([k for k in t.portal.global_value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
 
 
 
 def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir):
     # tmpdir = "ODD_EVEN_TWO_DECORATORS_LOGGING_" + str(int(time.time()))
-    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir) as l:
+    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir) as t:
         global isEven, isOdd
         N=5
         for i in range(N):
             oldIsEven = isEven
             oldIsOdd = isOdd
 
-            isEven = autonomous(excessive_logging=True, portal=l.portal)(isEven)
+            isEven = autonomous(excessive_logging=True, portal=t.portal)(isEven)
             assert isinstance(isEven, AutonomousFn)
-            isOdd = autonomous(excessive_logging=True, portal=l.portal)(isOdd)
+            isOdd = autonomous(excessive_logging=True, portal=t.portal)(isOdd)
             assert isinstance(isOdd, AutonomousFn)
 
             new_isOdd = isOdd.fix_kwargs(isEven=isEven, isOdd=isOdd)
@@ -75,7 +75,7 @@ def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir):
             isEven = oldIsEven
             isOdd = oldIsOdd
 
-        assert l.portal.get_number_of_linked_functions() == 4
-        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="bool"]) == 2
-        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="int"]) == N
-        assert len([k for k in l.portal.global_value_store.keys() if k[2]=="packedkwargs_len_3"]) == N
+        assert t.portal.get_number_of_linked_functions() == 4
+        assert len([k for k in t.portal.global_value_store.keys() if k[2]=="bool"]) == 2
+        assert len([k for k in t.portal.global_value_store.keys() if k[2]=="int"]) == N
+        assert len([k for k in t.portal.global_value_store.keys() if k[2]=="packedkwargs_len_3"]) == N

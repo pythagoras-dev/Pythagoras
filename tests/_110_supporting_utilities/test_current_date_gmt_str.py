@@ -106,7 +106,7 @@ def test_month_abbreviations_constant():
     
     expected = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
                 "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
-    assert _MONTH_ABBREVIATIONS == expected, f"Month abbreviations mismatch"
+    assert _MONTH_ABBREVIATIONS == expected, "Month abbreviations mismatch"
     
     # Verify all are 3-letter strings with proper capitalization
     for abbrev in _MONTH_ABBREVIATIONS:
