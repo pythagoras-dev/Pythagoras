@@ -33,6 +33,5 @@ Note:
     (https://pypi.org/project/RestrictedPython/) is planned.
 """
 
-from .safe_portal_core_classes import (
-    SafeCodePortal, SafeFn, SafeFnCallSignature)
-from .safe_decorator import safe
+from .safe_portal_core_classes import *
+from .safe_decorator import *

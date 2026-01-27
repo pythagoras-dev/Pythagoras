@@ -27,7 +27,6 @@ Decorator:
 - autonomous: Convert functions to AutonomousFn instances
 """
 
-from .autonomous_portal_core_classes import (
-    AutonomousCodePortal, AutonomousFn, AutonomousFnCallSignature)
-from .autonomous_decorators import autonomous
+from .autonomous_portal_core_classes import *
+from .autonomous_decorators import *
 

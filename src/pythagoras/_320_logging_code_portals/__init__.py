@@ -51,5 +51,5 @@ Logging utilities:
 
 from .logging_portal_core_classes import *
 from .execution_environment_summary import *
-from .logging_decorator import logging
+from .logging_decorator import *
 
