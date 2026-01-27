@@ -7,7 +7,8 @@ no defaults, no closures, etc.), and enforce these constraints.
 
 import ast
 import textwrap
-import types, inspect
+import types
+import inspect
 from functools import cache
 from typing import Callable
 

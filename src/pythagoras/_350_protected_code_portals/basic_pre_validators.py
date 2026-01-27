@@ -144,7 +144,8 @@ def _check_python_package_and_install_if_needed(
     """
     if not isinstance(package_name, str):
         raise TypeError("package_name must be a str")
-    import importlib, time
+    import importlib
+    import time
     try:
         importlib.import_module(package_name)
         return pth.VALIDATION_SUCCESSFUL
