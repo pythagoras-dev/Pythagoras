@@ -29,6 +29,5 @@ Thread Safety:
 
 from .basic_portal_core_classes import *
 from .basic_portal_accessors import *
-from .default_portal_base_dir import get_default_portal_base_dir
-from .portal_tester import _PortalTester
-# from .portal_tracker import PortalTracker
+from .default_portal_base_dir import *
+from .portal_tester import _PortalTester as _PortalTester
