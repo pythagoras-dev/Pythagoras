@@ -26,4 +26,4 @@ def test_one_decorator_odd(tmpdir):
             , tmpdir, max_n_workers=0):
         with pytest.raises(Exception):
             isOdd = pure()(isOdd)
-            address = isOdd.swarm(n=400)
+            isOdd.swarm(n=400)

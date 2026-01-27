@@ -154,8 +154,8 @@ def test_lazy_registration_idempotent(tmpdir):
         # Trigger registration multiple times
         _ = pure_fn.portal
         _ = pure_fn.portal
-        result1 = pure_fn(x=2)
-        result2 = pure_fn(x=3)
+        pure_fn(x=2)
+        pure_fn(x=3)
 
         # Still only registered once
         assert portal.get_number_of_linked_functions() == 1

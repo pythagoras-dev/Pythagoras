@@ -117,7 +117,7 @@ def test_value_address_ready_with_two_portals(tmpdir):
             assert len(portal1.global_value_store) == 1
             assert len(portal2.global_value_store) == 3
 
-            addr1_10_new = copy(addr1_10)
+            copy(addr1_10)
             assert len(portal1.global_value_store) == 1
             assert len(portal2.global_value_store) == 3
 
@@ -148,7 +148,7 @@ def test_value_address_get_with_two_portals(tmpdir):
             assert len(portal1.global_value_store) == 2
             assert len(portal2.global_value_store) == 3
 
-            addr1_10_new = copy(addr1_10)
+            copy(addr1_10)
             assert len(portal1.global_value_store) == 2
             assert len(portal2.global_value_store) == 3
 

@@ -55,7 +55,7 @@ def test_log_event_inside_function():
             return "result"
 
         with portal:
-            result = fn_with_event()
+            fn_with_event()
 
         # Get the call signature and check events
         sig = fn_with_event.get_signature({})
@@ -91,7 +91,7 @@ def test_log_event_with_multiple_arguments():
             return "result"
 
         with portal:
-            result = fn_with_complex_event()
+            fn_with_complex_event()
 
         sig = fn_with_complex_event.get_signature({})
         events = sig.events
@@ -120,7 +120,7 @@ def test_log_exception_inside_function():
             return "result"
 
         with portal:
-            result = fn_with_explicit_exception_log()
+            fn_with_explicit_exception_log()
 
         # Get the call signature and check crashes
         sig = fn_with_explicit_exception_log.get_signature({})
@@ -159,7 +159,7 @@ def test_multiple_events_in_same_function():
             return "result"
 
         with portal:
-            result = fn_with_multiple_events()
+            fn_with_multiple_events()
 
         sig = fn_with_multiple_events.get_signature({})
         events = sig.events
@@ -174,8 +174,8 @@ def test_log_event_in_multiple_functions():
         portal = tester.portal
 
         with portal:
-            result_a = fn_with_event_a()
-            result_b = fn_with_event_b()
+            fn_with_event_a()
+            fn_with_event_b()
 
         # Check function A events
         sig_a = fn_with_event_a.get_signature({})
@@ -231,7 +231,7 @@ def test_log_event_with_environment_summary():
             return "result"
 
         with portal:
-            result = fn_with_event()
+            fn_with_event()
 
         sig = fn_with_event.get_signature({})
         events = sig.events
@@ -242,7 +242,7 @@ def test_log_event_with_environment_summary():
         latest_event = events[list(events.keys())[-1]]
 
         # Check if environment summary is included (may be nested in dict)
-        has_env_summary = any(
+        any(
             "execution_environment_summary" in str(k) or
             "execution_environment_summary" in str(v)
             for k, v in latest_event.items()
@@ -293,7 +293,7 @@ def test_log_event_without_portal_context():
             return "result"
 
         # Call without explicit portal context - decorator should handle it
-        result = fn_with_event()
+        fn_with_event()
 
         sig = fn_with_event.get_signature({})
         events = sig.events
@@ -321,7 +321,7 @@ def test_multiple_exceptions_logged_separately():
             return "result"
 
         with portal:
-            result = fn_with_multiple_exceptions()
+            fn_with_multiple_exceptions()
 
         sig = fn_with_multiple_exceptions.get_signature({})
         crashes = sig.crashes
