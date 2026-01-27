@@ -9,7 +9,7 @@ from typing import Any
 import joblib.hashing
 
 from .base_16_32_converters import convert_base16_to_base32
-from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH, PTH_HASH_TYPE
+from .constants_for_signatures_and_converters import PTH_MAX_SIGNATURE_LENGTH, PTH_HASH_TYPE
 
 
 def get_base16_hash_signature(x: Any) -> str:

@@ -8,8 +8,8 @@ Notes:
   between textual bases; zero is represented as the single character ``"0"``.
 """
 
-from .constants_for_signatures_converters import PTH_BASE32_ALLOWED
-from .constants_for_signatures_converters import PTH_BASE32_ALPHABET
+from .constants_for_signatures_and_converters import PTH_BASE32_ALLOWED
+from .constants_for_signatures_and_converters import PTH_BASE32_ALPHABET
 from .long_infoname import get_long_infoname
 
 

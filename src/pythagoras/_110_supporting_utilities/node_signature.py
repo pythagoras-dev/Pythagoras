@@ -48,9 +48,9 @@ from typing import Callable
 from urllib import request
 from urllib.error import URLError, HTTPError
 
-from .constants_for_signatures_converters import PTH_METADATA_TIMEOUT, PTH_METADATA_READ_LIMIT, PTH_APP_NAME
-from .constants_for_signatures_converters import SMBIOS_UUID_PATH, PTH_NODE_SIGNATURE_VERSION
-from .hash_signatures import get_hash_signature
+from .constants_for_signatures_and_converters import PTH_METADATA_TIMEOUT, PTH_METADATA_READ_LIMIT, PTH_APP_NAME
+from .constants_for_signatures_and_converters import SMBIOS_UUID_PATH, PTH_NODE_SIGNATURE_VERSION
+from .hash_signature import get_hash_signature
 
 
 # --- helpers ------------------------------------------------------

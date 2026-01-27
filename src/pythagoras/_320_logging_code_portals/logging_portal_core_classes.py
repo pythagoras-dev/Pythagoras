@@ -78,7 +78,7 @@ from .._110_supporting_utilities.current_date_gmt_str import (
 from .._320_logging_code_portals.execution_environment_summary import (
     build_execution_environment_summary, add_execution_environment_summary)
 from .._110_supporting_utilities import get_long_infoname
-from .._110_supporting_utilities.random_signatures import (
+from .._110_supporting_utilities.random_signature import (
     get_random_signature)
 
 

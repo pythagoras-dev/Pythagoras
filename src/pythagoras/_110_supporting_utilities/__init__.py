@@ -16,10 +16,10 @@ Key exports:
     convert_base16_to_base32: Convert hex strings to project base32 encoding.
 """
 
-from .constants_for_signatures_converters import *
+from .constants_for_signatures_and_converters import *
 from .base_16_32_converters import *
 from .current_date_gmt_str import *
-from .hash_signatures import *
+from .hash_signature import *
 from .node_signature import *
-from .random_signatures import *
+from .random_signature import *
 from .long_infoname import *

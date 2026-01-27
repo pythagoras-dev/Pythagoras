@@ -30,7 +30,7 @@ from .._110_supporting_utilities.current_date_gmt_str import (
 from .._320_logging_code_portals.execution_environment_summary import (
     add_execution_environment_summary)
 from mixinforge import is_executed_in_notebook
-from .._110_supporting_utilities.random_signatures import (
+from .._110_supporting_utilities.random_signature import (
     get_random_signature)
 
 

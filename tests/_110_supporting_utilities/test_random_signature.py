@@ -1,8 +1,8 @@
 from persidict import replace_unsafe_chars
 
-from pythagoras._110_supporting_utilities.constants_for_signatures_converters import (
+from pythagoras._110_supporting_utilities.constants_for_signatures_and_converters import (
     PTH_MAX_SIGNATURE_LENGTH, PTH_BASE32_ALPHABET)
-from pythagoras._110_supporting_utilities.random_signatures import (
+from pythagoras._110_supporting_utilities.random_signature import (
     get_random_signature)
 
 def test_random_id():

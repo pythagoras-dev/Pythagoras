@@ -8,7 +8,7 @@ length when encoded and truncated.
 import secrets
 
 from .base_16_32_converters import convert_int_to_base32
-from .constants_for_signatures_converters import PTH_MAX_SIGNATURE_LENGTH
+from .constants_for_signatures_and_converters import PTH_MAX_SIGNATURE_LENGTH
 
 def get_random_signature() -> str:
     """Generate a short, random base32 signature string.
