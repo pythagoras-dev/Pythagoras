@@ -40,7 +40,10 @@ contract and may change without notice.
 """
 
 from __future__ import annotations
-import os, platform, subprocess, uuid
+import os
+import platform
+import subprocess
+import uuid
 from functools import cache
 from pathlib import Path
 import re
