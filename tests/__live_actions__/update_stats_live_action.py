@@ -42,7 +42,7 @@ def test_live_stats_update(pytestconfig):
     # Generate fresh statistics
     analysis = analyze_project(project_root, verbose=False)
     markdown_content = analysis.to_markdown()
-    rst_content = analysis.to_rst()
+    analysis.to_rst()
 
     # original_index_rst = index_rst_content
 
