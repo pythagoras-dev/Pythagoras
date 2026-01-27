@@ -6,8 +6,6 @@ support Content-Addressable Storage (CAS) and distributed execution across
 Pythagoras.
 
 Key exports:
-    CacheablePropertiesMixin: Mixin class providing property caching with
-        invalidation support.
     get_hash_signature: Compute a short, URL-safe content hash for any object.
     get_node_signature: Derive a stable identifier for the current compute node.
     get_random_signature: Generate a cryptographically secure random ID.
