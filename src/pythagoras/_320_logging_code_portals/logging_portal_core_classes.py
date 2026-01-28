@@ -135,7 +135,7 @@ class LoggingFn(OrdinaryFn):
         """Whether rich per-execution logging is enabled for this function.
 
         Returns:
-            bool: True if excessive logging is enabled for this function (from
+            True if excessive logging is enabled for this function (from
             its own config or inherited via the portal); False otherwise.
         """
         value = self._get_config_setting("excessive_logging", self.portal)
@@ -150,8 +150,8 @@ class LoggingFn(OrdinaryFn):
                 be raw or ValueAddr; they will be normalized and packed.
 
         Returns:
-            LoggingFnCallSignature: A signature object uniquely identifying
-            the combination of function and arguments.
+            A signature object uniquely identifying the combination of
+            function and arguments.
         """
         return LoggingFnCallSignature(self, arguments)
 
@@ -163,7 +163,7 @@ class LoggingFn(OrdinaryFn):
             **kwargs: Keyword arguments to pass to the wrapped function.
 
         Returns:
-            Any: The result returned by the wrapped function.
+            The result returned by the wrapped function.
 
         Side Effects:
             - Registers an execution attempt and, if enabled, captures
@@ -183,8 +183,7 @@ class LoggingFn(OrdinaryFn):
         """The LoggingCodePortal associated with this function.
 
         Returns:
-            LoggingCodePortal: The portal used for storage and logging during
-            execution.
+            The portal used for storage and logging during execution.
         """
         return super().portal
 
@@ -216,6 +215,15 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
     _kwargs_addr: ValueAddr
 
     def __init__(self, fn:LoggingFn, arguments:dict):
+        """Initialize a call signature for a LoggingFn with specific arguments.
+
+        Args:
+            fn: The LoggingFn instance to create a signature for.
+            arguments: Dictionary of keyword arguments for the call.
+
+        Raises:
+            TypeError: If fn is not a LoggingFn instance.
+        """
         if not isinstance(fn, LoggingFn):
             raise TypeError(f"fn must be an instance of LoggingFn, got {get_long_infoname(fn)}")
         isinstance(arguments, dict)
@@ -237,7 +245,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
 
 
     def __getstate__(self):
-        """This method is called when the object is pickled."""
+        """Return picklable state containing function and kwargs addresses."""
         state = dict(
             fn_addr=self._fn_addr
             , kwargs_addr=self._kwargs_addr)
@@ -245,7 +253,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
 
 
     def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
+        """Restore state from pickle, invalidating cached properties."""
         self._invalidate_cache()
         self._fn_addr = state["fn_addr"]
         self._kwargs_addr = state["kwargs_addr"]
@@ -266,7 +274,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
         """Name of the wrapped function.
 
         Returns:
-            str: The function's name, cached after first access.
+            The function's name, cached after first access.
         """
         return self.fn.name
 
@@ -308,7 +316,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
         """Whether excessive logging is enabled for the underlying function.
 
         Returns:
-            bool: True if excessive logging is enabled, False otherwise.
+            True if excessive logging is enabled, False otherwise.
         """
         return self.fn.excessive_logging
 
@@ -317,7 +325,7 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
         """Descriptor string contributing to the address hash.
 
         Returns:
-            str: A lowercase string combining the function name and this class
+            A lowercase string combining the function name and this class
             name, used as part of the address hashing scheme.
         """
         descriptor = self.fn_name
@@ -729,7 +737,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
         """Name of the function being executed.
 
         Returns:
-            str: The wrapped function's name.
+            The wrapped function's name.
         """
         return self.fn_call_signature.fn_name
 
@@ -739,7 +747,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
         """Whether the frame should capture detailed artifacts.
 
         Returns:
-            bool: True if excessive logging is enabled for the function.
+            True if excessive logging is enabled for the function.
         """
         return self.fn.excessive_logging
 
@@ -977,7 +985,7 @@ class LoggingCodePortal(OrdinaryCodePortal):
         """Whether this portal captures detailed per-call artifacts.
 
         Returns:
-            bool: True if excessive logging is enabled, False otherwise.
+            True if excessive logging is enabled, False otherwise.
         """
         return bool(self.get_effective_setting("excessive_logging"))
 

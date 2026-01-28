@@ -34,6 +34,10 @@ class logging(ordinary):
                 LoggingFn or the active portal.
             portal: Optional LoggingCodePortal to bind the wrapped function to.
                 If None, the active portal at execution time is used.
+
+        Raises:
+            TypeError: If excessive_logging is not a bool or Joker, or if
+                portal is not a LoggingCodePortal or None.
         """
         if not isinstance(excessive_logging, (bool, Joker)):
             raise TypeError(f"excessive_logging must be bool or Joker, got {get_long_infoname(excessive_logging)}")
@@ -49,7 +53,7 @@ class logging(ordinary):
             fn: A plain Python callable to decorate.
 
         Returns:
-            LoggingFn: The logging-enabled wrapper for the given function.
+            The logging-enabled wrapper for the given function.
         """
         self._restrict_to_single_thread()
         wrapper = LoggingFn(fn
