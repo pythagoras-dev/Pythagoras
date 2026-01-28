@@ -13,7 +13,7 @@ def nested_class_no_pollution():
     # If 'x' were incorrectly added to locals, this would not be detected
     # as an unclassified name
     import math
-    return math.sqrt(x)  # x is a global, should be detected as unclassified
+    return math.sqrt(x)  # noqa: F821 - x is a global, should be detected as unclassified
 
 
 def test_nested_class_no_pollution():
@@ -123,7 +123,7 @@ def false_negative_example():
         x = 1  # Without fix, this would leak into function locals
 
     # Now use 'x' as if it were a global variable
-    return x * 2  # This should be detected as unclassified!
+    return x * 2  # noqa: F821 - This should be detected as unclassified!
 
 
 def test_false_negative_example():

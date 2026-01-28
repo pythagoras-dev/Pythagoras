@@ -19,8 +19,8 @@ def test_empty_logging_portal(tmpdir):
                                              , _EXCEPTIONS_TOTAL_TXT) == 0
         assert _get_description_value_by_key(description
                                              , _EXCEPTIONS_TODAY_TXT) == 0
-        assert _get_description_value_by_key(description
-                                             , _EXCESSIVE_LOGGING_TXT) == False
+        assert not _get_description_value_by_key(description
+                                             , _EXCESSIVE_LOGGING_TXT)
 
 
 def test_exceptions_very_basics(tmpdir):

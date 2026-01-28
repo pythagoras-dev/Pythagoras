@@ -107,7 +107,7 @@ def test_nested_lambda():
 
 def func_lambda_uses_global():
     """Function with lambda that references an unbound name."""
-    result = (lambda y: GLOBAL_VAR + y)(5)
+    result = (lambda y: GLOBAL_VAR + y)(5)  # noqa: F821
     return result
 
 

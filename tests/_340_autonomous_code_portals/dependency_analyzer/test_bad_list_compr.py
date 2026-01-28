@@ -6,7 +6,7 @@ from pythagoras._340_autonomous_code_portals.names_usage_analyzer import _analyz
 
 
 def sample_bad_list_comprecension(x):
-    n = i
+    n = i  # noqa: F821
     return [i+n for i in range(x)]
 
 def test_bad_list_comprencension():

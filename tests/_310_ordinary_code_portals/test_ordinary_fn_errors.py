@@ -110,9 +110,8 @@ def test_ordinary_fn_from_non_ordinary_function(tmpdir):
             OrdinaryFn(func_with_args, portal=t.portal)
 
         # Lambda function
-        lambda_func = lambda x: x * 2
         with pytest.raises(FunctionError, match="can't be lambda"):
-            OrdinaryFn(lambda_func, portal=t.portal)
+            OrdinaryFn(lambda x: x * 2, portal=t.portal)
 
 
 def test_ordinary_fn_closure(tmpdir):

@@ -5,10 +5,10 @@ from pythagoras._340_autonomous_code_portals.names_usage_analyzer import _analyz
 
 
 def bad_simple_nested(x):
-    del sys
-    sys.api_version
+    del sys  # noqa: F821
+    sys.api_version  # noqa: F821
     def nested(y):
-        return math.sqrt(y)
+        return math.sqrt(y)  # noqa: F821
     return nested(x)
 
 def test_bad_simple_nested():

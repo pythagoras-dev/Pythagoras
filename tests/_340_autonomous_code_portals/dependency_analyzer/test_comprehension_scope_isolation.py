@@ -14,7 +14,7 @@ def false_negative_list_comp(n):
 
     The analyzer should flag this as non-autonomous.
     """
-    return [i for i in range(n)], i  # Second 'i' is undefined!
+    return [i for i in range(n)], i  # noqa: F821 - Second 'i' is undefined!
 
 
 def test_false_negative_list_comp():
@@ -37,7 +37,7 @@ def test_false_negative_list_comp():
 
 def false_negative_generator_exp(n):
     """Generator expressions should also isolate their scope."""
-    return sum(i for i in range(n)), i
+    return sum(i for i in range(n)), i  # noqa: F821
 
 
 def test_false_negative_generator_exp():
@@ -55,7 +55,7 @@ def test_false_negative_generator_exp():
 
 def false_negative_set_comp(n):
     """Set comprehensions should also isolate their scope."""
-    return {i for i in range(n)}, i
+    return {i for i in range(n)}, i  # noqa: F821
 
 
 def test_false_negative_set_comp():
@@ -73,7 +73,7 @@ def test_false_negative_set_comp():
 
 def false_negative_dict_comp(n):
     """Dict comprehensions should also isolate their scope."""
-    return {i: i*2 for i in range(n)}, i
+    return {i: i*2 for i in range(n)}, i  # noqa: F821
 
 
 def test_false_negative_dict_comp():
@@ -142,7 +142,7 @@ def test_nested_comprehensions():
 
 def example_from_issue(n):
     """The exact example from the issue statement."""
-    return sum(i*x for i in range(n))  # x is external
+    return sum(i*x for i in range(n))  # noqa: F821 - x is external
 
 
 def test_example_from_issue():

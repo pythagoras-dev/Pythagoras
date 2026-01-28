@@ -21,7 +21,7 @@ def test_live_clear_cache(pytestconfig):
     """
     project_root = Path(pytestconfig.rootdir)
 
-    assert (folder_contains_pyproject_toml(project_root),
+    assert folder_contains_pyproject_toml(project_root), (
         f"pyproject.toml not found at project root: {project_root}")
 
     # Execute cache clearing on actual project
