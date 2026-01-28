@@ -25,7 +25,7 @@ def test_portal(tmpdir):
         assert count_active_portals() == 1
         assert measure_active_portals_stack() == 1
 
-        portal2 = BasicPortal(tmpdir.mkdir("awasder"))
+        _portal2 = BasicPortal(tmpdir.mkdir("awasder"))
         portal3 = BasicPortal(tmpdir.mkdir("aadfgggr"))
 
         assert get_current_portal() is portal
@@ -40,9 +40,9 @@ def test_portal(tmpdir):
 def test_clear_all_portals(tmpdir):
     """Verify _clear_all_portals resets all portal state."""
     with _PortalTester():
-        portal = BasicPortal(tmpdir)
-        portal2 = BasicPortal(tmpdir)
-        portal3 = BasicPortal(tmpdir)
+        _portal = BasicPortal(tmpdir)
+        _portal2 = BasicPortal(tmpdir)
+        _portal3 = BasicPortal(tmpdir)
         _clear_all_portals()
         assert get_most_recently_created_portal() is None
         assert count_known_portals() == 0

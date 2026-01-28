@@ -67,15 +67,15 @@ def test_walrus_in_list_comprehension():
 def test_walrus_simple_assignment():
     """Test simple walrus operator assignment."""
     def func():
-        result = (x := 5) + 10
+        result = (_x := 5) + 10
         return result
 
     result = _analyze_names_in_function(func)
     analyzer = result["analyzer"]
 
-    # x should be recognized as a local variable
-    assert 'x' in analyzer.names.local, f"Expected 'x' in locals, got: {analyzer.names.local}"
-    assert 'x' not in analyzer.names.unclassified_deep, "'x' should not be unclassified"
+    # _x should be recognized as a local variable
+    assert '_x' in analyzer.names.local, f"Expected '_x' in locals, got: {analyzer.names.local}"
+    assert '_x' not in analyzer.names.unclassified_deep, "'_x' should not be unclassified"
 
 
 def test_walrus_multiple_assignments():

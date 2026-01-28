@@ -9,7 +9,7 @@ def test_exception_inside_with(tmpdir):
         assert len(p.portal._crash_history) == 0
         try:
             with p.portal:
-                x = 1/0
+                _ = 1/0
         except Exception:
             pass
         assert len(p.portal._crash_history) == 1
@@ -21,13 +21,13 @@ def test_sequential_exceptions_inside_with(tmpdir):
 
         try:
             with p.portal:
-                x = 1/0
+                _ = 1/0
         except Exception:
             pass
 
         try:
             with p.portal:
-                x = 1 / 0
+                _ = 1 / 0
         except Exception:
             pass
 
@@ -38,7 +38,7 @@ def test_exceptions_2_exceptions(tmpdir):
         assert len(p.portal._crash_history) == 0
         try:
             with p.portal:
-                x = 1/0
+                _ = 1/0
         except Exception:
             pass
 
@@ -47,7 +47,7 @@ def test_exceptions_2_exceptions(tmpdir):
 
         try:
             with p.portal:
-                x = 2/0
+                _ = 2/0
         except Exception:
             pass
 
@@ -63,7 +63,7 @@ def test_exception_inside_nested_with_same_portal(tmpdir):
                         with p.portal:
                             with p.portal:
                                 with p.portal:
-                                    x = 1/0
+                                    _ = 1/0
         except Exception:
             pass
         assert len(p.portal._crash_history) == 1

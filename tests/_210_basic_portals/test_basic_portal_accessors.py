@@ -22,7 +22,7 @@ def test_get_number_of_known_portals_no_portals():
 def test_get_number_of_known_portals_single_portal(tmp_path):
     """Verify count is correct with one portal."""
     with _PortalTester():
-        portal = BasicPortal(root_dict=str(tmp_path / "p1"))
+        _portal = BasicPortal(root_dict=str(tmp_path / "p1"))
         count = count_known_portals()
         assert count == 1
 

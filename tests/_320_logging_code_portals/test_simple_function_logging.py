@@ -16,9 +16,9 @@ def test_simple_function_single_call_very_basic(tmpdir):
             global simple_function
             simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
 
-            addr = ValueAddr(simple_function)
+            _addr = ValueAddr(simple_function)
 
-            signature = LoggingFnCallSignature(simple_function,dict())
+            _signature = LoggingFnCallSignature(simple_function,dict())
 
 
             simple_function()

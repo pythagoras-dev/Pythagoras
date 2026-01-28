@@ -158,7 +158,7 @@ def test_portal_describe_shows_function_count(tmpdir):
 
 def test_multiple_portals_separate_tracking(tmpdir):
     """Test that different portals track their own functions separately."""
-    with _PortalTester() as t:
+    with _PortalTester():
         portal1 = OrdinaryCodePortal(tmpdir.mkdir("portal1"))
         portal2 = OrdinaryCodePortal(tmpdir.mkdir("portal2"))
 
@@ -238,7 +238,7 @@ def test_get_linked_functions_with_type_filter(tmpdir):
 
 def test_get_linked_functions_invalid_type():
     """Test get_linked_functions with invalid target_class."""
-    with _PortalTester() as t:
+    with _PortalTester():
         portal = OrdinaryCodePortal()
 
         # Not a subclass of OrdinaryFn

@@ -48,7 +48,7 @@ def test_portal_aware_init_invalid_portal_type():
 
 def test_portal_aware_identity_key_works_after_init():
     """Test that identity_key is accessible after initialization completes."""
-    with _PortalTester(BasicPortal) as t:
+    with _PortalTester(BasicPortal):
         obj = SimplePortalAware(42)
         # After init, identity_key should work
         identity_key = obj.get_identity_key()
@@ -60,8 +60,7 @@ def test_portal_aware_identity_key_works_after_init():
 
 def test_portal_aware_registration_tracking():
     """Test that objects track portal visits and registration."""
-    with _PortalTester(BasicPortal) as t:
-        portal = t.portal
+    with _PortalTester(BasicPortal):
         obj = SimplePortalAware(10)
         
         # Object should not be registered initially
@@ -149,7 +148,7 @@ def test_portal_aware_clear_method(tmpdir):
 
 def test_portal_aware_invalidate_cache():
     """Test that _invalidate_cache can be called (default is no-op)."""
-    with _PortalTester(BasicPortal) as t:
+    with _PortalTester(BasicPortal):
         obj = SimplePortalAware(60)
         # Should not raise
         obj._invalidate_cache()
@@ -172,7 +171,7 @@ def test_portal_aware_portal_property_uses_current_active(tmpdir):
 
 def test_portal_aware_identity_key_before_init_raises_error():
     """Test that accessing identity_key before initialization raises RuntimeError."""
-    with _PortalTester(BasicPortal) as t:
+    with _PortalTester(BasicPortal):
         # This tests the edge case where identity_key is accessed before _init_finished=True
 
         class TestClass(PortalAwareObject):
@@ -264,10 +263,10 @@ def test_portal_aware_abstract_getstate_not_implemented():
         def __setstate__(self, state):
             super().__setstate__(state)
 
-    with _PortalTester(BasicPortal) as t:
+    with _PortalTester(BasicPortal):
         # Should raise TypeError when trying to instantiate
         with pytest.raises(TypeError, match="Can't instantiate abstract class.*__getstate__"):
-            obj = IncompletePortalAware()
+            _obj = IncompletePortalAware()
 
 
 def test_portal_aware_abstract_setstate_not_implemented():
@@ -283,7 +282,7 @@ def test_portal_aware_abstract_setstate_not_implemented():
 
         # Missing __setstate__ implementation
 
-    with _PortalTester(BasicPortal) as t:
+    with _PortalTester(BasicPortal):
         # Should raise TypeError when trying to instantiate
         with pytest.raises(TypeError, match="Can't instantiate abstract class.*__setstate__"):
-            obj = IncompletePortalAware2()
+            _obj = IncompletePortalAware2()

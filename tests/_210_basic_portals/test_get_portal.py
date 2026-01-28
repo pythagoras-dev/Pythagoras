@@ -19,7 +19,7 @@ def test_portal_nested(tmpdir):
             assert get_current_portal() == portal
             with portal2:
                 assert get_current_portal() == portal2
-                portal4 = BasicPortal(tmpdir.mkdir("p4"))
+                _portal4 = BasicPortal(tmpdir.mkdir("p4"))
                 with portal3:
                     assert get_current_portal() == portal3
                     with portal2:

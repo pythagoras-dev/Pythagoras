@@ -189,7 +189,7 @@ def test_ordinary_fn_wrong_portal_type(tmpdir):
     """Test that OrdinaryFn validates portal type."""
     from pythagoras import BasicPortal
 
-    with _PortalTester(BasicPortal, root_dict=tmpdir) as t:
+    with _PortalTester(BasicPortal, root_dict=tmpdir):
         def simple_func(x):
             return x * 2
 

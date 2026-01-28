@@ -18,11 +18,11 @@ def test_value_address_basic(tmpdir):
         portal2 = DataPortal(tmpdir2)
 
         with portal1:
-            addr = ValueAddr(10)
+            _addr = ValueAddr(10)
             with portal2:
-                addr = ValueAddr(10)
-                addr = ValueAddr(10)
-                addr = ValueAddr(12)
+                _addr = ValueAddr(10)
+                _addr = ValueAddr(10)
+                _addr = ValueAddr(12)
 
         assert len(portal1.global_value_store) == 1
         assert len(portal2.global_value_store) == 2

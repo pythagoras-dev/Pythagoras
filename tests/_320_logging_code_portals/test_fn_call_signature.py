@@ -15,7 +15,7 @@ def plus(x, y):
 def test_fn_call_signature_attributes(tmpdir):
     # tmpdir = "FN_CALL_SIGNATURE_ATTRIBUTES_" + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            ) as p:
+            ):
         new_plus = logging(excessive_logging=True)(plus)
         for i in range(1):
             ValueAddr(new_plus)
@@ -49,7 +49,7 @@ def test_fn_call_signature_run_history(tmpdir):
 
 def test_fn_call_signature_results_history(tmpdir):
     # tmpdir = "FN_CALL_SIGNATURE_RESULTS_HISTORY_" + str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir):
         x,y = "10","101"
         expected_result = plus(x=x,y=y)
         assert expected_result == "10101"
@@ -70,7 +70,7 @@ def test_fn_call_signature_results_history(tmpdir):
 
 def test_fn_call_signature_output_history(tmpdir):
     # tmpdir = "FN_CALL_SIGNATURE_OUTPUT_HISTORY_" + str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir):
         x,y = "10","101"
         expected_result = plus(x=x,y=y)
         assert expected_result == "10101"

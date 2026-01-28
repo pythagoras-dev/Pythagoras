@@ -291,7 +291,7 @@ def test_uninstall_with_verification_detects_remaining_module():
         # Artificially keep module in sys.modules to trigger verification failure
         import nothing
         assert nothing
-        original_module = sys.modules[package]
+        _original_module = sys.modules[package]
 
         # Mock the uninstall to not actually remove it (we can't easily test this)
         # This is a white-box test of verification logic

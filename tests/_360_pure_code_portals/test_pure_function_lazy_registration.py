@@ -164,7 +164,7 @@ def test_lazy_registration_idempotent(tmpdir):
 
 def test_lazy_registration_with_multiple_portals(tmpdir):
     """Test object visiting multiple portals lazily."""
-    with _PortalTester() as t:
+    with _PortalTester():
         portal1 = PureCodePortal(tmpdir.mkdir("p1"))
         portal2 = PureCodePortal(tmpdir.mkdir("p2"))
 

@@ -23,7 +23,7 @@ def f(a, b):
 
 
 def test_load_save_protected_no_guards_no_validators(tmpdir):
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
         f_1 = ProtectedFn(f)
         f_address = ValueAddr(f_1)
         f_2 = f_address.get()
@@ -41,7 +41,7 @@ def test_load_save_protected_dummy_good_guard(tmpdir):
     for guards in [dummy_good_guard, [dummy_good_guard], [[[dummy_good_guard]]]
             , [dummy_good_guard, dummy_good_guard]]:
 
-        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
             f_1 = ProtectedFn(f, pre_validators= guards)
             assert len(f_1.pre_validators) == 1
             f_address = ValueAddr(f_1)
@@ -59,7 +59,7 @@ def test_load_save_protected_dummy_good_guard(tmpdir):
 
 def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
 
         dummy_good_guard_autonomous = autonomous()(dummy_good_guard)
         guards = [dummy_good_guard_autonomous, dummy_good_guard_autonomous]
@@ -82,7 +82,7 @@ def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
 def test_load_save_protected_dummy_bad_guard(tmpdir):
     for guards in [dummy_bad_guard, [[dummy_good_guard], [dummy_bad_guard]]
         ,[dummy_bad_guard, dummy_good_guard]]:
-        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
             f_1 = ProtectedFn(f, pre_validators= guards)
             f_address = ValueAddr(f_1)
             f_2 = f_address.get()
@@ -102,7 +102,7 @@ def test_load_save_protected_dummy_bad_guard(tmpdir):
 
 def test_load_save_protected_dummy_bad_guard_autonomous(tmpdir):
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
         dummy_bad_guard_autonomous = autonomous()(dummy_bad_guard)
         guards = [dummy_bad_guard_autonomous, dummy_bad_guard_autonomous]
 
@@ -136,7 +136,7 @@ def test_validator_return_values_treated_as_failure(tmpdir):
     This test explicitly documents this behavior to prevent confusion, as many
     developers naturally expect validators to return boolean True/False.
     """
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
         # Test that returning True is treated as failure
         f_true = ProtectedFn(f, pre_validators=[guard_returns_false])
         with pytest.raises(Exception):

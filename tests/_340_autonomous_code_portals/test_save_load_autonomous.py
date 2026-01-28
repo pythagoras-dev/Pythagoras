@@ -6,7 +6,7 @@ def f(a, b):
     return a + b
 
 def test_load_save_autonomous(tmpdir):
-    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir):
 
         f_1 = AutonomousFn(f)
         f_address = ValueAddr(f_1)
@@ -30,7 +30,7 @@ def test_load_save_autonomous(tmpdir):
 
 def test_load_save_autonomous_one_fixed_kwarg(tmpdir):
     # tmpdir = "LOAD_SAVE_AUTONOMOUS_ONE_FIXED_KWARG_" + str(int(time.time()))
-    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir):
         f_1 = AutonomousFn(fn=f, fixed_kwargs = dict(a=2000) )
         f_1_full = AutonomousFn(fn=f)
         f_address = ValueAddr(f_1)
@@ -62,7 +62,7 @@ def test_load_save_autonomous_one_fixed_kwarg(tmpdir):
 
 def test_load_save_autonomous_all_fixed_kwargs(tmpdir):
     # tmpdir = "LOAD_SAVE_AUTONOMOUS_ALL_FIXED_KWARGS_" + str(int(time.time()))
-    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir) as p:
+    with _PortalTester(AutonomousCodePortal, root_dict=tmpdir):
         f_fixed_a = AutonomousFn(fn=f, fixed_kwargs = dict(a=2000) )
         f_fixed_both_a_b = f_fixed_a.fix_kwargs(b=25)
         assert f_fixed_a(b=0)==f(a=2000, b=0)

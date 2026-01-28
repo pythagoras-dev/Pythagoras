@@ -17,8 +17,7 @@ def test_value_address_basic(tmpdir):
     # tmpdir = 3*"VALUE_ADDRESS_BASIC_" + str(int(time.time())) + "_" + str(p)
     counter = 0
 
-    with _PortalTester(DataPortal,tmpdir) as t:
-        portal = t.portal
+    with _PortalTester(DataPortal,tmpdir):
         for v in values_to_test:
             assert len(get_current_portal().global_value_store) == counter
             assert ValueAddr(v).get() == v
@@ -33,7 +32,7 @@ def test_value_address_basic(tmpdir):
 def test_value_address_with_typechecks(tmpdir):
     # tmpdir = 2*"VALUE_ADDRESS_WITH_TYPECHECKS_" + str(int(time.time())) + "_" + str(p)
 
-    with _PortalTester(DataPortal,tmpdir) as t:
+    with _PortalTester(DataPortal,tmpdir):
         for v in values_to_test:
             assert ValueAddr(v).get(expected_type=type(v)) == v
             assert ValueAddr(v).get(expected_type=Any) == v
@@ -78,8 +77,8 @@ def test_value_address_constructor_with_two_portals(tmpdir):
         with portal1:
             addr1_10 = ValueAddr(10)
             with portal2:
-                addr2_10 = ValueAddr(10)
-                addr2_20 = ValueAddr(20)
+                _addr2_10 = ValueAddr(10)
+                _addr2_20 = ValueAddr(20)
                 addr2_hihi = ValueAddr("hihi")
 
 
@@ -110,8 +109,8 @@ def test_value_address_ready_with_two_portals(tmpdir):
         with portal1:
             addr1_10 = ValueAddr(10)
             with portal2:
-                addr2_10 = ValueAddr(10)
-                addr2_20 = ValueAddr(20)
+                _addr2_10 = ValueAddr(10)
+                _addr2_20 = ValueAddr(20)
                 addr2_hihi = ValueAddr("hihi")
 
             assert len(portal1.global_value_store) == 1
@@ -140,8 +139,8 @@ def test_value_address_get_with_two_portals(tmpdir):
         with portal1:
             addr1_10 = ValueAddr(10)
             with portal2:
-                addr2_10 = ValueAddr(10)
-                addr2_20 = ValueAddr(20)
+                _addr2_10 = ValueAddr(10)
+                _addr2_20 = ValueAddr(20)
                 addr2_hihi = ValueAddr("hihi")
 
             assert addr2_hihi.get() == "hihi"

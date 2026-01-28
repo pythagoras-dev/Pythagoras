@@ -42,7 +42,7 @@ def test_locals_in_autonomous(tmpdir):
         import random
 
         def bad_local_f3():
-            x = 3
+            _x = 3
             return random.random()
 
         with pytest.raises(Exception):
@@ -51,7 +51,7 @@ def test_locals_in_autonomous(tmpdir):
         @autonomous()
         def good_local_f2():
             import random
-            x=3
+            _x=3
             return random.random() + 1
 
         assert good_local_f2()

@@ -284,7 +284,7 @@ def test_log_event_without_portal_context():
     """Test log_event() behavior when called outside any portal context."""
     # This tests that log_event can find the current portal automatically
     with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
-        portal = tester.portal
+        _portal = tester.portal
 
         @logging(excessive_logging=True)
         def fn_with_event():

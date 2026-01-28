@@ -26,7 +26,7 @@ def test_strict_type_checking(tmpdir):
     """Verify accessor functions enforce strict portal type matching."""
     with _PortalTester():
         pA = PortalA(tmpdir + "/a")
-        pB = PortalB(tmpdir + "/b")
+        _pB = PortalB(tmpdir + "/b")
         
         # known_portals has pA(PortalA) and pB(PortalB)
         

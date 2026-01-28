@@ -8,7 +8,7 @@ def wonderful_function():
 
 def test_simple_function_value_addr(tmpdir):
     # tmpdir = "SIMPLE_FUNCTION_VALUE_ADDR_"*2 +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir):
         global wonderful_function
         wonderful_function = logging(excessive_logging=True)(wonderful_function)
 
@@ -22,7 +22,7 @@ def plus(x, y):
 
 def test_complex_function_value_addr(tmpdir):
     # tmpdir = "COMPLEX_FUNCTION_VALUE_ADDR_"*2 +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir):
         global plus
         plus = logging(excessive_logging=True)(plus)
 

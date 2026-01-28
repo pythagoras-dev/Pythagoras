@@ -6,7 +6,7 @@ import pytest
 
 def test_basics(tmpdir):
     # tmpdir = 3*"BASICS_EXECUTION_RECORDS_" +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir) as t:
+    with _PortalTester(LoggingCodePortal, tmpdir):
 
         @logging(excessive_logging=True)
         def f():
@@ -139,7 +139,7 @@ def test_total_recalc(tmpdir):
 
 def test_exception(tmpdir):
     # tmpdir = 3*"EXCEPTIONS_" +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir) as t:
+    with _PortalTester(LoggingCodePortal, tmpdir):
 
         @logging(excessive_logging=True)
         def fff():
@@ -158,5 +158,5 @@ def test_exception(tmpdir):
         assert a.execution_records[0].events == []
         assert len(a.execution_records[0].crashes) == 1
         with pytest.raises(Exception):
-            x = a.execution_records[0].result
+            _ = a.execution_records[0].result
         assert "ZeroDivisionError" in a.execution_records[0].output

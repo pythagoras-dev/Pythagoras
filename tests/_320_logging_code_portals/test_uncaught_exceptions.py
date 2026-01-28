@@ -17,7 +17,7 @@ from pythagoras._320_logging_code_portals.uncaught_exceptions import (
 def test_handler_registration_increments_counter():
     """Test that handler registration is reference-counted."""
     with _PortalTester(LoggingCodePortal) as tester:
-        portal = tester.portal
+        _portal = tester.portal
 
         # Handlers should be registered once during portal init
         from pythagoras._320_logging_code_portals.uncaught_exceptions import (
@@ -40,7 +40,7 @@ def test_handler_registration_increments_counter():
 def test_handler_unregistration_decrements_counter():
     """Test that handler unregistration decrements the reference count."""
     with _PortalTester(LoggingCodePortal) as tester:
-        portal = tester.portal
+        _portal = tester.portal
 
         # Register an extra handler
         register_systemwide_uncaught_exception_handlers()

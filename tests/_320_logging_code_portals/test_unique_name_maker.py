@@ -3,7 +3,7 @@ from pythagoras._320_logging_code_portals import (
     LoggingCodePortal,make_unique_name)
 
 def test_unique_name_maker(tmpdir):
-    with _PortalTester(LoggingCodePortal, tmpdir) as p:
+    with _PortalTester(LoggingCodePortal, tmpdir):
         name = make_unique_name(
             suggested_name="test",existing_names = ["a", "b"])
         assert name == "test"

@@ -37,7 +37,7 @@ def test_get_effective_setting_invalid_key_type(tmpdir):
             portal.get_effective_setting(123)
         except TypeError:
             pass # Expected
-        except Exception as e:
-            # If it raises something else, we should know. 
+        except Exception:
+            # If it raises something else, we should know.
             # If it doesn't raise, then we might need to adjust expectation or TunablePortal doesn't enforce it anymore.
             pass
