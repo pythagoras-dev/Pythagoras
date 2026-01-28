@@ -50,7 +50,6 @@ class TunablePortal(DataPortal):
         del root_dict
 
         self._auxiliary_config_params_at_init = dict()
-        # self._global_portal_settings_cache = dict()
 
         # Create portal-wide configuration store
         portal_config_settings_prototype = self._root_dict.get_subdict("portal_cfg")
@@ -254,8 +253,10 @@ class TunableObject(StorableObject):
     def get_effective_setting(self , key: NonEmptySafeStrTuple|str, default:Any=None) -> Any:
         """Get the effective configuration setting for a given key.
 
-        Checks local node settings first, then falls back to global portal
-        settings if not found.
+        Checks object's local node settings first, then object's global portal
+        settings if local not found.
+
+        If none of the above have the key, falls back to portal-wide settings.
 
         Args:
             key: Configuration key to retrieve.
@@ -268,8 +269,11 @@ class TunableObject(StorableObject):
         node_value = self.local_node_settings.get(key, no_value)
         if node_value is not no_value:
             return node_value
-        portal_value = self.global_portal_settings.get(key, default)
-        return portal_value
+        portal_value = self.global_portal_settings.get(key, no_value)
+        if portal_value is not no_value:
+            return portal_value
+
+        return self.portal.get_effective_setting(key, default)
 
 
     def _first_visit_to_portal(self, portal: TunablePortal) -> None:
