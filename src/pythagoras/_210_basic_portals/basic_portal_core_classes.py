@@ -94,7 +94,7 @@ class BasicPortal(NotPicklableMixin,
 
 
     def get_linked_objects(self
-            , target_class: type[PortalAwareObjectType] = None
+            , target_class: type[PortalAwareObjectType] | None = None
             ) -> set[PortalAwareObjectType]:
         """Get the set of objects linked to this portal.
 
