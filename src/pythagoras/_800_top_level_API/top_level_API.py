@@ -25,6 +25,6 @@ def get_portal(url_or_foldername:str) -> SwarmingPortal:
     if _is_valid_folder_name(url_or_foldername):
         return SwarmingPortal(url_or_foldername)
     elif _is_valid_url(url_or_foldername):
-        raise NotImplementedError("URLы not supported yet ... stay turned")
+        raise NotImplementedError("URLs are not supported yet ... stay turned")
     else:
         raise ValueError(f"Invalid folder name: {url_or_foldername}")
