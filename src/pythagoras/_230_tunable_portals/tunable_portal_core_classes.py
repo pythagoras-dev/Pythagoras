@@ -28,14 +28,12 @@ class TunablePortal(DataPortal):
         _global_portal_settings: Portal-wide persistent configuration store.
         _local_node_settings: Node-specific persistent configuration store.
         _local_node_value_store: Alias to _local_node_settings for convenience.
-        _global_portal_settings_cache: In-memory cache for config values.
         _auxiliary_config_params_at_init: Config parameters from initialization.
     """
 
     _global_portal_settings: PersiDict | None
     _local_node_settings: PersiDict | None
     _local_node_value_store: PersiDict | None
-    _global_portal_settings_cache: dict
     _auxiliary_config_params_at_init: dict[str, Any] | None
 
     def __init__(self, root_dict: PersiDict | str | None = None):
@@ -166,7 +164,7 @@ class TunablePortal(DataPortal):
             Set of parameter names including base parameters and portal-specific
             auxiliary configuration parameters.
         """
-        names = super().auxiliary_param_names
+        names = set(super().auxiliary_param_names)
         names.update(self._auxiliary_config_params_at_init)
         return names
 
