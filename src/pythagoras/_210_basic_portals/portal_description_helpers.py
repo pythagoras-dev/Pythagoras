@@ -69,7 +69,7 @@ def _get_description_value_by_key(dataframe: pd.DataFrame, key: str) -> Any:
     Raises:
         KeyError: If key is not found in the "name" column.
     """
-    mask = dataframe.iloc[:, 1] == key
+    mask = dataframe["name"] == key
     if not mask.any():
         raise KeyError(f"Key '{key}' not found in portal description.")
     return dataframe.loc[mask].iloc[0, 2]
