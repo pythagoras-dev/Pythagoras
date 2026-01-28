@@ -7,7 +7,7 @@ Core Concepts
 -------------
 **TunablePortal**: Extends DataPortal with persistent storage
 for configuration settings. Provides tools for storage and retrieval
-of portal-wide and node-щтдн configuration settings.
+of portal-wide and node-specific configuration settings.
 
 **TunableObject**: Base class for portal-aware objects that can save and retrieve
 instance-level settings. Provides methods to get/set instance-level settings,

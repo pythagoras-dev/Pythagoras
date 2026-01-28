@@ -1,6 +1,6 @@
-"""Core classes for work sith portal/object settings in Pythagoras .
+"""Core classes for working with portal/object settings in Pythagoras.
 
-This module provides TunablePortal and TunableObject classes    ,
+This module provides TunablePortal and TunableObject classes,
 which add settings management capabilities to portals and
 portal-aware objects.
 """
@@ -79,7 +79,7 @@ class TunablePortal(DataPortal):
         """Portal-wide persistent configuration store.
 
         Returns:
-            PersiDict: The persistent dictionary storing portal-wide settings.
+            The persistent dictionary storing portal-wide settings.
         """
         return self._global_portal_settings
 
@@ -89,7 +89,7 @@ class TunablePortal(DataPortal):
         """Node-specific persistent configuration store.
 
         Returns:
-            PersiDict: The persistent dictionary storing node-specific settings.
+            The persistent dictionary storing node-specific settings.
         """
         return self._local_node_settings
 
@@ -99,7 +99,7 @@ class TunablePortal(DataPortal):
         """Local node value store (alias to local_node_settings).
 
         Returns:
-            PersiDict: The persistent dictionary for local node values.
+            The persistent dictionary for local node values.
         """
         return self._local_node_value_store
 
@@ -112,9 +112,10 @@ class TunablePortal(DataPortal):
 
         Args:
             key: Configuration key to retrieve.
+            default: Value to return if key is not found in any settings store.
 
         Returns:
-            The effective configuration value, or None if not found.
+            The effective configuration value, or default if not found.
         """
 
         no_value = object()
@@ -149,7 +150,7 @@ class TunablePortal(DataPortal):
         """Return the portal's configuration parameters.
 
         Returns:
-            dict: A sorted dictionary of base parameters augmented with
+            A sorted dictionary of base parameters augmented with
             auxiliary config entries defined at initialization.
         """
         params = super().get_params()
@@ -174,7 +175,6 @@ class TunablePortal(DataPortal):
     def _invalidate_cache(self):
         """Invalidate the portal's cache."""
         super()._invalidate_cache()
-        # self._global_portal_settings_cache = dict()
 
 
     def _clear(self) -> None:
@@ -210,42 +210,44 @@ class TunableObject(StorableObject):
 
 
     def _get_local_node_settings(self, portal: TunablePortal) -> PersiDict:
-        """Get the local node settings from the specified portal.
+        """Get the object's local node settings from the specified portal.
 
         Args:
             portal: The TunablePortal to retrieve settings from.
+
         Returns:
-            PersiDict: The local node settings dictionary.
+            The local node settings dictionary scoped to this object's address.
         """
         return portal.local_node_settings.get_subdict(self.addr)
 
     @property
     def local_node_settings(self) -> PersiDict:
-        """Get the local node settings from the associated portal.
+        """Get the object's local node settings from the associated portal.
 
         Returns:
-            PersiDict: The local node settings dictionary.
+            The local node settings dictionary scoped to this object's address.
         """
         return self._get_local_node_settings(portal=self.portal)
 
 
     def _get_global_portal_settings(self, portal: TunablePortal) -> PersiDict:
-        """Get the global portal settings from the specified portal.
+        """Get the object's global portal settings from the specified portal.
 
         Args:
             portal: The TunablePortal to retrieve settings from.
+
         Returns:
-            PersiDict: The global portal settings dictionary.
+            The global portal settings dictionary scoped to this object's address.
         """
         return portal.global_portal_settings.get_subdict(self.addr)
 
 
     @property
     def global_portal_settings(self) -> PersiDict:
-        """Get the global portal settings from the associated portal.
+        """Get the object's global portal settings from the associated portal.
 
         Returns:
-            PersiDict: The global portal settings dictionary.
+            The global portal settings dictionary scoped to this object's address.
         """
         return self._get_global_portal_settings(portal=self.portal)
 
@@ -257,9 +259,10 @@ class TunableObject(StorableObject):
 
         Args:
             key: Configuration key to retrieve.
+            default: Value to return if key is not found in any settings store.
 
         Returns:
-            The effective configuration value, or None if not found.
+            The effective configuration value, or default if not found.
         """
         no_value = object()
         node_value = self.local_node_settings.get(key, no_value)
@@ -270,7 +273,7 @@ class TunableObject(StorableObject):
 
 
     def _first_visit_to_portal(self, portal: TunablePortal) -> None:
-        """Handle first visit to a portal.
+        """Handle the first visit to a portal.
 
         Args:
             portal: The TunablePortal being visited for the first time.
@@ -288,17 +291,17 @@ class TunableObject(StorableObject):
         """The TunablePortal associated with this object.
 
         Returns:
-            TunablePortal: The portal used by this object's methods.
+            The portal used by this object's methods.
         """
         return super().portal
 
 
     def __setstate__(self, state):
-        """This method is called when the object is unpickled."""
+        """Restore object state from pickle."""
         super().__setstate__(state)
         self._auxiliary_config_params_at_init = dict()
 
 
     def __getstate__(self):
-        """This method is called when the object is pickled."""
+        """Return object state for pickling."""
         return super().__getstate__()
