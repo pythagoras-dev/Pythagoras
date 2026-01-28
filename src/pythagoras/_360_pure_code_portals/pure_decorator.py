@@ -8,7 +8,7 @@ re-execution.
 Pythagoras tracks source code changes in pure functions. When the
 implementation changes, the function re-executes on the next call, but
 previously cached results remain available for the old version. Only
-source code changes for the functon and its pre/post validators are tracked,
+source code changes for the function and its pre/post validators are tracked,
 not dependencies or environment.
 """
 

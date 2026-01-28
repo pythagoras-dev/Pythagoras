@@ -400,6 +400,11 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     def get_ValueAddr(self):
+        """Convert this result address to a ValueAddr for the call signature.
+
+        Returns:
+            ValueAddr pointing to the PureFnCallSignature that produced this result.
+        """
         descriptor = self.descriptor.removesuffix(self._DESCRIPTOR_SUFFIX)
         descriptor += "_" + PureFnCallSignature.__name__.lower()
         return ValueAddr.from_strings(  # TODO: refactor this
