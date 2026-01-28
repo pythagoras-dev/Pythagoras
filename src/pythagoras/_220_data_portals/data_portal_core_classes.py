@@ -29,7 +29,7 @@ def count_known_data_portals() -> int:
     return count_known_portals(DataPortal)
 
 
-def get_all_known_data_portals() -> list[DataPortal]:
+def get_all_known_data_portals() -> set[DataPortal]:
     """Get a list of all known DataPortals.
 
     Returns:
@@ -87,7 +87,7 @@ def get_current_data_portal() -> DataPortal:
     return portal
 
 
-def get_nonactive_data_portals() -> list[DataPortal]:
+def get_nonactive_data_portals() -> set[DataPortal]:
     """Get a list of all DataPortals that are not in the active stack.
 
     Returns:
@@ -99,7 +99,7 @@ def get_nonactive_data_portals() -> list[DataPortal]:
     return get_nonactive_portals(DataPortal)
 
 
-def get_noncurrent_data_portals() -> list[DataPortal]:
+def get_noncurrent_data_portals() -> set[DataPortal]:
     """Get a list of all DataPortals that are not the current portal.
 
     Returns:
