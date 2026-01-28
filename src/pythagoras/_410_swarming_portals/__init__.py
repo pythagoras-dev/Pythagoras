@@ -10,7 +10,6 @@ Main Exports
 - SwarmingPortal: Portal for distributed swarming execution of pure functions.
     Extends PureCodePortal with background worker pools and request dispatching.
 - DescendantProcessInfo: Tracks descendant processes spawned by a swarming portal.
-- OutputSuppressor: Context manager to suppress stdout/stderr in worker processes.
 """
 
 from .system_processes_info_getters import *

@@ -38,7 +38,6 @@ from .descendant_process_info import _min_date
 from .system_processes_info_getters import *
 
 
-from .._410_swarming_portals.output_suppressor import OutputSuppressor
 from .._110_supporting_utilities import get_long_infoname
 
 
