@@ -296,7 +296,7 @@ class ProtectedFn(AutonomousFn):
                 if validator_type is PreValidatorFn:
                     try:
                         validator = ComplexPreValidatorFn(validator)
-                    except:
+                    except Exception:
                         validator = SimplePreValidatorFn(validator)
                 elif validator_type is PostValidatorFn:
                     validator = PostValidatorFn(validator)
