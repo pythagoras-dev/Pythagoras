@@ -70,7 +70,7 @@ def measure_active_portals_stack(required_portal_type: type[PortalType] = BasicP
     return _PORTAL_REGISTRY.measure_active_portals_stack_depth(required_portal_type)
 
 
-def get_current_portal() -> PortalType:
+def get_current_portal() -> BasicPortal:
     """Get the current portal object.
 
     Returns the most recently entered portal from the active stack. If no portal
@@ -79,11 +79,6 @@ def get_current_portal() -> PortalType:
 
     Returns:
         The current active portal.
-
-    Example:
-        >>> portal = get_current_portal()  # Gets or creates default portal
-        >>> with CustomPortal() as p:
-        ...     assert get_current_portal() is p  # p is now current
     """
     return _PORTAL_REGISTRY.get_current_portal()
 
