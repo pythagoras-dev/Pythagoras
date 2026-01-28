@@ -169,6 +169,11 @@ class SwarmingPortal(PureCodePortal):
 
     @property
     def auxiliary_param_names(self) -> set[str]:
+        """Parameter names excluded from hash-based identity comparison.
+
+        Returns:
+            Set of parameter names including ancestor process identifiers.
+        """
         names = super().auxiliary_param_names
         names.update({"ancestor_process_id","ancestor_process_start_time"})
         return names
@@ -430,21 +435,6 @@ class SwarmingPortal(PureCodePortal):
                 pass
 
 
-
-    # @property
-    # def _execution_environment_address(self) -> list[str]: #TODO: move to Logs
-    #     """Address path for storing execution environment summary.
-    #
-    #     Returns:
-    #         list[str]: A hierarchical key used in the compute_nodes storage of
-    #         the form [node_id, parent_pid_and_start, "execution_environment"].
-    #     """
-    #     s = str(self._ancestor_process_id) + "_" + str(self._ancestor_process_start_time)
-    #     return [self._node_id, s, "execution_environment"]
-
-
-
-
     def describe(self) -> pd.DataFrame:
         """Return portal configuration and runtime characteristics as a table.
 
@@ -522,18 +512,6 @@ class SwarmingPortal(PureCodePortal):
         if self.entropy_infuser.uniform(0, 1) < p:
             delay = self.entropy_infuser.uniform(min_delay, max_delay)
             sleep(delay)
-
-
-    # def _invalidate_cache(self):
-    #     """Drop cached computed attributes and delegate to base class.
-    #
-    #     This implementation removes any attributes used as local caches by this
-    #     class (currently _max_n_workers_cache) and then calls the base
-    #     implementation to allow it to clear its own caches.
-    #     """
-    #     if hasattr(self, "_max_n_workers_cache"):
-    #         del self._max_n_workers_cache
-    #     super()._invalidate_cache()
 
 
 def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -> None:
