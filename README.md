@@ -253,7 +253,7 @@ pip install pythagoras
 <!-- MIXINFORGE_STATS_START -->
 | Metric | Main code | Unit Tests | Total |
 |--------|-----------|------------|-------|
-| Lines Of Code (LOC) | 10900 | 15925 | 26825 |
+| Lines Of Code (LOC) | 10973 | 15971 | 26944 |
 | Source Lines Of Code (SLOC) | 4258 | 9704 | 13962 |
 | Classes | 53 | 46 | 99 |
 | Functions / Methods | 462 | 1277 | 1739 |
