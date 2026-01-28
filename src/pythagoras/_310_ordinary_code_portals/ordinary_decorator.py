@@ -38,7 +38,15 @@ class ordinary(SingleThreadEnforcerMixin):
         """Initialize the decorator with optional portal linkage.
 
         Args:
-            portal: Optional portal to associate with wrapped functions.
+            portal: Portal to associate with wrapped functions. Can be:
+
+                - An OrdinaryCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from the wrapped function
+                  (only valid when wrapping an existing OrdinaryFn)
+                - None to infer a suitable portal when the function is executed
+
+        Raises:
+            TypeError: If portal is not an OrdinaryCodePortal, ReuseFlag, or None.
         """
         super().__init__()
         self._restrict_to_single_thread()

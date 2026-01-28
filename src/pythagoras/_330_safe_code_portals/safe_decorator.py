@@ -33,13 +33,22 @@ class safe(logging):
         """Create a safe decorator bound to an optional portal.
 
         Args:
-            excessive_logging: Whether to enable verbose logging for wrapped
-                calls. KEEP_CURRENT inherits from current context.
-            portal: The SafeCodePortal to attach the resulting SafeFn to. If
-                None, the active portal (if any) may be used by lower layers.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit from current context
+                - USE_FROM_OTHER to copy the setting from the wrapped function
+                  (only valid when wrapping an existing SafeFn)
+
+            portal: Portal to attach the resulting SafeFn to. Can be:
+
+                - A SafeCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from the wrapped function
+                  (only valid when wrapping an existing SafeFn)
+                - None to use the active portal at execution time
 
         Raises:
-            TypeError: If portal is not a SafeCodePortal or None.
+            TypeError: If portal is not a SafeCodePortal, ReuseFlag, or None.
         """
         if not (isinstance(portal, (SafeCodePortal,ReuseFlag)) or portal is None):
             raise TypeError(f"portal must be a SafeCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")

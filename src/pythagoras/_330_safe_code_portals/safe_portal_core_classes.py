@@ -105,11 +105,20 @@ class SafeFn(LoggingFn):
         """Create a SafeFn wrapper.
 
         Args:
-            fn: The Python callable to wrap or its import string.
-            portal: The portal to associate with this function. If None, the
-                active portal (if any) may be used by the underlying layers.
-            excessive_logging: Whether to enable verbose logging for this fn.
-                Use KEEP_CURRENT to inherit from the surrounding context.
+            fn: The Python callable to wrap or its source code string.
+            portal: Portal to associate with this function. Can be:
+
+                - A SafeCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from ``fn`` when ``fn``
+                  is an existing SafeFn
+                - None to use the active portal at execution time
+
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit from the surrounding context
+                - USE_FROM_OTHER to copy the setting from ``fn`` when ``fn``
+                  is an existing SafeFn
         """
         LoggingFn.__init__(self
             , fn = fn

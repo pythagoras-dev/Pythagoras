@@ -177,9 +177,20 @@ class PureFn(ProtectedFn):
             fn: Target callable to wrap.
             pre_validators: Optional validators run before execution.
             post_validators: Optional validators run after execution.
-            excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit from context
+                - USE_FROM_OTHER to copy the setting from ``fn`` when ``fn``
+                  is an existing PureFn
+
             fixed_kwargs: Argument name-value pairs injected into every call.
-            portal: Specific PureCodePortal to link to.
+            portal: Portal for caching and execution. Can be:
+
+                - A PureCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from ``fn`` when ``fn``
+                  is an existing PureFn
+                - None to infer a suitable portal when the function is executed
         """
         super().__init__(fn=fn
                          , portal = portal

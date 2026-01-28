@@ -108,14 +108,25 @@ class LoggingFn(OrdinaryFn):
 
         Args:
             fn: A callable to wrap or a string with a function's source code.
-            excessive_logging: If True, capture detailed per-execution
-                artifacts (attempt context, outputs, results). If KEEP_CURRENT,
-                will inherit the setting from another LoggingFn when cloning.
-            portal: Optional LoggingCodePortal to bind this function to. If
-                omitted, uses the active portal during execution.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable detailed per-execution
+                  artifacts (attempt context, outputs, results)
+                - KEEP_CURRENT to inherit the setting from context
+                - USE_FROM_OTHER to copy the setting from ``fn`` when ``fn`` is
+                  an existing LoggingFn (enables sharing settings across wrappers)
+
+            portal: Portal to bind this function to. Can be:
+
+                - A LoggingCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from ``fn`` when ``fn``
+                  is an existing LoggingFn
+                - None to use the active portal during execution
 
         Raises:
             TypeError: If excessive_logging is not a bool, Joker, or ReuseFlag.
+            ValueError: If excessive_logging is USE_FROM_OTHER but fn is not
+                a LoggingFn.
         """
         super().__init__(fn=fn, portal=portal)
 

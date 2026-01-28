@@ -147,8 +147,19 @@ class AutonomousFn(SafeFn):
                 or an existing SafeFn to wrap. If an AutonomousFn is provided,
                 fixed_kwargs are merged.
             fixed_kwargs: Keyword arguments to pre-bind (partially apply).
-            excessive_logging: Verbose logging flag or KEEP_CURRENT.
-            portal: AutonomousCodePortal to use; may be None to defer.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit from context
+                - USE_FROM_OTHER to copy the setting from ``fn`` when ``fn``
+                  is an existing AutonomousFn
+
+            portal: Portal to use for autonomy checks. Can be:
+
+                - An AutonomousCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from ``fn`` when ``fn``
+                  is an existing AutonomousFn
+                - None to infer a suitable portal when the function is called
 
         Raises:
             FunctionError: If static analysis detects violations of autonomy

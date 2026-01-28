@@ -28,16 +28,24 @@ class logging(ordinary):
         """Initialize the logging decorator.
 
         Args:
-            excessive_logging: If True, the wrapped function will capture
-                detailed per-execution artifacts (attempt context, outputs,
-                and results). If KEEP_CURRENT, inherits from the wrapped
-                LoggingFn or the active portal.
-            portal: Optional LoggingCodePortal to bind the wrapped function to.
-                If None, the active portal at execution time is used.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable detailed per-execution
+                  artifacts (attempt context, outputs, and results)
+                - KEEP_CURRENT to inherit from the portal
+                - USE_FROM_OTHER to copy the setting from the wrapped function
+                  (only valid when wrapping an existing LoggingFn)
+
+            portal: Portal to bind the wrapped function to. Can be:
+
+                - A LoggingCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from the wrapped function
+                  (only valid when wrapping an existing LoggingFn)
+                - None to use the active portal at execution time
 
         Raises:
-            TypeError: If excessive_logging is not a bool or Joker, or if
-                portal is not a LoggingCodePortal or None.
+            TypeError: If excessive_logging is not a bool, Joker, or ReuseFlag,
+                or if portal is not a LoggingCodePortal, ReuseFlag, or None.
         """
         if not isinstance(excessive_logging, (bool, Joker,ReuseFlag)):
             raise TypeError(f"excessive_logging must be bool or Joker or ReuseFlag, got {get_long_infoname(excessive_logging)}")

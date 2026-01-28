@@ -58,12 +58,19 @@ class protected(autonomous):
                 can be wrapped into a PostValidatorFn by ProtectedFn.
             fixed_kwargs (dict[str, Any] | None): Keyword arguments to pre-bind
                 to the wrapped function for every call.
-            excessive_logging (bool | Joker): Enables verbose logging for the
-                wrapped function and its validators. Use KEEP_CURRENT to inherit
-                the current setting from the portal/context.
-            portal (ProtectedCodePortal | None): Optional portal instance to
-                bind the wrapped function to. If None, a suitable portal will be
-                inferred when function is called.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit the current setting from the portal/context
+                - USE_FROM_OTHER to copy the setting from the wrapped function
+                  (only valid when wrapping an existing ProtectedFn)
+
+            portal: Portal to bind the wrapped function to. Can be:
+
+                - A ProtectedCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from the wrapped function
+                  (only valid when wrapping an existing ProtectedFn)
+                - None to infer a suitable portal when the function is called
         """
         if not (isinstance(portal, (ProtectedCodePortal,ReuseFlag)) or portal is None):
             raise TypeError(f"portal must be a ProtectedCodePortal or None, got {get_long_infoname(portal)}")

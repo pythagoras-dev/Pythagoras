@@ -162,13 +162,19 @@ class OrdinaryFn(TunableObject):
 
         Args:
             fn: Function, source code string, or OrdinaryFn to clone.
-            portal: Optional portal to link to this instance.
+            portal: Portal to link to this instance. Can be:
+
+                - An OrdinaryCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from ``fn`` when ``fn``
+                  is an existing OrdinaryFn (enables sharing portals across
+                  related function wrappers)
+                - None to infer a suitable portal when the function is executed
 
         Raises:
             TypeError: If fn is not callable, string, or OrdinaryFn.
             FunctionError: If the function violates ordinarity rules.
             SyntaxError: If source cannot be parsed.
-            ValueError: If portal is USE_FROM_OTHER but fn is not OrdinaryFn.
+            ValueError: If portal is USE_FROM_OTHER but fn is not an OrdinaryFn.
         """
         if portal is USE_FROM_OTHER:
             if isinstance(fn, OrdinaryFn):

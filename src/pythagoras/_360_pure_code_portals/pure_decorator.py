@@ -44,8 +44,19 @@ class pure(protected):
             pre_validators: Validators run before execution.
             post_validators: Validators run after execution.
             fixed_kwargs: Argument name-value pairs injected into every call.
-            excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
-            portal: Specific PureCodePortal to use; inferred from context if omitted.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit from context
+                - USE_FROM_OTHER to copy the setting from the wrapped function
+                  (only valid when wrapping an existing PureFn)
+
+            portal: Portal to use for caching and execution. Can be:
+
+                - A PureCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from the wrapped function
+                  (only valid when wrapping an existing PureFn)
+                - None to infer from context at execution time
         """
         super().__init__(portal=portal
                        , excessive_logging=excessive_logging

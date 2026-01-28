@@ -71,13 +71,23 @@ class autonomous(safe):
         Args:
             fixed_kwargs: Keyword arguments to pre-bind (partially apply) to the
                 decorated function. These will be merged into every call.
-            excessive_logging: If True, enables verbose logging within the
-                selected portal. KEEP_CURRENT leaves the portal's setting as-is.
-            portal: Portal instance to use for autonomy and safety checks.
+            excessive_logging: Controls verbose logging behavior. Can be:
+
+                - True/False to explicitly enable/disable
+                - KEEP_CURRENT to inherit the portal's current setting
+                - USE_FROM_OTHER to copy the setting from the wrapped function
+                  (only valid when wrapping an existing AutonomousFn)
+
+            portal: Portal to use for autonomy and safety checks. Can be:
+
+                - An AutonomousCodePortal instance to link directly
+                - USE_FROM_OTHER to inherit the portal from the wrapped function
+                  (only valid when wrapping an existing AutonomousFn)
+                - None to infer a suitable portal when the function is called
 
         Raises:
-            TypeError: If portal is not an AutonomousCodePortal or None, or
-                if fixed_kwargs is not a dict or None.
+            TypeError: If portal is not an AutonomousCodePortal, ReuseFlag, or None,
+                or if fixed_kwargs is not a dict or None.
         """
         if not (isinstance(portal, (AutonomousCodePortal,ReuseFlag)) or portal is None):
             raise TypeError(f"portal must be an AutonomousCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")
