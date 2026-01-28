@@ -63,7 +63,7 @@ class protected(autonomous):
                 the current setting from the portal/context.
             portal (ProtectedCodePortal | None): Optional portal instance to
                 bind the wrapped function to. If None, a suitable portal will be
-                inferred when fuction is called.
+                inferred when function is called.
         """
         if not (isinstance(portal, ProtectedCodePortal) or portal is None):
             raise TypeError(f"portal must be a ProtectedCodePortal or None, got {get_long_infoname(portal)}")
@@ -84,7 +84,7 @@ class protected(autonomous):
             fn (Callable | str): The target function or its source code string.
 
         Returns:
-            ProtectedFn: A wrapper that performs pre/post validation and then
+            A wrapper that performs pre/post validation and then
             executes the function.
         """
         self._restrict_to_single_thread()

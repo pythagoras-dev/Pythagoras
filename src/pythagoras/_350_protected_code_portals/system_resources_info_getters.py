@@ -1,5 +1,11 @@
+"""Utilities for querying available system resources.
+
+Provides functions to check unused RAM, CPU cores, and NVIDIA GPU capacity.
+Used by pre-validators to ensure sufficient resources before execution.
+"""
 import os
 import psutil
+
 
 def get_unused_ram_mb() -> int:
     """Get the currently available RAM on the system in megabytes (MB).

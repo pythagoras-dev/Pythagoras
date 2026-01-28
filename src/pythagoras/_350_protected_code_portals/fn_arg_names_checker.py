@@ -1,3 +1,9 @@
+"""Utility for checking if a function accepts specific keyword arguments.
+
+Provides AST-based analysis to verify that a function's signature can accept
+a given set of keyword argument names, used by validators to ensure they
+can receive the arguments they need.
+"""
 import ast
 from typing import Iterable
 
