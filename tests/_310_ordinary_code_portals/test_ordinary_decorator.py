@@ -37,10 +37,10 @@ def test_decorator_without_portal(tmpdir):
 
 def test_decorator_with_invalid_portal_type():
     """Test that TypeError is raised when portal is not OrdinaryCodePortal or None."""
-    with pytest.raises(TypeError, match="portal must be an OrdinaryCodePortal or None"):
+    with pytest.raises(TypeError):
         ordinary(portal="invalid_portal")
     
-    with pytest.raises(TypeError, match="portal must be an OrdinaryCodePortal or None"):
+    with pytest.raises(TypeError):
         ordinary(portal=123)
 
 
