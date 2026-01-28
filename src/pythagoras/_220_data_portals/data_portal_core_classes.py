@@ -465,12 +465,12 @@ class ValueAddr(HashAddr):
             , descriptor=descriptor
             , hash_signature=hash_signature)
 
-        self._set_cached_properties(value=data)
-
         if store:
             portal = get_current_data_portal()
             portal.global_value_store[self] = data
             self._containing_portals.add(portal)
+
+        self._set_cached_properties(value=data)
 
 
     @cached_property
