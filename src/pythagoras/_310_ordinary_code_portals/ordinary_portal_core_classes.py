@@ -287,7 +287,16 @@ class OrdinaryFn(TunableObject):
 
     @cached_property
     def _compiled_code(self) -> Any:
-        """Return compiled code object for executing the wrapped function."""
+        """Compile the wrapped function's source into an executable code object.
+
+        Parses the normalized source, renames the function to avoid namespace
+        collisions, appends a call-and-store trailer, and compiles the result.
+        The compiled code expects kwargs in _kwargs_var_name and stores the
+        result in _result_var_name.
+
+        Returns:
+            Compiled code object ready for exec().
+        """
         # Parse the stored source
         tree = ast.parse(self.source_code,
             filename=self._virtual_file_name,
@@ -424,7 +433,7 @@ class OrdinaryFn(TunableObject):
         """Return a short descriptor string used in hashing.
 
         Returns:
-            str: Lowercased string combining the function name and class name.
+            Lowercased string combining the function name and class name.
         """
         descriptor = self.name
         descriptor += "_" + self.__class__.__name__

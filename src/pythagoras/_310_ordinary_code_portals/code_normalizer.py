@@ -79,7 +79,14 @@ class _AnnotationRemover(ast.NodeTransformer):
             return ast.copy_location(bare_name_expr, node)
     
     def visit_arg(self, node: ast.arg) -> ast.arg:
-        """Remove annotation from function argument."""
+        """Remove type annotation from a function argument.
+
+        Args:
+            node: Function argument node.
+
+        Returns:
+            The same node with its annotation set to None.
+        """
         node.annotation = None
         return node
     
