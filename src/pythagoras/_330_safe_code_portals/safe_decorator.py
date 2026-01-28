@@ -1,3 +1,9 @@
+"""Decorator for creating safe-execution-enabled functions.
+
+Provides the @safe decorator which wraps ordinary Python functions into
+SafeFn instances that execute within a SafeCodePortal context with logging
+and (planned) sandboxing capabilities.
+"""
 from typing import Callable
 
 from persidict import Joker, KEEP_CURRENT
@@ -30,6 +36,9 @@ class safe(logging):
                 calls. KEEP_CURRENT inherits from current context.
             portal: The SafeCodePortal to attach the resulting SafeFn to. If
                 None, the active portal (if any) may be used by lower layers.
+
+        Raises:
+            TypeError: If portal is not a SafeCodePortal or None.
         """
         if not (isinstance(portal, SafeCodePortal) or portal is None):
             raise TypeError(f"portal must be a SafeCodePortal or None, got {get_long_infoname(portal)}")
@@ -45,7 +54,7 @@ class safe(logging):
             fn: The function to wrap.
 
         Returns:
-            SafeFn: The wrapped function that can be executed via a portal and
+            The wrapped function that can be executed via a portal and
             will record logging information.
         """
         self._restrict_to_single_thread()

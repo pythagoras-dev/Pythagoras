@@ -66,6 +66,9 @@ class SafeFnCallSignature(LoggingFnCallSignature):
         Args:
             fn: The safe function object to be called.
             arguments: The keyword arguments to use for the call.
+
+        Raises:
+            TypeError: If fn is not a SafeFn instance or arguments is not a dict.
         """
         if not isinstance(fn, SafeFn):
             raise TypeError(f"fn must be a SafeFn instance, got {get_long_infoname(fn)}")
@@ -78,7 +81,7 @@ class SafeFnCallSignature(LoggingFnCallSignature):
         """Return the SafeFn referenced by this signature.
 
         Returns:
-            SafeFn: The underlying safe function instance.
+            The underlying safe function instance.
         """
         return super().fn
 
@@ -118,7 +121,7 @@ class SafeFn(LoggingFn):
         """Return picklable state.
 
         Returns:
-            dict: The state returned by the parent LoggingFn for pickling.
+            The state returned by the parent LoggingFn for pickling.
         """
         state = super().__getstate__()
         return state
@@ -138,7 +141,7 @@ class SafeFn(LoggingFn):
         """Return the associated SafeCodePortal.
 
         Returns:
-            SafeCodePortal: The portal that owns this function.
+            The portal that owns this function.
         """
         return super().portal
 
@@ -150,7 +153,7 @@ class SafeFn(LoggingFn):
             arguments: The keyword arguments for the call.
 
         Returns:
-            SafeFnCallSignature: A typed call signature suitable for execution
-            and logging through the portal.
+            A typed call signature suitable for execution and logging
+            through the portal.
         """
         return SafeFnCallSignature(fn=self, arguments=arguments)
