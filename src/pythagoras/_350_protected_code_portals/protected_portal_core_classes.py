@@ -250,8 +250,8 @@ class ProtectedFn(AutonomousFn):
                                         f"for function {self.name}")
                 result = super().execute(**kwargs)
 
-                if not (self.validate_execution_result(kw_args, result)
-                         is VALIDATION_SUCCESSFUL):
+                if (self.validate_execution_result(kw_args, result)
+                         is not VALIDATION_SUCCESSFUL):
                     raise FunctionError(f"Post-validators failed "
                                         f"for function {self.name}")
                 return result

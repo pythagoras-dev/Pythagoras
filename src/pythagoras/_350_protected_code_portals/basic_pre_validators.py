@@ -153,7 +153,7 @@ def _check_python_package_and_install_if_needed(
         portal = self.portal
         address = ("installation_attempts", package_name)
         # allow installation retries every 10 minutes
-        if (not address in portal.local_node_value_store
+        if (address not in portal.local_node_value_store
                 or portal.local_node_value_store[address] < time.time() - 600):
             portal.local_node_value_store[address] = time.time()
             pth.install_package(package_name)

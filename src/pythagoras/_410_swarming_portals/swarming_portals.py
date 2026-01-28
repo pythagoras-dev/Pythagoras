@@ -625,7 +625,7 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
                 if isinstance(pre_validation_result, PureFnCallSignature):
                     call_signature = pre_validation_result
                     continue
-                elif not pre_validation_result is VALIDATION_SUCCESSFUL:
+                elif pre_validation_result is not VALIDATION_SUCCESSFUL:
                     continue
                 with OutputSuppressor():
                     new_address.execute()
