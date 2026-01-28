@@ -31,6 +31,7 @@ def test_two_equivalent_pure_functions_only_one_with_portal(tmpdir):
             return x*10
 
         assert my_function(x=1) == 10
+        assert my_function.linked_portal is t.portal
 
         @pure()
         def my_function(x:int)->int: # comment
@@ -38,6 +39,6 @@ def test_two_equivalent_pure_functions_only_one_with_portal(tmpdir):
             return     x*10
 
         assert my_function(x=2) == 20
-        assert my_function.linked_portal is t.portal
+        assert my_function.linked_portal is None
 
         assert t.portal.get_number_of_linked_functions() == 1
