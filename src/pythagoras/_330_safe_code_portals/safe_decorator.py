@@ -8,6 +8,7 @@ from typing import Callable
 
 from persidict import Joker, KEEP_CURRENT
 
+from .. import ReuseFlag
 from .._320_logging_code_portals import logging
 from .._110_supporting_utilities import get_long_infoname
 from .safe_portal_core_classes import SafeFn, SafeCodePortal
@@ -27,8 +28,8 @@ class safe(logging):
     """
 
     def __init__(self
-                 , excessive_logging: bool|None|Joker = KEEP_CURRENT
-                 , portal: SafeCodePortal | None = None):
+                 , excessive_logging: bool|None|Joker|ReuseFlag = KEEP_CURRENT
+                 , portal: SafeCodePortal | None|ReuseFlag = None):
         """Create a safe decorator bound to an optional portal.
 
         Args:
@@ -40,8 +41,8 @@ class safe(logging):
         Raises:
             TypeError: If portal is not a SafeCodePortal or None.
         """
-        if not (isinstance(portal, SafeCodePortal) or portal is None):
-            raise TypeError(f"portal must be a SafeCodePortal or None, got {get_long_infoname(portal)}")
+        if not (isinstance(portal, (SafeCodePortal,ReuseFlag)) or portal is None):
+            raise TypeError(f"portal must be a SafeCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")
         logging.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging)

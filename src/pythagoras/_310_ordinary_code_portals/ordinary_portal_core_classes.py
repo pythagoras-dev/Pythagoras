@@ -15,6 +15,7 @@ import pandas as pd
 from persidict import PersiDict, SafeStrTuple
 
 from .function_error_exception import FunctionError
+from .reuse_flag import ReuseFlag, USE_FROM_OTHER
 from .._230_tunable_portals import TunablePortal, TunableObject
 from .code_normalizer import _get_normalized_fn_source_code_str_impl
 from .function_processing import get_function_name_from_source
@@ -124,7 +125,6 @@ class OrdinaryCodePortal(TunablePortal):
         result.reset_index(drop=True, inplace=True)
         return result
 
-
 class OrdinaryFn(TunableObject):
     """A wrapper around an ordinary function that enables controlled execution.
 
@@ -156,7 +156,7 @@ class OrdinaryFn(TunableObject):
 
     def __init__(self
                  , fn: Callable | str
-                 , portal: OrdinaryCodePortal | None = None
+                 , portal: OrdinaryCodePortal | ReuseFlag | None = None
                  ):
         """Create a new OrdinaryFn wrapper.
 
@@ -168,19 +168,26 @@ class OrdinaryFn(TunableObject):
             TypeError: If fn is not callable, string, or OrdinaryFn.
             FunctionError: If the function violates ordinarity rules.
             SyntaxError: If source cannot be parsed.
+            ValueError: If portal is USE_FROM_OTHER but fn is not OrdinaryFn.
         """
+        if portal is USE_FROM_OTHER:
+            if isinstance(fn, OrdinaryFn):
+                portal = fn._linked_portal
+            else:
+                raise ValueError("portal can't be USE_FROM_OTHER "
+                                 "when fn is not an OrdinaryFn.")
+
         TunableObject.__init__(self, portal=portal)
         if isinstance(fn, OrdinaryFn):
             self.__setstate__(deepcopy(fn.__getstate__()))
             self._init_finished = False
-            if self._linked_portal is None:
-                self._linked_portal = fn._linked_portal
-            #TODO: check this logic
         else:
             if not (callable(fn) or isinstance(fn, str)):
                 raise TypeError("fn must be a callable or a string "
                                 "with the function's source code.")
             self._source_code = get_normalized_fn_source_code_str(fn)
+
+        self._linked_portal = portal
 
 
     @property

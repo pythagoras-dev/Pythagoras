@@ -44,8 +44,8 @@ class protected(autonomous):
                  , pre_validators: list[ValidatorFn] | None = None
                  , post_validators: list[ValidatorFn] | None = None
                  , fixed_kwargs: dict[str,Any] | None = None
-                 , excessive_logging: bool|Joker = KEEP_CURRENT
-                 , portal: ProtectedCodePortal | None = None
+                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
+                 , portal: ProtectedCodePortal | None | ReuseFlag = None
                  ):
         """Initialize the protected decorator.
 
@@ -65,10 +65,8 @@ class protected(autonomous):
                 bind the wrapped function to. If None, a suitable portal will be
                 inferred when function is called.
         """
-        if not (isinstance(portal, ProtectedCodePortal) or portal is None):
+        if not (isinstance(portal, (ProtectedCodePortal,ReuseFlag)) or portal is None):
             raise TypeError(f"portal must be a ProtectedCodePortal or None, got {get_long_infoname(portal)}")
-        if not (isinstance(fixed_kwargs, dict) or fixed_kwargs is None):
-            raise TypeError(f"fixed_kwargs must be a dict or None, got {get_long_infoname(fixed_kwargs)}")
         autonomous.__init__(self=self
             , portal=portal
             , excessive_logging=excessive_logging

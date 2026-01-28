@@ -168,9 +168,9 @@ class PureFn(ProtectedFn):
     def __init__(self, fn: Callable | str
                  , pre_validators: list[AutonomousFn] | list[Callable] | None = None
                  , post_validators: list[AutonomousFn] | list[Callable] | None = None
-                 , excessive_logging: bool | Joker = KEEP_CURRENT
+                 , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
-                 , portal: PureCodePortal | None = None):
+                 , portal: PureCodePortal | None |ReuseFlag = None):
         """Construct a PureFn wrapper.
 
         Args:
@@ -181,13 +181,12 @@ class PureFn(ProtectedFn):
             fixed_kwargs: Argument name-value pairs injected into every call.
             portal: Specific PureCodePortal to link to.
         """
-        ProtectedFn.__init__(self
-                             , fn=fn
-                             , portal = portal
-                             , fixed_kwargs=fixed_kwargs
-                             , excessive_logging = excessive_logging
-                             , pre_validators=pre_validators
-                             , post_validators=post_validators)
+        super().__init__(fn=fn
+                         , portal = portal
+                         , fixed_kwargs=fixed_kwargs
+                         , excessive_logging = excessive_logging
+                         , pre_validators=pre_validators
+                         , post_validators=post_validators)
 
 
     def get_address(self, **kwargs) -> PureFnExecutionResultAddr:

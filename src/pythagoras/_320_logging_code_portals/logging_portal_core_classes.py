@@ -71,7 +71,8 @@ from .._320_logging_code_portals.uncaught_exceptions import \
 from persidict import OverlappingMultiDict
 from .._220_data_portals import KwArgs, PackedKwArgs
 from mixinforge import OutputCapturer
-from .._310_ordinary_code_portals import OrdinaryCodePortal, OrdinaryFn
+from .._310_ordinary_code_portals import (
+    OrdinaryCodePortal, OrdinaryFn, ReuseFlag, USE_FROM_OTHER)
 from .._110_supporting_utilities.current_date_gmt_str import (
     current_date_gmt_string)
 from .._320_logging_code_portals.execution_environment_summary import (
@@ -100,8 +101,8 @@ class LoggingFn(OrdinaryFn):
 
     def __init__(self
             , fn: Callable | str
-            , excessive_logging: bool|Joker = KEEP_CURRENT
-            , portal: LoggingCodePortal | None = None
+            , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
+            , portal: LoggingCodePortal | ReuseFlag | None = None
             ):
         """Initialize a LoggingFn wrapper.
 
@@ -114,17 +115,21 @@ class LoggingFn(OrdinaryFn):
                 omitted, uses the active portal during execution.
 
         Raises:
-            TypeError: If excessive_logging is not a bool or Joker.
+            TypeError: If excessive_logging is not a bool, Joker, or ReuseFlag.
         """
         super().__init__(fn=fn, portal=portal)
 
-        if not isinstance(excessive_logging, (bool, Joker)):
+        if not isinstance(excessive_logging, (bool, Joker, ReuseFlag)):
             raise TypeError(
-                "excessive_logging must be a boolean or Joker, "
-                f"got {type(excessive_logging)}")
+                "excessive_logging must be a boolean, Joker, or ReuseFlag, "
+                f"got {get_long_infoname(excessive_logging)}")
 
-        if excessive_logging is KEEP_CURRENT and isinstance(fn, LoggingFn):
-            excessive_logging = fn._auxiliary_config_params_at_init["excessive_logging"]
+        if excessive_logging is USE_FROM_OTHER:
+            if isinstance(fn, LoggingFn):
+                excessive_logging = fn._auxiliary_config_params_at_init["excessive_logging"]
+            else:
+                raise ValueError("excessive_logging can't be USE_FROM_OTHER "
+                                 "when fn is not an instance of LoggingFn.")
 
         self._auxiliary_config_params_at_init[
             "excessive_logging"] = excessive_logging

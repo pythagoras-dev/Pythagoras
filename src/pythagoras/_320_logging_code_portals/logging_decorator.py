@@ -9,7 +9,7 @@ from typing import Callable
 
 from persidict import Joker, KEEP_CURRENT
 
-from .._310_ordinary_code_portals import ordinary
+from .._310_ordinary_code_portals import ordinary, ReuseFlag
 from .logging_portal_core_classes import LoggingCodePortal, LoggingFn
 from .._110_supporting_utilities import get_long_infoname
 
@@ -23,8 +23,8 @@ class logging(ordinary):
     _excessive_logging: bool|Joker
 
     def __init__(self
-            , excessive_logging:bool|Joker = KEEP_CURRENT
-            , portal: LoggingCodePortal | None = None):
+            , excessive_logging:bool|Joker|ReuseFlag = KEEP_CURRENT
+            , portal: LoggingCodePortal | ReuseFlag| None = None):
         """Initialize the logging decorator.
 
         Args:
@@ -39,11 +39,11 @@ class logging(ordinary):
             TypeError: If excessive_logging is not a bool or Joker, or if
                 portal is not a LoggingCodePortal or None.
         """
-        if not isinstance(excessive_logging, (bool, Joker)):
-            raise TypeError(f"excessive_logging must be bool or Joker, got {get_long_infoname(excessive_logging)}")
-        if not (isinstance(portal, LoggingCodePortal) or portal is None):
-            raise TypeError(f"portal must be LoggingCodePortal or None, got {get_long_infoname(portal)}")
-        ordinary.__init__(self=self, portal=portal)
+        if not isinstance(excessive_logging, (bool, Joker,ReuseFlag)):
+            raise TypeError(f"excessive_logging must be bool or Joker or ReuseFlag, got {get_long_infoname(excessive_logging)}")
+        if not (isinstance(portal, (LoggingCodePortal,ReuseFlag)) or portal is None):
+            raise TypeError(f"portal must be LoggingCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")
+        super().__init__(portal=portal)
         self._excessive_logging = excessive_logging
 
     def __call__(self,fn:Callable)->LoggingFn:

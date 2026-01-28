@@ -99,8 +99,8 @@ class SafeFn(LoggingFn):
 
     def __init__(self
                  , fn: Callable|str
-                 , portal: LoggingCodePortal|None = None
-                 , excessive_logging: bool|Joker = KEEP_CURRENT
+                 , portal: LoggingCodePortal|None|ReuseFlag = None
+                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
                  ):
         """Create a SafeFn wrapper.
 

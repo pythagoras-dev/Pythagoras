@@ -40,6 +40,7 @@ of decoration, while runtime checks happen at the time of function execution.
 """
 from typing import Callable
 
+from .._310_ordinary_code_portals import ReuseFlag
 from .._330_safe_code_portals import safe
 from .autonomous_portal_core_classes import AutonomousFn, AutonomousCodePortal
 from persidict import Joker, KEEP_CURRENT
@@ -62,7 +63,7 @@ class autonomous(safe):
 
     def __init__(self
                  , fixed_kwargs: dict | None = None
-                 , excessive_logging: bool|Joker = KEEP_CURRENT
+                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
                  , portal: AutonomousCodePortal | None = None
                  ):
         """Initialize the decorator.
@@ -78,8 +79,8 @@ class autonomous(safe):
             TypeError: If portal is not an AutonomousCodePortal or None, or
                 if fixed_kwargs is not a dict or None.
         """
-        if not (isinstance(portal, AutonomousCodePortal) or portal is None):
-            raise TypeError(f"portal must be an AutonomousCodePortal or None, got {get_long_infoname(portal)}")
+        if not (isinstance(portal, (AutonomousCodePortal,ReuseFlag)) or portal is None):
+            raise TypeError(f"portal must be an AutonomousCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")
         if not (isinstance(fixed_kwargs, dict) or fixed_kwargs is None):
             raise TypeError(f"fixed_kwargs must be a dict or None, got {get_long_infoname(fixed_kwargs)}")
         safe.__init__(self=self

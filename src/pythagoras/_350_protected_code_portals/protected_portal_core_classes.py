@@ -82,9 +82,9 @@ class ProtectedFn(AutonomousFn):
     def __init__(self, fn: Callable | str
                  , pre_validators: list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None = None
                  , post_validators: list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None = None
-                 , excessive_logging: bool | Joker = KEEP_CURRENT
+                 , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , fixed_kwargs: dict[str,Any] | None = None
-                 , portal: ProtectedCodePortal | None = None):
+                 , portal: ProtectedCodePortal | None | ReuseFlag = None):
         """Construct a ProtectedFn.
 
         Args:

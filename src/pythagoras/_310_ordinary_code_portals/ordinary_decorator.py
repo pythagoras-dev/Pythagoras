@@ -10,6 +10,7 @@ from typing import Callable, Any
 from mixinforge import SingleThreadEnforcerMixin
 
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
+from .reuse_flag import ReuseFlag
 from .._110_supporting_utilities import get_long_infoname
 
 
@@ -33,15 +34,16 @@ class ordinary(SingleThreadEnforcerMixin):
 
     _portal: OrdinaryCodePortal | None
 
-    def __init__(self, portal: OrdinaryCodePortal | None = None):
+    def __init__(self, portal: OrdinaryCodePortal | ReuseFlag | None = None):
         """Initialize the decorator with optional portal linkage.
 
         Args:
             portal: Optional portal to associate with wrapped functions.
         """
+        super().__init__()
         self._restrict_to_single_thread()
-        if not (portal is None or isinstance(portal, OrdinaryCodePortal)):
-            raise TypeError(f"portal must be an OrdinaryCodePortal or None, got {get_long_infoname(portal)}")
+        if not (portal is None or isinstance(portal, (OrdinaryCodePortal, ReuseFlag))):
+            raise TypeError(f"portal must be an OrdinaryCodePortal, ReuseFlag, or None, got {get_long_infoname(portal)}")
         self._portal = portal
 
     def __call__(self, fn: Callable) -> OrdinaryFn:

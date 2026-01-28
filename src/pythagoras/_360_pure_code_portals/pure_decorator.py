@@ -14,6 +14,7 @@ not dependencies or environment.
 
 from typing import Callable, Any
 
+from .._310_ordinary_code_portals import ReuseFlag
 from .._350_protected_code_portals import protected, ValidatorFn
 from .._360_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFn)
@@ -34,8 +35,8 @@ class pure(protected):
                  , pre_validators: list[ValidatorFn] | None = None
                  , post_validators: list[ValidatorFn] | None = None
                  , fixed_kwargs: dict[str, Any] | None = None
-                 , excessive_logging: bool | Joker = KEEP_CURRENT
-                 , portal: PureCodePortal | None = None
+                 , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
+                 , portal: PureCodePortal | None | ReuseFlag = None
                  ):
         """Initialize the pure decorator.
 
@@ -46,12 +47,11 @@ class pure(protected):
             excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
             portal: Specific PureCodePortal to use; inferred from context if omitted.
         """
-        protected.__init__(self=self
-                           , portal=portal
-                           , excessive_logging=excessive_logging
-                           , fixed_kwargs=fixed_kwargs
-                           , pre_validators=pre_validators
-                           , post_validators=post_validators)
+        super().__init__(portal=portal
+                       , excessive_logging=excessive_logging
+                       , fixed_kwargs=fixed_kwargs
+                       , pre_validators=pre_validators
+                       , post_validators=post_validators)
 
 
     def __call__(self, fn:Callable|str) -> PureFn:
