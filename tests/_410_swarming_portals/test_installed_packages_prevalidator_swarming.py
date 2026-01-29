@@ -18,8 +18,7 @@ def test_polars_package(tmpdir):
     with _PortalTester(SwarmingPortal, tmpdir+"qrtr"):
         polars_package_name = "polars"
 
-        uninstall_package(polars_package_name, use_uv=False)
-        uninstall_package(polars_package_name, use_uv=False)
+        uninstall_package(polars_package_name)
 
         with pytest.raises(Exception):
             package = importlib.import_module(polars_package_name)
@@ -31,7 +30,7 @@ def test_polars_package(tmpdir):
         package = importlib.import_module(polars_package_name)
         importlib.reload(package)
 
-        uninstall_package(polars_package_name, use_uv=False)
+        uninstall_package(polars_package_name)
 
         with pytest.raises((ModuleNotFoundError,ImportError)):
             importlib.reload(package)
