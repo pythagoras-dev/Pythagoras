@@ -5,7 +5,7 @@ Python functions into Pythagoras OrdinaryFn objects while enforcing ordinarity
 constraints (keyword-only arguments, no defaults, etc.).
 """
 
-from typing import Callable, Any
+from typing import Callable
 
 from mixinforge import SingleThreadEnforcerMixin, NotPicklableMixin
 
