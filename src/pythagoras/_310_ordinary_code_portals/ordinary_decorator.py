@@ -7,14 +7,14 @@ constraints (keyword-only arguments, no defaults, etc.).
 
 from typing import Callable, Any
 
-from mixinforge import SingleThreadEnforcerMixin
+from mixinforge import SingleThreadEnforcerMixin, NotPicklableMixin
 
 from .ordinary_portal_core_classes import OrdinaryFn, OrdinaryCodePortal
 from .reuse_flag import ReuseFlag
 from .._110_supporting_utilities import get_long_infoname
 
 
-class ordinary(SingleThreadEnforcerMixin):
+class ordinary(SingleThreadEnforcerMixin, NotPicklableMixin):
     """A decorator that converts a Python function into an OrdinaryFn object.
 
     Transforms regular Python functions into Pythagoras OrdinaryFn wrappers,
@@ -66,22 +66,3 @@ class ordinary(SingleThreadEnforcerMixin):
         self._restrict_to_single_thread()
         wrapper = OrdinaryFn(fn, portal=self._portal)
         return wrapper
-
-    def __getstate__(self) -> Any:
-        """Prevent pickling of the decorator instance.
-
-        Raises:
-            TypeError: Always, as decorators are not meant to be pickled.
-        """
-        raise TypeError("Decorators cannot be pickled.")
-
-    def __setstate__(self, state: Any) -> None:
-        """Prevent unpickling of the decorator instance.
-
-        Args:
-            state: The state object to restore.
-
-        Raises:
-            TypeError: Always, as decorators should not be pickled.
-        """
-        raise TypeError("Decorators cannot be pickled.")
