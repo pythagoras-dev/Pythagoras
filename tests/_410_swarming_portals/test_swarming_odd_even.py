@@ -32,6 +32,7 @@ def test_two_decorators(tmpdir):
         isEven_pure = pure()(isEven)
         isOdd_pure = pure()(isOdd)
         addr = isEven_pure.swarm(n=10,isOdd= isOdd_pure, isEven= isEven_pure)
+        addr._invalidate_cache()
 
     with _PortalTester(SwarmingPortal
             , tmpdir, max_n_workers=8):
