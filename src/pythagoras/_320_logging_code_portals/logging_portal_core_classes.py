@@ -52,6 +52,7 @@ Excessive Logging Mode:
 from __future__ import annotations
 
 import sys
+from contextlib import ExitStack
 from functools import cached_property
 from typing import Callable, Any, Final
 
@@ -716,6 +717,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
     exception_counter: int
     event_counter: int
     context_used: bool
+    _exit_stack: ExitStack | None
 
     def __init__(self, fn_call_signature: LoggingFnCallSignature):
         """Initialize the execution frame for a specific function call.
@@ -739,6 +741,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             self.exception_counter = 0
             self.event_counter = 0
             self.context_used = False
+            self._exit_stack = None
 
 
     @property
@@ -828,12 +831,26 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             raise RuntimeError("An instance of LoggingFnExecutionFrame can be used only once.")
         if self.event_counter != 0:
             raise RuntimeError("An instance of LoggingFnExecutionFrame can be used only once.")
-        self.portal.__enter__()
-        if isinstance(self.output_capturer, OutputCapturer):
-            self.output_capturer.__enter__()
-        LoggingFnExecutionFrame.call_stack.append(self)
-        self._register_execution_attempt()
-        return self
+
+        self._exit_stack = ExitStack()
+        try:
+            self._exit_stack.enter_context(self.portal)
+            if isinstance(self.output_capturer, OutputCapturer):
+                # Register callback first so it runs AFTER output_capturer.__exit__
+                # (callbacks execute in LIFO order)
+                def capture_output():
+                    output_id = self.session_id + "_output"
+                    execution_outputs = self.fn_call_signature.execution_outputs
+                    execution_outputs[output_id] = self.output_capturer.get_output()
+                self._exit_stack.callback(capture_output)
+                self._exit_stack.enter_context(self.output_capturer)
+            LoggingFnExecutionFrame.call_stack.append(self)
+            self._exit_stack.callback(LoggingFnExecutionFrame.call_stack.pop)
+            self._register_execution_attempt()
+            return self
+        except BaseException:
+            self._exit_stack.close()
+            raise
 
 
     def _register_execution_attempt(self):
@@ -885,9 +902,10 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
     def __exit__(self, exc_type, exc_value, trace_back):
         """Exit the execution frame context.
 
-        Ensures the current exception (if any) is logged, finalizes output
-        capture and stores it, pops the frame from the call stack, and exits
-        the underlying portal context.
+        Ensures the current exception (if any) is logged, then delegates
+        cleanup to the ExitStack which handles: popping from call stack,
+        closing output capturer (and storing captured output), and exiting
+        the portal context - all in reverse order of entry.
 
         Args:
             exc_type: Exception class raised within the context, if any.
@@ -895,19 +913,9 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             trace_back: Traceback object associated with the exception, if any.
         """
         try:
-            try:
-                try:
-                    log_exception()
-                finally:
-                    if isinstance(self.output_capturer, OutputCapturer):
-                        self.output_capturer.__exit__(exc_type, exc_value, trace_back)
-                        output_id = self.session_id + "_output"
-                        execution_outputs = self.fn_call_signature.execution_outputs
-                        execution_outputs[output_id] = self.output_capturer.get_output()
-            finally:
-                self.portal.__exit__(exc_type, exc_value, trace_back)
+            log_exception()
         finally:
-            LoggingFnExecutionFrame.call_stack.pop()
+            self._exit_stack.__exit__(exc_type, exc_value, trace_back)
 
 
 _EXCEPTIONS_TOTAL_TXT: Final[str] = "Exceptions, total"

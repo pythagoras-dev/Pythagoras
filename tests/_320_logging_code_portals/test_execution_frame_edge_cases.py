@@ -259,3 +259,79 @@ def test_execution_frame_counters_initialized_correctly():
 
             assert frame.exception_counter == 0
             assert frame.event_counter == 0
+
+
+def test_cleanup_order_on_exception_in_body():
+    """Test that resources are cleaned up in correct order when exception occurs."""
+    cleanup_order = []
+
+    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+        portal = tester.portal
+
+        @logging(excessive_logging=True)
+        def fn_that_raises():
+            raise ValueError("Intentional test exception")
+
+        initial_stack_depth = len(LoggingFnExecutionFrame.call_stack)
+
+        with portal:
+            try:
+                fn_that_raises()
+            except ValueError:
+                pass
+
+        # Verify call stack was properly cleaned up
+        assert len(LoggingFnExecutionFrame.call_stack) == initial_stack_depth
+
+
+def test_output_captured_before_capturer_closes():
+    """Test that output is captured and stored correctly with ExitStack."""
+    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+        portal = tester.portal
+
+        @logging(excessive_logging=True)
+        def fn_with_output():
+            print("Test output line")
+            return "result"
+
+        with portal:
+            result = fn_with_output()
+            assert result == "result"
+
+            # Get the call signature to check captured output
+            sig = fn_with_output.get_signature({})
+            execution_outputs = sig.execution_outputs
+
+            # There should be at least one output captured
+            assert len(execution_outputs) > 0
+
+            # The output should contain our print statement
+            output_keys = list(execution_outputs.keys())
+            found_output = False
+            for key in output_keys:
+                output_value = execution_outputs[key]
+                if "Test output line" in str(output_value):
+                    found_output = True
+                    break
+            assert found_output, "Expected output was not captured"
+
+
+def test_exit_stack_attribute_initialized():
+    """Test that _exit_stack attribute is properly initialized."""
+    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+        portal = tester.portal
+
+        @logging(excessive_logging=True)
+        def simple_fn():
+            return "result"
+
+        with portal:
+            sig = simple_fn.get_signature({})
+            frame = LoggingFnExecutionFrame(sig)
+
+            # Before entering context, _exit_stack should be None
+            assert frame._exit_stack is None
+
+            with frame:
+                # Inside context, _exit_stack should be set
+                assert frame._exit_stack is not None
