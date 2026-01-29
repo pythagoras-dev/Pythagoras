@@ -299,11 +299,25 @@ class TunableObject(StorableObject):
 
 
     def __setstate__(self, state):
-        """Restore object state from pickle."""
+        """Restore object state from pickle.
+
+        Note:
+            _auxiliary_config_params_at_init is intentionally reset to an empty
+            dict rather than restored from state. This asymmetry with __getstate__
+            is by design: config params are persisted to the portal's settings
+            on first visit (see _first_visit_to_portal), so after unpickling,
+            the object retrieves its effective settings from the portal rather
+            than from its internal state.
+        """
         super().__setstate__(state)
         self._auxiliary_config_params_at_init = dict()
 
 
     def __getstate__(self):
-        """Return object state for pickling."""
+        """Return object state for pickling.
+
+        Note:
+            _auxiliary_config_params_at_init is intentionally excluded from
+            the serialized state. See __setstate__ for the design rationale.
+        """
         return super().__getstate__()
