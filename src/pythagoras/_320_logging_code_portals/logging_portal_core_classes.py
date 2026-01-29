@@ -56,7 +56,8 @@ from functools import cached_property
 from typing import Callable, Any, Final
 
 import pandas as pd
-from mixinforge import NotPicklableMixin, CacheablePropertiesMixin, SingleThreadEnforcerMixin
+from mixinforge import (NotPicklableMixin, CacheablePropertiesMixin,
+    SingleThreadEnforcerMixin, GuardedInitMeta, ImmutableMixin)
 from persidict import PersiDict, KEEP_CURRENT, Joker
 from .._210_basic_portals import get_current_portal
 from .._210_basic_portals.basic_portal_core_classes import (
@@ -204,7 +205,8 @@ class LoggingFn(OrdinaryFn):
         return super().portal
 
 
-class   LoggingFnCallSignature(CacheablePropertiesMixin):
+class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
+                             metaclass=GuardedInitMeta):
     """Unique identifier for a LoggingFn execution with specific arguments.
 
     Combines a function's ValueAddr with its packed arguments' ValueAddr to
@@ -240,6 +242,8 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
         Raises:
             TypeError: If fn is not a LoggingFn instance.
         """
+        super().__init__()
+        self._init_finished = False
         if not isinstance(fn, LoggingFn):
             raise TypeError(f"fn must be an instance of LoggingFn, got {get_long_infoname(fn)}")
         isinstance(arguments, dict)
@@ -247,6 +251,11 @@ class   LoggingFnCallSignature(CacheablePropertiesMixin):
         with fn.portal:
             self._fn_addr = fn.addr
             self._kwargs_addr = ValueAddr(arguments.pack())
+
+
+    def get_identity_key(self) -> tuple:
+        """Return identity key based on function and arguments addresses."""
+        return (self._fn_addr, self._kwargs_addr)
 
 
     @property

@@ -109,3 +109,40 @@ def test_fn_call_signature_events_history(tmpdir):
 
         assert len(signature.events) == N_EXECUTIONS*2
         assert len(p.portal._event_history) == N_EXECUTIONS*2
+
+
+def test_fn_call_signature_hash_consistency_with_equality(tmpdir):
+    """Verify hash/equality contract: equal signatures must have equal hashes."""
+    with _PortalTester(LoggingCodePortal, tmpdir):
+        fn = logging(excessive_logging=True)(plus)
+        sig1 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
+        sig2 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
+
+        assert sig1 == sig2
+        assert hash(sig1) == hash(sig2)
+
+
+def test_fn_call_signature_usable_in_sets(tmpdir):
+    """Verify LoggingFnCallSignature instances can be used in sets correctly."""
+    with _PortalTester(LoggingCodePortal, tmpdir):
+        fn = logging(excessive_logging=True)(plus)
+        sig1 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
+        sig2 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
+        sig3 = LoggingFnCallSignature(fn, KwArgs(x=99, y=99))
+
+        sig_set = {sig1, sig2, sig3}
+        assert len(sig_set) == 2  # sig1 and sig2 are equal
+
+
+def test_fn_call_signature_usable_as_dict_keys(tmpdir):
+    """Verify LoggingFnCallSignature instances can be used as dictionary keys."""
+    with _PortalTester(LoggingCodePortal, tmpdir):
+        fn = logging(excessive_logging=True)(plus)
+        sig1 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
+        sig2 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
+
+        d = {sig1: "value1"}
+        d[sig2] = "value2"
+
+        assert len(d) == 1
+        assert d[sig1] == "value2"
