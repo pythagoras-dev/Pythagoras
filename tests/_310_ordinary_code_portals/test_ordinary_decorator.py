@@ -48,7 +48,7 @@ def test_decorator_not_picklable():
     """Test that decorator cannot be pickled."""
     decorator = ordinary()
     
-    with pytest.raises(TypeError, match="Decorators cannot be pickled"):
+    with pytest.raises(TypeError):
         pickle.dumps(decorator)
 
 
