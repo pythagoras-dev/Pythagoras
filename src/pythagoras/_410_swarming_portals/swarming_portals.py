@@ -34,7 +34,6 @@ from .._360_pure_code_portals.pure_core_classes import (
 
 from multiprocessing import get_context
 from .descendant_process_info import *
-from .descendant_process_info import _min_date
 from .system_processes_info_getters import *
 
 
