@@ -240,13 +240,15 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
             arguments: Dictionary of keyword arguments for the call.
 
         Raises:
-            TypeError: If fn is not a LoggingFn instance.
+            TypeError: If fn is not a LoggingFn instance or arguments is not a dict.
         """
         super().__init__()
         self._init_finished = False
         if not isinstance(fn, LoggingFn):
             raise TypeError(f"fn must be an instance of LoggingFn, got {get_long_infoname(fn)}")
-        isinstance(arguments, dict)
+        if not isinstance(arguments, dict):
+            raise TypeError(
+                f"arguments must be a dict, got {get_long_infoname(arguments)}")
         arguments = KwArgs(**arguments)
         with fn.portal:
             self._fn_addr = fn.addr
