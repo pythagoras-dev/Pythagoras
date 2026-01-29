@@ -409,6 +409,11 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
         return not (self == other)
 
 
+    def __hash__(self) -> int:
+        """Return hash(self), consistent with __eq__."""
+        return hash((type(self), self.strings))
+
+
 class ValueAddr(HashAddr):
     """A globally unique address of an immutable value.
 

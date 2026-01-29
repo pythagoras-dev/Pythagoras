@@ -88,6 +88,37 @@ def test_hash_addr_equality():
     assert addr1 != addr3
 
 
+def test_hash_addr_hash_consistency_with_equality():
+    """Verify hash/equality contract: equal objects must have equal hashes."""
+    addr1 = MockHashAddr("desc", "abcdefghij")
+    addr2 = MockHashAddr("desc", "abcdefghij")
+
+    assert addr1 == addr2
+    assert hash(addr1) == hash(addr2)
+
+
+def test_hash_addr_usable_in_sets():
+    """Verify HashAddr instances can be used in sets correctly."""
+    addr1 = MockHashAddr("desc", "abcdefghij")
+    addr2 = MockHashAddr("desc", "abcdefghij")
+    addr3 = MockHashAddr("desc", "xxxxxxxxxx")
+
+    addr_set = {addr1, addr2, addr3}
+    assert len(addr_set) == 2  # addr1 and addr2 are equal, so only 2 unique
+
+
+def test_hash_addr_usable_as_dict_keys():
+    """Verify HashAddr instances can be used as dictionary keys correctly."""
+    addr1 = MockHashAddr("desc", "abcdefghij")
+    addr2 = MockHashAddr("desc", "abcdefghij")
+
+    d = {addr1: "value1"}
+    d[addr2] = "value2"
+
+    assert len(d) == 1  # addr1 and addr2 are equal, so same key
+    assert d[addr1] == "value2"  # Updated by addr2
+
+
 def test_hash_addr_build_descriptor_basic():
     """Test _build_descriptor() with basic types."""
     assert "int" in HashAddr._build_descriptor(42).lower()
