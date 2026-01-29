@@ -721,6 +721,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             fn_call_signature: The call signature identifying the function and
                 its (packed) arguments.
         """
+        super().__init__()
         self._restrict_to_single_thread()
         with fn_call_signature.portal:
             self.session_id = "run_"+get_random_signature()
