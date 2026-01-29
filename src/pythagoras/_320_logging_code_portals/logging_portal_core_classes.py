@@ -573,6 +573,7 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
             call_signature: The call signature the record is associated with.
             session_id: The unique ID of the execution session.
         """
+        super().__init__()
         self._restrict_to_single_thread()
         self.call_signature = call_signature
         self.session_id = session_id

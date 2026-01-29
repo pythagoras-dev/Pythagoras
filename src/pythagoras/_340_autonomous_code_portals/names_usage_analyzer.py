@@ -113,6 +113,7 @@ class NamesUsageAnalyzer(ast.NodeVisitor):
     # TODO: add support for structural pattern matching
     def __init__(self):
         """Initialize the analyzer state and counters."""
+        super().__init__()
         self.names = NamesUsedInFunction()
         self.imported_packages_deep = set()
         self.func_nesting_level = 0
