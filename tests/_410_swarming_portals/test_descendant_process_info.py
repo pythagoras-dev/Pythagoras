@@ -11,7 +11,7 @@ from pythagoras import get_current_process_id, get_current_process_start_time
 from pythagoras._410_swarming_portals.descendant_process_info import (
     process_is_alive,
     DescendantProcessInfo,
-    MIN_VALID_TIMESTAMP
+    min_valid_process_start_time
 )
 
 
@@ -28,8 +28,7 @@ def test_process_is_alive_with_wrong_timestamp():
     """Verify process not detected as alive when timestamp mismatches."""
     pid = get_current_process_id()
     wrong_timestamp = int(time.time()) - 3600  # 1 hour ago
-    if wrong_timestamp >= MIN_VALID_TIMESTAMP:
-        assert process_is_alive(pid, wrong_timestamp) is False
+    assert process_is_alive(pid, wrong_timestamp) is False
 
 
 def test_process_is_alive_with_nonexistent_pid():
@@ -63,10 +62,10 @@ def test_process_is_alive_rejects_non_int_timestamp():
         process_is_alive(12345, "1735689600")
 
 
-def test_process_is_alive_rejects_old_timestamp():
-    """Verify ValueError when timestamp is before MIN_VALID_TIMESTAMP."""
-    with pytest.raises(ValueError, match="must be a valid Unix timestamp"):
-        process_is_alive(12345, MIN_VALID_TIMESTAMP - 1)
+def test_process_is_alive_returns_false_for_old_timestamp():
+    """Verify old timestamp returns False instead of raising."""
+    old_timestamp = min_valid_process_start_time() - 1
+    assert process_is_alive(12345, old_timestamp) is False
 
 
 # Tests for DescendantProcessInfo class
@@ -226,11 +225,11 @@ def test_descendant_process_info_rejects_non_int_process_start_time():
 
 
 def test_descendant_process_info_rejects_old_process_start_time():
-    """Verify ValueError when process_start_time is before MIN_VALID_TIMESTAMP."""
-    with pytest.raises(ValueError, match="must be a valid Unix timestamp"):
+    """Verify ValueError when process_start_time is outside boot-time window."""
+    with pytest.raises(ValueError, match="boot-time window"):
         DescendantProcessInfo(
             process_id=12345,
-            process_start_time=MIN_VALID_TIMESTAMP - 1,
+            process_start_time=min_valid_process_start_time() - 1,
             ancestor_process_id=100,
             ancestor_process_start_time=int(time.time()),
             process_type="test"
@@ -290,13 +289,13 @@ def test_descendant_process_info_rejects_non_int_ancestor_start_time():
 
 
 def test_descendant_process_info_rejects_old_ancestor_start_time():
-    """Verify ValueError when ancestor_process_start_time is before MIN_VALID_TIMESTAMP."""
-    with pytest.raises(ValueError, match="must be a valid Unix timestamp"):
+    """Verify ValueError when ancestor_process_start_time is outside boot-time window."""
+    with pytest.raises(ValueError, match="boot-time window"):
         DescendantProcessInfo(
             process_id=12345,
             process_start_time=int(time.time()),
             ancestor_process_id=100,
-            ancestor_process_start_time=MIN_VALID_TIMESTAMP - 1,
+            ancestor_process_start_time=min_valid_process_start_time() - 1,
             process_type="test"
         )
 

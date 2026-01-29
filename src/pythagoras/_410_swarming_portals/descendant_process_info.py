@@ -6,14 +6,40 @@ reused by the operating system.
 """
 
 import psutil
+import time
 from datetime import datetime, timezone
 from typing import Final
 
 from .._110_supporting_utilities import get_long_infoname
 
-# Unix timestamp for 2026-01-01 00:00:00 UTC - reasonable minimum for modern processes
-MIN_VALID_TIMESTAMP: Final[int] = 1735689600
-_min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d')
+BOOT_TIME_SKEW_SECONDS: Final[int] = 86_400
+
+def _boot_time_seconds() -> int:
+    return int(psutil.boot_time())
+
+
+def min_valid_process_start_time() -> int:
+    return _boot_time_seconds() - BOOT_TIME_SKEW_SECONDS
+
+
+def max_valid_process_start_time() -> int:
+    return int(time.time()) + BOOT_TIME_SKEW_SECONDS
+
+
+def _format_utc(ts: int) -> str:
+    return datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
+
+
+def validate_process_start_time(process_start_time: int, name: str = "process_start_time") -> None:
+    min_ts = min_valid_process_start_time()
+    max_ts = max_valid_process_start_time()
+    if process_start_time < min_ts or process_start_time > max_ts:
+        min_dt = _format_utc(min_ts)
+        max_dt = _format_utc(max_ts)
+        raise ValueError(
+            f"{name} must be within boot-time window [{min_ts}, {max_ts}] "
+            f"({min_dt} .. {max_dt}), got {process_start_time}"
+        )
 
 
 def process_is_alive(process_id: int, process_start_time: int) -> bool:
@@ -38,9 +64,10 @@ def process_is_alive(process_id: int, process_start_time: int) -> bool:
 
     if not isinstance(process_start_time, int):
         raise TypeError(f"process_start_time must be an integer, got {get_long_infoname(process_start_time)}")
-    if process_start_time < MIN_VALID_TIMESTAMP:
-        min_date = datetime.fromtimestamp(MIN_VALID_TIMESTAMP, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
-        raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {min_date}), got {process_start_time}")
+    min_ts = min_valid_process_start_time()
+    max_ts = max_valid_process_start_time()
+    if process_start_time < min_ts or process_start_time > max_ts:
+        return False
     try:
         proc = psutil.Process(process_id)
         if int(proc.create_time()) != process_start_time:
@@ -78,11 +105,9 @@ class DescendantProcessInfo:
 
         Args:
             process_id: PID of the descendant process (must be positive).
-            process_start_time: UNIX timestamp when the descendant process started
-                (must be >= 1735689600, i.e., 2026-01-01).
+            process_start_time: UNIX timestamp when the descendant process started.
             ancestor_process_id: PID of the spawning ancestor process (must be positive).
-            ancestor_process_start_time: UNIX timestamp when ancestor started
-                (must be >= 1735689600).
+            ancestor_process_start_time: UNIX timestamp when ancestor started.
             process_type: Type label for this process's role in the swarm (non-empty string).
 
         Raises:
@@ -96,8 +121,7 @@ class DescendantProcessInfo:
 
         if not isinstance(process_start_time, int):
             raise TypeError(f"process_start_time must be an integer, got {get_long_infoname(process_start_time)}")
-        if process_start_time < MIN_VALID_TIMESTAMP:
-            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {process_start_time}")
+        validate_process_start_time(process_start_time, "process_start_time")
 
         if not isinstance(ancestor_process_id, int):
             raise TypeError(f"ancestor_process_id must be an integer, got {get_long_infoname(ancestor_process_id)}")
@@ -106,8 +130,7 @@ class DescendantProcessInfo:
 
         if not isinstance(ancestor_process_start_time, int):
             raise TypeError(f"ancestor_process_start_time must be an integer, got {get_long_infoname(ancestor_process_start_time)}")
-        if ancestor_process_start_time < MIN_VALID_TIMESTAMP:
-            raise ValueError(f"ancestor_process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {ancestor_process_start_time}")
+        validate_process_start_time(ancestor_process_start_time, "ancestor_process_start_time")
 
         if not isinstance(process_type, str):
             raise TypeError(f"process_type must be a string, got {get_long_infoname(process_type)}")

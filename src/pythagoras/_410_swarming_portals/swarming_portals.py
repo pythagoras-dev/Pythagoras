@@ -204,8 +204,7 @@ class SwarmingPortal(PureCodePortal):
 
         if not isinstance(process_start_time, int):
             raise TypeError(f"process_start_time must be an integer, got {get_long_infoname(process_start_time)}")
-        if process_start_time < MIN_VALID_TIMESTAMP:
-            raise ValueError(f"process_start_time must be a valid Unix timestamp (>= {MIN_VALID_TIMESTAMP} / {_min_date}), got {process_start_time}")
+        validate_process_start_time(process_start_time, "process_start_time")
 
         # Use self.ancestor_process_id if available (for descendant portals),
         # otherwise use current process ID (for ancestor portals)
