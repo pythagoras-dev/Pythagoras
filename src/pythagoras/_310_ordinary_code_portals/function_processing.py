@@ -63,6 +63,22 @@ def accepts_unlimited_positional_args(func: Callable) -> bool:
     return False
 
 
+def has_positional_only_params(func: Callable) -> bool:
+    """Check if function has positional-only parameters.
+
+    Args:
+        func: Callable to inspect.
+
+    Returns:
+        True if function has any POSITIONAL_ONLY parameters.
+    """
+    signature = inspect.signature(func)
+    for param in signature.parameters.values():
+        if param.kind == inspect.Parameter.POSITIONAL_ONLY:
+            return True
+    return False
+
+
 def count_parameters_with_defaults(func: Callable) -> int:
     """Count parameters with default values.
 
@@ -128,6 +144,10 @@ def assert_ordinarity(a_func: Callable) -> None:
         raise FunctionError("Pythagoras only allows functions "
             f"with named arguments, but {name} accepts "
             "unlimited (nameless) positional arguments.")
+
+    if has_positional_only_params(a_func):
+        raise FunctionError(f"The function {name} has positional-only "
+            "parameters, which are not allowed in ordinary functions.")
 
     if inspect.iscoroutinefunction(a_func):
         raise FunctionError(f"The function {name} can't be "

@@ -83,5 +83,14 @@ def test_var_kwargs_allowed():
     """**kwargs are allowed in ordinary functions."""
     def func_with_kwargs(**kwargs):
         pass
-    
+
     assert_ordinarity(func_with_kwargs)
+
+
+def test_positional_only_params():
+    """Positional-only parameters are not allowed in ordinary functions."""
+    def func_requiring_positional_arg(a, /, b):
+        pass
+
+    with pytest.raises(FunctionError):
+        assert_ordinarity(func_requiring_positional_arg)
