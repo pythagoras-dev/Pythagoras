@@ -60,4 +60,7 @@ def _mark_exception_as_processed(exc_type, exc_value, trace_back) -> None:
         exc_value.add_note(
             "__suppress_pythagoras_logging__")
     else:
-        exc_value.__suppress_pythagoras_logging__ = True
+        try:
+            exc_value.__suppress_pythagoras_logging__ = True
+        except (AttributeError, TypeError):
+            pass  # Cannot mark exception; may result in duplicate logging

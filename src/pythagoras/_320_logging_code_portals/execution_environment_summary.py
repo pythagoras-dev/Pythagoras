@@ -22,6 +22,27 @@ from datetime import datetime
 from mixinforge import is_executed_in_notebook
 
 
+def _safe_call(func, *args, **kwargs):
+    """Safely call a function, returning None if it fails.
+
+    Used to wrap system introspection calls (e.g., psutil functions) that may
+    raise PermissionError, OSError, or AttributeError in restrictive
+    environments such as containers or sandboxes.
+
+    Args:
+        func: The function to call.
+        *args: Positional arguments to pass to the function.
+        **kwargs: Keyword arguments to pass to the function.
+
+    Returns:
+        The result of the function call, or None if an exception was raised.
+    """
+    try:
+        return func(*args, **kwargs)
+    except Exception:
+        return None
+
+
 def build_execution_environment_summary() -> Dict:
     """Build a snapshot of the current execution environment.
 
@@ -44,11 +65,11 @@ def build_execution_environment_summary() -> Dict:
         python_implementation=platform.python_implementation(),
         python_version=platform.python_version(),
         processor=platform.processor(),
-        cpu_count=psutil.cpu_count(),
-        cpu_load_avg=psutil.getloadavg(),
+        cpu_count=_safe_call(psutil.cpu_count),
+        cpu_load_avg=_safe_call(psutil.getloadavg),
         # cuda_gpu_count=torch.cuda.device_count(),
-        disk_usage=psutil.disk_usage(cwd),
-        virtual_memory=psutil.virtual_memory(),
+        disk_usage=_safe_call(psutil.disk_usage, cwd),
+        virtual_memory=_safe_call(psutil.virtual_memory),
         working_directory=cwd,
         local_timezone=datetime.now().astimezone().tzname(),
         is_in_notebook=is_executed_in_notebook(),
