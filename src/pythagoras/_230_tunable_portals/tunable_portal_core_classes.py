@@ -21,8 +21,13 @@ class TunablePortal(DataPortal):
 
     TunablePortal extends DataPortal with persistent storage for settings.
     It maintains two types of settings:
-    - Portal-wide: Settings shared across all nodes in a portal
-    - Node-specific: Settings known / applicable to the current compute node
+    - Portal-wide (global): Settings shared across all nodes in a portal
+    - Node-specific (local): Settings applicable to the current compute node
+
+    Settings Precedence:
+        When retrieving settings via get_effective_setting(), global settings
+        take precedence over local settings. This allows portal-wide defaults
+        to be overridden by node-specific values when needed.
 
     Attributes:
         _global_portal_settings: Portal-wide persistent configuration store.
@@ -104,8 +109,9 @@ class TunablePortal(DataPortal):
     def get_effective_setting(self , key: NonEmptySafeStrTuple|str, default:Any=None) -> Any:
         """Get the effective configuration setting for a given key.
 
-        Checks node-specific settings first, then falls back to portal-wide
-        settings if not found.
+        Precedence order (highest to lowest):
+            1. global_portal_settings (portal-wide, shared across all nodes)
+            2. local_node_settings (node-specific)
 
         Args:
             key: Configuration key to retrieve.
@@ -117,21 +123,22 @@ class TunablePortal(DataPortal):
 
         no_value = object()
 
-        node_value = self.local_node_settings.get(key, no_value)
-        if node_value is not no_value:
-            return node_value
-        portal_value = self.global_portal_settings.get(key, default)
-        return portal_value
+        portal_value = self.global_portal_settings.get(key, no_value)
+        if portal_value is not no_value:
+            return portal_value
+        node_value = self.local_node_settings.get(key, default)
+        return node_value
 
 
     def _persist_initial_config_params(self) -> None:
-        """Persist initialization configuration parameters to the portal's config store.
+        """Persist initialization configuration parameters to the portal's global config store.
 
         Writes all auxiliary configuration parameters that were provided during
-        initialization to the persistent config store.
+        initialization to the portal-wide (global) config store. This ensures
+        these settings take precedence over any node-specific settings.
         """
         for key, value in self._auxiliary_config_params_at_init.items():
-            self.local_node_settings[key] = value
+            self.global_portal_settings[key] = value
 
 
     def __post_init__(self) -> None:
@@ -192,6 +199,17 @@ class TunableObject(StorableObject):
     TunableObject provides configuration management for any portal-aware object.
     It stores auxiliary configuration parameters and provides methods to get/set
     config settings in the portal.
+
+    Settings Precedence:
+        When retrieving settings via get_effective_setting(), the following
+        precedence order applies (highest to lowest):
+            1. Portal's global_portal_settings (portal-wide, shared across nodes)
+            2. Portal's local_node_settings (portal-wide, node-specific)
+            3. Object's global_portal_settings (object-scoped, shared across nodes)
+            4. Object's local_node_settings (object-scoped, node-specific)
+
+        This allows portal-wide settings to override object-specific settings,
+        and global settings to override local settings at each level.
     """
 
     _auxiliary_config_params_at_init: dict[str, Any] | None
@@ -251,10 +269,11 @@ class TunableObject(StorableObject):
     def get_effective_setting(self , key: NonEmptySafeStrTuple|str, default:Any=None) -> Any:
         """Get the effective configuration setting for a given key.
 
-        Checks object's local node settings first, then object's global portal
-        settings if local not found.
-
-        If none of the above have the key, falls back to portal-wide settings.
+        Precedence order (highest to lowest):
+            1. Portal's global_portal_settings (portal-wide, shared across all nodes)
+            2. Portal's local_node_settings (portal-wide, node-specific)
+            3. Object's global_portal_settings (object-scoped, shared across nodes)
+            4. Object's local_node_settings (object-scoped, node-specific)
 
         Args:
             key: Configuration key to retrieve.
@@ -264,14 +283,17 @@ class TunableObject(StorableObject):
             The effective configuration value, or default if not found.
         """
         no_value = object()
-        node_value = self.local_node_settings.get(key, no_value)
-        if node_value is not no_value:
-            return node_value
-        portal_value = self.global_portal_settings.get(key, no_value)
-        if portal_value is not no_value:
-            return portal_value
-
-        return self.portal.get_effective_setting(key, default)
+        # Check portal-wide settings first (highest priority)
+        portal_wide_value = self.portal.get_effective_setting(key, no_value)
+        if portal_wide_value is not no_value:
+            return portal_wide_value
+        # Then check object's global settings
+        global_value = self.global_portal_settings.get(key, no_value)
+        if global_value is not no_value:
+            return global_value
+        # Finally check object's local settings
+        local_value = self.local_node_settings.get(key, default)
+        return local_value
 
 
     def _first_visit_to_portal(self, portal: TunablePortal) -> None:

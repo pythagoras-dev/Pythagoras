@@ -20,22 +20,26 @@ def test_tunable_object_effective_setting_default(tmpdir):
     with _PortalTester(TunablePortal, tmpdir) as pt:
         portal = pt.portal
         obj = ConcreteTunable(portal)
-        
+
         # Initially empty
         assert obj.get_effective_setting("key") is None
-        
+
         # Set via local_node_settings
         obj.local_node_settings["key"] = "local_val"
         assert obj.get_effective_setting("key") == "local_val"
-        
-        # Set via global_portal_settings
+
+        # Set via global_portal_settings (object-scoped)
         obj.global_portal_settings["key"] = "global_val"
-        # Local still takes precedence
-        assert obj.get_effective_setting("key") == "local_val"
-        
-        # Remove local
-        del obj.local_node_settings["key"]
+        # Global takes precedence over local
         assert obj.get_effective_setting("key") == "global_val"
+
+        # Remove global, local should be used
+        del obj.global_portal_settings["key"]
+        assert obj.get_effective_setting("key") == "local_val"
+
+        # Portal-wide setting should override object-level settings
+        portal.global_portal_settings["key"] = "portal_wide_val"
+        assert obj.get_effective_setting("key") == "portal_wide_val"
 
 def test_tunable_object_effective_setting_addr(tmpdir):
     """Test get_effective_setting works with addr (if available)."""

@@ -156,13 +156,7 @@ class LoggingFn(OrdinaryFn):
             True if excessive logging is enabled for this function (from
             its own config or inherited via the portal); False otherwise.
         """
-        # Check portal-wide setting first
-        value = self.portal.get_effective_setting("excessive_logging")
-        if value is not None:
-            return bool(value)
-        # Fall back to function-specific setting
-        value = self.get_effective_setting("excessive_logging")
-        return bool(value)
+        return bool(self.get_effective_setting("excessive_logging"))
 
 
     def get_signature(self, arguments:dict) -> LoggingFnCallSignature:
