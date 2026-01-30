@@ -263,7 +263,6 @@ def test_execution_frame_counters_initialized_correctly():
 
 def test_cleanup_order_on_exception_in_body():
     """Test that resources are cleaned up in correct order when exception occurs."""
-    cleanup_order = []
 
     with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
         portal = tester.portal

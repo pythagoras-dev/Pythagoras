@@ -27,4 +27,5 @@ from .protected_portal_core_classes import *
 from .protected_decorators import *
 from .system_resources_info_getters import *
 from .basic_pre_validators import *
-from .package_manager import *
+from mixinforge import install_package as install_package
+from mixinforge import uninstall_package as uninstall_package

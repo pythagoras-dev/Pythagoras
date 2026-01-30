@@ -1,4 +1,3 @@
-import pytest
 from pythagoras import _PortalTester
 from pythagoras._310_ordinary_code_portals import OrdinaryCodePortal, OrdinaryFn
 

@@ -12,7 +12,7 @@ from functools import cached_property
 from typing import Callable, Any, TypeVar, Final
 
 import pandas as pd
-from persidict import PersiDict, SafeStrTuple
+from persidict import PersiDict
 
 from .function_error_exception import FunctionError
 from .reuse_flag import ReuseFlag, USE_FROM_OTHER

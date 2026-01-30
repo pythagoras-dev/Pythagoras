@@ -1,7 +1,7 @@
 
 
 from pythagoras import pure, _PortalTester, SwarmingPortal
-from pythagoras._350_protected_code_portals.package_manager import *
+
 from pythagoras.core import get
 
 

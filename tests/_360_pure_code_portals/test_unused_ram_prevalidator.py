@@ -1,7 +1,6 @@
 import pytest
 
 from pythagoras import pure, _PortalTester, PureCodePortal, unused_ram
-from pythagoras._350_protected_code_portals.package_manager import *
 
 @pure(pre_validators = [unused_ram(Gb=1)] )
 def very_easy_ram_testing_function():

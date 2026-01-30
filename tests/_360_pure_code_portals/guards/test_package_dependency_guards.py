@@ -4,7 +4,8 @@ from pythagoras._210_basic_portals.portal_tester import _PortalTester
 from pythagoras._360_pure_code_portals.pure_core_classes import (
     PureCodePortal)
 
-from pythagoras._350_protected_code_portals.package_manager import *
+from mixinforge import uninstall_package
+import importlib
 
 
 def test_real_package_installation_via_guard(tmpdir):

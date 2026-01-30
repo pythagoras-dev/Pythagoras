@@ -2,7 +2,8 @@
 import pytest
 
 from pythagoras import pure, installed_packages, _PortalTester, SwarmingPortal
-from pythagoras._350_protected_code_portals.package_manager import *
+from mixinforge import uninstall_package
+import importlib
 from pythagoras.core import get
 
 
