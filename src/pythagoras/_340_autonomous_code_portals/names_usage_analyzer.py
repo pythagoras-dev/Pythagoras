@@ -644,5 +644,6 @@ def _analyze_names_in_function(
         {'math'}
     """
 
-    normalized_source = get_normalized_fn_source_code_str(a_func)
+    normalized_source = get_normalized_fn_source_code_str(
+        a_func, skip_ordinarity_check=True)
     return _validate_and_parse_function_source(normalized_source)

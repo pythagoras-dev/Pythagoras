@@ -24,7 +24,10 @@ from .._210_basic_portals.basic_portal_core_classes import (
     _describe_runtime_characteristic)
 
 
-def get_normalized_fn_source_code_str(a_func: OrdinaryFn | Callable | str) -> str:
+def get_normalized_fn_source_code_str(
+        a_func: OrdinaryFn | Callable | str,
+        skip_ordinarity_check: bool = False
+        ) -> str:
     """Get normalized source code for a function.
 
     Normalizes function source by removing comments, docstrings, type
@@ -33,12 +36,14 @@ def get_normalized_fn_source_code_str(a_func: OrdinaryFn | Callable | str) -> st
 
     Args:
         a_func: OrdinaryFn instance, callable, or source code string.
+        skip_ordinarity_check: If True, skip ordinarity validation for callables.
 
     Returns:
         Normalized source code string.
 
     Raises:
-        FunctionError: If the function violates ordinarity rules.
+        FunctionError: If the function violates ordinarity rules
+            (unless skip_ordinarity_check is True).
         TypeError | ValueError: If input type is invalid or integrity checks fail.
         SyntaxError: If source cannot be parsed.
     """
@@ -47,7 +52,8 @@ def get_normalized_fn_source_code_str(a_func: OrdinaryFn | Callable | str) -> st
         return a_func.source_code
     else:
         return _get_normalized_fn_source_code_str_impl(
-            a_func, drop_pth_decorators=True)
+            a_func, drop_pth_decorators=True,
+            skip_ordinarity_check=skip_ordinarity_check)
 
 
 _REGISTERED_FUNCTIONS_TXT: Final[str] = "Registered functions"

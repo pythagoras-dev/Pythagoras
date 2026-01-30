@@ -123,11 +123,15 @@ class _AnnotationRemover(ast.NodeTransformer):
         return node
 
 
-def _extract_fn_name_and_source_code(a_func: Callable | str) -> tuple[str | None, str]:
+def _extract_fn_name_and_source_code(
+        a_func: Callable | str,
+        skip_ordinarity_check: bool = False
+        ) -> tuple[str | None, str]:
     """Extract source code and function name from callable or string.
 
     Args:
         a_func: Function or source code string.
+        skip_ordinarity_check: If True, skip ordinarity validation for callables.
 
     Returns:
         Tuple of (function_name_or_none, source_code). Name may be None for
@@ -137,7 +141,8 @@ def _extract_fn_name_and_source_code(a_func: Callable | str) -> tuple[str | None
         TypeError: If input is neither callable nor string.
     """
     if callable(a_func):
-        assert_ordinarity(a_func)
+        if not skip_ordinarity_check:
+            assert_ordinarity(a_func)
         fn_name_for_error_messages = get_long_infoname(a_func)
         fn_source_code = inspect.getsource(a_func)
         return fn_name_for_error_messages, fn_source_code
@@ -348,6 +353,7 @@ def _normalize_fn_source_code_str(
 def _get_normalized_fn_source_code_str_impl(
         a_func: Callable | str,
         drop_pth_decorators: bool = False,
+        skip_ordinarity_check: bool = False,
         ) -> str:
     """Produce normalized representation of function source code.
 
@@ -368,16 +374,18 @@ def _get_normalized_fn_source_code_str_impl(
     Args:
         a_func: Function or source code string.
         drop_pth_decorators: Whether to remove Pythagoras decorators.
+        skip_ordinarity_check: If True, skip ordinarity validation for callables.
 
     Returns:
         Normalized source code string.
 
     Raises:
         FunctionError: If function has multiple decorators or fails ordinarity
-            checks.
+            checks (unless skip_ordinarity_check is True).
         TypeError: If input types or AST node types are invalid.
         ValueError: If parsing assumptions or integrity checks fail.
         SyntaxError: If source cannot be parsed.
     """
-    func_name_for_error_messages, code = _extract_fn_name_and_source_code(a_func)
+    func_name_for_error_messages, code = _extract_fn_name_and_source_code(
+        a_func, skip_ordinarity_check=skip_ordinarity_check)
     return _normalize_fn_source_code_str(code, func_name_for_error_messages, drop_pth_decorators)
