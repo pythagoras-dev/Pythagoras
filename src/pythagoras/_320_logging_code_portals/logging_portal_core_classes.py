@@ -243,7 +243,6 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
             TypeError: If fn is not a LoggingFn instance or arguments is not a dict.
         """
         super().__init__()
-        self._init_finished = False
         if not isinstance(fn, LoggingFn):
             raise TypeError(f"fn must be an instance of LoggingFn, got {get_long_infoname(fn)}")
         if not isinstance(arguments, dict):

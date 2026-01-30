@@ -60,7 +60,6 @@ class BasicPortal(NotPicklableMixin,
     _entropy_infuser: random.Random | None
 
     _root_dict: PersiDict | None
-    _init_finished:bool
 
 
     def __init__(self, root_dict:PersiDict|str|None = None):
@@ -71,7 +70,6 @@ class BasicPortal(NotPicklableMixin,
                 or None for default location.
         """
         super().__init__()
-        self._init_finished = False
         self._entropy_infuser = random.Random()
         if root_dict is None:
             root_dict = get_default_portal_base_dir()
@@ -738,7 +736,6 @@ class PortalAwareObject(CacheablePropertiesMixin,
         """
         super().__init__()
         self._restrict_to_single_thread()
-        self._init_finished = False
         if not (portal is None or isinstance(portal, BasicPortal)):
             raise TypeError(
                 f"portal must be a BasicPortal or None, "
