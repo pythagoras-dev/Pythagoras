@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "pythagoras"
-version = "0.38.0"
+version = "0.39.0"
 authors = [
     {name = "Volodymyr (Vlad) Pavlov", email = "vlpavlov@ieee.org"},
 ]
