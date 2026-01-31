@@ -1074,30 +1074,33 @@ def log_exception() -> None:
     Returns:
         None
     """
-    exc_type, exc_value, trace_back = sys.exc_info()
-    if not _exception_needs_to_be_processed(
-            exc_type, exc_value, trace_back):
-        return
+    try:
+        exc_type, exc_value, trace_back = sys.exc_info()
+        if not _exception_needs_to_be_processed(
+                exc_type, exc_value, trace_back):
+            return
 
-    if len(LoggingFnExecutionFrame.call_stack):
-        frame = LoggingFnExecutionFrame.call_stack[-1]
-        exception_id = frame.session_id + "_crash_"
-        exception_id += str(frame.exception_counter)
-        frame.exception_counter += 1
-    else:
-        frame = None
-        exception_id = "portal_" + get_random_signature() + "_crash"
+        if len(LoggingFnExecutionFrame.call_stack):
+            frame = LoggingFnExecutionFrame.call_stack[-1]
+            exception_id = frame.session_id + "_crash_"
+            exception_id += str(frame.exception_counter)
+            frame.exception_counter += 1
+        else:
+            frame = None
+            exception_id = "portal_" + get_random_signature() + "_crash"
 
-    event_body = add_execution_environment_summary(
-        exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
-    _mark_exception_as_processed(exc_type, exc_value, trace_back)
+        event_body = add_execution_environment_summary(
+            exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
+        _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
-    if frame is not None and frame.excessive_logging:
-        frame.fn_call_signature.crashes[exception_id] = event_body
+        if frame is not None and frame.excessive_logging:
+            frame.fn_call_signature.crashes[exception_id] = event_body
 
-    portal = get_current_portal()
-    address = (current_date_gmt_string(),exception_id)
-    portal._crash_history[address] = event_body
+        portal = get_current_portal()
+        address = (current_date_gmt_string(),exception_id)
+        portal._crash_history[address] = event_body
+    except Exception:
+        pass
 
 
 def log_event(*args, **kwargs):
