@@ -541,7 +541,7 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
         with self.portal:
             result = []
             for k in self.execution_attempts:
-                run_id = k[-1][:-9]
+                run_id = k[-1].removesuffix("_attempt")
                 result.append(LoggingFnExecutionRecord(self, run_id))
             return result
 
@@ -600,8 +600,9 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         with self.portal:
             execution_outputs = self.call_signature.execution_outputs
+            output_key = f"{self.session_id}_output"
             for k in execution_outputs:
-                if self.session_id in k[-1]:
+                if k[-1] == output_key:
                     return execution_outputs[k]
             return None
 
@@ -616,8 +617,9 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         with self.portal:
             execution_attempts = self.call_signature.execution_attempts
+            attempt_key = f"{self.session_id}_attempt"
             for k in execution_attempts:
-                if self.session_id in k[-1]:
+                if k[-1] == attempt_key:
                     return execution_attempts[k]
             return None
 
@@ -632,8 +634,9 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
         result = []
         with self.portal:
             crashes = self.call_signature.crashes
+            crash_prefix = f"{self.session_id}_crash_"
             for k in crashes:
-                if self.session_id in k[-1]:
+                if k[-1].startswith(crash_prefix):
                     result.append(crashes[k])
         return result
 
@@ -648,8 +651,9 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
         result = []
         with self.portal:
             events = self.call_signature.events
+            event_prefix = f"{self.session_id}_event_"
             for k in events:
-                if self.session_id in k[-1]:
+                if k[-1].startswith(event_prefix):
                     result.append(events[k])
         return result
 
@@ -666,8 +670,9 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
         """
         with self.portal:
             execution_results = self.call_signature.execution_results
+            result_key = f"{self.session_id}_result"
             for k in execution_results:
-                if self.session_id in k[-1]:
+                if k[-1] == result_key:
                     return execution_results[k].get()
             raise ValueError(
                 f"Result for session {self.session_id} not found in "
@@ -1091,6 +1096,7 @@ def log_exception() -> None:
 
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
+        _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
         if frame is not None and frame.excessive_logging:
             frame.fn_call_signature.crashes[exception_id] = event_body
@@ -1098,7 +1104,6 @@ def log_exception() -> None:
         portal = get_current_portal()
         address = (current_date_gmt_string(),exception_id)
         portal._crash_history[address] = event_body
-        _mark_exception_as_processed(exc_type, exc_value, trace_back)
     except Exception:
         pass
 
