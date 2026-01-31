@@ -74,9 +74,9 @@ def test_fn_exception_inside_nested_with_same_portal(tmpdir):
         @pth.logging()
         def yyy():
             raise Exception("This is a demo exception")
-        sifnature = LoggingFnCallSignature(yyy, {})
+        signature = LoggingFnCallSignature(yyy, {})
         assert len(p.portal._crash_history) == 0
-        assert len(sifnature.crashes) == 0
+        assert len(signature.crashes) == 0
         try:
             with p.portal:
                 with p.portal:
@@ -89,7 +89,7 @@ def test_fn_exception_inside_nested_with_same_portal(tmpdir):
             pass
 
         assert len(p.portal._crash_history) == 1
-        assert len(sifnature.crashes) == 0
+        assert len(signature.crashes) == 0
 
 
 def test_exception_inside_nested_with(tmpdir):
