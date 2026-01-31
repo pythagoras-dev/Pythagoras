@@ -1091,7 +1091,6 @@ def log_exception() -> None:
 
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
-        _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
         if frame is not None and frame.excessive_logging:
             frame.fn_call_signature.crashes[exception_id] = event_body
@@ -1099,6 +1098,7 @@ def log_exception() -> None:
         portal = get_current_portal()
         address = (current_date_gmt_string(),exception_id)
         portal._crash_history[address] = event_body
+        _mark_exception_as_processed(exc_type, exc_value, trace_back)
     except Exception:
         pass
 

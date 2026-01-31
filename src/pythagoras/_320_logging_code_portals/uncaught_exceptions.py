@@ -56,10 +56,10 @@ def pth_excepthook(exc_type, exc_value, trace_back) -> None:
         exception_id = "app_"+ get_random_signature() + "_crash"
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
-        _mark_exception_as_processed(exc_type, exc_value, trace_back)
         portal = get_current_portal()
         portal._crash_history[current_date_gmt_string()
             , exception_id] = event_body
+        _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
     sys.__excepthook__(exc_type, exc_value, trace_back)
 
@@ -91,10 +91,10 @@ def pth_excepthandler(_, exc_type, exc_value
         exception_id = "app_" + get_random_signature() + "_crash"
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
-        _mark_exception_as_processed(exc_type, exc_value, trace_back)
         portal = get_current_portal()
         portal._crash_history[current_date_gmt_string()
             , exception_id] = event_body
+        _mark_exception_as_processed(exc_type, exc_value, trace_back)
     traceback.print_exception(exc_type, exc_value, trace_back)
 
 
