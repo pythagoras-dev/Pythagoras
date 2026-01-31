@@ -1096,6 +1096,12 @@ def log_exception() -> None:
 
         event_body = add_execution_environment_summary(
             exc_type=exc_type, exc_value=exc_value, trace_back=trace_back)
+        # CRITICAL: Mark exception as processed BEFORE persistence.
+        # Moving this after persistence causes infinite loops: the write
+        # operations below can trigger code paths that re-check
+        # _exception_needs_to_be_processed(), and if the exception isn't
+        # marked yet, we recurse forever. The tradeoff is that if persistence
+        # fails, the exception won't be logged—but that's better than hanging.
         _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
         if frame is not None and frame.excessive_logging:
