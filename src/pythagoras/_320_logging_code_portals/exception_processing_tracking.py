@@ -56,6 +56,9 @@ def _mark_exception_as_processed(exc_type, exc_value, trace_back) -> None:
         - Mutates the exception by adding a note (preferred) or by setting
           an attribute `__suppress_pythagoras_logging__ = True`.
     """
+    if not _exception_needs_to_be_processed(exc_type, exc_value, trace_back):
+        return
+
     if hasattr(exc_value, "add_note"):
         exc_value.add_note(
             "__suppress_pythagoras_logging__")
