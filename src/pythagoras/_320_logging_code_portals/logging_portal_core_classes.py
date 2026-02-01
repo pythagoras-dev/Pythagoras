@@ -854,6 +854,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             return self
         except BaseException:
             self._exit_stack.close()
+            self._exit_stack = None
             raise
 
 
