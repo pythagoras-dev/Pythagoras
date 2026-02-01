@@ -280,6 +280,51 @@ def test_log_exception_portal_level():
         assert len(portal._crash_history) > initial_crash_count
 
 
+def test_log_event_prints_and_reports_failures(capsys, monkeypatch):
+    """Test that log_event() pprint output and reports logging failures."""
+    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+        portal = tester.portal
+
+        class FailingEventHistory:
+            def __setitem__(self, key, value):
+                raise RuntimeError("Event persistence failed")
+
+        with portal:
+            monkeypatch.setattr(portal, "_event_history", FailingEventHistory())
+            pth.log_event(test_payload="value")
+
+        captured = capsys.readouterr().out
+        assert "Event logged:" in captured
+        assert "execution_environment_summary" in captured
+        assert "test_payload" in captured
+        assert "Logging process failed while logging event:" in captured
+        assert "Event persistence failed" in captured
+
+
+def test_log_exception_prints_and_reports_failures(capsys, monkeypatch):
+    """Test that log_exception() pprint output and reports logging failures."""
+    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+        portal = tester.portal
+
+        class FailingCrashHistory:
+            def __setitem__(self, key, value):
+                raise RuntimeError("Crash persistence failed")
+
+        with portal:
+            try:
+                raise ValueError("Boom")
+            except ValueError:
+                monkeypatch.setattr(portal, "_crash_history", FailingCrashHistory())
+                pth.log_exception()
+
+        captured = capsys.readouterr().out
+        assert "Exception logged:" in captured
+        assert "execution_environment_summary" in captured
+        assert "ValueError" in captured
+        assert "Logging process failed while logging exception:" in captured
+        assert "Crash persistence failed" in captured
+
+
 def test_log_event_without_portal_context():
     """Test log_event() behavior when called outside any portal context."""
     # This tests that log_event can find the current portal automatically

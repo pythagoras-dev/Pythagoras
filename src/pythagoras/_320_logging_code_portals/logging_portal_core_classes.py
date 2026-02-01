@@ -52,6 +52,7 @@ Excessive Logging Mode:
 from __future__ import annotations
 
 import sys
+from pprint import pprint
 from contextlib import ExitStack
 from functools import cached_property
 from typing import Callable, Any, Final
@@ -1104,12 +1105,25 @@ def log_exception() -> None:
         # fails, the exception won't be logged—but that's better than hanging.
         _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
+        logging_failures = []
         if frame is not None and frame.excessive_logging:
-            frame.fn_call_signature.crashes[exception_id] = event_body
+            try:
+                frame.fn_call_signature.crashes[exception_id] = event_body
+            except Exception as logging_error:
+                logging_failures.append(logging_error)
 
-        portal = get_current_portal()
-        address = (current_date_gmt_string(),exception_id)
-        portal._crash_history[address] = event_body
+        try:
+            portal = get_current_portal()
+            address = (current_date_gmt_string(),exception_id)
+            portal._crash_history[address] = event_body
+        except Exception as logging_error:
+            logging_failures.append(logging_error)
+        print(f"Exception logged: {exception_id}")
+        pprint(event_body)
+        if logging_failures:
+            for logging_error in logging_failures:
+                print("Logging process failed while logging exception:")
+                pprint(logging_error)
     except Exception:
         pass
 
@@ -1138,10 +1152,22 @@ def log_event(*args, **kwargs):
 
     event_body = add_execution_environment_summary(*args, **kwargs)
 
+    logging_failures = []
     if frame is not None:
-        frame.fn_call_signature.events[event_id] = event_body
+        try:
+            frame.fn_call_signature.events[event_id] = event_body
+        except Exception as logging_error:
+            logging_failures.append(logging_error)
 
-    portal = get_current_portal()
-    address = (current_date_gmt_string(),event_id)
-    portal._event_history[address] = event_body
-    print(f"Event logged: {event_id} ", *args)
+    try:
+        portal = get_current_portal()
+        address = (current_date_gmt_string(),event_id)
+        portal._event_history[address] = event_body
+    except Exception as logging_error:
+        logging_failures.append(logging_error)
+    print(f"Event logged: {event_id}")
+    pprint(event_body)
+    if logging_failures:
+        for logging_error in logging_failures:
+            print("Logging process failed while logging event:")
+            pprint(logging_error)
