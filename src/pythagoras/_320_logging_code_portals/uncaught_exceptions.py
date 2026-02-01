@@ -68,7 +68,10 @@ def pth_excepthook(exc_type, exc_value, trace_back) -> None:
         except Exception:
             pass
 
-    sys.__excepthook__(exc_type, exc_value, trace_back)
+    if _previous_excepthook is not None and _previous_excepthook is not pth_excepthook:
+        _previous_excepthook(exc_type, exc_value, trace_back)
+    else:
+        sys.__excepthook__(exc_type, exc_value, trace_back)
 
 
 def pth_excepthandler(_, exc_type, exc_value
@@ -109,10 +112,14 @@ def pth_excepthandler(_, exc_type, exc_value
                 , exception_id] = event_body
         except Exception:
             pass
-    traceback.print_exception(exc_type, exc_value, trace_back)
+    if _previous_ipython_handler is not None and _previous_ipython_handler is not pth_excepthandler:
+        _previous_ipython_handler(_, exc_type, exc_value, trace_back, tb_offset)
+    else:
+        traceback.print_exception(exc_type, exc_value, trace_back)
 
 
 _previous_excepthook = None
+_previous_ipython_handler = None
 _number_of_handlers_registrations = 0
 
 def register_systemwide_uncaught_exception_handlers() -> None:
@@ -133,7 +140,7 @@ def register_systemwide_uncaught_exception_handlers() -> None:
         - Installs exception handlers (first registration only)
         - Stores the previous sys.excepthook for later restoration
     """
-    global _number_of_handlers_registrations, _previous_excepthook
+    global _number_of_handlers_registrations, _previous_excepthook, _previous_ipython_handler
     _number_of_handlers_registrations += 1
     if _number_of_handlers_registrations > 1:
         return
@@ -141,11 +148,16 @@ def register_systemwide_uncaught_exception_handlers() -> None:
     if not is_executed_in_notebook():
         _previous_excepthook = sys.excepthook
         sys.excepthook = pth_excepthook
-        pass
     else:
         try:
             from IPython import get_ipython
-            get_ipython().set_custom_exc((BaseException,), pth_excepthandler)
+            ip = get_ipython()
+            # Save previous handler if one exists (and it's not ourselves)
+            if hasattr(ip, 'custom_exceptions') and ip.custom_exceptions:
+                prev_handler = ip.custom_exceptions[1]
+                if prev_handler is not None and prev_handler is not pth_excepthandler:
+                    _previous_ipython_handler = prev_handler
+            ip.set_custom_exc((BaseException,), pth_excepthandler)
         except Exception:
             _previous_excepthook = sys.excepthook
             sys.excepthook = pth_excepthook
@@ -165,7 +177,7 @@ def unregister_systemwide_uncaught_exception_handlers() -> None:
         - Restores original exception handlers (when counter reaches zero)
         - Clears the stored previous excepthook reference
     """
-    global _number_of_handlers_registrations, _previous_excepthook
+    global _number_of_handlers_registrations, _previous_excepthook, _previous_ipython_handler
     _number_of_handlers_registrations -= 1
     if _number_of_handlers_registrations > 0:
         return
@@ -177,6 +189,10 @@ def unregister_systemwide_uncaught_exception_handlers() -> None:
     if is_executed_in_notebook():
         try:
             from IPython import get_ipython
-            get_ipython().set_custom_exc((BaseException,), None)
+            if _previous_ipython_handler is not None:
+                get_ipython().set_custom_exc((BaseException,), _previous_ipython_handler)
+                _previous_ipython_handler = None
+            else:
+                get_ipython().set_custom_exc((BaseException,), None)
         except Exception:
             pass

@@ -199,3 +199,104 @@ def test_multiple_portals_log_independently(tmpdir):
         # Each portal should have exactly one exception
         assert len(portal1._crash_history) == 1
         assert len(portal2._crash_history) == 1
+
+
+def test_chains_to_previous_excepthook():
+    """Test that pth_excepthook chains to the previous handler."""
+    from pythagoras._320_logging_code_portals import uncaught_exceptions
+
+    # Reset global state for clean test
+    original_count = uncaught_exceptions._number_of_handlers_registrations
+    uncaught_exceptions._number_of_handlers_registrations = 0
+    uncaught_exceptions._previous_excepthook = None
+    original_hook = sys.excepthook
+
+    call_log = []
+
+    def custom_handler(exc_type, exc_value, trace_back):
+        call_log.append("custom_handler_called")
+        sys.__excepthook__(exc_type, exc_value, trace_back)
+
+    try:
+        # Install custom handler BEFORE Pythagoras
+        sys.excepthook = custom_handler
+
+        # Now register Pythagoras (should save custom_handler)
+        register_systemwide_uncaught_exception_handlers()
+
+        with _PortalTester(LoggingCodePortal) as tester:
+            portal = tester.portal
+
+            try:
+                raise ValueError("Test chaining")
+            except ValueError:
+                exc_type, exc_value, trace_back = sys.exc_info()
+                with portal:
+                    pth_excepthook(exc_type, exc_value, trace_back)
+
+            # Custom handler should have been called via chaining
+            assert "custom_handler_called" in call_log
+    finally:
+        # Restore original state
+        sys.excepthook = original_hook
+        uncaught_exceptions._number_of_handlers_registrations = original_count
+        uncaught_exceptions._previous_excepthook = None
+
+
+def test_restores_previous_excepthook_on_unregister():
+    """Test that unregistration restores the previous handler."""
+    from pythagoras._320_logging_code_portals import uncaught_exceptions
+
+    # Reset global state for clean test
+    original_count = uncaught_exceptions._number_of_handlers_registrations
+    uncaught_exceptions._number_of_handlers_registrations = 0
+    uncaught_exceptions._previous_excepthook = None
+    original_hook = sys.excepthook
+
+    def custom_handler(exc_type, exc_value, trace_back):
+        pass
+
+    try:
+        # Install custom handler
+        sys.excepthook = custom_handler
+
+        # Register Pythagoras handler (should save custom_handler)
+        register_systemwide_uncaught_exception_handlers()
+
+        # Pythagoras should be active
+        assert sys.excepthook == pth_excepthook
+
+        # Unregister
+        unregister_systemwide_uncaught_exception_handlers()
+
+        # Custom handler should be restored
+        assert sys.excepthook == custom_handler
+    finally:
+        # Restore original state
+        sys.excepthook = original_hook
+        uncaught_exceptions._number_of_handlers_registrations = original_count
+        uncaught_exceptions._previous_excepthook = None
+
+
+def test_no_infinite_recursion_with_self_reference():
+    """Test that chaining doesn't cause infinite recursion if previous is pth_excepthook."""
+    from pythagoras._320_logging_code_portals import uncaught_exceptions
+
+    original_prev = uncaught_exceptions._previous_excepthook
+
+    try:
+        # Artificially set previous to ourselves (shouldn't happen but defensive)
+        uncaught_exceptions._previous_excepthook = pth_excepthook
+
+        with _PortalTester(LoggingCodePortal) as tester:
+            portal = tester.portal
+
+            try:
+                raise ValueError("Test self-reference")
+            except ValueError:
+                exc_type, exc_value, trace_back = sys.exc_info()
+                with portal:
+                    # Should not cause infinite recursion
+                    pth_excepthook(exc_type, exc_value, trace_back)
+    finally:
+        uncaught_exceptions._previous_excepthook = original_prev
