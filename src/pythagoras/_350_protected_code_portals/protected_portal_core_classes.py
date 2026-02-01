@@ -388,7 +388,11 @@ class ValidatorFn(AutonomousFn):
             , excessive_logging=excessive_logging
             , portal=portal)
 
-        check_if_fn_accepts_args(self.get_allowed_kwargs_names(), self.source_code)
+        allowed_kwargs = self.get_allowed_kwargs_names()
+        if not check_if_fn_accepts_args(allowed_kwargs, self.source_code):
+            raise ValueError(
+                f"Validator {get_long_infoname(self)} does not accept required "
+                f"kwargs {sorted(allowed_kwargs)}")
 
 
     @classmethod
