@@ -15,10 +15,10 @@ from pythagoras._320_logging_code_portals.logging_portal_core_classes import (
 
 def test_execution_frame_cannot_be_reused():
     """Test that an execution frame raises error if reused."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def simple_fn():
             return "result"
 
@@ -43,10 +43,10 @@ def test_execution_frame_cannot_be_reused():
 
 def test_execution_frame_call_stack_pushed_and_popped():
     """Test that execution frame is correctly pushed to and popped from call_stack."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def test_fn():
             return "result"
 
@@ -63,10 +63,10 @@ def test_execution_frame_call_stack_pushed_and_popped():
 
 def test_nested_execution_frames_stack_correctly():
     """Test that multiple sequential function calls work correctly."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def test_fn(*, value):
             return value * 2
 
@@ -88,10 +88,10 @@ def test_nested_execution_frames_stack_correctly():
 
 def test_execution_frame_cleaned_up_on_exception():
     """Test that execution frame is properly cleaned up even when exception occurs."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def failing_fn():
             raise ValueError("Intentional failure")
 
@@ -109,10 +109,10 @@ def test_execution_frame_cleaned_up_on_exception():
 
 def test_execution_frame_exception_counter_increments():
     """Test that exception counter is updated when exceptions occur."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_exception():
             raise RuntimeError("Test exception")
 
@@ -130,12 +130,12 @@ def test_execution_frame_exception_counter_increments():
         assert len(crashes) > 0
 
 
-def test_execution_frame_excessive_logging_false_no_output_capture():
-    """Test that excessive_logging=False prevents output capture."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=False) as tester:
+def test_execution_frame_verbose_logging_false_no_output_capture():
+    """Test that verbose_logging=False prevents output capture."""
+    with _PortalTester(LoggingCodePortal, verbose_logging=False) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=False)
+        @logging(verbose_logging=False)
         def simple_fn():
             print("This should not be captured")
             return "result"
@@ -148,12 +148,12 @@ def test_execution_frame_excessive_logging_false_no_output_capture():
             assert frame.output_capturer is None
 
 
-def test_execution_frame_excessive_logging_true_has_output_capture():
-    """Test that excessive_logging=True enables output capture."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+def test_execution_frame_verbose_logging_true_has_output_capture():
+    """Test that verbose_logging=True enables output capture."""
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def simple_fn():
             return "result"
 
@@ -167,10 +167,10 @@ def test_execution_frame_excessive_logging_true_has_output_capture():
 
 def test_execution_frame_session_id_is_unique():
     """Test that each execution frame gets a unique session ID."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def simple_fn():
             return "result"
 
@@ -191,10 +191,10 @@ def test_execution_frame_session_id_is_unique():
 
 def test_execution_frame_portal_context_managed():
     """Test that execution frame manages portal context correctly."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def test_fn():
             return "success"
 
@@ -206,10 +206,10 @@ def test_execution_frame_portal_context_managed():
 
 def test_execution_frame_properties_accessible():
     """Test that execution frame properties return expected values."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def test_fn():
             return "result"
 
@@ -221,7 +221,7 @@ def test_execution_frame_properties_accessible():
             assert frame.fn_name == "test_fn"
             assert frame.fn is test_fn
             assert frame.portal is portal
-            assert frame.excessive_logging is True
+            assert frame.verbose_logging is True
             assert frame.exception_counter == 0
             assert frame.event_counter == 0
             assert frame.context_used is False
@@ -229,10 +229,10 @@ def test_execution_frame_properties_accessible():
 
 def test_multiple_calls_with_arguments_work():
     """Test that multiple function calls with arguments work correctly."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def compute(*, x, y):
             return x + y
 
@@ -246,10 +246,10 @@ def test_multiple_calls_with_arguments_work():
 
 def test_execution_frame_counters_initialized_correctly():
     """Test that frame counters start at zero."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def simple_fn():
             return "result"
 
@@ -264,10 +264,10 @@ def test_execution_frame_counters_initialized_correctly():
 def test_cleanup_order_on_exception_in_body():
     """Test that resources are cleaned up in correct order when exception occurs."""
 
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_that_raises():
             raise ValueError("Intentional test exception")
 
@@ -285,10 +285,10 @@ def test_cleanup_order_on_exception_in_body():
 
 def test_output_captured_before_capturer_closes():
     """Test that output is captured and stored correctly with ExitStack."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_output():
             print("Test output line")
             return "result"
@@ -317,10 +317,10 @@ def test_output_captured_before_capturer_closes():
 
 def test_exit_stack_attribute_initialized():
     """Test that _exit_stack attribute is properly initialized."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def simple_fn():
             return "result"
 

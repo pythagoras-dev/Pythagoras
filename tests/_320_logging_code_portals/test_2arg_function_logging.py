@@ -11,7 +11,7 @@ def test_2args_function_single_call(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_SINGLE_CALL_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
 
-        two_arg_function = logging(excessive_logging=True)(two_arg_function_original)
+        two_arg_function = logging(verbose_logging=True)(two_arg_function_original)
 
         two_arg_function(a=1, b=2)
 
@@ -36,7 +36,7 @@ def test_2args_function_2similar_calls(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         global two_arg_function
         two_arg_function = logging(
-            excessive_logging=True
+            verbose_logging=True
             , portal=p.portal
             )(two_arg_function_original)
 
@@ -60,7 +60,7 @@ def test_2args_function_2different_calls(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         global two_arg_function
         two_arg_function = logging(
-            excessive_logging=True
+            verbose_logging=True
             , portal = p.portal
             )(two_arg_function_original)
 
@@ -83,7 +83,7 @@ def test_2args_function_single_call_no_logs(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_SINGLE_CALL_NO_LOGS_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         global two_arg_function
-        two_arg_function = logging(excessive_logging=False,portal = p.portal)(two_arg_function_original)
+        two_arg_function = logging(verbose_logging=False,portal = p.portal)(two_arg_function_original)
 
         two_arg_function(a=1, b=2)
 
@@ -103,7 +103,7 @@ def test_2args_function_2similar_calls_no_logs(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_2SIMILAR_CALLS_NO_LOGS_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         global two_arg_function
-        two_arg_function = logging(excessive_logging=False,portal = p.portal)(two_arg_function_original)
+        two_arg_function = logging(verbose_logging=False,portal = p.portal)(two_arg_function_original)
 
         two_arg_function(a=1, b=2)
         two_arg_function(b=2, a=1)
@@ -124,7 +124,7 @@ def test_2args_function_2different_calls_no_logs(tmpdir):
     # tmpdir = "TWO_ARGS_FUNCTION_2DIFFERENT_CALLS_NO_LOGS_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         global two_arg_function
-        two_arg_function = logging(excessive_logging=False,portal = p.portal)(two_arg_function_original)
+        two_arg_function = logging(verbose_logging=False,portal = p.portal)(two_arg_function_original)
 
         two_arg_function(a=1, b=2)
         two_arg_function(a=1, b=10)

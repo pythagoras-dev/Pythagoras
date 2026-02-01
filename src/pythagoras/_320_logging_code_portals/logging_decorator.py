@@ -20,15 +20,15 @@ class logging(ordinary):
     execution attempts, results, outputs, crashes, and events via a
     LoggingCodePortal.
     """
-    _excessive_logging: bool|Joker
+    _verbose_logging: bool|Joker
 
     def __init__(self
-            , excessive_logging:bool|Joker|ReuseFlag = KEEP_CURRENT
+            , verbose_logging:bool|Joker|ReuseFlag = KEEP_CURRENT
             , portal: LoggingCodePortal | ReuseFlag| None = None):
         """Initialize the logging decorator.
 
         Args:
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable detailed per-execution
                   artifacts (attempt context, outputs, and results)
@@ -44,15 +44,15 @@ class logging(ordinary):
                 - None to use the active portal at execution time
 
         Raises:
-            TypeError: If excessive_logging is not a bool, Joker, or ReuseFlag,
+            TypeError: If verbose_logging is not a bool, Joker, or ReuseFlag,
                 or if portal is not a LoggingCodePortal, ReuseFlag, or None.
         """
-        if not isinstance(excessive_logging, (bool, Joker,ReuseFlag)):
-            raise TypeError(f"excessive_logging must be bool or Joker or ReuseFlag, got {get_long_infoname(excessive_logging)}")
+        if not isinstance(verbose_logging, (bool, Joker,ReuseFlag)):
+            raise TypeError(f"verbose_logging must be bool or Joker or ReuseFlag, got {get_long_infoname(verbose_logging)}")
         if not (isinstance(portal, (LoggingCodePortal,ReuseFlag)) or portal is None):
             raise TypeError(f"portal must be LoggingCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")
         super().__init__(portal=portal)
-        self._excessive_logging = excessive_logging
+        self._verbose_logging = verbose_logging
 
     def __call__(self,fn:Callable)->LoggingFn:
         """Wrap the function into a LoggingFn.
@@ -65,6 +65,6 @@ class logging(ordinary):
         """
         self._restrict_to_single_thread()
         wrapper = LoggingFn(fn
-            , excessive_logging=self._excessive_logging
+            , verbose_logging=self._verbose_logging
             , portal=self._portal)
         return wrapper

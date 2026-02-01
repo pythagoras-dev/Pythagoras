@@ -8,7 +8,7 @@ def test_execution_attempts_simple(tmpdir):
 
     with _PortalTester(PureCodePortal, tmpdir):
 
-        @pure(excessive_logging=True)
+        @pure(verbose_logging=True)
         def simple_func()->int:
             return 10
 

@@ -15,7 +15,7 @@ from mixinforge import SingletonMixin
 class ReuseFlag(SingletonMixin):
     """Singleton flag indicating to reuse settings from another function wrapper.
 
-    When passed as the value for parameters like ``portal`` or ``excessive_logging``
+    When passed as the value for parameters like ``portal`` or ``verbose_logging``
     during function wrapper construction, instructs the constructor to copy that
     setting from the source function (``fn``) if it is an existing wrapper of the
     appropriate type.
@@ -31,7 +31,7 @@ class ReuseFlag(SingletonMixin):
 USE_FROM_OTHER: Final[ReuseFlag] = ReuseFlag()
 """Singleton flag to inherit settings from an existing function wrapper.
 
-Pass this as the ``portal`` or ``excessive_logging`` argument when constructing
+Pass this as the ``portal`` or ``verbose_logging`` argument when constructing
 a function wrapper (e.g., OrdinaryFn, LoggingFn) to copy that setting from the
 source function. The source function must be an existing wrapper of a compatible
 type, otherwise a ValueError is raised.

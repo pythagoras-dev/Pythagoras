@@ -10,21 +10,21 @@ from pythagoras._320_logging_code_portals import LoggingCodePortal, logging
 
 # Module-level functions to avoid closures
 
-@logging(excessive_logging=True)
+@logging(verbose_logging=True)
 def fn_with_event_a():
     """Function that logs an event."""
     pth.log_event(location="function_a")
     return "result_a"
 
 
-@logging(excessive_logging=True)
+@logging(verbose_logging=True)
 def fn_with_event_b():
     """Function that logs an event."""
     pth.log_event(location="function_b")
     return "result_b"
 
 
-@logging(excessive_logging=True)
+@logging(verbose_logging=True)
 def fn_with_exception_a():
     """Function that raises and logs exception."""
     try:
@@ -34,7 +34,7 @@ def fn_with_exception_a():
         raise
 
 
-@logging(excessive_logging=True)
+@logging(verbose_logging=True)
 def fn_with_exception_b():
     """Function that catches and logs exception."""
     try:
@@ -46,10 +46,10 @@ def fn_with_exception_b():
 
 def test_log_event_inside_function():
     """Test that log_event() logs to the correct function's event history."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_event():
             pth.log_event(message="Test event", value=42)
             return "result"
@@ -77,10 +77,10 @@ def test_log_event_inside_function():
 
 def test_log_event_with_multiple_arguments():
     """Test that log_event() handles multiple keyword arguments."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_complex_event():
             pth.log_event(
                 event_type="test",
@@ -108,10 +108,10 @@ def test_log_event_with_multiple_arguments():
 
 def test_log_exception_inside_function():
     """Test that log_exception() logs exceptions to the function's crash history."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_explicit_exception_log():
             try:
                 raise ValueError("Caught exception")
@@ -131,10 +131,10 @@ def test_log_exception_inside_function():
 
 def test_log_exception_without_active_exception():
     """Test that log_exception() handles case when no exception is active."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_logging_no_exception():
             # Call log_exception when no exception is active
             pth.log_exception()
@@ -148,10 +148,10 @@ def test_log_exception_without_active_exception():
 
 def test_multiple_events_in_same_function():
     """Test logging multiple events in a single function execution."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_multiple_events():
             pth.log_event(stage="start")
             pth.log_event(stage="middle", progress=50)
@@ -170,7 +170,7 @@ def test_multiple_events_in_same_function():
 
 def test_log_event_in_multiple_functions():
     """Test that log_event() works correctly for multiple independent functions."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
         with portal:
@@ -198,7 +198,7 @@ def test_log_event_in_multiple_functions():
 
 def test_log_exception_in_multiple_functions():
     """Test that log_exception() works correctly for multiple independent functions."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
         with portal:
@@ -222,10 +222,10 @@ def test_log_exception_in_multiple_functions():
 
 def test_log_event_with_environment_summary():
     """Test that log_event() includes execution environment summary."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_event():
             pth.log_event(test_event="value")
             return "result"
@@ -251,7 +251,7 @@ def test_log_event_with_environment_summary():
 
 def test_log_event_portal_level():
     """Test that log_event() works at portal level outside functions."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
         initial_event_count = len(portal._event_history)
@@ -265,7 +265,7 @@ def test_log_event_portal_level():
 
 def test_log_exception_portal_level():
     """Test that log_exception() works at portal level outside functions."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
         initial_crash_count = len(portal._crash_history)
@@ -282,7 +282,7 @@ def test_log_exception_portal_level():
 
 def test_log_event_prints_and_reports_failures(capsys, monkeypatch):
     """Test that log_event() pprint output and reports logging failures."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
         class FailingEventHistory:
@@ -303,7 +303,7 @@ def test_log_event_prints_and_reports_failures(capsys, monkeypatch):
 
 def test_log_exception_prints_and_reports_failures(capsys, monkeypatch):
     """Test that log_exception() pprint output and reports logging failures."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
         class FailingCrashHistory:
@@ -328,10 +328,10 @@ def test_log_exception_prints_and_reports_failures(capsys, monkeypatch):
 def test_log_event_without_portal_context():
     """Test log_event() behavior when called outside any portal context."""
     # This tests that log_event can find the current portal automatically
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         _portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_event():
             # log_event should work without explicit portal context
             pth.log_event(auto_portal="test")
@@ -348,10 +348,10 @@ def test_log_event_without_portal_context():
 
 def test_multiple_exceptions_logged_separately():
     """Test that multiple exceptions are logged as separate crash records."""
-    with _PortalTester(LoggingCodePortal, excessive_logging=True) as tester:
+    with _PortalTester(LoggingCodePortal, verbose_logging=True) as tester:
         portal = tester.portal
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fn_with_multiple_exceptions():
             try:
                 raise ValueError("First exception")

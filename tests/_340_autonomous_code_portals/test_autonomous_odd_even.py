@@ -34,9 +34,9 @@ def test_odd_even_two_decorators_autonomous(tmpdir):
             oldIsEven = isEven
             oldIsOdd = isOdd
 
-            isEven = autonomous(excessive_logging=True)(isEven)
+            isEven = autonomous(verbose_logging=True)(isEven)
             assert isinstance(isEven, AutonomousFn)
-            isOdd = autonomous(excessive_logging=True)(isOdd)
+            isOdd = autonomous(verbose_logging=True)(isOdd)
             assert isinstance(isOdd, AutonomousFn)
 
             assert isOdd(n=i, isEven=isEven, isOdd=isOdd) == bool(i%2)
@@ -60,9 +60,9 @@ def test_odd_even_two_decorators_fixed_kwargs_autonomous(tmpdir):
             oldIsEven = isEven
             oldIsOdd = isOdd
 
-            isEven = autonomous(excessive_logging=True, portal=t.portal)(isEven)
+            isEven = autonomous(verbose_logging=True, portal=t.portal)(isEven)
             assert isinstance(isEven, AutonomousFn)
-            isOdd = autonomous(excessive_logging=True, portal=t.portal)(isOdd)
+            isOdd = autonomous(verbose_logging=True, portal=t.portal)(isOdd)
             assert isinstance(isOdd, AutonomousFn)
 
             new_isOdd = isOdd.fix_kwargs(isEven=isEven, isOdd=isOdd)

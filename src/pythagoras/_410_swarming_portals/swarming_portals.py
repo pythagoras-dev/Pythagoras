@@ -81,7 +81,7 @@ class SwarmingPortal(PureCodePortal):
 
     def __init__(self
                  , root_dict: PersiDict | str | None = None
-                 , excessive_logging: bool|Joker = KEEP_CURRENT
+                 , verbose_logging: bool|Joker = KEEP_CURRENT
                  , max_n_workers: int|Joker|None = KEEP_CURRENT
                  , min_n_workers: int|Joker|None = KEEP_CURRENT
                  , exact_n_workers: int|None = None
@@ -92,7 +92,7 @@ class SwarmingPortal(PureCodePortal):
 
         Args:
             root_dict: Persistent storage backing portal state, or None for default.
-            excessive_logging: Whether to enable verbose diagnostic logging.
+            verbose_logging: Whether to enable verbose diagnostic logging.
             max_n_workers: Upper bound on background workers. Actual count may be
                 lower based on available CPUs and RAM.
             min_n_workers: Lower bound on background workers. Actual count may be
@@ -113,7 +113,7 @@ class SwarmingPortal(PureCodePortal):
         """
         PureCodePortal.__init__(self
             , root_dict=root_dict
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
         if not isinstance(max_n_workers, (int, Joker, type(None))):
             raise TypeError(f"max_n_workers must be int or Joker or None, "

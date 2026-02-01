@@ -16,7 +16,7 @@ def test_fn_call_signature_attributes(tmpdir):
     # tmpdir = "FN_CALL_SIGNATURE_ATTRIBUTES_" + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
             ):
-        new_plus = logging(excessive_logging=True)(plus)
+        new_plus = logging(verbose_logging=True)(plus)
         for i in range(1):
             ValueAddr(new_plus)
             signature = LoggingFnCallSignature(new_plus, KwArgs(x=10, y=-200))
@@ -31,7 +31,7 @@ def test_fn_call_signature_attributes(tmpdir):
 def test_fn_call_signature_run_history(tmpdir):
     # tmpdir = "FN_CALL_SIGNATURE_RUN_HISTORY_" + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
-        new_plus = logging(excessive_logging=True)(plus)
+        new_plus = logging(verbose_logging=True)(plus)
         signature = LoggingFnCallSignature(new_plus, KwArgs(x=-50, y=500))
 
         N_EXECUTIONS = 4
@@ -54,7 +54,7 @@ def test_fn_call_signature_results_history(tmpdir):
         expected_result = plus(x=x,y=y)
         assert expected_result == "10101"
 
-        new_plus = logging(excessive_logging=True)(plus)
+        new_plus = logging(verbose_logging=True)(plus)
         signature = LoggingFnCallSignature(new_plus, KwArgs(x=x, y=y))
 
         N_EXECUTIONS = 5
@@ -75,7 +75,7 @@ def test_fn_call_signature_output_history(tmpdir):
         expected_result = plus(x=x,y=y)
         assert expected_result == "10101"
 
-        new_plus = logging(excessive_logging=True)(plus)
+        new_plus = logging(verbose_logging=True)(plus)
         signature = LoggingFnCallSignature(new_plus, KwArgs(x=x, y=y))
 
         N_EXECUTIONS = 10
@@ -100,7 +100,7 @@ def test_fn_call_signature_events_history(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         x,y = "10","101"
 
-        new_plus = logging(excessive_logging=True)(plus_with_events)
+        new_plus = logging(verbose_logging=True)(plus_with_events)
         signature = LoggingFnCallSignature(new_plus, KwArgs(x=x, y=y))
 
         N_EXECUTIONS = 8
@@ -114,7 +114,7 @@ def test_fn_call_signature_events_history(tmpdir):
 def test_fn_call_signature_hash_consistency_with_equality(tmpdir):
     """Verify hash/equality contract: equal signatures must have equal hashes."""
     with _PortalTester(LoggingCodePortal, tmpdir):
-        fn = logging(excessive_logging=True)(plus)
+        fn = logging(verbose_logging=True)(plus)
         sig1 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
         sig2 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
 
@@ -125,7 +125,7 @@ def test_fn_call_signature_hash_consistency_with_equality(tmpdir):
 def test_fn_call_signature_usable_in_sets(tmpdir):
     """Verify LoggingFnCallSignature instances can be used in sets correctly."""
     with _PortalTester(LoggingCodePortal, tmpdir):
-        fn = logging(excessive_logging=True)(plus)
+        fn = logging(verbose_logging=True)(plus)
         sig1 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
         sig2 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
         sig3 = LoggingFnCallSignature(fn, KwArgs(x=99, y=99))
@@ -137,7 +137,7 @@ def test_fn_call_signature_usable_in_sets(tmpdir):
 def test_fn_call_signature_usable_as_dict_keys(tmpdir):
     """Verify LoggingFnCallSignature instances can be used as dictionary keys."""
     with _PortalTester(LoggingCodePortal, tmpdir):
-        fn = logging(excessive_logging=True)(plus)
+        fn = logging(verbose_logging=True)(plus)
         sig1 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
         sig2 = LoggingFnCallSignature(fn, KwArgs(x=10, y=20))
 

@@ -34,9 +34,9 @@ def test_odd_even_two_decorators_logging(tmpdir):
             oldIsEven = isEven
             oldIsOdd = isOdd
 
-            isEven = safe(excessive_logging=True)(isEven)
+            isEven = safe(verbose_logging=True)(isEven)
             assert isinstance(isEven, SafeFn)
-            isOdd = safe(excessive_logging=True)(isOdd)
+            isOdd = safe(verbose_logging=True)(isOdd)
             assert isinstance(isOdd, SafeFn)
 
             assert isOdd(n=i, isEven=isEven, isOdd=isOdd) == bool(i%2)

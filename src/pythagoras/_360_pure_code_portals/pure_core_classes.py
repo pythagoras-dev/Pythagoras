@@ -64,17 +64,17 @@ class PureCodePortal(ProtectedCodePortal):
 
     def __init__(self
             , root_dict: PersiDict | str | None = None
-            , excessive_logging: bool | Joker = KEEP_CURRENT
+            , verbose_logging: bool | Joker = KEEP_CURRENT
             ):
         """Initialize a PureCodePortal instance.
 
         Args:
             root_dict: Backing persistent dictionary or filesystem path.
-            excessive_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
+            verbose_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
         """
         ProtectedCodePortal.__init__(self
             , root_dict=root_dict
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
         results_dict_prototype = self._root_dict.get_subdict(
             "execution_results")
@@ -168,7 +168,7 @@ class PureFn(ProtectedFn):
     def __init__(self, fn: Callable | str
                  , pre_validators: list[AutonomousFn] | list[Callable] | None = None
                  , post_validators: list[AutonomousFn] | list[Callable] | None = None
-                 , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None |ReuseFlag = None):
         """Construct a PureFn wrapper.
@@ -177,7 +177,7 @@ class PureFn(ProtectedFn):
             fn: Target callable to wrap.
             pre_validators: Optional validators run before execution.
             post_validators: Optional validators run after execution.
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit from context
@@ -195,7 +195,7 @@ class PureFn(ProtectedFn):
         super().__init__(fn=fn
                          , portal = portal
                          , fixed_kwargs=fixed_kwargs
-                         , excessive_logging = excessive_logging
+                         , verbose_logging = verbose_logging
                          , pre_validators=pre_validators
                          , post_validators=post_validators)
 

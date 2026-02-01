@@ -12,7 +12,7 @@ def test_simple_signature_value_addr(tmpdir):
     # tmpdir = "SIMPLE_SIGNATURE_VALUE_ADDR_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir):
         global wonderful_function
-        wonderful_function = logging(excessive_logging=True)(wonderful_function)
+        wonderful_function = logging(verbose_logging=True)(wonderful_function)
         signature = LoggingFnCallSignature(wonderful_function, KwArgs())
 
         addr = ValueAddr(signature)
@@ -27,7 +27,7 @@ def test_complex_signature_value_addr(tmpdir):
     # tmpdir = "COMPLEX_SIGNATURE_VALUE_ADDR_"*2 +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir):
         global plus
-        plus = logging(excessive_logging=True)(plus)
+        plus = logging(verbose_logging=True)(plus)
         signature = LoggingFnCallSignature(plus, KwArgs(x=1, y=2))
 
         addr = ValueAddr(signature)

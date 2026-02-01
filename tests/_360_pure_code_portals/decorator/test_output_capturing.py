@@ -4,10 +4,10 @@ from pythagoras._360_pure_code_portals.pure_core_classes import (
 from pythagoras._360_pure_code_portals.pure_decorator import pure
 
 
-def test_print_excessive_logging(tmpdir):
+def test_print_verbose_logging(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
 
-        @pure(excessive_logging=True)
+        @pure(verbose_logging=True)
         def f(n:int):
             print(f"<{n}>")
 
@@ -19,7 +19,7 @@ def test_print_excessive_logging(tmpdir):
 def test_print_no_logging(tmpdir):
     with _PortalTester(PureCodePortal, tmpdir) as t:
 
-        @pure(excessive_logging=False)
+        @pure(verbose_logging=False)
         def f(n:int):
             print(f"<{n}>")
 

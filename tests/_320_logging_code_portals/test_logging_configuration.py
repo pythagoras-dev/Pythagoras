@@ -28,12 +28,12 @@ def test_all_defaulta_config(tmpdir):
 def test_portal_and_fn_config(tmpdir,f,p):
     # tmpdir = 2*"PORTAL_AND_FN_CONFIG_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , excessive_logging=p) as t:
+            , verbose_logging=p) as t:
         # Portal-level config goes to global_portal_settings
         assert len(t.portal.global_portal_settings) == 1 - int(p==KEEP_CURRENT)
         assert len(t.portal.local_node_settings) == 0
 
-        @logging(excessive_logging=f)
+        @logging(verbose_logging=f)
         def simple_function():
             print("Hello, world!")
 
@@ -59,7 +59,7 @@ def test_portal_and_fn_config(tmpdir,f,p):
 def test_portal_config(tmpdir,p):
     # tmpdir = 3*"PORTAL_CONFIG_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir
-            , excessive_logging=p) as t:
+            , verbose_logging=p) as t:
         # Portal-level config goes to global_portal_settings
         assert len(t.portal.global_portal_settings) == 1
         assert len(t.portal.local_node_settings) == 0
@@ -84,7 +84,7 @@ def test_fn_config(tmpdir,f):
     with _PortalTester(LoggingCodePortal, tmpdir) as t:
         assert len(t.portal.local_node_settings) == 0
 
-        @logging(excessive_logging=f)
+        @logging(verbose_logging=f)
         def simple_function():
             print("Hello, world!")
 

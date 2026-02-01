@@ -13,5 +13,5 @@ def test_aut_factorial(tmpdir):
     with _PortalTester(AutonomousCodePortal
             , root_dict=tmpdir):
         global factorial
-        factorial_new = autonomous(excessive_logging=True)(factorial)
+        factorial_new = autonomous(verbose_logging=True)(factorial)
         assert factorial_new(n=5) == 120

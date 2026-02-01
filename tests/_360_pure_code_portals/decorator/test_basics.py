@@ -27,7 +27,7 @@ def test_basics_pure_decorator_log_everything(tmpdir):
             return a + b
 
         result = f_ab(a=1,b=2)
-        f_1 = pure(excessive_logging=True)(f_ab)
+        f_1 = pure(verbose_logging=True)(f_ab)
         #
         assert isinstance(f_1, PureFn)
         for i in range(3):

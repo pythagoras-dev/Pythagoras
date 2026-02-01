@@ -14,7 +14,7 @@ def test_simple_function_single_call_very_basic(tmpdir):
             ) as p:
         for i in range(3):
             global simple_function
-            simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
+            simple_function = logging(verbose_logging=True, portal = p.portal)(simple_function_original)
 
             _addr = ValueAddr(simple_function)
 
@@ -41,7 +41,7 @@ def test_simple_function_single_call(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         for i in range(3):
             global simple_function
-            simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
+            simple_function = logging(verbose_logging=True, portal = p.portal)(simple_function_original)
 
             simple_function()
 
@@ -62,7 +62,7 @@ def test_simple_function_single_call_no_logs(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir
             ) as p:
         global simple_function
-        simple_function = logging(excessive_logging=False, portal = p.portal)(simple_function_original)
+        simple_function = logging(verbose_logging=False, portal = p.portal)(simple_function_original)
 
         simple_function()
 
@@ -84,7 +84,7 @@ def test_simple_function_double_call(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         for i in range(1,5):
             global simple_function
-            simple_function = logging(excessive_logging=True, portal = p.portal)(simple_function_original)
+            simple_function = logging(verbose_logging=True, portal = p.portal)(simple_function_original)
 
             simple_function()
             simple_function()
@@ -106,7 +106,7 @@ def test_simple_function_double_call_no_logs(tmpdir):
     # tmpdir = "SIMPLE_FUNCTION_DOUBLE_CALL_NO_LOGS_"*2 + str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as p:
         global simple_function
-        simple_function = logging(excessive_logging=False, portal = p.portal)(simple_function_original)
+        simple_function = logging(verbose_logging=False, portal = p.portal)(simple_function_original)
 
         simple_function()
         simple_function()

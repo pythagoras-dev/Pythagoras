@@ -28,12 +28,12 @@ class safe(logging):
     """
 
     def __init__(self
-                 , excessive_logging: bool|None|Joker|ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool|None|Joker|ReuseFlag = KEEP_CURRENT
                  , portal: SafeCodePortal | None|ReuseFlag = None):
         """Create a safe decorator bound to an optional portal.
 
         Args:
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit from current context
@@ -54,7 +54,7 @@ class safe(logging):
             raise TypeError(f"portal must be a SafeCodePortal or ReuseFlag or None, got {get_long_infoname(portal)}")
         logging.__init__(self=self
             , portal=portal
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
 
     def __call__(self,fn:Callable)->SafeFn:
@@ -70,5 +70,5 @@ class safe(logging):
         self._restrict_to_single_thread()
         wrapper = SafeFn(fn
             , portal=self._portal
-            , excessive_logging=self._excessive_logging)
+            , verbose_logging=self._verbose_logging)
         return wrapper

@@ -16,7 +16,7 @@ def test_needs_execution(tmpdir):
     # initialize(base_dir="TTTTTTTTTTTTTTTTTTTTT")
 
         global factorial
-        factorial = pure(excessive_logging=True)(factorial)
+        factorial = pure(verbose_logging=True)(factorial)
 
         addr = PureFnExecutionResultAddr(fn=factorial, arguments=dict(n=5))
 

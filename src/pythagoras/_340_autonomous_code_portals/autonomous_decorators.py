@@ -63,7 +63,7 @@ class autonomous(safe):
 
     def __init__(self
                  , fixed_kwargs: dict | None = None
-                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
                  , portal: AutonomousCodePortal | None = None
                  ):
         """Initialize the decorator.
@@ -71,7 +71,7 @@ class autonomous(safe):
         Args:
             fixed_kwargs: Keyword arguments to pre-bind (partially apply) to the
                 decorated function. These will be merged into every call.
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit the portal's current setting
@@ -95,7 +95,7 @@ class autonomous(safe):
             raise TypeError(f"fixed_kwargs must be a dict or None, got {get_long_infoname(fixed_kwargs)}")
         safe.__init__(self=self
             , portal=portal
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
         self._fixed_kwargs = fixed_kwargs
 
 
@@ -113,5 +113,5 @@ class autonomous(safe):
         wrapper = AutonomousFn(fn
             ,portal=self._portal
             ,fixed_kwargs=self._fixed_kwargs
-            ,excessive_logging=self._excessive_logging)
+            ,verbose_logging=self._verbose_logging)
         return wrapper

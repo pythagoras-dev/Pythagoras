@@ -34,7 +34,7 @@ class SafeCodePortal(LoggingCodePortal):
 
     def __init__(self
                  , root_dict: PersiDict|str|None = None
-                 , excessive_logging: bool|Joker = KEEP_CURRENT
+                 , verbose_logging: bool|Joker = KEEP_CURRENT
                  ):
         """Initialize a SafeCodePortal.
 
@@ -43,13 +43,13 @@ class SafeCodePortal(LoggingCodePortal):
                 underlying data portal for storing execution artifacts. If a
                 string is provided, it is treated as a path on disk. If None,
                 an in-memory structure may be used (depending on configuration).
-            excessive_logging: Whether to enable verbose logging of execution
+            verbose_logging: Whether to enable verbose logging of execution
                 attempts, results, outputs and events. Use KEEP_CURRENT to
                 inherit the active setting from parent context.
         """
         LoggingCodePortal.__init__(self
             , root_dict=root_dict
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
 
 class SafeFnCallSignature(LoggingFnCallSignature):
@@ -100,7 +100,7 @@ class SafeFn(LoggingFn):
     def __init__(self
                  , fn: Callable|str
                  , portal: LoggingCodePortal|None|ReuseFlag = None
-                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
                  ):
         """Create a SafeFn wrapper.
 
@@ -113,7 +113,7 @@ class SafeFn(LoggingFn):
                   is an existing SafeFn
                 - None to use the active portal at execution time
 
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit from the surrounding context
@@ -123,7 +123,7 @@ class SafeFn(LoggingFn):
         LoggingFn.__init__(self
             , fn = fn
             , portal=portal
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
 
     def __getstate__(self):

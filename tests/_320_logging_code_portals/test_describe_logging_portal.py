@@ -4,7 +4,7 @@ import pythagoras as pth
 from pythagoras._210_basic_portals.portal_description_helpers import _get_description_value_by_key
 from pythagoras._320_logging_code_portals.logging_portal_core_classes import (
     LoggingFnCallSignature, LoggingCodePortal
-    , _EXCEPTIONS_TODAY_TXT, _EXCESSIVE_LOGGING_TXT
+    , _EXCEPTIONS_TODAY_TXT, _VERBOSE_LOGGING_TXT
     , _EXCEPTIONS_TOTAL_TXT)
 
 
@@ -20,14 +20,14 @@ def test_empty_logging_portal(tmpdir):
         assert _get_description_value_by_key(description
                                              , _EXCEPTIONS_TODAY_TXT) == 0
         assert not _get_description_value_by_key(description
-                                             , _EXCESSIVE_LOGGING_TXT)
+                                             , _VERBOSE_LOGGING_TXT)
 
 
 def test_exceptions_very_basics(tmpdir):
     # tmpdir = "TEST_EXCEPTIONS_VERY_BASIC_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir):
 
-        @pth.logging(excessive_logging=True)
+        @pth.logging(verbose_logging=True)
         def y():
             x = 1 / 0
             print(x)
@@ -56,11 +56,11 @@ def test_exceptions_very_basics(tmpdir):
                                              , _EXCEPTIONS_TODAY_TXT) == 1
 
 
-def test_exceptions_basics_no_excessive_logging(tmpdir):
+def test_exceptions_basics_no_verbose_logging(tmpdir):
     # tmpdir = "TEST_EXCEPTIONS_VERY_BASIC_NO_EXCESSIVE_LOGGING" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir):
 
-        @pth.logging(excessive_logging=False)
+        @pth.logging(verbose_logging=False)
         def y():
             x = 1 / 0
             print(x)
@@ -89,9 +89,9 @@ def test_exceptions_basics_no_excessive_logging(tmpdir):
 
 def test_exceptions_basics_portal_level_logging(tmpdir):
     # tmpdir = "TEST_EXCEPTIONS_BASIC_PORTAL_LEVEL_LOGGING_" +str(int(time.time()))
-    with _PortalTester(LoggingCodePortal, tmpdir, excessive_logging=True):
+    with _PortalTester(LoggingCodePortal, tmpdir, verbose_logging=True):
 
-        @pth.logging(excessive_logging=False)
+        @pth.logging(verbose_logging=False)
         def y():
             x = 1 / 0
             print(x)

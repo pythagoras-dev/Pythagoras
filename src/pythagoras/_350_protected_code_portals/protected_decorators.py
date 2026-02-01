@@ -44,7 +44,7 @@ class protected(autonomous):
                  , pre_validators: list[ValidatorFn] | None = None
                  , post_validators: list[ValidatorFn] | None = None
                  , fixed_kwargs: dict[str,Any] | None = None
-                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
                  , portal: ProtectedCodePortal | None | ReuseFlag = None
                  ):
         """Initialize the protected decorator.
@@ -58,7 +58,7 @@ class protected(autonomous):
                 can be wrapped into a PostValidatorFn by ProtectedFn.
             fixed_kwargs (dict[str, Any] | None): Keyword arguments to pre-bind
                 to the wrapped function for every call.
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit the current setting from the portal/context
@@ -76,7 +76,7 @@ class protected(autonomous):
             raise TypeError(f"portal must be a ProtectedCodePortal or None, got {get_long_infoname(portal)}")
         autonomous.__init__(self=self
             , portal=portal
-            , excessive_logging=excessive_logging
+            , verbose_logging=verbose_logging
             , fixed_kwargs=fixed_kwargs)
         self._pre_validators = pre_validators
         self._post_validators = post_validators
@@ -98,5 +98,5 @@ class protected(autonomous):
                               , pre_validators=self._pre_validators
                               , fixed_kwargs=self._fixed_kwargs
                               , post_validators=self._post_validators
-                              , excessive_logging=self._excessive_logging)
+                              , verbose_logging=self._verbose_logging)
         return wrapper

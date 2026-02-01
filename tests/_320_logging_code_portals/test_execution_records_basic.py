@@ -8,7 +8,7 @@ def test_basics(tmpdir):
     # tmpdir = 3*"BASICS_EXECUTION_RECORDS_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir):
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def f():
             return 1
 
@@ -32,7 +32,7 @@ def test_basics_no_logging_recalc(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir
             ):
 
-        @logging(excessive_logging=False)
+        @logging(verbose_logging=False)
         def f():
             return 1
 
@@ -51,7 +51,7 @@ def test_basics_with_logging_recalc(tmpdir):
     with _PortalTester(LoggingCodePortal, tmpdir
             ):
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def f():
             return 1
 
@@ -70,7 +70,7 @@ def test_basics_many_kwargs(tmpdir):
     # tmpdir = 3*"BASICS_MANY_KWARGS_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir) as t:
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def f(**kwargs):
             print(f"{kwargs=}")
             result = sum(kwargs.values())
@@ -111,7 +111,7 @@ def test_total_recalc(tmpdir):
             , tmpdir
             ):
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def f():
             return 1
 
@@ -141,7 +141,7 @@ def test_exception(tmpdir):
     # tmpdir = 3*"EXCEPTIONS_" +str(int(time.time()))
     with _PortalTester(LoggingCodePortal, tmpdir):
 
-        @logging(excessive_logging=True)
+        @logging(verbose_logging=True)
         def fff():
             return 1/0
 

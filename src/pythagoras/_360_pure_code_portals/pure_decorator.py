@@ -35,7 +35,7 @@ class pure(protected):
                  , pre_validators: list[ValidatorFn] | None = None
                  , post_validators: list[ValidatorFn] | None = None
                  , fixed_kwargs: dict[str, Any] | None = None
-                 , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , portal: PureCodePortal | None | ReuseFlag = None
                  ):
         """Initialize the pure decorator.
@@ -44,7 +44,7 @@ class pure(protected):
             pre_validators: Validators run before execution.
             post_validators: Validators run after execution.
             fixed_kwargs: Argument name-value pairs injected into every call.
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit from context
@@ -59,7 +59,7 @@ class pure(protected):
                 - None to infer from context at execution time
         """
         super().__init__(portal=portal
-                       , excessive_logging=excessive_logging
+                       , verbose_logging=verbose_logging
                        , fixed_kwargs=fixed_kwargs
                        , pre_validators=pre_validators
                        , post_validators=post_validators)
@@ -80,6 +80,6 @@ class pure(protected):
                          , pre_validators=self._pre_validators
                          , fixed_kwargs=self._fixed_kwargs
                          , post_validators=self._post_validators
-                         , excessive_logging=self._excessive_logging)
+                         , verbose_logging=self._verbose_logging)
         return wrapper
 

@@ -33,16 +33,16 @@ LoggingCodePortal:
 Execution Model:
     When a LoggingFn executes, it creates a unique session_id (e.g., "run_abc123"),
     enters a LoggingFnExecutionFrame context, and records:
-    - Attempt metadata (if excessive_logging=True): environment, timestamp
-    - Captured stdout/stderr/logging (if excessive_logging=True)
+    - Attempt metadata (if verbose_logging=True): environment, timestamp
+    - Captured stdout/stderr/logging (if verbose_logging=True)
     - Any exceptions raised (always logged)
     - Custom events via log_event() (always logged)
-    - Function result (if excessive_logging=True)
+    - Function result (if verbose_logging=True)
 
     All artifacts are timestamped and organized by call signature, enabling
     time-series analysis of function behavior.
 
-Excessive Logging Mode:
+Verbose Logging Mode:
     When enabled (per-function or per-portal), captures detailed per-call
     artifacts including execution environment, full output, and results.
     When disabled, only logs exceptions and custom events to reduce storage
@@ -90,7 +90,7 @@ class LoggingFn(OrdinaryFn):
 
     LoggingFn wraps a callable and, when executed within a LoggingCodePortal,
     records execution attempts, results, captured stdout/stderr, raised
-    exceptions, and custom events. It also supports an excessive_logging mode
+    exceptions, and custom events. It also supports a verbose_logging mode
     that enables storing rich per-call artifacts.
 
     A logging function can only be called with keyword arguments.
@@ -98,20 +98,20 @@ class LoggingFn(OrdinaryFn):
 
     Attributes:
         _auxiliary_config_params_at_init (dict): Internal configuration store
-            inherited from StorableClass. Includes the 'excessive_logging' flag
+            inherited from StorableClass. Includes the 'verbose_logging' flag
             when provided.
     """
 
     def __init__(self
             , fn: Callable | str
-            , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
+            , verbose_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
             , portal: LoggingCodePortal | ReuseFlag | None = None
             ):
         """Initialize a LoggingFn wrapper.
 
         Args:
             fn: A callable to wrap or a string with a function's source code.
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable detailed per-execution
                   artifacts (attempt context, outputs, results)
@@ -127,37 +127,37 @@ class LoggingFn(OrdinaryFn):
                 - None to use the active portal during execution
 
         Raises:
-            TypeError: If excessive_logging is not a bool, Joker, or ReuseFlag.
-            ValueError: If excessive_logging is USE_FROM_OTHER but fn is not
+            TypeError: If verbose_logging is not a bool, Joker, or ReuseFlag.
+            ValueError: If verbose_logging is USE_FROM_OTHER but fn is not
                 a LoggingFn.
         """
         super().__init__(fn=fn, portal=portal)
 
-        if not isinstance(excessive_logging, (bool, Joker, ReuseFlag)):
+        if not isinstance(verbose_logging, (bool, Joker, ReuseFlag)):
             raise TypeError(
-                "excessive_logging must be a boolean, Joker, or ReuseFlag, "
-                f"got {get_long_infoname(excessive_logging)}")
+                "verbose_logging must be a boolean, Joker, or ReuseFlag, "
+                f"got {get_long_infoname(verbose_logging)}")
 
-        if excessive_logging is USE_FROM_OTHER:
+        if verbose_logging is USE_FROM_OTHER:
             if isinstance(fn, LoggingFn):
-                excessive_logging = fn._auxiliary_config_params_at_init["excessive_logging"]
+                verbose_logging = fn._auxiliary_config_params_at_init["verbose_logging"]
             else:
-                raise ValueError("excessive_logging can't be USE_FROM_OTHER "
+                raise ValueError("verbose_logging can't be USE_FROM_OTHER "
                                  "when fn is not an instance of LoggingFn.")
 
         self._auxiliary_config_params_at_init[
-            "excessive_logging"] = excessive_logging
+            "verbose_logging"] = verbose_logging
 
 
     @property
-    def excessive_logging(self) -> bool:
+    def verbose_logging(self) -> bool:
         """Whether rich per-execution logging is enabled for this function.
 
         Returns:
-            True if excessive logging is enabled for this function (from
+            True if verbose logging is enabled for this function (from
             its own config or inherited via the portal); False otherwise.
         """
-        return bool(self.get_effective_setting("excessive_logging"))
+        return bool(self.get_effective_setting("verbose_logging"))
 
 
     def get_signature(self, arguments:dict) -> LoggingFnCallSignature:
@@ -339,13 +339,13 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
 
 
     @property
-    def excessive_logging(self) -> bool:
-        """Whether excessive logging is enabled for the underlying function.
+    def verbose_logging(self) -> bool:
+        """Whether verbose logging is enabled for the underlying function.
 
         Returns:
-            True if excessive logging is enabled, False otherwise.
+            True if verbose logging is enabled, False otherwise.
         """
-        return self.fn.excessive_logging
+        return self.fn.verbose_logging
 
 
     def __hash_addr_descriptor__(self) -> str:
@@ -614,7 +614,7 @@ class LoggingFnExecutionRecord(NotPicklableMixin, SingleThreadEnforcerMixin):
 
         Returns:
             dict | None: The environment summary dict for this session, or
-            None if not present (e.g., excessive logging disabled).
+            None if not present (e.g., verbose logging disabled).
         """
         with self.portal:
             execution_attempts = self.call_signature.execution_attempts
@@ -688,9 +688,9 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
     1. Creates a unique session_id for this execution
     2. Optionally starts capturing stdout/stderr/logging output
     3. Pushes itself onto the class-level call_stack (enables nested calls)
-    4. Registers execution attempt metadata (if excessive_logging enabled)
+    4. Registers execution attempt metadata (if verbose_logging enabled)
     5. Routes any exceptions/events to both function-level and portal-level logs
-    6. Stores the result and captured output (if excessive_logging enabled)
+    6. Stores the result and captured output (if verbose_logging enabled)
     7. Pops itself from the call_stack on exit
 
     The class-level call_stack enables nested function calls to work correctly,
@@ -708,7 +708,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             and log_exception() to determine which function is currently active.
         session_id: Unique identifier (e.g., "run_abc123") for this execution.
         fn_call_signature: The call signature being executed.
-        output_capturer: Optional OutputCapturer instance (when excessive_logging=True).
+        output_capturer: Optional OutputCapturer instance (when verbose_logging=True).
         exception_counter: Count of exceptions logged during this execution.
         event_counter: Count of custom events logged during this execution.
     """
@@ -737,7 +737,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             self.fn_call_signature = fn_call_signature
             self.fn_call_addr = fn_call_signature.addr
 
-            if self.excessive_logging:
+            if self.verbose_logging:
                 self.output_capturer = OutputCapturer()
             else:
                 self.output_capturer = None
@@ -779,13 +779,13 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
 
 
     @property
-    def excessive_logging(self) -> bool:
+    def verbose_logging(self) -> bool:
         """Whether the frame should capture detailed artifacts.
 
         Returns:
-            True if excessive logging is enabled for the function.
+            True if verbose logging is enabled for the function.
         """
-        return self.fn.excessive_logging
+        return self.fn.verbose_logging
 
 
     @property
@@ -823,7 +823,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
 
         Performs sanity checks, enters the portal context, optionally starts
         capturing output, pushes the frame onto the call stack, and registers
-        an execution attempt if excessive logging is enabled.
+        an execution attempt if verbose logging is enabled.
 
         Returns:
             LoggingFnExecutionFrame: This frame instance for use as a context var.
@@ -870,9 +870,9 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             - Stores function source code in _run_history.py
 
         Note:
-            No-op when excessive_logging is disabled.
+            No-op when verbose_logging is disabled.
         """
-        if not self.excessive_logging:
+        if not self.verbose_logging:
             return
         execution_attempts = self.fn_call_signature.execution_attempts
         attempt_id = self.session_id+"_attempt"
@@ -895,9 +895,9 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
             - Stores result as ValueAddr in execution_results under session_id
 
         Note:
-            No-op when excessive_logging is disabled.
+            No-op when verbose_logging is disabled.
         """
-        if not self.excessive_logging:
+        if not self.verbose_logging:
             return
         execution_results = self.fn_call_signature.execution_results
         result_id = self.session_id+"_result"
@@ -925,7 +925,7 @@ class LoggingFnExecutionFrame(NotPicklableMixin,SingleThreadEnforcerMixin):
 
 _EXCEPTIONS_TOTAL_TXT: Final[str] = "Exceptions, total"
 _EXCEPTIONS_TODAY_TXT: Final[str] = "Exceptions, today"
-_EXCESSIVE_LOGGING_TXT: Final[str] = "Excessive logging"
+_VERBOSE_LOGGING_TXT: Final[str] = "Verbose logging"
 
 class LoggingCodePortal(OrdinaryCodePortal):
     """A portal that supports function-level logging for events and exceptions.
@@ -955,7 +955,7 @@ class LoggingCodePortal(OrdinaryCodePortal):
 
 
     def __init__(self, root_dict:PersiDict|str|None = None
-            , excessive_logging: bool|Joker = KEEP_CURRENT
+            , verbose_logging: bool|Joker = KEEP_CURRENT
             ):
         """Construct a LoggingCodePortal.
 
@@ -963,24 +963,24 @@ class LoggingCodePortal(OrdinaryCodePortal):
             root_dict: PersiDict instance or filesystem path serving as the
                 storage root. When None, a default in-memory or configured
                 PersiDict is used by the base DataPortal.
-            excessive_logging: If True, functions executed via this portal will
+            verbose_logging: If True, functions executed via this portal will
                 store detailed artifacts (attempts/results/outputs). If
                 KEEP_CURRENT, the setting is inherited when cloning or
                 otherwise unspecified.
 
         Raises:
-            TypeError: If excessive_logging is not a bool or Joker.
+            TypeError: If verbose_logging is not a bool or Joker.
         """
         super().__init__(root_dict=root_dict)
         del root_dict
 
-        if not isinstance(excessive_logging,(Joker,bool)):
+        if not isinstance(verbose_logging,(Joker,bool)):
             raise TypeError(
-                "excessive_logging must be a boolean or Joker, "
-                f"got {type(excessive_logging)}")
+                "verbose_logging must be a boolean or Joker, "
+                f"got {type(verbose_logging)}")
 
-        self._auxiliary_config_params_at_init["excessive_logging"
-            ] = excessive_logging
+        self._auxiliary_config_params_at_init["verbose_logging"
+            ] = verbose_logging
 
         crash_history_prototype = self._root_dict.get_subdict("crash_history")
         crash_history_params = crash_history_prototype.get_params()
@@ -1023,13 +1023,13 @@ class LoggingCodePortal(OrdinaryCodePortal):
 
 
     @property
-    def excessive_logging(self) -> bool:
+    def verbose_logging(self) -> bool:
         """Whether this portal captures detailed per-call artifacts.
 
         Returns:
-            True if excessive logging is enabled, False otherwise.
+            True if verbose logging is enabled, False otherwise.
         """
-        return bool(self.get_effective_setting("excessive_logging"))
+        return bool(self.get_effective_setting("verbose_logging"))
 
 
     def describe(self) -> pd.DataFrame:
@@ -1037,7 +1037,7 @@ class LoggingCodePortal(OrdinaryCodePortal):
 
         Returns:
             pandas.DataFrame: A table with key characteristics, including
-            total crashes logged, today's crashes, and whether excessive
+            total crashes logged, today's crashes, and whether verbose
             logging is enabled, combined with the base DataPortal summary.
         """
         all_params = [super().describe()]
@@ -1047,7 +1047,7 @@ class LoggingCodePortal(OrdinaryCodePortal):
             _EXCEPTIONS_TODAY_TXT
             , len(self._crash_history.get_subdict(current_date_gmt_string()))))
         all_params.append(_describe_runtime_characteristic(
-            _EXCESSIVE_LOGGING_TXT, self.excessive_logging))
+            _VERBOSE_LOGGING_TXT, self.verbose_logging))
 
         result = pd.concat(all_params)
         result.reset_index(drop=True, inplace=True)
@@ -1075,7 +1075,7 @@ def log_exception() -> None:
 
     Captures the exception from sys.exc_info(), enriches it with execution
     environment context, and stores it in the portal-level crash history. If
-    called during a function execution with excessive logging enabled, also
+    called during a function execution with verbose logging enabled, also
     stores the event under the function's per-call crash log.
 
     Returns:
@@ -1107,7 +1107,7 @@ def log_exception() -> None:
         _mark_exception_as_processed(exc_type, exc_value, trace_back)
 
         logging_failures = []
-        if frame is not None and frame.excessive_logging:
+        if frame is not None and frame.verbose_logging:
             try:
                 frame.fn_call_signature.crashes[exception_id] = event_body
             except Exception as logging_error:

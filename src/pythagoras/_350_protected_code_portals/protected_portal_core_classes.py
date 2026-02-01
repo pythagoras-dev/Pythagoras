@@ -45,22 +45,22 @@ class ProtectedCodePortal(AutonomousCodePortal):
     Args:
         root_dict: Persistent dictionary or path to initialize portal storage.
             If None, uses default in-memory storage.
-        excessive_logging: Enables verbose logging of portal and function
+        verbose_logging: Enables verbose logging of portal and function
             operations. Use KEEP_CURRENT to inherit current setting.
     """
 
     def __init__(self
             , root_dict: PersiDict|str|None = None
-            , excessive_logging: bool|Joker = KEEP_CURRENT
+            , verbose_logging: bool|Joker = KEEP_CURRENT
             ):
         """Initialize the portal.
 
         Args:
             root_dict: Backing storage or its path. If None, use default.
-            excessive_logging: Verbose logging flag, or KEEP_CURRENT to inherit.
+            verbose_logging: Verbose logging flag, or KEEP_CURRENT to inherit.
         """
         super().__init__(root_dict=root_dict
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
 
 class ProtectedFn(AutonomousFn):
@@ -82,7 +82,7 @@ class ProtectedFn(AutonomousFn):
     def __init__(self, fn: Callable | str
                  , pre_validators: list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None = None
                  , post_validators: list[ValidatorFn] | list[Callable] | ValidatorFn | Callable | None = None
-                 , excessive_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , fixed_kwargs: dict[str,Any] | None = None
                  , portal: ProtectedCodePortal | None | ReuseFlag = None):
         """Construct a ProtectedFn.
@@ -93,7 +93,7 @@ class ProtectedFn(AutonomousFn):
                 PreValidatorFn subclasses. Nested lists are flattened.
             post_validators: Post-execution validators. Callables are wrapped
                 into PostValidatorFn. Nested lists are flattened.
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit from context
@@ -111,7 +111,7 @@ class ProtectedFn(AutonomousFn):
         super().__init__(fn=fn
             , portal = portal
             , fixed_kwargs=fixed_kwargs
-            , excessive_logging = excessive_logging)
+            , verbose_logging = verbose_logging)
 
         if pre_validators is None:
             pre_validators = list()
@@ -372,20 +372,20 @@ class ValidatorFn(AutonomousFn):
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
-        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , verbose_logging: bool | Joker = KEEP_CURRENT
         , portal: AutonomousCodePortal | None = None):
         """Initialize a validator function wrapper.
 
         Args:
             fn: The validator implementation or its source code.
             fixed_kwargs: Keyword arguments fixed for every validation call.
-            excessive_logging: Controls verbose logging.
+            verbose_logging: Controls verbose logging.
             portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
             , fixed_kwargs=fixed_kwargs
-            , excessive_logging=excessive_logging
+            , verbose_logging=verbose_logging
             , portal=portal)
 
         allowed_kwargs = self.get_allowed_kwargs_names()
@@ -442,20 +442,20 @@ class PreValidatorFn(ValidatorFn):
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
-        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , verbose_logging: bool | Joker = KEEP_CURRENT
         , portal: AutonomousCodePortal | None = None):
         """Initialize a pre-execution validator wrapper.
 
         Args:
             fn: The pre-validator implementation.
             fixed_kwargs: Keyword arguments fixed for every call.
-            excessive_logging: Controls verbose logging.
+            verbose_logging: Controls verbose logging.
             portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
             , fixed_kwargs=fixed_kwargs
-            , excessive_logging=excessive_logging
+            , verbose_logging=verbose_logging
             , portal=portal)
 
 
@@ -467,20 +467,20 @@ class SimplePreValidatorFn(PreValidatorFn):
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
-        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , verbose_logging: bool | Joker = KEEP_CURRENT
         , portal: AutonomousCodePortal | None = None):
         """Initialize a simple pre-validator.
 
         Args:
             fn: The implementation.
             fixed_kwargs: Fixed keyword arguments, if any.
-            excessive_logging: Controls verbose logging.
+            verbose_logging: Controls verbose logging.
             portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
             , fixed_kwargs=fixed_kwargs
-            , excessive_logging=excessive_logging
+            , verbose_logging=verbose_logging
             , portal=portal)
 
 
@@ -498,20 +498,20 @@ class ComplexPreValidatorFn(PreValidatorFn):
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
-        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , verbose_logging: bool | Joker = KEEP_CURRENT
         , portal: AutonomousCodePortal | None = None):
         """Initialize a complex pre-validator.
 
         Args:
             fn: The implementation.
             fixed_kwargs: Fixed keyword arguments, if any.
-            excessive_logging: Controls verbose logging.
+            verbose_logging: Controls verbose logging.
             portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
             , fixed_kwargs=fixed_kwargs
-            , excessive_logging=excessive_logging
+            , verbose_logging=verbose_logging
             , portal=portal)
 
 
@@ -539,20 +539,20 @@ class PostValidatorFn(ValidatorFn):
     """
     def __init__(self, fn: Callable | str | AutonomousFn
         , fixed_kwargs: dict | None = None
-        , excessive_logging: bool | Joker = KEEP_CURRENT
+        , verbose_logging: bool | Joker = KEEP_CURRENT
         , portal: AutonomousCodePortal | None = None):
         """Initialize a post-execution validator.
 
         Args:
             fn: The implementation.
             fixed_kwargs: Fixed keyword arguments, if any.
-            excessive_logging: Controls verbose logging.
+            verbose_logging: Controls verbose logging.
             portal: Optional portal binding.
         """
         super().__init__(
             fn=fn
             , fixed_kwargs=fixed_kwargs
-            , excessive_logging=excessive_logging
+            , verbose_logging=verbose_logging
             , portal=portal)
 
     @classmethod

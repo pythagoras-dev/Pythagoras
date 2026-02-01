@@ -40,19 +40,19 @@ class AutonomousCodePortal(SafeCodePortal):
     """
     def __init__(self
             , root_dict: PersiDict | str | None = None
-            , excessive_logging: bool|Joker = KEEP_CURRENT
+            , verbose_logging: bool|Joker = KEEP_CURRENT
             ):
         """Create an autonomous code portal.
 
         Args:
             root_dict: Persistence root backing the portal state. Can be a
                 PersiDict instance, a path string, or None for defaults.
-            excessive_logging: Whether to enable verbose logging. KEEP_CURRENT
+            verbose_logging: Whether to enable verbose logging. KEEP_CURRENT
                 preserves the existing portal setting.
         """
         SafeCodePortal.__init__(self
             , root_dict=root_dict
-            , excessive_logging=excessive_logging)
+            , verbose_logging=verbose_logging)
 
 
 class AutonomousFnCallSignature(SafeFnCallSignature):
@@ -138,7 +138,7 @@ class AutonomousFn(SafeFn):
 
     def __init__(self, fn: Callable|str|SafeFn
                  , fixed_kwargs: dict[str,Any]|None = None
-                 , excessive_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
+                 , verbose_logging: bool|Joker|ReuseFlag = KEEP_CURRENT
                  , portal: AutonomousCodePortal|None|ReuseFlag = None):
         """Construct an AutonomousFn and validate autonomy constraints.
 
@@ -147,7 +147,7 @@ class AutonomousFn(SafeFn):
                 or an existing SafeFn to wrap. If an AutonomousFn is provided,
                 fixed_kwargs are merged.
             fixed_kwargs: Keyword arguments to pre-bind (partially apply).
-            excessive_logging: Controls verbose logging behavior. Can be:
+            verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
                 - KEEP_CURRENT to inherit from context
@@ -167,7 +167,7 @@ class AutonomousFn(SafeFn):
         """
         super().__init__(fn=fn
             , portal = portal
-            , excessive_logging = excessive_logging)
+            , verbose_logging = verbose_logging)
 
         self._packed_fixed_kwargs = None
 
@@ -315,12 +315,12 @@ class AutonomousFn(SafeFn):
             raise ValueError(f"Overlapping kwargs with fixed kwargs: {sorted(overlapping_keys)}")
         new_fixed_kwargs = {**self.fixed_kwargs, **kwargs}
 
-        # Preserve portal and excessive_logging from parent
+        # Preserve portal and verbose_logging from parent
 
         new_fn = type(self)(fn=self,
             fixed_kwargs=new_fixed_kwargs,
             portal=self._linked_portal,
-            excessive_logging=self.excessive_logging)
+            verbose_logging=self.verbose_logging)
 
         return new_fn
 
