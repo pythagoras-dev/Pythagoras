@@ -157,7 +157,9 @@ def _check_python_package_and_install_if_needed(
                 or portal.local_node_value_store[address] < time.time() - 600):
             portal.local_node_value_store[address] = time.time()
             pth.install_package(package_name)
-            return pth.VALIDATION_SUCCESSFUL
+            if pth.is_package_installed(package_name):
+                return pth.VALIDATION_SUCCESSFUL
+            return None
 
 
 def installed_packages(*args) -> list[SimplePreValidatorFn]:
