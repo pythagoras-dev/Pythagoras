@@ -14,6 +14,8 @@ mechanism.
 from __future__ import annotations
 
 import atexit
+import signal
+import sys
 from time import sleep
 from typing import Final
 
@@ -528,6 +530,21 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
     Args:
         portal_init_jsparams: Serialized portal configuration with ancestor metadata.
     """
+    current_new_worker = None
+
+    def sigterm_handler(signum, frame):
+        nonlocal current_new_worker
+        if current_new_worker:
+            try:
+                current_new_worker.terminate()
+                current_new_worker.join(timeout=0.5)
+                if current_new_worker.is_alive():
+                    current_new_worker.kill()
+            except Exception:
+                pass
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
 
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
@@ -545,8 +562,10 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
                 ctx = get_context("spawn")
                 try:
                     p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
+                    current_new_worker = p
                     p.start()
                 except (OSError, RuntimeError):
+                    current_new_worker = None
                     log_exception()
                     continue
 
@@ -558,7 +577,9 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
                         "_background_worker",
                         worker_pid,
                         worker_start_time)
+                    current_new_worker = None
                 except (RuntimeError, ValueError, TypeError, OSError):
+                    current_new_worker = None
                     log_exception()
                     try:
                         p.terminate()
@@ -580,6 +601,22 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
     Args:
         portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
+    current_subprocess = None
+
+    def sigterm_handler(signum, frame):
+        nonlocal current_subprocess
+        if current_subprocess:
+            try:
+                current_subprocess.terminate()
+                current_subprocess.join(timeout=0.5)
+                if current_subprocess.is_alive():
+                    current_subprocess.kill()
+            except Exception:
+                pass
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
@@ -592,8 +629,10 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
                 p = ctx.Process(
                     target=_process_random_execution_request
                     , args=(portal_init_jsparams,))
+                current_subprocess = p
                 p.start()
                 p.join()
+                current_subprocess = None
                 portal._randomly_delay_execution()
 
 
@@ -607,6 +646,11 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
     Args:
         portal_init_jsparams: Serialized portal configuration for reconstruction.
     """
+    def sigterm_handler(signum, frame):
+        sys.exit(0)
+
+    signal.signal(signal.SIGTERM, sigterm_handler)
+
     portal = mixinforge.loadjs(portal_init_jsparams)
     if not isinstance(portal, SwarmingPortal):
         raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
