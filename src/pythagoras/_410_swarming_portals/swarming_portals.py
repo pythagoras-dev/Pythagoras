@@ -31,6 +31,7 @@ from .._210_basic_portals.basic_portal_core_classes import _describe_runtime_cha
 from persidict import OverlappingMultiDict
 from .._360_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFnExecutionResultAddr, PureFnCallSignature)
+from .._320_logging_code_portals import log_exception
 
 from multiprocessing import get_context
 from .descendant_process_info import *
@@ -536,11 +537,15 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
             current_n_workers = portal.get_active_descendant_process_counter("_background_worker")
             n_workers_to_launch = max(0, portal.n_workers_to_target - current_n_workers)
             if n_workers_to_launch > 0:
+                ctx = get_context("spawn")
                 try:
-                    ctx = get_context("spawn")
                     p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
                     p.start()
+                except (OSError, RuntimeError):
+                    log_exception()
+                    continue
 
+                try:
                     # Register the background worker process from outside
                     worker_pid = p.pid
                     worker_start_time = get_process_start_time_with_retry(worker_pid)
@@ -548,8 +553,16 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
                         "_background_worker",
                         worker_pid,
                         worker_start_time)
-                except Exception:
-                    pass
+                except (RuntimeError, ValueError, TypeError, OSError):
+                    log_exception()
+                    try:
+                        p.terminate()
+                        p.join(timeout=1.0)
+                        if p.is_alive():
+                            p.kill()
+                            p.join(timeout=1.0)
+                    except Exception:
+                        pass
             portal._randomly_delay_execution(p=1)
 
 
