@@ -434,4 +434,4 @@ def test_descendant_process_info_equality_with_non_descendant():
 
     assert info != "not a process info"
     assert info != 123
-    assert info != None
+    assert info is not None
