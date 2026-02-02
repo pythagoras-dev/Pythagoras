@@ -143,6 +143,24 @@ class DescendantProcessInfo:
         self.ancestor_process_start_time = ancestor_process_start_time
         self.process_type = process_type
 
+    def __repr__(self) -> str:
+        """Return a string representation for debugging."""
+        return (f"DescendantProcessInfo(process_id={self.process_id}, "
+                f"process_start_time={self.process_start_time}, "
+                f"ancestor_process_id={self.ancestor_process_id}, "
+                f"ancestor_process_start_time={self.ancestor_process_start_time}, "
+                f"process_type={self.process_type!r})")
+
+    def __eq__(self, other: object) -> bool:
+        """Check equality based on all attributes."""
+        if not isinstance(other, DescendantProcessInfo):
+            return NotImplemented
+        return (self.process_id == other.process_id
+                and self.process_start_time == other.process_start_time
+                and self.ancestor_process_id == other.ancestor_process_id
+                and self.ancestor_process_start_time == other.ancestor_process_start_time
+                and self.process_type == other.process_type)
+
     def is_alive(self) -> bool:
         """Check if both this process and its ancestor are alive.
 

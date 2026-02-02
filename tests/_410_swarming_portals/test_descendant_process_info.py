@@ -324,3 +324,114 @@ def test_descendant_process_info_rejects_empty_process_type():
             ancestor_process_start_time=int(time.time()),
             process_type=""
         )
+
+
+# Tests for __repr__
+
+def test_descendant_process_info_repr():
+    """Verify __repr__ returns a useful string representation."""
+    pid = get_current_process_id()
+    start_time = get_current_process_start_time()
+
+    info = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="test_worker"
+    )
+
+    repr_str = repr(info)
+    assert "DescendantProcessInfo" in repr_str
+    assert str(pid) in repr_str
+    assert str(start_time) in repr_str
+    assert "test_worker" in repr_str
+
+
+# Tests for __eq__
+
+def test_descendant_process_info_equality_identical():
+    """Verify two identical DescendantProcessInfo objects are equal."""
+    pid = get_current_process_id()
+    start_time = get_current_process_start_time()
+
+    info1 = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="test_worker"
+    )
+    info2 = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="test_worker"
+    )
+
+    assert info1 == info2
+
+
+def test_descendant_process_info_equality_different_process_id():
+    """Verify objects with different process_id are not equal."""
+    pid = get_current_process_id()
+    start_time = get_current_process_start_time()
+
+    info1 = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="test_worker"
+    )
+    info2 = DescendantProcessInfo(
+        process_id=pid + 1,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="test_worker"
+    )
+
+    assert info1 != info2
+
+
+def test_descendant_process_info_equality_different_process_type():
+    """Verify objects with different process_type are not equal."""
+    pid = get_current_process_id()
+    start_time = get_current_process_start_time()
+
+    info1 = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="worker_a"
+    )
+    info2 = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="worker_b"
+    )
+
+    assert info1 != info2
+
+
+def test_descendant_process_info_equality_with_non_descendant():
+    """Verify comparison with non-DescendantProcessInfo returns NotImplemented."""
+    pid = get_current_process_id()
+    start_time = get_current_process_start_time()
+
+    info = DescendantProcessInfo(
+        process_id=pid,
+        process_start_time=start_time,
+        ancestor_process_id=pid,
+        ancestor_process_start_time=start_time,
+        process_type="test_worker"
+    )
+
+    assert info != "not a process info"
+    assert info != 123
+    assert info != None
