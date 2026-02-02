@@ -274,15 +274,27 @@ class PureFn(ProtectedFn):
             packed_kwargs = KwArgs(**kwargs).pack()
             output_address = PureFnExecutionResultAddr(
                 fn=self, arguments=packed_kwargs)
+
             if output_address.ready:
                 return output_address.get()
+
             output_address.request_execution()
             unpacked_kwargs = KwArgs(**packed_kwargs).unpack()
             result = super().execute(**unpacked_kwargs)
-            result_addr = ValueAddr(result)
-            portal._execution_results[output_address] = result_addr
+
+            try:
+                result_addr = ValueAddr(result)
+                portal._execution_results[output_address] = result_addr
+            except Exception:
+                # Looks like another worker won the race.
+                output_address._invalidate_cache()
+                if not output_address.ready:
+                    raise RuntimeError(f"Race condition detected in {self.name}, "
+                        f"result not found for address {output_address}",
+                        "portal may be in an inconsistent state")
+
             output_address.drop_execution_request()
-            return result
+            return output_address.get()
 
 
     def swarm_list(
