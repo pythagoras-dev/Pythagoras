@@ -13,21 +13,21 @@ import psutil
 def get_process_start_time(pid: int) -> int:
     """Get the UNIX timestamp when a process started.
 
-    Returns 0 on any error (missing process, permission denied, etc.)
-    to provide a safe fallback for process tracking logic.
+    Returns -1 on any error (missing process, permission denied, etc.)
+    to provide an unambiguous error indicator for process tracking logic.
 
     Args:
         pid: Operating system process identifier.
 
     Returns:
-        Start time as a UNIX timestamp in seconds, or 0 if the process
+        Start time as a UNIX timestamp in seconds, or -1 if the process
         does not exist or cannot be accessed.
     """
     try:
         process = psutil.Process(pid)
         return int(process.create_time())
     except Exception:
-        return 0
+        return -1
 
 
 def get_current_process_id() -> int:
@@ -43,7 +43,7 @@ def get_current_process_start_time() -> int:
     """Get the UNIX timestamp when the current Python process started.
 
     Returns:
-        Start time as a UNIX timestamp in seconds, or 0 on error.
+        Start time as a UNIX timestamp in seconds, or -1 on error.
     """
     return int(get_process_start_time(get_current_process_id()))
 
@@ -66,7 +66,7 @@ def get_process_start_time_with_retry(pid: int, max_retries: int = 5, base_delay
     delay = 0.0
     for attempt in range(max_retries):
         start_time = get_process_start_time(pid)
-        if start_time > 0:
+        if start_time >= 0:
             return start_time
         if attempt < max_retries - 1:
             # Exponential backoff with jitter: base_delay * 2^attempt * random(0.5, 1.5)

@@ -22,7 +22,7 @@ def test_process_start_time_values():
     assert 0 < start_ts <= now
 
     bogus_pid = -42 if os.name != "nt" else 999_999_999
-    assert get_process_start_time(bogus_pid) == 0
+    assert get_process_start_time(bogus_pid) == -1
 
 
 def test_current_process_start_time_consistency():
