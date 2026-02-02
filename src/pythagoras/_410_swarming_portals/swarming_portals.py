@@ -288,12 +288,17 @@ class SwarmingPortal(PureCodePortal):
         dead_addresses = []
 
         for worker_address, worker in self._all_workers.items():
-            if len(worker_address) != 2:
-                raise RuntimeError("Unexpected worker address format: "
-                                   f"{worker_address}")
-            if not isinstance(worker, DescendantProcessInfo):
-                raise RuntimeError(f"Unexpected worker type: "
-                                   f"{get_long_infoname(worker)}")
+            try:
+                if len(worker_address) != 2:
+                    raise RuntimeError("Unexpected worker address format: "
+                                       f"{worker_address}")
+                if not isinstance(worker, DescendantProcessInfo):
+                    raise RuntimeError(f"Unexpected worker type: "
+                                       f"{get_long_infoname(worker)}")
+            except Exception:
+                log_exception()
+                dead_addresses.append(worker_address)
+                continue
 
             if not worker.is_alive():
                 dead_addresses.append(worker_address)
