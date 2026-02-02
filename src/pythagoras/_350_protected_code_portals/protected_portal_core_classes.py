@@ -53,12 +53,7 @@ class ProtectedCodePortal(AutonomousCodePortal):
             , root_dict: PersiDict|str|None = None
             , verbose_logging: bool|Joker = KEEP_CURRENT
             ):
-        """Initialize the portal.
-
-        Args:
-            root_dict: Backing storage or its path. If None, use default.
-            verbose_logging: Verbose logging flag, or KEEP_CURRENT to inherit.
-        """
+        """Initialize the portal."""
         super().__init__(root_dict=root_dict
             , verbose_logging=verbose_logging)
 
@@ -93,20 +88,13 @@ class ProtectedFn(AutonomousFn):
                 PreValidatorFn subclasses. Nested lists are flattened.
             post_validators: Post-execution validators. Callables are wrapped
                 into PostValidatorFn. Nested lists are flattened.
-            verbose_logging: Controls verbose logging behavior. Can be:
-
-                - True/False to explicitly enable/disable
-                - KEEP_CURRENT to inherit from context
-                - USE_FROM_OTHER to copy the setting from ``fn`` when ``fn``
-                  is an existing ProtectedFn
-
+            verbose_logging: Controls verbose logging. Can be True/False,
+                KEEP_CURRENT to inherit from context, or USE_FROM_OTHER to copy
+                from fn when fn is an existing ProtectedFn.
             fixed_kwargs: Keyword arguments bound for every execution.
-            portal: Portal to bind this function to. Can be:
-
-                - A ProtectedCodePortal instance to link directly
-                - USE_FROM_OTHER to inherit the portal from ``fn`` when ``fn``
-                  is an existing ProtectedFn
-                - None to infer a suitable portal when the function is executed
+            portal: Portal to bind this function to. Can be a ProtectedCodePortal
+                instance, USE_FROM_OTHER to inherit from fn when fn is an existing
+                ProtectedFn, or None to infer when executed.
         """
         super().__init__(fn=fn
             , portal = portal

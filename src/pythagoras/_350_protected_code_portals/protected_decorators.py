@@ -50,27 +50,22 @@ class protected(autonomous):
         """Initialize the protected decorator.
 
         Args:
-            pre_validators (list[ValidatorFn] | None): Pre-execution validators
-                to apply. Each item is either a ValidatorFn or a callable that
-                can be wrapped into a PreValidatorFn by ProtectedFn.
-            post_validators (list[ValidatorFn] | None): Post-execution validators
-                to apply. Each item is either a ValidatorFn or a callable that
-                can be wrapped into a PostValidatorFn by ProtectedFn.
-            fixed_kwargs (dict[str, Any] | None): Keyword arguments to pre-bind
-                to the wrapped function for every call.
-            verbose_logging: Controls verbose logging behavior. Can be:
-
-                - True/False to explicitly enable/disable
-                - KEEP_CURRENT to inherit the current setting from the portal/context
-                - USE_FROM_OTHER to copy the setting from the wrapped function
-                  (only valid when wrapping an existing ProtectedFn)
-
-            portal: Portal to bind the wrapped function to. Can be:
-
-                - A ProtectedCodePortal instance to link directly
-                - USE_FROM_OTHER to inherit the portal from the wrapped function
-                  (only valid when wrapping an existing ProtectedFn)
-                - None to infer a suitable portal when the function is called
+            pre_validators: Pre-execution validators to apply. Each item is
+                either a ValidatorFn or a callable that can be wrapped into
+                a PreValidatorFn by ProtectedFn.
+            post_validators: Post-execution validators to apply. Each item is
+                either a ValidatorFn or a callable that can be wrapped into
+                a PostValidatorFn by ProtectedFn.
+            fixed_kwargs: Keyword arguments to pre-bind to the wrapped function
+                for every call.
+            verbose_logging: Controls verbose logging behavior. Can be
+                True/False to explicitly enable/disable, KEEP_CURRENT to inherit
+                from portal/context, or USE_FROM_OTHER to copy from the wrapped
+                function (only valid when wrapping an existing ProtectedFn).
+            portal: Portal to bind the wrapped function to. Can be a
+                ProtectedCodePortal instance, USE_FROM_OTHER to inherit from
+                the wrapped function (only valid when wrapping an existing
+                ProtectedFn), or None to infer when the function is called.
         """
         if not (isinstance(portal, (ProtectedCodePortal,ReuseFlag)) or portal is None):
             raise TypeError(f"portal must be a ProtectedCodePortal or None, got {get_long_infoname(portal)}")
@@ -86,11 +81,11 @@ class protected(autonomous):
         """Wrap the given function into a ProtectedFn.
 
         Args:
-            fn (Callable | str): The target function or its source code string.
+            fn: The target function or its source code string.
 
         Returns:
-            A wrapper that performs pre/post validation and then
-            executes the function.
+            A wrapper that performs pre/post validation and then executes
+            the function.
         """
         self._restrict_to_single_thread()
         wrapper = ProtectedFn(fn

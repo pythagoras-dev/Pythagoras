@@ -11,14 +11,12 @@ def get_unused_ram_mb() -> int:
     """Get the currently available RAM on the system in megabytes (MB).
 
     Returns:
-        int: Integer number of megabytes of RAM that are currently available
-        to user processes as reported by psutil.virtual_memory().available.
+        Integer number of megabytes of RAM currently available to user
+        processes, rounded down.
 
-    Notes:
-        - The value is rounded down to the nearest integer.
-        - Uses powers-of-two conversion (1 MB = 1024^2 bytes).
-        - On systems with memory compression or overcommit, this value is an
-          approximation provided by the OS.
+    Note:
+        Uses powers-of-two conversion (1 MB = 1024^2 bytes). On systems with
+        memory compression or overcommit, this value is an OS approximation.
     """
     free_ram = psutil.virtual_memory().available / (1024 * 1024)
     return int(free_ram)
@@ -27,21 +25,18 @@ def get_unused_ram_mb() -> int:
 def get_unused_cpu_cores() -> float:
     """Estimate currently unused logical CPU capacity in units of CPU cores.
 
-    On POSIX systems with load average support, this uses the 1-minute load
-    average to estimate remaining capacity: max(logical_cores - load1, 0).
-    On other systems, it samples CPU usage over 100ms using psutil and
-    computes: logical_cores * (1 - usage/100).
+    On POSIX systems with load average support, uses the 1-minute load
+    average: max(logical_cores - load1, 0). On other systems, samples CPU
+    usage over 100ms: logical_cores * (1 - usage/100).
 
     Returns:
-        float: A non-negative float representing approximate available logical
-        CPU cores. For example, 2.5 means roughly two and a half cores free.
+        Non-negative float representing approximate available logical CPU
+        cores. For example, 2.5 means roughly two and a half cores free.
 
-    Notes:
-        - The number of logical cores (with SMT/Hyper-Threading) is used.
-        - On Windows and non-POSIX systems, this function blocks for ~100ms
-          to collect accurate CPU usage measurements.
-        - This is a heuristic; short spikes and scheduling nuances may cause
-          deviations from actual availability.
+    Note:
+        Uses logical cores (with SMT/Hyper-Threading). On Windows and
+        non-POSIX systems, blocks for ~100ms. This is a heuristic; short
+        spikes may cause deviations.
     """
 
     cnt = psutil.cpu_count(logical=True) or 1
@@ -57,20 +52,16 @@ def get_unused_cpu_cores() -> float:
 def get_unused_nvidia_gpus() -> float:
     """Estimate the total unused NVIDIA GPU capacity across all devices.
 
-    This aggregates the per-GPU unused utilization percentage (100 - gpu%) and
-    returns the sum in "GPU units". For example, 2.0 means capacity equivalent
-    to two fully idle GPUs. If no NVIDIA GPUs are present or NVML is unavailable,
-    the function returns 0.0.
+    Aggregates per-GPU unused utilization (100 - gpu%) and returns the sum
+    in "GPU units". For example, 2.0 means capacity equivalent to two fully
+    idle GPUs. Returns 0.0 if no NVIDIA GPUs are present or NVML is unavailable.
 
     Returns:
-        float: Sum of unused GPU capacity across all NVIDIA GPUs in GPU units.
+        Sum of unused GPU capacity across all NVIDIA GPUs in GPU units.
 
-    Notes:
-        - Requires NVIDIA Management Library (pynvml) to be installed and the
-          NVIDIA driver to be available.
-        - Utilization is based on instantaneous NVML readings and may fluctuate.
-        - Any NVML error (e.g., no devices, driver issues) results in 0.0 for
-          safety.
+    Note:
+        Requires pynvml and NVIDIA driver. Utilization is instantaneous and
+        may fluctuate. Any NVML error returns 0.0 for safety.
     """
     try:
         import pynvml
