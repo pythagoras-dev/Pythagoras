@@ -2,7 +2,7 @@
 import pytest
 
 from pythagoras import pure, installed_packages, _PortalTester, SwarmingPortal
-from mixinforge import uninstall_package
+from mixinforge import uninstall_package, is_package_installed
 import importlib
 from pythagoras.core import get
 
@@ -21,17 +21,13 @@ def test_polars_package(tmpdir):
 
         uninstall_package(polars_package_name)
 
-        with pytest.raises(Exception):
-            package = importlib.import_module(polars_package_name)
-            importlib.reload(package)
+        assert not is_package_installed(polars_package_name)
 
         res = very_nothing_swarming_function_with_polars.swarm(n=1, m=1)
         get(res)
 
-        package = importlib.import_module(polars_package_name)
-        importlib.reload(package)
+        assert is_package_installed(polars_package_name)
 
         uninstall_package(polars_package_name)
 
-        with pytest.raises((ModuleNotFoundError,ImportError)):
-            importlib.reload(package)
+        assert not is_package_installed(polars_package_name)
