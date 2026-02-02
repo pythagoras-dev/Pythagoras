@@ -39,7 +39,7 @@ from functools import cached_property
 import pandas as pd
 
 def get_noncurrent_pure_portals() -> list[PureCodePortal]:
-    """Get all known PureCodePortals except the currentl one.
+    """Get all known PureCodePortals except the current one.
 
     Returns:
         List of all known pure portal instances excluding the current portal.
