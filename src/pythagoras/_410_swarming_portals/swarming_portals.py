@@ -591,61 +591,64 @@ def _launch_many_background_workers(portal_init_jsparams:JsonSerializedObject) -
         portal_init_jsparams: Serialized portal configuration with ancestor metadata.
     """
     current_new_worker = None
+    portal = None
 
     _install_sigterm_exit_handler()
 
-    portal = mixinforge.loadjs(portal_init_jsparams)
-    if not isinstance(portal, SwarmingPortal):
-        raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
-    # summary = build_execution_environment_summary()
-    # portal._compute_nodes.json[portal._execution_environment_address] = summary
+    try:
+        portal = mixinforge.loadjs(portal_init_jsparams)
+        if not isinstance(portal, SwarmingPortal):
+            raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
 
-    with portal:
-        try:
-            while True:
-                if not portal.ancestor_runtime_is_live():
-                    return
-                current_n_workers = portal.get_active_descendant_process_counter("_background_worker")
-                n_workers_to_launch = max(0, portal.n_workers_to_target - current_n_workers)
-                if n_workers_to_launch > 0:
-                    ctx = get_context("spawn")
-                    try:
-                        p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
-                        current_new_worker = p
-                        p.start()
-                    except (OSError, RuntimeError):
-                        current_new_worker = None
-                        log_exception()
-                        continue
-
-                    try:
-                        # Register the background worker process from outside
-                        worker_pid = p.pid
-                        worker_start_time = get_process_start_time_with_retry(worker_pid)
-                        portal.register_descendant_process(
-                            "_background_worker",
-                            worker_pid,
-                            worker_start_time)
-                        current_new_worker = None
-                    except (RuntimeError, ValueError, TypeError, OSError):
-                        current_new_worker = None
-                        log_exception()
-                        try:
-                            _terminate_process_best_effort(p, timeout=1.0, kill_timeout=1.0)
-                        except Exception:
-                            pass
-                portal._randomly_delay_execution(p=1)
-        finally:
-            _terminate_process_best_effort(current_new_worker, timeout=0.5)
-
+        with portal:
             try:
-                _terminate_descendants_for_ancestor(
-                    portal._all_workers,
-                    portal.ancestor_process_id,
-                    portal.ancestor_process_start_time,
-                    exclude_process_id=get_current_process_id())
-            except Exception:
-                pass
+                while True:
+                    if not portal.ancestor_runtime_is_live():
+                        return
+                    current_n_workers = portal.get_active_descendant_process_counter("_background_worker")
+                    n_workers_to_launch = max(0, portal.n_workers_to_target - current_n_workers)
+                    if n_workers_to_launch > 0:
+                        ctx = get_context("spawn")
+                        try:
+                            p = ctx.Process(target=_background_worker, args=(portal_init_jsparams,))
+                            current_new_worker = p
+                            p.start()
+                        except (OSError, RuntimeError):
+                            current_new_worker = None
+                            log_exception()
+                            continue
+
+                        try:
+                            # Register the background worker process from outside
+                            worker_pid = p.pid
+                            worker_start_time = get_process_start_time_with_retry(worker_pid)
+                            portal.register_descendant_process(
+                                "_background_worker",
+                                worker_pid,
+                                worker_start_time)
+                            current_new_worker = None
+                        except (RuntimeError, ValueError, TypeError, OSError):
+                            current_new_worker = None
+                            log_exception()
+                            try:
+                                _terminate_process_best_effort(p, timeout=1.0, kill_timeout=1.0)
+                            except Exception:
+                                pass
+                    portal._randomly_delay_execution(p=1)
+            finally:
+                _terminate_process_best_effort(current_new_worker, timeout=0.5)
+
+                try:
+                    _terminate_descendants_for_ancestor(
+                        portal._all_workers,
+                        portal.ancestor_process_id,
+                        portal.ancestor_process_start_time,
+                        exclude_process_id=get_current_process_id())
+                except Exception:
+                    pass
+    finally:
+        # Cleanup if SIGTERM arrives during portal reconstruction
+        _terminate_process_best_effort(current_new_worker, timeout=0.5)
 
 
 def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
@@ -661,26 +664,31 @@ def _background_worker(portal_init_jsparams:JsonSerializedObject) -> None:
 
     _install_sigterm_exit_handler()
 
-    portal = mixinforge.loadjs(portal_init_jsparams)
-    if not isinstance(portal, SwarmingPortal):
-        raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
-    with portal:
-        ctx = get_context("spawn")
-        with OutputSuppressor():
-            try:
-                while True:
-                    if not portal.ancestor_runtime_is_live():
-                        return
-                    p = ctx.Process(
-                        target=_process_random_execution_request
-                        , args=(portal_init_jsparams,))
-                    current_subprocess = p
-                    p.start()
-                    p.join()
-                    current_subprocess = None
-                    portal._randomly_delay_execution()
-            finally:
-                _terminate_process_best_effort(current_subprocess, timeout=0.5)
+    try:
+        portal = mixinforge.loadjs(portal_init_jsparams)
+        if not isinstance(portal, SwarmingPortal):
+            raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
+
+        with portal:
+            ctx = get_context("spawn")
+            with OutputSuppressor():
+                try:
+                    while True:
+                        if not portal.ancestor_runtime_is_live():
+                            return
+                        p = ctx.Process(
+                            target=_process_random_execution_request
+                            , args=(portal_init_jsparams,))
+                        current_subprocess = p
+                        p.start()
+                        p.join()
+                        current_subprocess = None
+                        portal._randomly_delay_execution()
+                finally:
+                    _terminate_process_best_effort(current_subprocess, timeout=0.5)
+    finally:
+        # Cleanup if SIGTERM arrives during portal reconstruction
+        _terminate_process_best_effort(current_subprocess, timeout=0.5)
 
 
 def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject):
