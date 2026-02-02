@@ -45,6 +45,7 @@ _MIN_BACKGROUND_WORKERS_TXT: Final[str] = "Min Background workers"
 _EXACT_BACKGROUND_WORKERS_TXT: Final[str] = "Exact Background workers"
 _ANCESTOR_PROCESS_ID_TXT: Final[str] = "Ancestor Process ID"
 _ANCESTOR_PROCESS_START_TIME_TXT: Final[str] = "Ancestor Process Start Time"
+_MAX_ITERATIONS_PER_REQUEST: Final[int] = 100
 
 
 class SwarmingPortal(PureCodePortal):
@@ -593,7 +594,11 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
         raise TypeError(f"Expected SwarmingPortal, got {get_long_infoname(portal)}")
     with portal:
         call_signature:PureFnCallSignature|None = None
+        iterations = 0
         while True:
+            iterations += 1
+            if iterations > _MAX_ITERATIONS_PER_REQUEST:
+                return
             if not portal.ancestor_runtime_is_live():
                 return
             if call_signature is not None:
