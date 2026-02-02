@@ -1,9 +1,7 @@
 
-import pytest
 
 from pythagoras import pure, installed_packages, _PortalTester, SwarmingPortal
 from mixinforge import uninstall_package, is_package_installed
-import importlib
 from pythagoras.core import get
 
 
