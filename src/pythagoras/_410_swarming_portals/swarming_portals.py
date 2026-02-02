@@ -603,7 +603,8 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
                     call_signature = pre_validation_result
                     continue
                 elif pre_validation_result is VALIDATION_SUCCESSFUL:
-                    call_signature.fn.execute(**call_signature.packed_kwargs)
+                    with OutputSuppressor():
+                        call_signature.fn.execute(**call_signature.packed_kwargs)
                     return
                 else:
                     call_signature = None
