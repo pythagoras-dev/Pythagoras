@@ -546,7 +546,7 @@ class PureFnExecutionResultAddr(HashAddr):
 
     def drop_execution_request(self):
         """Remove execution request from all known portals."""
-        for portal in get_known_portals():
+        for portal in get_all_known_pure_code_portals():
             with portal:
                 portal._execution_requests.delete_if_exists(self)
 
@@ -672,3 +672,15 @@ class PureFnExecutionResultAddr(HashAddr):
                     > _DEFAULT_EXECUTION_TIME*(2**n_past_attempts)):
                 return True
             return False
+
+
+def get_all_known_pure_code_portals() -> set[PureCodePortal]:
+    """Get a set of all known PureCodePortal instances.
+
+    Returns:
+        A set containing all pure portal instances currently known to the system.
+
+    Raises:
+        TypeError: If any known portal is not an instance of PureCodePortal.
+    """
+    return get_known_portals(required_portal_type=PureCodePortal)
