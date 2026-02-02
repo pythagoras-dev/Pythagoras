@@ -410,18 +410,18 @@ class SwarmingPortal(PureCodePortal):
             raise RuntimeError("This method should only be called "
                                "from the ancestor process")
 
-        workers_to_terminate, adresses_to_discard = list(),list()
+        workers_to_terminate, addresses_to_discard = list(),list()
         current_process_id = get_current_process_id()
         current_process_start_time = get_current_process_start_time()
 
         for address, worker in self._all_workers.items():
             if not worker.is_alive():
-                adresses_to_discard.append(address)
+                addresses_to_discard.append(address)
             elif worker.ancestor_process_id == current_process_id:
                 if worker.ancestor_process_start_time == current_process_start_time:
                     workers_to_terminate.append(worker)
 
-        for address in adresses_to_discard:
+        for address in addresses_to_discard:
             self._all_workers.discard(address)
         for worker in workers_to_terminate:
             try:
