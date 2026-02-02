@@ -15,22 +15,43 @@ from .._110_supporting_utilities import get_long_infoname
 BOOT_TIME_SKEW_SECONDS: Final[int] = 86_400
 
 def _boot_time_seconds() -> int:
+    """Return system boot time as a UNIX timestamp in seconds."""
     return int(psutil.boot_time())
 
 
 def min_valid_process_start_time() -> int:
+    """Return minimum valid process start time with boot time skew tolerance.
+    
+    Returns:
+        UNIX timestamp representing the earliest acceptable process start time.
+    """
     return _boot_time_seconds() - BOOT_TIME_SKEW_SECONDS
 
 
 def max_valid_process_start_time() -> int:
+    """Return maximum valid process start time with future skew tolerance.
+    
+    Returns:
+        UNIX timestamp representing the latest acceptable process start time.
+    """
     return int(time.time()) + BOOT_TIME_SKEW_SECONDS
 
 
 def _format_utc(ts: int) -> str:
+    """Format UNIX timestamp as UTC datetime string for error messages."""
     return datetime.fromtimestamp(ts, tz=timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')
 
 
 def validate_process_start_time(process_start_time: int, name: str = "process_start_time") -> None:
+    """Validate that a process start time falls within acceptable bounds.
+    
+    Args:
+        process_start_time: UNIX timestamp to validate.
+        name: Parameter name for error messages.
+    
+    Raises:
+        ValueError: If the timestamp is outside the valid range.
+    """
     min_ts = min_valid_process_start_time()
     max_ts = max_valid_process_start_time()
     if process_start_time < min_ts or process_start_time > max_ts:
