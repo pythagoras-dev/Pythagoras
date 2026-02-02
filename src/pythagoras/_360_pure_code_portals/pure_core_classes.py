@@ -34,6 +34,9 @@ from .._220_data_portals import HashAddr, ValueAddr
 
 from .._350_protected_code_portals import *
 from .._110_supporting_utilities import get_long_infoname
+from copy import copy
+from functools import cached_property
+import pandas as pd
 
 def get_noncurrent_pure_portals() -> list[PureCodePortal]:
     """Get all known PureCodePortals except the currentl one.
