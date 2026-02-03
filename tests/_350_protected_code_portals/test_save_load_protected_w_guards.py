@@ -9,6 +9,12 @@ def dummy_good_guard(packed_kwargs, fn_addr):
 def dummy_bad_guard(packed_kwargs, fn_addr):
     return True
 
+def dummy_good_guard_2(packed_kwargs, fn_addr):
+    return pth.VALIDATION_SUCCESSFUL
+
+def dummy_good_post_guard(packed_kwargs, fn_addr, result):
+    return pth.VALIDATION_SUCCESSFUL
+
 def guard_returns_false(packed_kwargs, fn_addr):
     return False
 
@@ -160,3 +166,19 @@ def test_validator_return_values_treated_as_failure(tmpdir):
         # Confirm that VALIDATION_SUCCESSFUL works correctly
         f_good = ProtectedFn(f, pre_validators=[dummy_good_guard])
         assert f_good(a=1, b=2) == 3
+
+
+def test_wrapping_protected_fn_with_single_pre_validator(tmpdir):
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+        base = ProtectedFn(f, pre_validators=[dummy_good_guard])
+        wrapped = ProtectedFn(base, pre_validators=dummy_good_guard_2)
+        assert wrapped(a=1, b=2) == 3
+        assert len(wrapped.pre_validators) == 2
+
+
+def test_wrapping_protected_fn_with_single_post_validator(tmpdir):
+    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+        base = ProtectedFn(f, post_validators=[dummy_good_post_guard])
+        wrapped = ProtectedFn(base, post_validators=dummy_good_post_guard)
+        assert wrapped(a=1, b=2) == 3
+        assert len(wrapped.post_validators) == 1

@@ -16,10 +16,12 @@ Under the hood, validators are autonomous functions.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from copy import copy
 from typing import Final
 
 from mixinforge import sort_dict_by_keys, flatten_nested_collection
+from mixinforge.utility_functions import is_atomic_object
 
 from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._220_data_portals.kw_args import _visit_portal
@@ -103,13 +105,19 @@ class ProtectedFn(AutonomousFn):
 
         if pre_validators is None:
             pre_validators = list()
+        elif (isinstance(pre_validators, Iterable)
+              and not is_atomic_object(pre_validators)):
+            pre_validators = list(pre_validators)
         else:
-            pre_validators = copy(pre_validators)
+            pre_validators = [pre_validators]
 
         if post_validators is None:
             post_validators = list()
+        elif (isinstance(post_validators, Iterable)
+              and not is_atomic_object(post_validators)):
+            post_validators = list(post_validators)
         else:
-            post_validators = copy(post_validators)
+            post_validators = [post_validators]
 
         if isinstance(fn, ProtectedFn):
             pre_validators += fn.pre_validators
