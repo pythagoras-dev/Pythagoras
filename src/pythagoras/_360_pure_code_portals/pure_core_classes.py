@@ -407,7 +407,7 @@ class PureFnExecutionResultAddr(HashAddr):
             self._set_cached_properties(call_signature = signature
                     , fn = fn, kwargs = kwargs)
             tmp = ValueAddr(signature)
-            new_descriptor = fn.name +self._DESCRIPTOR_SUFFIX
+            new_descriptor = (fn.name + self._DESCRIPTOR_SUFFIX).lower()
             new_hash_signature = tmp.hash_signature
             super().__init__(new_descriptor, new_hash_signature)
 
@@ -430,7 +430,7 @@ class PureFnExecutionResultAddr(HashAddr):
         Returns:
             ValueAddr pointing to the PureFnCallSignature that produced this result.
         """
-        descriptor = self.descriptor.removesuffix(self._DESCRIPTOR_SUFFIX)
+        descriptor = self.descriptor.removesuffix(self._DESCRIPTOR_SUFFIX).lower()
         descriptor += "_" + PureFnCallSignature.__name__.lower()
         return ValueAddr.from_strings(  # TODO: refactor this
             descriptor= descriptor
