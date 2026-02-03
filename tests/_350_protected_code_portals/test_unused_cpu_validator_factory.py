@@ -54,3 +54,12 @@ def test_unused_cpu_multiple_instances_independent(tmpdir):
 
         assert validator_2._fixed_kwargs == {"n": 2}
         assert validator_8._fixed_kwargs == {"n": 8}
+
+
+def test_unused_cpu_with_bool_raises_type_error():
+    """Test that passing a boolean raises TypeError (bool is subclass of int)."""
+    with pytest.raises(TypeError):
+        unused_cpu(True)
+
+    with pytest.raises(TypeError):
+        unused_cpu(False)

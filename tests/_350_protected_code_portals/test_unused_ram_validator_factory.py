@@ -54,3 +54,12 @@ def test_unused_ram_multiple_instances_independent(tmpdir):
 
         assert validator_1._fixed_kwargs == {"x": 1}
         assert validator_16._fixed_kwargs == {"x": 16}
+
+
+def test_unused_ram_with_bool_raises_type_error():
+    """Test that passing a boolean raises TypeError (bool is subclass of int)."""
+    with pytest.raises(TypeError, match="Gb must be an int"):
+        unused_ram(True)
+
+    with pytest.raises(TypeError, match="Gb must be an int"):
+        unused_ram(False)
