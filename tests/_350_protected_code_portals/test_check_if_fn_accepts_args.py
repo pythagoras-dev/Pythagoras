@@ -193,6 +193,18 @@ def example(a, b
         check_if_fn_accepts_args(["a"], source_code)
 
 
+def test_async_function_def_rejected_with_clear_error():
+    """
+    Async function definitions are explicitly rejected with a clear error.
+    """
+    source_code = """
+async def example(a, b):
+    return a + b
+"""
+    with pytest.raises(ValueError, match="Async function definitions are not supported"):
+        check_if_fn_accepts_args(["a"], source_code)
+
+
 def test_complex_signature_with_all_parameter_types():
     """
     Test a complex function signature with all parameter types combined.

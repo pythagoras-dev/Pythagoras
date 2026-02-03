@@ -29,6 +29,10 @@ def check_if_fn_accepts_args(required_arg_names: Iterable[str], fn: str) -> bool
     tree = ast.parse(fn)
 
     func_def_nodes = [node for node in tree.body if isinstance(node, ast.FunctionDef)]
+    async_func_def_nodes = [node for node in tree.body if isinstance(node, ast.AsyncFunctionDef)]
+    if async_func_def_nodes and not func_def_nodes:
+        raise ValueError(
+            "Async function definitions are not supported; provide a regular def.")
     if not func_def_nodes:
         raise ValueError("No function definition found in the provided source code.")
     if not len(func_def_nodes) == 1:
