@@ -755,9 +755,20 @@ def _terminate_all_portals_descendant_processes():
     Registered via atexit during first SwarmingPortal initialization. Prevents
     orphaned worker processes.
     """
-    for portal in get_known_portals():
+    for portal in get_all_known_swarming_portals:
         try:
             portal._terminate_descendant_processes()
         except Exception:
             # Best-effort cleanup; ignore errors during shutdown.
             pass
+
+def get_all_known_swarming_portals() -> set[SwarmingPortal]:
+    """Get a set of all known SwarmingPortal instances.
+
+    Returns:
+        A set containing all data portal instances currently known to the system.
+
+    Raises:
+        TypeError: If any known portal is not an instance of SwarmingPortal.
+    """
+    return get_known_portals(required_portal_type=SwarmingPortal)

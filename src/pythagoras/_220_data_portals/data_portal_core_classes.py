@@ -30,10 +30,10 @@ def count_known_data_portals() -> int:
 
 
 def get_all_known_data_portals() -> set[DataPortal]:
-    """Get a list of all known DataPortals.
+    """Get a set of all known DataPortals.
 
     Returns:
-        A list containing all portal instances currently known to the system.
+        A set containing all data portal instances currently known to the system.
 
     Raises:
         TypeError: If any known portal is not an instance of DataPortal.

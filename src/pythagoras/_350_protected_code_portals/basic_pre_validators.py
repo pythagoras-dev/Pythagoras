@@ -128,22 +128,21 @@ def _check_python_package_and_install_if_needed(
     """
     if not isinstance(package_name, str):
         raise TypeError("package_name must be a str")
-    import importlib
-    import time
-    try:
-        importlib.import_module(package_name)
+    if pth.is_package_installed(package_name):
         return pth.VALIDATION_SUCCESSFUL
-    except Exception:
-        portal = self.portal
-        address = ("installation_attempts", package_name)
-        # allow installation retries every 10 minutes
-        if (address not in portal.local_node_value_store
-                or portal.local_node_value_store[address] < time.time() - 600):
-            portal.local_node_value_store[address] = time.time()
-            pth.install_package(package_name)
-            if pth.is_package_installed(package_name):
-                return pth.VALIDATION_SUCCESSFUL
-            return None
+
+    import time
+    portal = self.portal
+    address = ("installation_attempts", package_name)
+    # allow installation retries every 10 minutes
+    if (address not in portal.local_node_value_store
+            or portal.local_node_value_store[address] < time.time() - 600):
+        portal.local_node_value_store[address] = time.time()
+        pth.install_package(package_name)
+        if pth.is_package_installed(package_name):
+            return pth.VALIDATION_SUCCESSFUL
+
+    return None
 
 
 def installed_packages(*args) -> list[SimplePreValidatorFn]:
