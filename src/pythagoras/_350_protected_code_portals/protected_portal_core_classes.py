@@ -17,6 +17,7 @@ Under the hood, validators are autonomous functions.
 from __future__ import annotations
 
 from copy import copy
+from typing import Final
 
 from mixinforge import sort_dict_by_keys, flatten_nested_collection
 
