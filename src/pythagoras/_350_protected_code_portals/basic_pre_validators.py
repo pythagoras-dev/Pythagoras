@@ -66,7 +66,7 @@ def unused_cpu(cores: int) -> SimplePreValidatorFn:
         TypeError: If cores is not an integer.
         ValueError: If cores is not greater than 0.
     """
-    if not isinstance(cores, int):
+    if isinstance(cores, bool) or not isinstance(cores, int):
         raise TypeError("cores must be an int")
     if cores <= 0:
         raise ValueError("cores must be > 0")
@@ -102,7 +102,7 @@ def unused_ram(Gb: int) -> SimplePreValidatorFn:
         TypeError: If Gb is not an integer.
         ValueError: If Gb is not greater than 0.
     """
-    if not isinstance(Gb, int):
+    if isinstance(Gb, bool) or not isinstance(Gb, int):
         raise TypeError("Gb must be an int")
     if Gb <= 0:
         raise ValueError("Gb must be > 0")
