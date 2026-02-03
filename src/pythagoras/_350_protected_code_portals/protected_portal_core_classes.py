@@ -17,22 +17,21 @@ Under the hood, validators are autonomous functions.
 from __future__ import annotations
 
 from copy import copy
-from functools import cached_property
-from typing import Callable, Any
 
 from mixinforge import sort_dict_by_keys, flatten_nested_collection
-from persidict import PersiDict, Joker, KEEP_CURRENT
 
 from .fn_arg_names_checker import check_if_fn_accepts_args
 from .._220_data_portals.kw_args import _visit_portal
 from .validation_succesful_const import VALIDATION_SUCCESSFUL, ValidationSuccessFlag
 
-from .._310_ordinary_code_portals import FunctionError
-from .._220_data_portals import ValueAddr
 from .._220_data_portals import DataPortal
-from .._220_data_portals import KwArgs
 from .._340_autonomous_code_portals import *
 from .._110_supporting_utilities import get_long_infoname
+
+# Maximum number of pre-validation retry iterations before raising an error.
+# This prevents infinite loops when validators repeatedly return
+# ProtectedFnCallSignature objects without making progress.
+MAX_PRE_VALIDATION_ITERATIONS: Final[int] = 10000
 
 
 class ProtectedCodePortal(AutonomousCodePortal):
@@ -224,7 +223,7 @@ class ProtectedFn(AutonomousFn):
 
         Performs validation and execution loop:
         1. Run pre-validators; if one returns a ProtectedFnCallSignature,
-           execute it and retry validation
+           execute it and retry validation (up to MAX_PRE_VALIDATION_ITERATIONS)
         2. Execute the wrapped function
         3. Run post-validators and verify they all succeed
 
@@ -235,11 +234,12 @@ class ProtectedFn(AutonomousFn):
             The result returned by the wrapped function.
 
         Raises:
-            FunctionError: If pre- or post-validation fails.
+            FunctionError: If pre- or post-validation fails, or if the
+                pre-validation loop exceeds MAX_PRE_VALIDATION_ITERATIONS.
         """
         with (self.portal):
             kw_args = KwArgs(**kwargs)
-            while True:
+            for iteration in range(MAX_PRE_VALIDATION_ITERATIONS):
                 validation_result = self.can_be_executed(kw_args)
                 if isinstance(validation_result, ProtectedFnCallSignature):
                     validation_result.execute()
@@ -254,6 +254,11 @@ class ProtectedFn(AutonomousFn):
                     raise FunctionError(f"Post-validators failed "
                                         f"for function {self.name}")
                 return result
+            raise FunctionError(
+                f"Pre-validation loop exceeded {MAX_PRE_VALIDATION_ITERATIONS} "
+                f"iterations for function {self.name}. This may indicate a "
+                f"circular dependency between validators or validators that "
+                f"never reach a successful state.")
 
 
     def _normalize_validators(self

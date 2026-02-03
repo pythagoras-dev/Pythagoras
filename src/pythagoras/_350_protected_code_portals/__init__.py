@@ -13,6 +13,7 @@ Main Exports
 - PreValidatorFn: Base class for pre-execution validators.
 - PostValidatorFn: Base class for post-execution validators.
 - VALIDATION_SUCCESSFUL: Sentinel indicating successful validation.
+- MAX_PRE_VALIDATION_ITERATIONS: Maximum retry iterations for pre-validation.
 
 Pre-validator Factories
 -----------------------
