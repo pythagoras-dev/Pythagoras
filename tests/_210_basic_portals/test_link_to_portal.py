@@ -27,13 +27,8 @@ def test_link_to_portal_creates_new_instance(tmpdir):
         obj1 = SimplePortalAware(42, portal=portal1)
         obj2 = obj1.link_to_portal(portal2)
 
-        # Should be different instances
         assert obj1 is not obj2
-
-        # Should have same value
         assert obj1.value == obj2.value
-
-        # Should have different portals
         assert obj1._linked_portal is portal1
         assert obj2._linked_portal is portal2
 
@@ -46,7 +41,6 @@ def test_link_to_portal_returns_self_when_same_portal(tmpdir):
         obj = SimplePortalAware(42, portal=portal)
         result = obj.link_to_portal(portal)
 
-        # Should return the same instance
         assert obj is result
 
 
@@ -59,7 +53,6 @@ def test_link_to_portal_preserves_state(tmpdir):
         obj1 = SimplePortalAware(123, portal=portal1)
         obj2 = obj1.link_to_portal(portal2)
 
-        # State should be preserved
         assert obj2.value == 123
 
 
@@ -71,14 +64,11 @@ def test_link_to_portal_resets_visited_portals(tmpdir):
 
         obj1 = SimplePortalAware(42, portal=portal1)
 
-        # Trigger registration on portal1
         _ = obj1.portal
         assert len(obj1._visited_portals) == 1
 
-        # Link to new portal
         obj2 = obj1.link_to_portal(portal2)
 
-        # New instance should have empty visited portals
         assert len(obj2._visited_portals) == 0
 
 
@@ -100,7 +90,6 @@ def test_link_to_portal_before_init_raises_error(tmpdir):
 
         obj = SimplePortalAware(42, portal=portal1)
 
-        # Manually set _init_finished to False
         obj._init_finished = False
 
         with pytest.raises(RuntimeError, match="Cannot link an uninitialized object"):
@@ -117,10 +106,8 @@ def test_link_to_portal_from_none_to_explicit(tmpdir):
 
         obj2 = obj1.link_to_portal(portal)
 
-        # Should be different instances
         assert obj1 is not obj2
 
-        # New instance should be linked to portal
         assert obj2._linked_portal is portal
 
 
@@ -130,7 +117,6 @@ def test_link_to_portal_from_explicit_to_none_not_possible(tmpdir):
         portal = BasicPortal(tmpdir)
         obj = SimplePortalAware(42, portal=portal)
 
-        # This should raise TypeError because None is not a BasicPortal
         with pytest.raises(TypeError):
             obj.link_to_portal(None)
 
@@ -159,12 +145,10 @@ def test_link_to_portal_multiple_times(tmpdir):
         obj2 = obj1.link_to_portal(portal2)
         obj3 = obj2.link_to_portal(portal3)
 
-        # All should be different instances
         assert obj1 is not obj2
         assert obj2 is not obj3
         assert obj1 is not obj3
 
-        # Each should be linked to its portal
         assert obj1._linked_portal is portal1
         assert obj2._linked_portal is portal2
         assert obj3._linked_portal is portal3
@@ -178,17 +162,13 @@ def test_link_to_portal_registration_state(tmpdir):
 
         obj1 = SimplePortalAware(42, portal=portal1)
 
-        # Trigger registration on portal1
         _ = obj1.portal
         assert obj1.is_registered
 
-        # Link to new portal
         obj2 = obj1.link_to_portal(portal2)
 
-        # New instance should not be registered yet
         assert not obj2.is_registered
 
-        # Accessing portal should register it
         _ = obj2.portal
         assert obj2.is_registered
 
@@ -202,10 +182,8 @@ def test_link_to_portal_independent_instances(tmpdir):
         obj1 = SimplePortalAware(42, portal=portal1)
         obj2 = obj1.link_to_portal(portal2)
 
-        # Modify obj1
         obj1.value = 100
 
-        # obj2 should be unaffected
         assert obj2.value == 42
 
 
@@ -218,6 +196,5 @@ def test_link_to_portal_returns_correct_type(tmpdir):
         obj1 = SimplePortalAware(42, portal=portal1)
         obj2 = obj1.link_to_portal(portal2)
 
-        # Should be same type
         assert type(obj1) is type(obj2)
         assert isinstance(obj2, SimplePortalAware)
