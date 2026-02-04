@@ -1,3 +1,9 @@
+"""Core classes for content-addressable data portals.
+
+Defines DataPortal, HashAddr, and ValueAddr along with portal-aware base
+classes that persist and retrieve immutable values across portals.
+"""
+
 from __future__ import annotations
 
 from functools import cached_property
@@ -30,10 +36,10 @@ def count_known_data_portals() -> int:
 
 
 def get_all_known_data_portals() -> set[DataPortal]:
-    """Get a set of all known DataPortals.
+    """Get all known DataPortals.
 
     Returns:
-        A set containing all data portal instances currently known to the system.
+        All data portal instances currently known to the system.
 
     Raises:
         TypeError: If any known portal is not an instance of DataPortal.
@@ -68,14 +74,13 @@ def measure_depth_of_active_data_portals_stack() -> int:
 def get_current_data_portal() -> DataPortal:
     """Get the current portal object.
 
-    The current portal is the one that was most recently entered
-    using the 'with' statement. If no portal is currently active,
-    it finds the most recently created portal and makes it active (and current).
-    If currently no portals exist in the system,
-    it creates the default portal, and makes it active and current.
+    The current portal is the most recently entered context manager.
+    If no portal is active, the most recently created portal becomes
+    active. If no portals exist, a default portal is created and made
+    active.
 
     Returns:
-        The current active DataPortal.
+        The current active portal.
 
     Raises:
         TypeError: If the current portal is not a DataPortal.
@@ -88,10 +93,10 @@ def get_current_data_portal() -> DataPortal:
 
 
 def get_nonactive_data_portals() -> set[DataPortal]:
-    """Get a list of all DataPortals that are not in the active stack.
+    """Get all DataPortals that are not in the active stack.
 
     Returns:
-        A list of portal instances that are not currently in the active portal stack.
+        All known portal instances not in the active portal stack.
 
     Raises:
         TypeError: If any non-active portal is not an instance of DataPortal.
@@ -100,10 +105,10 @@ def get_nonactive_data_portals() -> set[DataPortal]:
 
 
 def get_noncurrent_data_portals() -> set[DataPortal]:
-    """Get a list of all DataPortals that are not the current portal.
+    """Get all DataPortals that are not the current portal.
 
     Returns:
-        A list of all known portal instances but the current one.
+        All known portal instances except the current one.
 
     Raises:
         TypeError: If any non-current portal is not an instance of DataPortal.
@@ -112,7 +117,7 @@ def get_noncurrent_data_portals() -> set[DataPortal]:
 
 
 class DataPortal(BasicPortal):
-    """A portal that persistently stores and retrieves immutable values.
+    """Portal with persistent content-addressable storage.
 
     A DataPortal is responsible for addressing, storing, and retrieving
     values by their content-derived addresses. It exposes a context manager
@@ -163,11 +168,7 @@ class DataPortal(BasicPortal):
 
     @property
     def global_value_store(self) -> WriteOnceDict:
-        """The portal's persistent content-addressable storage.
-
-        Returns:
-            The persistent dictionary storing values by address.
-        """
+        """Persistent content-addressable storage for values."""
         return self._global_value_store
 
 
@@ -205,19 +206,15 @@ class StorableObject(PortalAwareObject):
 
     @property
     def portal(self) -> DataPortal:
-        """The DataPortal associated with this object.
-
-        Returns:
-            DataPortal: The portal used by this object's methods.
-        """
+        """The portal associated with this object."""
         return super().portal
 
     @cached_property
     def addr(self) -> ValueAddr:
-        """The content-derived address of this object.
+        """Content-derived address for this object.
 
-        Returns:
-            ValueAddr uniquely identifying this object based on its content.
+        Raises:
+            ValueError: If the object has not finished initialization.
         """
         if not hasattr(self, "_init_finished") or not self._init_finished:
             raise ValueError("Cannot get address of an uninitialized object")
@@ -231,16 +228,10 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
     with identical type and value always produce identical addresses. This
     enables reliable deduplication and content-based retrieval.
 
-    Structure:
-        - descriptor: Human-readable type/shape information
-        - hash_signature: SHA-256 hash encoded in base-32
-          - shard: First 3 characters (for filesystem/storage optimization)
-          - subshard: Next 3 characters (for further partitioning)
-          - hash_tail: Remaining characters
-
-    The three-part hash split addresses filesystem limitations (max files
-    per directory) and optimizes cloud storage access patterns (S3 prefix
-    distribution).
+    Each address contains a human-readable descriptor and a base-32 hash
+    signature. The signature is split into shard, subshard, and tail
+    segments to improve filesystem layout and object-store prefix
+    distribution.
     """
 
     def __init__(self, descriptor:str
@@ -356,7 +347,7 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
             assert_readiness: Whether to validate address readiness (subclass-specific).
 
         Returns:
-            Reconstructed HashAddr instance.
+            Reconstructed address instance.
 
         Raises:
             TypeError: If descriptor or hash_signature are not strings.
@@ -377,7 +368,7 @@ class HashAddr(SafeStrTuple, CacheablePropertiesMixin):
     @property
     @abstractmethod
     def ready(self) -> bool:
-        """Check if the address points to a value that is ready to be retrieved."""
+        """True if the address points to a retrievable value."""
         # TODO: decide whether we need .ready() at the base class
         raise NotImplementedError
 
@@ -425,12 +416,9 @@ class ValueAddr(HashAddr):
     comparable to systems like IPFS) and a human-readable descriptor (improving
     interpretability and further reducing collision risk).
 
-    Behavior:
-        - Creating a ValueAddr automatically stores the value in the current DataPortal
-        - Values can be retrieved from any DataPortal that contains them
-        - If a value is retrieved from a non-current portal, it's automatically replicated to the current one
-        - The .ready property checks value availability across all known portals
-        - The .get() method retrieves value from any known portal that contains it
+    Creating a ValueAddr stores the value in the current portal by default.
+    Values can be retrieved from any known portal, and retrieval from a
+    non-current portal replicates the value into the current portal.
     """
     _containing_portals: set[DataPortal]
 
@@ -480,13 +468,7 @@ class ValueAddr(HashAddr):
 
     @cached_property
     def value(self) -> Any:
-        """The value referenced by this address.
-
-        Retrieves and caches the value from any available portal. Equivalent
-        to calling .get() but cached for efficiency.
-
-        Returns:
-            The object referenced by this address.
+        """The value referenced by this address, cached after first retrieval.
 
         Raises:
             KeyError: If the value cannot be found in any known portal.
@@ -512,12 +494,7 @@ class ValueAddr(HashAddr):
 
     @property
     def _noncontaining_portals(self) -> set[DataPortal]:
-        """Portals not yet known to contain this value.
-
-        Returns:
-            Set of portals that haven't been checked or confirmed
-            not to contain this value.
-        """
+        """Portals not yet known to contain this value."""
         all_portals = set(get_all_known_data_portals())
         return all_portals - self._containing_portals
 
@@ -530,18 +507,17 @@ class ValueAddr(HashAddr):
         falls back to direct store lookup otherwise. Updates cache on success.
 
         Returns:
-            Tuple of (data, success) where success is True if value was found
+            A (data, success) pair where success is True if the value was found
             and retrieved.
         """
         current_portal = get_current_data_portal()
 
-        # Fast path: check if we already know it's in current portal
+        # Use cached containment to skip store lookups when possible.
         if current_portal in self._containing_portals:
             data = current_portal.global_value_store[self]
             self._set_cached_properties(value=data)
             return data, True
 
-        # Slow path: check the store directly
         if self in current_portal.global_value_store:
             self._containing_portals.add(current_portal)
             data = current_portal.global_value_store[self]
@@ -553,17 +529,10 @@ class ValueAddr(HashAddr):
 
     @property
     def ready(self) -> bool:
-        """Check if the value is available in any known portal.
+        """True if the value is available in any known portal.
 
-        Searches through all retrieval strategies (cache, current portal, known
-        containing portals, and other portals) to determine availability. If found
-        in a non-current portal, automatically replicates the value to the current portal.
-
-        Returns:
-            True if the value is available in the current portal or has been successfully replicated,
-            False if not found in any portal.
+        Availability checks may replicate the value into the current portal.
         """
-        # Try to retrieve using the same strategies as get(), just return boolean
         if get_current_data_portal() in self._containing_portals:
             return True
 
@@ -590,7 +559,7 @@ class ValueAddr(HashAddr):
         in the current portal (replicating if necessary).
 
         Returns:
-            Tuple of (data, success) where success is True if a cached value
+            A (data, success) pair where success is True if a cached value
             was available.
         """
         if not self._get_cached_property_status("value"):
@@ -613,7 +582,7 @@ class ValueAddr(HashAddr):
         to the current portal.
 
         Returns:
-            Tuple of (data, success) where success is True if data was retrieved.
+            A (data, success) pair where success is True if data was retrieved.
         """
         if len(self._containing_portals) < 1:
             return None, False
@@ -636,8 +605,8 @@ class ValueAddr(HashAddr):
         to retrieve it. If found, replicates to the current portal.
 
         Returns:
-            Tuple of (data, success) where success is True if value was found,
-            retrieved and replicated.
+            A (data, success) pair where success is True if value was found,
+            retrieved, and replicated.
         """
         current_portal = get_current_data_portal()
 
@@ -660,7 +629,7 @@ class ValueAddr(HashAddr):
 
         Args:
             data: The retrieved data to validate.
-            expected_type: The expected type.
+            expected_type: Type to validate the retrieved value against.
 
         Raises:
             TypeError: If data doesn't match expected_type.
@@ -684,7 +653,7 @@ class ValueAddr(HashAddr):
         automatically replicated to the current portal.
 
         Args:
-            timeout: Unused.
+            timeout: Present for API compatibility; currently unused.
             expected_type: Expected type of the retrieved value for validation.
 
         Returns:
@@ -694,7 +663,6 @@ class ValueAddr(HashAddr):
             KeyError: If the value cannot be found in any known portal.
             TypeError: If the retrieved value doesn't match expected_type.
         """
-        # Try to retrieve data through various strategies
         data, success = self._get_from_cache()
         if not success:
             data, success = self._get_from_current_portal()
@@ -715,8 +683,8 @@ class ValueAddr(HashAddr):
         """Prepare address for pickling.
 
         Returns:
-            State dictionary containing only the address components (strings).
-            Cached values and portal fingerprints are not serialized.
+            State mapping containing only the address components. Cached values
+            and portal fingerprints are not serialized.
         """
         state = dict(strings=self.strings)
         return state
@@ -750,7 +718,7 @@ class ValueAddr(HashAddr):
             assert_readiness: If True, verify the value is retrievable.
 
         Returns:
-            Reconstructed ValueAddr instance.
+            Reconstructed address instance.
 
         Raises:
             TypeError: If descriptor or hash_signature are not strings.
