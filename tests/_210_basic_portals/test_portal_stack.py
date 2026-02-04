@@ -109,9 +109,9 @@ def test_mixed_reentrant_and_different_portals():
     portal1, portal2 = MagicMock(), MagicMock()
 
     stack.push(portal1)
-    stack.push(portal1)  # re-entrant
+    stack.push(portal1)
     stack.push(portal2)
-    stack.push(portal2)  # re-entrant
+    stack.push(portal2)
 
     assert stack.depth() == 4
     assert stack.unique_count() == 2
@@ -157,7 +157,7 @@ def test_as_set_returns_unique_portals():
     portal1, portal2 = MagicMock(), MagicMock()
 
     stack.push(portal1)
-    stack.push(portal1)  # re-entrant
+    stack.push(portal1)
     stack.push(portal2)
 
     result = stack.as_set()
