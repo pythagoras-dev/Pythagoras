@@ -28,6 +28,4 @@ from .protected_portal_core_classes import *
 from .protected_decorators import *
 from .system_resources_info_getters import *
 from .basic_pre_validators import *
-from mixinforge import install_package as install_package
-from mixinforge import uninstall_package as uninstall_package
-from mixinforge import is_package_installed as is_package_installed
+

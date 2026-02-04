@@ -24,6 +24,7 @@ from typing import TYPE_CHECKING
 
 from .._350_protected_code_portals import SimplePreValidatorFn
 from .validation_succesful_const import ValidationSuccessFlag
+from .._110_supporting_utilities import is_valid_env_name
 
 # The validator functions below use `pth` and `self` which are injected into
 # their global namespace at runtime by the portal framework (see module docstring).
@@ -207,9 +208,9 @@ def required_environment_variables(*names) -> list[SimplePreValidatorFn]:
             raise TypeError("All environment variable names must be strings")
         if len(name)==0:
             raise ValueError("Environment variable name cannot be empty")
-        if not all(c.isalnum() or c == '_' for c in name):
+        if not is_valid_env_name(name):
             raise ValueError(f"Environment variable name '{name}' "
-                f"can only contain letters, numbers, and underscores")
+                "is not a valid environment variable name.")
 
     validators = []
     for name in names:
