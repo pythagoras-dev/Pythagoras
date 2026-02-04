@@ -245,7 +245,7 @@ def _validate_and_remove_decorators(
             f"Function {fn_name_for_error_messages} can't have multiple "
             "decorators; only one decorator is allowed.")
 
-    # Remove Pythagoras decorators when requested
+    # Remove Pythagoras decorators when requested.
     if drop_pth_decorators and decorator_list:
         decorator_node = decorator_list[0]
         if _is_pythagoras_decorator(decorator_node):
@@ -294,7 +294,7 @@ def _remove_docstrings(code_ast: ast.Module) -> None:
         if not hasattr(node.body[0], 'value'):
             continue
 
-        # Check for docstring: ast.Constant (Python 3.8+) with string value
+        # Check for docstring: ast.Constant (Python 3.8+) with string value.
         first_value = node.body[0].value
         is_docstring = False
 

@@ -114,8 +114,8 @@ def assert_ordinarity(a_func: Callable) -> None:
         FunctionError: If the callable violates ordinarity constraints.
     """
 
-    # TODO: decide how to handle static methods
-    # currently they are treated as ordinary functions
+    # TODO: Decide how to handle static methods; currently treated as ordinary
+    # functions when passed as plain callables.
 
     name = get_long_infoname(a_func)
 

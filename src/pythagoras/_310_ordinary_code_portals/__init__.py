@@ -1,43 +1,20 @@
-"""Classes and utilities for ordinary functions in Pythagoras.
+"""Ordinary function wrappers, portals, and normalization helpers.
 
-An ordinary function is a regular Python function with strict constraints
-that enable reliable introspection, comparison, and isolated execution:
-- Accepts only named (keyword) arguments
-- No default parameter values
-- No closures or captured state
-- Not a method, lambda, async function, or builtin
+Ordinary functions are regular Python callables with strict constraints that
+make them easy to normalize, compare, and execute in isolation:
 
-Ordinary functions are the foundation of the Pythagoras execution model.
-To use a function in Pythagoras, apply the @ordinary decorator to convert
-it into an OrdinaryFn wrapper.
+- Accept keyword arguments only
+- Define no default parameter values
+- Avoid closures, async definitions, lambdas, and methods
+- Use only Pythagoras decorators
 
-Key Concepts
-------------
-**Normalization**: Function source code is transformed into canonical form
-by removing decorators, docstrings, comments, and type annotations, then
-applying consistent PEP8 formatting. This enables reliable comparison and hashing
-for caching and distributed execution.
+Normalization removes decorators, docstrings, comments, and type annotations,
+then applies PEP 8 formatting to produce stable source for hashing and
+comparison.
 
-**Execution Model**: OrdinaryFn instances execute in controlled namespaces
-with only explicitly allowed symbols, providing isolation from caller context
-and ensuring reproducibility.
-
-**Decorator Constraints**: Ordinary functions may only use Pythagoras
-decorators (@ordinary, @pure, etc.). External decorators are not allowed.
-
-Main Exports
-------------
-- OrdinaryCodePortal: Portal for managing ordinary function lifecycle.
-- OrdinaryFn: Wrapper class for ordinary functions with normalized execution.
-- ordinary: Decorator to convert functions into OrdinaryFn instances.
-- FunctionError: Exception raised when a function violates ordinarity rules.
-- get_normalized_fn_source_code_str: Utility to get normalized source code.
-
-Usage Note
-----------
-Most users work with higher-level abstractions (pure functions) built on
-OrdinaryFn. Direct use of this module is for framework extension
-and advanced customization.
+Most users work with higher-level abstractions built on OrdinaryFn. Use these
+utilities when extending the framework or controlling execution contexts
+directly.
 """
 
 from .ordinary_portal_core_classes import *
@@ -46,5 +23,4 @@ from .function_processing import *
 from .ordinary_decorator import *
 from .code_normalizer import *
 from .function_error_exception import *
-
 

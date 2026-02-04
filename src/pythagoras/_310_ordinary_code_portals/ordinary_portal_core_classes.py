@@ -1,7 +1,7 @@
 """Core classes for ordinary function portals and wrappers.
 
-This module defines OrdinaryFn (a wrapper around ordinary functions) and
-OrdinaryCodePortal (a portal for managing ordinary function execution context).
+This module defines OrdinaryFn, a wrapper around ordinary functions, and
+OrdinaryCodePortal, which manages portal context and linked wrappers.
 """
 
 from __future__ import annotations
@@ -42,9 +42,10 @@ def get_normalized_fn_source_code_str(
         Normalized source code string.
 
     Raises:
-        FunctionError: If the function violates ordinarity rules
-            (unless skip_ordinarity_check is True).
-        TypeError | ValueError: If input type is invalid or integrity checks fail.
+        FunctionError: If the function violates ordinarity rules and
+            skip_ordinarity_check is False.
+        TypeError: If a_func is not a callable, OrdinaryFn, or string.
+        ValueError: If normalization integrity checks fail.
         SyntaxError: If source cannot be parsed.
     """
 
@@ -65,7 +66,7 @@ class OrdinaryCodePortal(TunablePortal):
     """Portal that manages OrdinaryFn instances and their runtime context.
 
     The portal is responsible for tracking linked OrdinaryFn objects and
-    providing a context manager used during execution. It extends DataPortal
+    providing a context manager used during execution. It extends TunablePortal
     with convenience methods specific to ordinary functions.
     """
 
@@ -96,7 +97,7 @@ class OrdinaryCodePortal(TunablePortal):
         if target_class is None:
             target_class = OrdinaryFn
         if isinstance(target_class, OrdinaryFn):
-            # in case an instance is passed by mistake
+            # Handle accidental instance input.
             target_class = target_class.__class__
         if not issubclass(target_class, OrdinaryFn):
             raise TypeError(f"target_class must be a subclass of {OrdinaryFn.__name__}.")
@@ -119,8 +120,8 @@ class OrdinaryCodePortal(TunablePortal):
         """Describe the portal's current state.
 
         Returns:
-            DataFrame with portal runtime characteristics including the number
-            of registered functions.
+            Tabular summary of portal runtime characteristics, including the
+            number of registered functions.
         """
         all_params = [super().describe()]
 
@@ -316,22 +317,23 @@ class OrdinaryFn(TunableObject):
         Returns:
             Compiled code object ready for exec().
         """
-        # Parse the stored source
-        tree = ast.parse(self.source_code,
+        tree = ast.parse(
+            self.source_code,
             filename=self._virtual_file_name,
-            mode="exec")
+            mode="exec",
+        )
 
-        # Rename the target function
+        # Rename to avoid namespace collisions during exec().
         for node in ast.walk(tree):
             if isinstance(node, ast.FunctionDef) and node.name == self.name:
                 node.name = self._tmp_fn_name
                 break
-        else:  # defensive: should not happen
+        else:  # Defensive: the function definition should always be present.
             raise RuntimeError(
                 f"Function definition {self.name!r} not found "
                 "while building _compiled_code.")
 
-        # Append the call-and-store trailer
+        # Store the result in a known variable after invocation.
         trailer_src = (
             f"{self._result_var_name} = "
             f"{self._tmp_fn_name}(**{self._kwargs_var_name})")
@@ -340,7 +342,7 @@ class OrdinaryFn(TunableObject):
             mode="exec",)
         tree.body.extend(trailer_ast.body)
 
-        # Fix locations after AST edits, compile the code
+        # Fix missing locations after AST edits before compiling.
         ast.fix_missing_locations(tree)
         source_to_execute = ast.unparse(tree)
         return self._compile(
@@ -385,18 +387,11 @@ class OrdinaryFn(TunableObject):
         """Return names injected into the function's execution context.
 
         Provides a controlled namespace for function execution with only
-        explicitly allowed symbols. This ensures:
-        - Standard builtins are available (print, len, etc.)
-        - Functions can reference themselves (for recursion or introspection)
-        - Access to the Pythagoras package for framework operations
-        - No implicit access to the caller's namespace (enforces isolation)
+        explicitly allowed symbols.
 
         Returns:
-            A mapping of name to object made available during execution:
-            - "__builtins__": The builtins module for standard Python functions.
-            - self.name: The OrdinaryFn itself, allowing recursive calls.
-            - "self": Alias for the OrdinaryFn (enables self-reference).
-            - "pth": The pythagoras package for framework-level operations.
+            Mapping of names to objects available during execution, including
+            "__builtins__", the function's own name, "self", and "pth".
         """
         import builtins
         import pythagoras as pth
