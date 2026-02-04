@@ -53,8 +53,8 @@ class KwArgs(dict):
         """Create a KwArgs mapping with deterministically sorted keys.
 
         Args:
-            *args: Positional arguments accepted by dict().
-            **kwargs: Keyword arguments accepted by dict().
+            args: Positional arguments forwarded to dict().
+            kwargs: Keyword arguments forwarded to dict().
         """
         dict.__init__(self)
         tmp_dict = dict(*args, **kwargs)
@@ -70,7 +70,7 @@ class KwArgs(dict):
                 returns a new KwArgs instance with sorted keys.
 
         Returns:
-            KwArgs: The sorted KwArgs (self when inplace=True, otherwise a new instance).
+            The sorted mapping (self when inplace=True, otherwise a new instance).
         """
         if inplace:
             sorted_dict = sort_dict_by_keys(self)
@@ -84,12 +84,11 @@ class KwArgs(dict):
     def copy(self) -> KwArgs:
         """Create a shallow copy of this KwArgs instance.
 
-        Returns a new instance of the same class type (KwArgs, PackedKwArgs, or
-        UnpackedKwArgs) with the same keys and values. Keys are deterministically
-        sorted in the copy.
+        Returns a new instance of the same class as self with the same
+        keys and values. Keys are deterministically sorted in the copy.
 
         Returns:
-            KwArgs: A new instance of the same type as self with copied contents.
+            A shallow copy of this instance.
 
         Example:
             >>> kwargs = KwArgs(x=5, y="hello")
@@ -112,7 +111,7 @@ class KwArgs(dict):
         immutable data types rather than structural nesting.
 
         Args:
-            key: The key to set; must be a str.
+            key: The key to set; must be a string.
             value: The value to associate with the key.
 
         Raises:
@@ -130,8 +129,8 @@ class KwArgs(dict):
         """Update the dictionary with new keys and values.
 
         Args:
-            *args: Positional arguments (other dict or iterable of pairs).
-            **kwargs: Keyword arguments.
+            args: Positional arguments (other dict or iterable of pairs).
+            kwargs: Keyword arguments.
         """
         if args:
             if len(args) > 1:
@@ -148,7 +147,7 @@ class KwArgs(dict):
         """Support pickling by sorting keys first for stable serialization.
 
         Returns:
-            tuple: Standard pickle reduce tuple from dict.__reduce__().
+            Standard pickle reduce tuple from dict.__reduce__().
         """
         self.sort(inplace=True)
         return super().__reduce__()
@@ -161,8 +160,8 @@ class KwArgs(dict):
         storage, enabling function execution with the original arguments.
 
         Returns:
-            UnpackedKwArgs: A new mapping where each ValueAddr is replaced with
-            its underlying value via ValueAddr.get().
+            A new mapping where each ValueAddr is replaced with its
+            underlying value via ValueAddr.get().
 
         Example:
             >>> packed = KwArgs(x=5, y="hello").pack()
@@ -195,7 +194,7 @@ class KwArgs(dict):
                 non-stored addresses suitable for transient signatures.
 
         Returns:
-            PackedKwArgs: A new mapping with values converted to ValueAddr.
+            A new mapping with values converted to ValueAddr handles.
 
         Example:
             >>> kwargs = KwArgs(x=5, y="hello")
@@ -257,7 +256,7 @@ class PackedKwArgs(KwArgs):
         PackedKwArgs must only contain ValueAddr instances as values.
 
         Args:
-            key: The key to set; must be a str.
+            key: The key to set; must be a string.
             value: The value to associate with the key; must be a ValueAddr.
 
         Raises:
@@ -312,7 +311,7 @@ class UnpackedKwArgs(KwArgs):
         but PackedKwArgs and UnpackedKwArgs are allowed as they represent data values.
 
         Args:
-            key: The key to set; must be a str.
+            key: The key to set; must be a string.
             value: The value to associate with the key; must not be ValueAddr or base KwArgs.
 
         Raises:
@@ -327,13 +326,12 @@ class UnpackedKwArgs(KwArgs):
 
 
 def _visit_portal(obj: Any, portal: DataPortal) -> None:
-    """Traverse an object structure and register all found PortalAwareObjects with the portal.
+    """Register portal-aware objects referenced inside a structure.
 
-    This function makes sure the object, including all its (recursively)
-    nested/referenced PortalAwareObject (sub)objects, has completed all necessary
-    registration steps with the given portal, so it can be safely used within
-    the context of the portal. This includes copying the object, its subobjects,
-    and any data referenced by HashAddr instances to the portal's storage backend.
+    Ensures PortalAwareObject and HashAddr instances reachable from obj
+    complete portal registration so they can be safely used within the
+    portal context. HashAddr values are retrieved and replicated into the
+    portal when ready.
 
     Args:
         obj: The object structure to traverse.
