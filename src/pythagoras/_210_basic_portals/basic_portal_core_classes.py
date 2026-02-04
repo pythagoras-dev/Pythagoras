@@ -112,17 +112,23 @@ class BasicPortal(NotPicklableMixin,
         """Get the number of objects linked to this portal.
 
         Args:
-            target_class: Optional class type filter.
+            target_class: Optional class filter.
 
         Returns:
-            Count of portal-aware objects linked to this portal, filtered by target_class if provided.
+            Count of portal-aware objects linked to this portal, filtered by
+            target_class if provided.
         """
         return len(self.get_linked_objects(target_class))
 
 
     @property
     def entropy_infuser(self) -> random.Random:
-        """The random number generator associated with this portal."""
+        """The random number generator associated with this portal.
+
+        Raises:
+            RuntimeError: If the portal has been cleared and the generator is
+                unavailable.
+        """
         if self._entropy_infuser is None:
             raise RuntimeError("Entropy infuser is None. "
                                "Most probably, it was cleared by calling portal._clear(). "
@@ -150,7 +156,11 @@ class BasicPortal(NotPicklableMixin,
 
 
     def describe(self) -> pd.DataFrame:
-        """Get a DataFrame describing the portal's current state."""
+        """Get a DataFrame describing the portal's current state.
+
+        Includes runtime and persistent characteristics using the standard
+        portal description schema.
+        """
         all_params = []
 
         all_params.append(_describe_runtime_characteristic(
@@ -694,8 +704,8 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
 
         Args:
             portal: The portal to query.
-            target_class: Optional class filter. If provided, only objects
-                of this type are included.
+            target_class: Optional class filter. When None, includes all
+                linked objects.
 
         Returns:
             A set of PortalAwareObject instances linked to the portal.
@@ -708,7 +718,7 @@ class _PortalRegistry(NotPicklableMixin, SingleThreadEnforcerMixin):
         return {o for o in objs if isinstance(o, target_class)}
 
 
-# Singleton instance used by the rest of the module
+# Singleton instance used by the rest of the module.
 _PORTAL_REGISTRY = _PortalRegistry()
 
 
@@ -731,8 +741,8 @@ class PortalAwareObject(CacheablePropertiesMixin,
 
         Args:
             portal: The portal to link this object to, or None to use
-                current active portals for operations. Registration happens
-                lazily on first `portal` property access.
+                the current active portal for operations. Registration happens
+                lazily on first portal property access.
         """
         super().__init__()
         self._restrict_to_single_thread()
@@ -767,14 +777,13 @@ class PortalAwareObject(CacheablePropertiesMixin,
             raise TypeError(
                 f"portal must be a BasicPortal, got {get_long_infoname(portal)}")
 
-        # Return self if already linked to the same portal
         if self._linked_portal is portal:
             return self
 
-        # Get current state (excludes portal information per contract)
+        # State excludes portal data by contract, so cloning preserves
+        # portal-neutral configuration.
         state = self.__getstate__()
 
-        # Create new instance with the new portal
         new_obj = type(self).__new__(type(self))
         new_obj.__setstate__(state)
         new_obj._linked_portal = portal
@@ -784,7 +793,7 @@ class PortalAwareObject(CacheablePropertiesMixin,
 
     @property
     def linked_portal(self) -> BasicPortal | None:
-        """The object's preferred portal, or None if using current active portals."""
+        """The object's preferred portal, or None if using the current active portal."""
         linked_portal =  self._linked_portal
         if linked_portal is not None:
             self._visit_portal(linked_portal)
@@ -949,10 +958,6 @@ def _clear_all_portals() -> None:
 
 
 
-##################################################
-
-
-
 def get_most_recently_created_portal() -> BasicPortal | None:
     """Get the most recently created portal.
 
@@ -986,7 +991,5 @@ def count_linked_portal_aware_objects() -> int:
         The number of linked objects in the registry.
     """
     return _PORTAL_REGISTRY.count_linked_objects()
-
-
 
 
