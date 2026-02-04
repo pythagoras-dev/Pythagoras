@@ -24,11 +24,9 @@ def test_get_default_portal_base_dir_path_structure():
     result = get_default_portal_base_dir()
     path = Path(result)
 
-    # Should end with .pythagoras/.default_portal
     assert path.name == ".default_portal"
     assert path.parent.name == ".pythagoras"
 
-    # Should be under user's home directory
     assert Path.home() in path.parents
 
 
