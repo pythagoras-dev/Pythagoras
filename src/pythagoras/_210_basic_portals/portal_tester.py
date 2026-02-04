@@ -20,7 +20,6 @@ class _PortalTester:
     Example:
         >>> with _PortalTester(BasicPortal) as tester:
         ...     assert tester.portal is not None
-        ...     # Test portal functionality
     """
     _current_instance:_PortalTester|None = None
     _portal:BasicPortal|None = None
