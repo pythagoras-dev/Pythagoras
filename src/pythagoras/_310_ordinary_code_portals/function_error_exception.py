@@ -9,8 +9,8 @@ Pythagoras function.
 class FunctionError(Exception):
     """Exception raised when a function violates Pythagoras constraints/requirements.
 
-    Raised when a function fails to meet requirements such as keyword-only
-    arguments, no defaults, no closures, or other rules.
+    Raised when a function fails to meet constraints such as keyword-only
+    arguments, no defaults, no closures, or other requirements.
     """
 
     pass
