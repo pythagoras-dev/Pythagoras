@@ -755,7 +755,7 @@ def _terminate_all_portals_descendant_processes():
     Registered via atexit during first SwarmingPortal initialization. Prevents
     orphaned worker processes.
     """
-    for portal in get_all_known_swarming_portals:
+    for portal in get_all_known_swarming_portals():
         try:
             portal._terminate_descendant_processes()
         except Exception:
