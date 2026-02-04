@@ -1,6 +1,4 @@
 """Tests for basic portal accessor functions."""
-
-
 from pythagoras import (
     BasicPortal,
     count_known_portals,
@@ -38,7 +36,7 @@ def test_get_number_of_known_portals_multiple_portals(tmp_path):
 
 
 def test_get_all_known_portals_returns_list(tmp_path):
-    """Verify get_all_known_portals returns a list."""
+    """Verify get_known_portals returns a set."""
     with _PortalTester():
         BasicPortal(root_dict=str(tmp_path / "p1"))
         result = get_known_portals()
@@ -46,14 +44,14 @@ def test_get_all_known_portals_returns_list(tmp_path):
 
 
 def test_get_all_known_portals_empty():
-    """Verify empty list when no portals exist."""
+    """Verify empty set when no portals exist."""
     with _PortalTester():
         result = get_known_portals()
         assert len(result) == 0
 
 
 def test_get_all_known_portals_content(tmp_path):
-    """Verify get_all_known_portals returns correct portal instances."""
+    """Verify get_known_portals returns correct portal instances."""
     with _PortalTester():
         p1 = BasicPortal(root_dict=str(tmp_path / "p1"))
         p2 = BasicPortal(root_dict=str(tmp_path / "p2"))
@@ -68,7 +66,6 @@ def test_get_all_known_portals_content(tmp_path):
 def test_get_number_of_active_portals_no_active(tmp_path):
     """Verify count is zero when no portals are active."""
     with _PortalTester():
-        # Create portal but don't activate it
         BasicPortal(root_dict=str(tmp_path / "p1"))
         count = count_active_portals()
         assert count == 0
@@ -89,7 +86,6 @@ def test_get_number_of_active_portals_nested_same_portal(tmp_path):
         portal = BasicPortal(root_dict=str(tmp_path / "p1"))
         with portal:
             with portal:
-                # Should still count as 1 unique portal
                 count = count_active_portals()
                 assert count == 1
 
@@ -146,7 +142,7 @@ def test_get_depth_of_active_portal_stack_multiple_portals(tmp_path):
 
 
 def test_get_nonactive_portals_all_active(tmp_path):
-    """Verify empty list when all portals are active."""
+    """Verify empty set when all portals are active."""
     with _PortalTester():
         p1 = BasicPortal(root_dict=str(tmp_path / "p1"))
         with p1:
@@ -155,7 +151,7 @@ def test_get_nonactive_portals_all_active(tmp_path):
 
 
 def test_get_nonactive_portals_mixed(tmp_path):
-    """Verify correct list when some portals are not active."""
+    """Verify correct set when some portals are not active."""
     with _PortalTester():
         p1 = BasicPortal(root_dict=str(tmp_path / "p1"))
         p2 = BasicPortal(root_dict=str(tmp_path / "p2"))
