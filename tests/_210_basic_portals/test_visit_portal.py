@@ -26,13 +26,10 @@ def test_visit_portal_with_portal_aware_object(tmpdir):
 
         obj = SimplePortalAware(42)
 
-        # Initially not visited
         assert len(obj._visited_portals) == 0
 
-        # Visit the portal
         _visit_portal(obj, portal)
 
-        # Now should be registered
         assert portal in obj._visited_portals
 
 
@@ -51,10 +48,8 @@ def test_visit_portal_with_nested_dict(tmpdir):
             }
         }
 
-        # Visit the portal with nested structure
         _visit_portal(data, portal)
 
-        # Both objects should be registered
         assert portal in obj1._visited_portals
         assert portal in obj2._visited_portals
 
@@ -70,10 +65,8 @@ def test_visit_portal_with_nested_list(tmpdir):
 
         data = [obj1, [obj2, obj3]]
 
-        # Visit the portal with nested structure
         _visit_portal(data, portal)
 
-        # All objects should be registered
         assert portal in obj1._visited_portals
         assert portal in obj2._visited_portals
         assert portal in obj3._visited_portals
@@ -86,14 +79,11 @@ def test_visit_portal_with_circular_reference(tmpdir):
 
         obj = SimplePortalAware(42)
 
-        # Create circular reference
         data = {"obj": obj, "self": None}
         data["self"] = data
 
-        # Should not crash with infinite loop
         _visit_portal(data, portal)
 
-        # Object should still be registered
         assert portal in obj._visited_portals
 
 
@@ -108,10 +98,8 @@ def test_visit_portal_skips_strings(tmpdir):
             "obj": obj
         }
 
-        # Should not try to iterate the string
         _visit_portal(data, portal)
 
-        # Object should be registered
         assert portal in obj._visited_portals
 
 
@@ -129,10 +117,8 @@ def test_visit_portal_skips_special_types(tmpdir):
             "obj": obj
         }
 
-        # Should not try to iterate these special types
         _visit_portal(data, portal)
 
-        # Object should be registered
         assert portal in obj._visited_portals
 
 
@@ -153,10 +139,8 @@ def test_visit_portal_with_non_portal_aware_objects(tmpdir):
             "obj": obj
         }
 
-        # Should not crash on regular object
         _visit_portal(data, portal)
 
-        # Only portal-aware object should be registered
         assert portal in obj._visited_portals
 
 
@@ -171,7 +155,6 @@ def test_visit_portal_with_empty_structures(tmpdir):
             "empty_tuple": ()
         }
 
-        # Should not crash
         _visit_portal(data, portal)
 
 
@@ -180,7 +163,6 @@ def test_visit_portal_with_none(tmpdir):
     with _PortalTester():
         portal = BasicPortal(tmpdir)
 
-        # Should not crash
         _visit_portal(None, portal)
 
 
@@ -191,15 +173,12 @@ def test_visit_portal_deep_nesting(tmpdir):
 
         obj = SimplePortalAware(42)
 
-        # Create deeply nested structure
         data = obj
         for _ in range(100):
             data = {"nested": data}
 
-        # Should not crash with stack overflow
         _visit_portal(data, portal)
 
-        # Object should be registered
         assert portal in obj._visited_portals
 
 
@@ -223,7 +202,6 @@ def test_visit_portal_with_mixed_structures(tmpdir):
 
         _visit_portal(data, portal)
 
-        # All objects should be registered
         assert portal in obj1._visited_portals
         assert portal in obj2._visited_portals
         assert portal in obj3._visited_portals
