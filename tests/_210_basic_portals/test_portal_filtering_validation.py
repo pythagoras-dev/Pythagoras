@@ -20,10 +20,8 @@ class NotAPortal:
 def test_validation_errors(tmpdir):
     """Verify accessor functions raise TypeError for invalid portal types."""
     with _PortalTester():
-        # Prepare some invalid inputs
-        # We need a portal instance for one of the checks
         portal_instance = BasicPortal(tmpdir)
-        
+
         invalid_inputs = [
             int,
             str,
@@ -31,7 +29,7 @@ def test_validation_errors(tmpdir):
             NotAPortal,
             123,
             "some string",
-            portal_instance # An instance, not a class
+            portal_instance
         ]
 
         functions_to_test = [
@@ -42,7 +40,7 @@ def test_validation_errors(tmpdir):
             get_nonactive_portals,
             get_noncurrent_portals
         ]
-        
+
         for func in functions_to_test:
             for invalid_input in invalid_inputs:
                 with pytest.raises(TypeError):

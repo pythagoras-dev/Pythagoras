@@ -27,37 +27,25 @@ def test_strict_type_checking(tmpdir):
     with _PortalTester():
         pA = PortalA(tmpdir + "/a")
         _pB = PortalB(tmpdir + "/b")
-        
-        # known_portals has pA(PortalA) and pB(PortalB)
-        
-        # Should raise because pB is not PortalA
+
         with pytest.raises(TypeError):
-             get_known_portals(required_portal_type=PortalA)
-             
+            get_known_portals(required_portal_type=PortalA)
+
         with pytest.raises(TypeError):
-             count_known_portals(required_portal_type=PortalA)
-             
-        # Non-active check (both are inactive)
+            count_known_portals(required_portal_type=PortalA)
+
         with pytest.raises(TypeError):
-             get_nonactive_portals(required_portal_type=PortalA)
-             
-        # Non-current check (both are non-current)
+            get_nonactive_portals(required_portal_type=PortalA)
+
         with pytest.raises(TypeError):
-             get_noncurrent_portals(required_portal_type=PortalA)
+            get_noncurrent_portals(required_portal_type=PortalA)
 
         with pA:
-             # Active: pA. Stack: [pA]
-             # unique active: {pA}. pA is PortalA. This should OK?
-             # Wait, if I ask for PortalB?
-             
-             # Stack has pA. required=PortalB. pA is not PortalB. Raise.
-             with pytest.raises(TypeError):
-                 count_active_portals(required_portal_type=PortalB)
-                 
-             with pytest.raises(TypeError):
-                 measure_active_portals_stack(required_portal_type=PortalB)
+            with pytest.raises(TypeError):
+                count_active_portals(required_portal_type=PortalB)
 
-             # stack has pA(PortalA). required=PortalA. OK.
-             assert count_active_portals(required_portal_type=PortalA) == 1
-             assert measure_active_portals_stack(required_portal_type=PortalA) == 1
+            with pytest.raises(TypeError):
+                measure_active_portals_stack(required_portal_type=PortalB)
 
+            assert count_active_portals(required_portal_type=PortalA) == 1
+            assert measure_active_portals_stack(required_portal_type=PortalA) == 1

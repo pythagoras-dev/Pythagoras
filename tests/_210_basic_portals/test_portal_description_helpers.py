@@ -20,10 +20,8 @@ def test_describe_persistent_characteristic_schema():
     """Verify the returned DataFrame has correct schema."""
     result = _describe_persistent_characteristic("test_name", "test_value")
 
-    # Should have exactly 3 columns in correct order
     assert list(result.columns) == ["type", "name", "value"]
 
-    # Should have exactly 1 row
     assert len(result) == 1
 
 
@@ -38,15 +36,12 @@ def test_describe_persistent_characteristic_content():
 
 def test_describe_persistent_characteristic_various_value_types():
     """Verify function works with different value types."""
-    # String value
     result_str = _describe_persistent_characteristic("key", "string_val")
     assert result_str.iloc[0]["value"] == "string_val"
 
-    # Integer value
     result_int = _describe_persistent_characteristic("key", 42)
     assert result_int.iloc[0]["value"] == 42
 
-    # Path-like object
     from pathlib import Path
     path_val = Path("/test/path")
     result_path = _describe_persistent_characteristic("key", path_val)
@@ -63,10 +58,8 @@ def test_describe_runtime_characteristic_schema():
     """Verify the returned DataFrame has correct schema."""
     result = _describe_runtime_characteristic("test_name", "test_value")
 
-    # Should have exactly 3 columns in correct order
     assert list(result.columns) == ["type", "name", "value"]
 
-    # Should have exactly 1 row
     assert len(result) == 1
 
 
@@ -134,6 +127,5 @@ def test_get_description_value_by_key_returns_first_match():
         "value": ["first_value", "second_value"]
     })
 
-    # Should return the first occurrence
     result = _get_description_value_by_key(df, "duplicate")
     assert result == "first_value"
