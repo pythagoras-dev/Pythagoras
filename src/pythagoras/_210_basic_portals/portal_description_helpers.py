@@ -64,7 +64,7 @@ def _get_description_value_by_key(dataframe: pd.DataFrame, key: str) -> Any:
         key: Characteristic name to retrieve.
 
     Returns:
-        The value from the "value" column for the matching row.
+        The value from the "value" column for the first matching row.
 
     Raises:
         KeyError: If key is not found in the "name" column.
