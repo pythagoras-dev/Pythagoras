@@ -132,16 +132,68 @@ def _check_python_package_and_install_if_needed(
     if pth.is_package_installed(package_name):
         return pth.VALIDATION_SUCCESSFUL
 
+    import os
+    import random
     import time
+
+    def _acquire_package_install_lock(
+            portal,
+            name: str,
+            *,
+            wait_seconds: float = 60.0,
+            ttl_seconds: float = 300.0,
+            min_sleep: float = 0.05,
+            max_sleep: float = 0.15,
+    ) -> str | None:
+        """Best-effort lock using local_node_value_store only."""
+        key = ("package_install_lock", name)
+        token = f"{os.getpid()}-{time.time()}-{random.random()}"
+        deadline = time.time() + wait_seconds
+
+        while time.time() < deadline:
+            now = time.time()
+            lock_info = portal.local_node_value_store.get(key, None)
+            if lock_info is None or lock_info.get("expires_at", 0) < now:
+                portal.local_node_value_store[key] = {
+                    "token": token,
+                    "pid": os.getpid(),
+                    "acquired_at": now,
+                    "expires_at": now + ttl_seconds,
+                }
+                confirmed = portal.local_node_value_store.get(key, None)
+                if confirmed and confirmed.get("token") == token:
+                    return token
+
+            time.sleep(min_sleep + random.random() * (max_sleep - min_sleep))
+
+        return None
+
+    def _release_package_install_lock(portal, name: str, token: str | None) -> None:
+        """Release a best-effort lock stored in local_node_value_store."""
+        if token is None:
+            return
+        key = ("package_install_lock", name)
+        lock_info = portal.local_node_value_store.get(key, None)
+        if lock_info and lock_info.get("token") == token:
+            portal.local_node_value_store.delete_if_exists(key)
+
     portal = self.portal
     address = ("installation_attempts", package_name)
     # allow installation retries every 10 minutes
-    if (address not in portal.local_node_value_store
-            or portal.local_node_value_store[address] < time.time() - 600):
-        portal.local_node_value_store[address] = time.time()
-        pth.install_package(package_name)
+    lock_token = _acquire_package_install_lock(portal, package_name)
+    try:
+        if lock_token is None:
+            return None
         if pth.is_package_installed(package_name):
             return pth.VALIDATION_SUCCESSFUL
+        if (address not in portal.local_node_value_store
+                or portal.local_node_value_store[address] < time.time() - 600):
+            portal.local_node_value_store[address] = time.time()
+            pth.install_package(package_name)
+            if pth.is_package_installed(package_name):
+                return pth.VALIDATION_SUCCESSFUL
+    finally:
+        _release_package_install_lock(portal, package_name, lock_token)
 
     return None
 
