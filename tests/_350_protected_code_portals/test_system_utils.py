@@ -1,7 +1,19 @@
 
+import os
+import threading
+import time
+
 import psutil
 
 from pythagoras import get_unused_nvidia_gpus, get_unused_ram_mb, get_unused_cpu_cores
+
+
+def _spin_cpu(duration_s: float) -> None:
+    """Busy-loop for a short duration to create measurable CPU activity."""
+    end = time.perf_counter() + duration_s
+    x = 0
+    while time.perf_counter() < end:
+        x += 1
 
 def test_available_ram_is_int_and_within_bounds():
     avail = get_unused_ram_mb()
@@ -26,9 +38,19 @@ def test_cpu_cores_first_call_not_zero():
     This test ensures the function uses interval=0.1 (or load average on POSIX)
     to get accurate measurements rather than the unreliable first-call behavior.
     """
+    # On Windows CI, create a brief CPU load so 100ms sampling isn't 0% on idle runners.
+    spinner = None
+    if os.name == 'nt':
+        spinner = threading.Thread(target=_spin_cpu, args=(0.6,), daemon=True)
+        spinner.start()
+        time.sleep(0.05)
+
     # Call twice to ensure both calls return reasonable values
     first_call = get_unused_cpu_cores()
     second_call = get_unused_cpu_cores()
+
+    if spinner is not None:
+        spinner.join()
 
     logical_cnt = psutil.cpu_count(logical=True) or 1
 
