@@ -29,10 +29,8 @@ def test_methods():
     with pytest.raises(FunctionError):
         assert_ordinarity(demo_obj.class_method)
 
-    # TODO: decide how to handle static methods
-    # currently they are treated as ordinary functions
-    # with pytest.raises(AssertionError):
-    #     assert_ordinarity(demo_obj.static_method)
+    # TODO: Decide how to handle static methods; currently treated as ordinary
+    # functions when passed as callables.
 
 def outer_function():
     return 0

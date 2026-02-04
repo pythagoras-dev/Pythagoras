@@ -35,20 +35,16 @@ def test_ordinary_fn_properties(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(simple_function, portal=t.portal)
         
-        # Test name property
         assert f.name == "simple_function"
-        
-        # Test source_code property returns normalized source
+
         source = f.source_code
         assert "def simple_function" in source
         assert "return a+b" in source or "return a + b" in source
-        
-        # Test hash_signature property
+
         hash_sig = f.hash_signature
         assert isinstance(hash_sig, str)
         assert len(hash_sig) > 0
-        
-        # Same function should have same hash
+
         f2 = OrdinaryFn(simple_function, portal=t.portal)
         assert f.hash_signature == f2.hash_signature
 
@@ -58,7 +54,6 @@ def test_ordinary_fn_execute_method(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(simple_function, portal=t.portal)
 
-        # execute() should work like __call__() but only accepts kwargs
         result = f.execute(a=5, b=10)
         assert result == 15
 
@@ -73,13 +68,10 @@ def test_ordinary_fn_pickling(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(simple_function, portal=t.portal)
 
-        # Pickle the function
         pickled = pickle.dumps(f)
 
-        # Unpickle it
         f_restored = pickle.loads(pickled)
 
-        # Verify it works correctly
         assert f_restored(a=10, b=20) == 30
         assert f_restored.name == "simple_function"
         assert f_restored.source_code == f.source_code
@@ -91,14 +83,11 @@ def test_ordinary_fn_identity_key(tmpdir):
         f1 = OrdinaryFn(simple_function, portal=t.portal)
         f2 = OrdinaryFn(simple_function, portal=t.portal)
 
-        # Same function should have same identity key
         assert f1.get_identity_key() == f2.get_identity_key()
 
-        # Identity key should be a non-empty string
         assert isinstance(f1.get_identity_key(), str)
         assert len(f1.get_identity_key()) > 0
 
-        # Different functions should have different identity keys
         f3 = OrdinaryFn(fibonacci, portal=t.portal)
         assert f1.get_identity_key() != f3.get_identity_key()
 
@@ -111,7 +100,6 @@ def test_ordinary_fn_positional_args_error(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(simple_function, portal=t.portal)
 
-        # Should raise FunctionError when called with positional args
         with pytest.raises(FunctionError, match="can't be called.*with positional arguments"):
             f(1, 2)
 
@@ -126,18 +114,14 @@ def test_ordinary_fn_available_names(tmpdir):
 
         names = f._available_names()
 
-        # Should contain builtins
         assert "__builtins__" in names
 
-        # Should contain the function itself by name
         assert f.name in names
         assert names[f.name] is f
 
-        # Should contain "self" pointing to the function
         assert "self" in names
         assert names["self"] is f
 
-        # Should contain "pth" module
         assert "pth" in names
         import pythagoras as pth
         assert names["pth"] is pth
@@ -162,13 +146,11 @@ def test_ordinary_fn_internal_names(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         f = OrdinaryFn(simple_function, portal=t.portal)
 
-        # Virtual filename should contain function name and hash
         virtual_file = f._virtual_file_name
         assert "simple_function" in virtual_file
         assert f.hash_signature in virtual_file
         assert virtual_file.endswith(".py")
 
-        # Internal variable names should be unique and contain hash
         kwargs_var = f._kwargs_var_name
         result_var = f._result_var_name
         tmp_fn = f._tmp_fn_name
@@ -193,13 +175,9 @@ def test_ordinary_fn_hash_addr_descriptor(tmpdir):
 
         descriptor = f.__hash_addr_descriptor__()
 
-        # Should be lowercase
         assert descriptor == descriptor.lower()
 
-        # Should contain function name
         assert "simple_function" in descriptor
 
-        # Should contain class name
         assert "ordinaryfn" in descriptor
-
 

@@ -19,9 +19,6 @@ from pythagoras._310_ordinary_code_portals.code_normalizer import (
 )
 
 
-# Tests for _is_pythagoras_decorator
-
-
 def test_is_pythagoras_decorator_with_name_node():
     """Test _is_pythagoras_decorator with simple Name node."""
     source = "@ordinary\ndef f(): pass"
@@ -83,9 +80,6 @@ def test_is_pythagoras_decorator_with_unknown_decorator():
     decorator = func_node.decorator_list[0]
 
     assert _is_pythagoras_decorator(decorator) is False
-
-
-# Tests for _AnnotationRemover
 
 
 def test_annotation_remover_visit_ann_assign_with_value():
@@ -163,9 +157,6 @@ def test_annotation_remover_empty_function_body_gets_pass():
     assert "pass" in result or "x" in result
 
 
-# Tests for _extract_fn_name_and_source_code
-
-
 def test_extract_fn_name_and_source_code_with_callable():
     """Test _extract_fn_name_and_source_code with callable function."""
     def sample_func(x, y):
@@ -208,9 +199,6 @@ def test_extract_fn_name_and_source_code_with_non_ordinary_function():
         _extract_fn_name_and_source_code(func_with_defaults)
 
 
-# Tests for _dedent_and_clean_empty_lines
-
-
 def test_dedent_and_clean_empty_lines_removes_indentation():
     """Test _dedent_and_clean_empty_lines removes leading whitespace."""
     source = """
@@ -247,9 +235,6 @@ def test_dedent_and_clean_empty_lines_with_empty_code():
         _dedent_and_clean_empty_lines("", "some_func")
 
 
-# Tests for _parse_and_validate_function_ast
-
-
 def test_parse_and_validate_function_ast_with_valid_function():
     """Test _parse_and_validate_function_ast with valid function source."""
     source = "def my_func(x):\n    return x * 2"
@@ -278,9 +263,6 @@ def test_parse_and_validate_function_ast_with_class():
     source = "class MyClass:\n    pass"
     with pytest.raises(ValueError, match="not a FunctionDef"):
         _parse_and_validate_function_ast(source, "MyClass")
-
-
-# Tests for _validate_and_remove_decorators
 
 
 def test_validate_and_remove_decorators_single_pythagoras():

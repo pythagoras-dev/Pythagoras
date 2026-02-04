@@ -24,12 +24,10 @@ def test_decorator_without_portal(tmpdir):
     """Test that decorator can be created without specifying a portal."""
     def test_func(x:int)->int:
         return x * 2
-    
-    # Decorator can be created without portal argument
+
     decorated = ordinary()(test_func)
     assert isinstance(decorated, OrdinaryFn)
-    
-    # Function executes correctly in a portal context
+
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir):
         assert decorated(x=5) == 10
         assert decorated(x=7) == 14
@@ -50,6 +48,5 @@ def test_decorator_not_picklable():
     
     with pytest.raises(TypeError):
         pickle.dumps(decorator)
-
 
 

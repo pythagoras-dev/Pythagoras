@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING
 import pythagoras as pth
 from pythagoras import ordinary
 
-# The functions below use `self` which is injected into their global namespace
+# The functions below use `self`, which is injected into their global namespace
 # at runtime by the portal framework when the decorated function is executed.
-# This TYPE_CHECKING declaration makes `self` visible to static analysis tools
+# The TYPE_CHECKING declaration makes `self` visible to static analysis tools
 # (ruff, mypy, IDEs) without affecting runtime behavior.
 if TYPE_CHECKING:
     from typing import Any

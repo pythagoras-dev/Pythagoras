@@ -54,8 +54,6 @@ def test_normalization_multiple_decorators():
     def decorated_func(x):
         return x * 2
 
-    # This should raise FunctionError due to multiple decorators check
-    # However, external decorators are not Pythagoras decorators
     with pytest.raises((FunctionError, ValueError)):
         get_normalized_fn_source_code_str(decorated_func)
 
@@ -86,7 +84,7 @@ def test_ordinary_fn_compile_error(tmpdir):
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
         invalid_source = """
 def broken_func(x)
-    return x  # Missing colon
+    return x  # Missing colon.
 """
         with pytest.raises(SyntaxError):
             OrdinaryFn(invalid_source, portal=t.portal)
@@ -95,21 +93,18 @@ def broken_func(x)
 def test_ordinary_fn_from_non_ordinary_function(tmpdir):
     """Test OrdinaryFn with functions that violate ordinarity constraints."""
     with _PortalTester(OrdinaryCodePortal, root_dict=tmpdir) as t:
-        # Function with default arguments
         def func_with_defaults(x, y=10):
             return x + y
 
         with pytest.raises(FunctionError, match="can't have.*default values"):
             OrdinaryFn(func_with_defaults, portal=t.portal)
 
-        # Function with *args
         def func_with_args(x, *args):
             return sum(args)
 
         with pytest.raises(FunctionError, match="unlimited.*positional arguments"):
             OrdinaryFn(func_with_args, portal=t.portal)
 
-        # Lambda function
         with pytest.raises(FunctionError, match="can't be lambda"):
             OrdinaryFn(lambda x: x * 2, portal=t.portal)
 
@@ -165,7 +160,7 @@ def test_normalization_preserves_function_logic():
 
     def original_func(x, y):
         """This is a docstring that should be removed."""
-        # This is a comment that should be removed
+        # This comment should be removed during normalization.
         if x > y:
             return x
         else:
@@ -173,11 +168,9 @@ def test_normalization_preserves_function_logic():
 
     normalized = get_normalized_fn_source_code_str(original_func)
 
-    # Should not contain docstring or comments
     assert "docstring" not in normalized
     assert "comment" not in normalized
 
-    # Should preserve function name and logic structure
     assert "def original_func" in normalized
     assert "if x > y:" in normalized or "if x > y:" in normalized.replace(" ", "")
     assert "return x" in normalized
@@ -192,9 +185,6 @@ def test_ordinary_fn_wrong_portal_type(tmpdir):
         def simple_func(x):
             return x * 2
 
-        # BasicPortal is not OrdinaryCodePortal
-        # This should work - OrdinaryFn accepts BasicPortal or None
-        # Let's test with invalid types instead
         with pytest.raises(TypeError, match="portal must be"):
             OrdinaryFn(simple_func, portal="not_a_portal")
 

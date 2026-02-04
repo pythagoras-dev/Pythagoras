@@ -7,13 +7,13 @@ from pythagoras._310_ordinary_code_portals import OrdinaryFn, OrdinaryCodePortal
 
 
 def f_docstring():
-    """ This is a CRAZY docstring"""
+    """This is a CRAZY docstring."""
     def internal(a:int):
-        """ This is another CRAZY docstring"""
+        """This is another CRAZY docstring."""
         b=24
         return a+b
     class A:
-        """ This is a third CRAZY docstring"""
+        """This is a third CRAZY docstring."""
         def __init__(self):
             pass
     return 123456
@@ -21,7 +21,7 @@ def f_docstring():
 def f_comments():
     def internal(a:int):
         b=24
-        # This is a STRANGE comment
+        # STRANGE comment used for normalization tests.
         return a+b
     return internal(58)
 
@@ -40,8 +40,8 @@ def test_basics():
     assert no_comments == autopep8.fix_code(no_comments)
 
 
-def a2(x): # a sample function to test
-    print(10 # Why do I sit here?
+def a2(x):
+    print(10  # Comment kept to exercise normalization.
         ,20)
     return x*x
 
@@ -53,7 +53,7 @@ def test_inclosed():
     def a2(x):
 
         print (10, 20)
-        # unneeded comment
+        # Comment removed during normalization.
         return (x * x)
 
     new_a2 = get_normalized_fn_source_code_str(a2)
@@ -61,7 +61,7 @@ def test_inclosed():
     assert new_a2 == autopep8.fix_code(new_a2)
 
 
-def a3(x): # a sample function to test
+def a3(x):
     if x>0:
         return x*x*x
     elif x<100_000_000:
@@ -74,8 +74,9 @@ def test_inclosed2():
     old_a3 = get_normalized_fn_source_code_str(a3)
     del a3
     def a3(x):
-        """ another version of the same function
-        this is a docstring
+        """Another version of the same function.
+
+        This is a docstring.
         """
         if x > 0:
             return x * x * x
