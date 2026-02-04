@@ -13,30 +13,28 @@ from mixinforge import SingletonMixin
 
 
 class ReuseFlag(SingletonMixin):
-    """Singleton flag indicating to reuse settings from another function wrapper.
+    """Singleton flag indicating settings should be reused from another wrapper.
 
-    When passed as the value for parameters like ``portal`` or ``verbose_logging``
-    during function wrapper construction, instructs the constructor to copy that
-    setting from the source function (``fn``) if it is an existing wrapper of the
-    appropriate type.
+    When passed as the value for parameters like `portal` or
+    `verbose_logging`, the constructor copies that setting from the source
+    function if it is already a compatible wrapper. Use the USE_FROM_OTHER
+    instance rather than instantiating this class directly.
 
-    Raises ValueError if the source ``fn`` is not an appropriate wrapper type
-    (e.g., using USE_FROM_OTHER for portal when fn is a raw callable).
-
-    See Also:
-        USE_FROM_OTHER: The singleton instance of this class to use in code.
+    Raises:
+        ValueError: If the source function is not an appropriate wrapper type.
     """
 
 
 USE_FROM_OTHER: Final[ReuseFlag] = ReuseFlag()
 """Singleton flag to inherit settings from an existing function wrapper.
 
-Pass this as the ``portal`` or ``verbose_logging`` argument when constructing
-a function wrapper (e.g., OrdinaryFn, LoggingFn) to copy that setting from the
-source function. The source function must be an existing wrapper of a compatible
-type, otherwise a ValueError is raised.
+Pass this as the `portal` or `verbose_logging` argument when constructing a
+function wrapper (for example, OrdinaryFn or LoggingFn) to copy that setting
+from the source function. The source function must be an existing wrapper of a
+compatible type, otherwise a ValueError is raised.
 
 Example:
     >>> wrapped = LoggingFn(existing_logging_fn, portal=USE_FROM_OTHER)
-    >>> # wrapped now uses the same portal as existing_logging_fn
+    >>> wrapped.portal is existing_logging_fn.portal
+    True
 """
