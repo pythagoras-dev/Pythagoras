@@ -50,4 +50,3 @@ Utilities:
 from .data_portal_core_classes import *
 from .kw_args import *
 from .ready_and_get import *
-
