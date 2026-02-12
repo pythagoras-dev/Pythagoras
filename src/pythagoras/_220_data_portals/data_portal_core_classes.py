@@ -162,7 +162,10 @@ class DataPortal(BasicPortal):
         value_store_params.update(
             digest_len=0, append_only=True, serialization_format = "pkl")
         value_store = type(self._root_dict)(**value_store_params)
-        value_store = WriteOnceDict(value_store, 0)
+        value_store = WriteOnceDict(
+            wrapped_dict=value_store,
+            p_consistency_checks=0,
+        )
         self._global_value_store = value_store
 
 
@@ -562,10 +565,10 @@ class ValueAddr(HashAddr):
             A (data, success) pair where success is True if a cached value
             was available.
         """
-        if not self._get_cached_property_status("value"):
+        if not self._get_cached_property_status(name="value"):
             return None, False
 
-        data = self._get_cached_property("value")
+        data = self._get_cached_property(name="value")
         current_portal = get_current_data_portal()
 
         if current_portal not in self._containing_portals:

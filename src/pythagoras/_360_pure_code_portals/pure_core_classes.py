@@ -84,7 +84,10 @@ class PureCodePortal(ProtectedCodePortal):
         results_dict_params = results_dict_prototype.get_params()
         results_dict_params.update(append_only=True,  serialization_format = "pkl")
         execution_results = type(self._root_dict)(**results_dict_params)
-        execution_results = WriteOnceDict(execution_results, 0)
+        execution_results = WriteOnceDict(
+            wrapped_dict=execution_results,
+            p_consistency_checks=0,
+        )
         self._execution_results = execution_results
 
         requests_dict_prototype = self._root_dict.get_subdict(
