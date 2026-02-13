@@ -403,7 +403,7 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
         """
         with self.portal:
             attempts = self.execution_attempts
-            timeline = attempts.newest_values(1)
+            timeline = attempts.newest_values(max_n=1)
             if not len(timeline):
                 result = None
             else:
@@ -433,7 +433,7 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
         """
         with self.portal:
             results = self.execution_results
-            timeline = results.newest_values(1)
+            timeline = results.newest_values(max_n=1)
             if not len(timeline):
                 result = None
             else:
@@ -463,7 +463,7 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
         """
         with self.portal:
             outputs = self.execution_outputs
-            timeline = outputs.newest_values(1)
+            timeline = outputs.newest_values(max_n=1)
             if not len(timeline):
                 result = None
             else:
@@ -493,7 +493,7 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
         """
         with self.portal:
             crashes = self.crashes
-            timeline = crashes.newest_values(1)
+            timeline = crashes.newest_values(max_n=1)
             if not len(timeline):
                 result = None
             else:
@@ -523,7 +523,7 @@ class LoggingFnCallSignature(ImmutableMixin, CacheablePropertiesMixin,
         """
         with self.portal:
             events = self.events
-            timeline = events.newest_values(1)
+            timeline = events.newest_values(max_n=1)
             if not len(timeline):
                 result = None
             else:
