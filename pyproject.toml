@@ -90,7 +90,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/persidict"]
+source = ["src/pythagoras"]
 branch = true
 
 [tool.ruff]
