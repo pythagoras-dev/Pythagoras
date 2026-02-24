@@ -10,63 +10,48 @@ The central value proposition: the result of every successful execution of a pur
 
 All values, function code, and execution results are addressed by their content hash (SHA-256, encoded in base-32). Addresses combine a human-readable descriptor with a deterministic hash, forming types like `ValueAddr` and `PureFnExecutionResultAddr`. Content addressing enables deduplication, immutable result caches, and transparent distributed access — any machine with access to the same storage backend can retrieve any result.
 
-## 3. Progressive portal hierarchy
-
-Capabilities are composed in strict layers. Each portal class extends the previous one with exactly one coherent concern:
-
-- `BasicPortal`: Lifecycle, registration, portal stack management.
-- `DataPortal`: Persistent storage via `persidict` with content-addressable values.
-- `TunablePortal`: Per-portal and per-object configuration.
-- `OrdinaryCodePortal` → `LoggingCodePortal` → `SafeCodePortal`: Function wrapping, execution logging, safer defaults.
-- `AutonomousCodePortal`: Self-contained execution with AST-based autonomy validation.
-- `GuardedCodePortal`: Pre-execution requirements and post-execution result checks.
-- `PureCodePortal`: Deterministic caching keyed by function identity, code, and arguments.
-- `SwarmingPortal`: Asynchronous distributed execution across processes and machines.
-
-The numbered module convention (`_110_`, `_210_`, …, `_410_`, `_800_`) enforces dependency ordering: higher-numbered modules depend only on lower-numbered ones, never in reverse. For the full architecture, see [`portal_architecture.md`](portal_architecture.md).
-
-## 4. Portals as execution environments
+## 3. Portals as layered execution environments
 
 A portal is the "operating system" for Pythagoras functions. It manages persistent storage, execution context, logging, scheduling, and security policies. Functions are portal-aware objects that dynamically use the current portal from a context-managed stack, or can be permanently linked to a specific portal instance. Multiple applications can share one portal; one application can use multiple portals.
 
-## 5. Autonomous functions for distribution
+Users interact with a single portal type: `SwarmingPortal`. Internally, `SwarmingPortal` is built from a strict hierarchy of 10 single-concern layers (`BasicPortal` → `DataPortal` → `TunablePortal` → `OrdinaryCodePortal` → `LoggingCodePortal` → `SafeCodePortal` → `AutonomousCodePortal` → `GuardedCodePortal` → `PureCodePortal` → `SwarmingPortal`). This layered architecture exists to reduce cognitive load on maintainers — each layer adds exactly one concern — not as a menu of user choices. The numbered module convention (`_110_`, `_210_`, …, `_410_`, `_800_`) enforces dependency ordering: higher-numbered modules depend only on lower-numbered ones, never in reverse. For the full architecture, see [`portal_architecture.md`](portal_architecture.md).
 
-Functions decorated with `@autonomous` (and by extension `@guarded` and `@pure`) must be self-contained: all imports inside the function body, no references to external globals, no closures, no `yield`. AST-based validation at decoration time and runtime checks during execution enforce these constraints. Autonomy ensures that a function can be serialized, transferred, and executed on any machine without external dependencies.
+## 4. Autonomous functions for distribution
 
-## 6. Keyword-only arguments for canonical addressing
+Functions decorated with `@pure` (and custom extension functions decorated with `@autonomous`) must be self-contained: all imports inside the function body, no references to external globals, no closures, no `yield`. AST-based validation at decoration time and runtime checks during execution enforce these constraints. Autonomy ensures that a function can be serialized, transferred, and executed on any machine without external dependencies. For the full contract — what's allowed, what's forbidden, and how source normalization works — see [`autonomy_model.md`](autonomy_model.md).
+
+## 5. Keyword-only arguments for canonical addressing
 
 All decorated functions accept only keyword arguments — no positional arguments, no default values. This ensures a single canonical representation for any function call, which is essential for deterministic content-addressing and cache-key generation. The canonical representation packs arguments into a sorted, hashable form used to construct `PureFnExecutionResultAddr`.
 
-## 7. Decorator-based progressive API
+## 6. Simple user API, layered internals
 
-A chain of decorators lets users choose the level of features they need:
+The user-facing API is intentionally minimal:
 
-- `@ordinary`: Basic function wrapping with ordinarity constraints.
-- `@logging`: Adds execution logging and stdout/stderr capture.
-- `@safe`: Safer execution defaults (foundation for future sandboxing).
-- `@autonomous`: Enables autonomous, distributable execution.
-- `@guarded`: Adds requirements and result checks.
-- `@pure`: Declares deterministic behavior with persistent result caching.
+- Decorate functions with `@pure` for persistent memoization and distributed execution.
+- Write custom extension functions (requirements, result checks) with `@autonomous`.
+- Create a `SwarmingPortal` (or accept the default at `~/.pythagoras/.default_portal`) for distributed execution.
+- Call `.swarm()` for asynchronous execution; retrieve results via `ready()` / `get()`.
 
-Each decorator creates the corresponding `Fn` wrapper class (`OrdinaryFn`, …, `PureFn`) linked to the appropriate portal type. There is no `@swarming` decorator — swarming is invoked via the `.swarm()` method on pure functions within a `SwarmingPortal` context.
+Everything else — `@ordinary`, `@logging`, `@safe`, `@guarded`, `BasicPortal` through `PureCodePortal`, and wrapper classes `OrdinaryFn` through `GuardedFn` — is internal infrastructure. These intermediate layers decompose a complex system into testable, single-concern building blocks for maintainers; they are not part of the user API.
 
-## 8. Source-code-aware caching
+## 7. Source-code-aware caching
 
 Pure function results are keyed by: function identity + normalized source code hash + packed argument hash. Source code is normalized before hashing — comments and docstrings are stripped, formatting is standardized (PEP 8) — so that cosmetic changes don't invalidate caches. Changing the actual logic triggers re-execution for the new code version, while previously cached results for older versions are preserved.
 
-## 9. Extension mechanism: requirements and result checks
+## 8. Extension mechanism: requirements and result checks
 
 Pre-execution requirements (e.g., `unused_cpu`, `unused_ram`, `installed_packages`) and post-execution result checks are themselves autonomous functions. Requirements can be passive (check a condition) or active (install a missing package). This makes validation composable, distributable, and testable. Requirements returning `NO_OBJECTIONS` allow execution to proceed; any other return value signals a problem.
 
-## 10. Swarming: eventual-execution distributed computing
+## 9. Swarming: eventual-execution distributed computing
 
 The `.swarm()` method on `PureFn` enqueues a function call for asynchronous execution by any available worker process. Callers receive a `PureFnExecutionResultAddr` immediately — a "future" that can be polled via `ready()` and resolved via `get()`. Guarantees: at-least-once eventual execution. No guarantees: timing, worker assignment, or single execution. Results are idempotent because pure functions are deterministic.
 
-## 11. Storage-agnostic via persidict
+## 10. Storage-agnostic via persidict
 
 All persistent state — values, execution results, execution requests, run history, crash logs — flows through `persidict`, which provides pluggable backends (`FileDirDict` for local filesystem, `BasicS3Dict` / `S3Dict` for cloud, `LocalDict` for testing). Pythagoras inherits persidict's distributed access, serialization, caching, and write-once semantics without coupling to a specific storage mechanism. Switching from local development to cloud-scale deployment requires only changing the portal's `root_dict`.
 
-## 12. Trade-offs and limitations
+## 11. Trade-offs and limitations
 
 These choices come with explicit trade-offs:
 

@@ -6,7 +6,7 @@ Your help is greatly appreciated. These guidelines will help you get started.
 ## Getting Started
 
 1. **Learn the Conventions:**
-   Familiarize yourself with the project's [Design Principles](https://github.com/pythagoras-dev/pythagoras/blob/master/design_principles.md), [Portal Architecture](https://github.com/pythagoras-dev/pythagoras/blob/master/portal_architecture.md), [Glossary](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md), [docstrings and comments](https://github.com/pythagoras-dev/pythagoras/blob/master/docstrings_comments.md), [type hints](https://github.com/pythagoras-dev/pythagoras/blob/master/type_hints.md), and [unit testing](https://github.com/pythagoras-dev/pythagoras/blob/master/unit_tests.md) guidelines.
+   Familiarize yourself with the project's [Design Principles](https://github.com/pythagoras-dev/pythagoras/blob/master/design_principles.md), [Portal Architecture](https://github.com/pythagoras-dev/pythagoras/blob/master/portal_architecture.md), [Autonomy Model](https://github.com/pythagoras-dev/pythagoras/blob/master/autonomy_model.md), [Glossary](https://github.com/pythagoras-dev/pythagoras/blob/master/GLOSSARY.md), [docstrings and comments](https://github.com/pythagoras-dev/pythagoras/blob/master/docstrings_comments.md), [type hints](https://github.com/pythagoras-dev/pythagoras/blob/master/type_hints.md), and [unit testing](https://github.com/pythagoras-dev/pythagoras/blob/master/unit_tests.md) guidelines.
 
 2. **Fork and Clone:**
     ```bash
