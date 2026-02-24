@@ -1,15 +1,15 @@
-"""Tests for unused_cpu() validator factory in basic_pre_validators.py."""
+"""Tests for unused_cpu() requirement factory in basic_requirements.py."""
 
 import pytest
-from pythagoras import unused_cpu, SimplePreValidatorFn, ProtectedCodePortal
+from pythagoras import unused_cpu, SimpleRequirementFn, GuardedCodePortal
 from pythagoras._210_basic_portals.portal_tester import _PortalTester
 
 
-def test_unused_cpu_returns_simple_pre_validator_fn(tmpdir):
-    """Test that unused_cpu() returns a SimplePreValidatorFn."""
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-        validator = unused_cpu(2)
-        assert isinstance(validator, SimplePreValidatorFn)
+def test_unused_cpu_returns_simple_requirement_fn(tmpdir):
+    """Test that unused_cpu() returns a SimpleRequirementFn."""
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+        requirement = unused_cpu(2)
+        assert isinstance(requirement, SimpleRequirementFn)
 
 
 def test_unused_cpu_with_non_integer_raises_type_error():
@@ -39,21 +39,21 @@ def test_unused_cpu_with_negative_raises_value_error():
         unused_cpu(-10)
 
 
-def test_unused_cpu_validator_has_fixed_kwargs(tmpdir):
-    """Test that the validator has the correct fixed_kwargs."""
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-        validator = unused_cpu(4)
-        assert validator._fixed_kwargs == {"n": 4}
+def test_unused_cpu_requirement_has_fixed_kwargs(tmpdir):
+    """Test that the requirement has the correct fixed_kwargs."""
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+        requirement = unused_cpu(4)
+        assert requirement._fixed_kwargs == {"n": 4}
 
 
 def test_unused_cpu_multiple_instances_independent(tmpdir):
-    """Test that multiple validator instances have independent configurations."""
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-        validator_2 = unused_cpu(2)
-        validator_8 = unused_cpu(8)
+    """Test that multiple requirement instances have independent configurations."""
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+        requirement_2 = unused_cpu(2)
+        requirement_8 = unused_cpu(8)
 
-        assert validator_2._fixed_kwargs == {"n": 2}
-        assert validator_8._fixed_kwargs == {"n": 8}
+        assert requirement_2._fixed_kwargs == {"n": 2}
+        assert requirement_8._fixed_kwargs == {"n": 8}
 
 
 def test_unused_cpu_with_bool_raises_type_error():

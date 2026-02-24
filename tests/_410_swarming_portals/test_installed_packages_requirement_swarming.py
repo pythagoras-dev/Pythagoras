@@ -5,7 +5,7 @@ from mixinforge import uninstall_package, is_package_installed
 from pythagoras.core import get
 
 
-@pure(pre_validators=installed_packages("polars"))
+@pure(requirements=installed_packages("polars"))
 def very_nothing_swarming_function_with_polars(n:int, m:int):
     print()
 

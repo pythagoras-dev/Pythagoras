@@ -1,12 +1,12 @@
 import mixinforge
 
-from pythagoras import _PortalTester, ProtectedCodePortal
+from pythagoras import _PortalTester, GuardedCodePortal
 
 
 def test_portal(tmpdir):
     with _PortalTester():
 
-        portal1 = ProtectedCodePortal(tmpdir.mkdir("edede"))
+        portal1 = GuardedCodePortal(tmpdir.mkdir("edede"))
         portal1_params = portal1.get_params()
         portal1_params_json = mixinforge.dumpjs(portal1)
 
@@ -16,4 +16,4 @@ def test_portal(tmpdir):
 
         assert portal1_params == portal2_params
         assert portal1_params_json == portal1_params_json2
-    
+

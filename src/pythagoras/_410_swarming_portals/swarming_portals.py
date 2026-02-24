@@ -26,7 +26,7 @@ from persidict import PersiDict, Joker, KEEP_CURRENT
 from mixinforge import *
 
 from .._210_basic_portals import get_known_portals
-from .._350_protected_code_portals import (VALIDATION_SUCCESSFUL,
+from .._350_guarded_code_portals import (NO_OBJECTIONS,
                                            get_unused_ram_mb, get_unused_cpu_cores)
 from .._210_basic_portals.basic_portal_core_classes import _describe_runtime_characteristic
 from persidict import OverlappingMultiDict
@@ -716,12 +716,12 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
             if not portal.ancestor_runtime_is_live():
                 return
             if call_signature is not None:
-                pre_validation_result = call_signature.fn.can_be_executed(
+                requirement_result = call_signature.fn.can_be_executed(
                     call_signature.packed_kwargs)
-                if isinstance(pre_validation_result, PureFnCallSignature):
-                    call_signature = pre_validation_result
+                if isinstance(requirement_result, PureFnCallSignature):
+                    call_signature = requirement_result
                     continue
-                elif pre_validation_result is VALIDATION_SUCCESSFUL:
+                elif requirement_result is NO_OBJECTIONS:
                     with OutputSuppressor():
                         call_signature.fn.execute(**call_signature.packed_kwargs)
                     return
@@ -738,11 +738,11 @@ def _process_random_execution_request(portal_init_jsparams:JsonSerializedObject)
                     ,assert_readiness=False)
                 if not new_address.needs_execution:
                     continue
-                pre_validation_result =  new_address.can_be_executed
-                if isinstance(pre_validation_result, PureFnCallSignature):
-                    call_signature = pre_validation_result
+                requirement_result =  new_address.can_be_executed
+                if isinstance(requirement_result, PureFnCallSignature):
+                    call_signature = requirement_result
                     continue
-                elif pre_validation_result is not VALIDATION_SUCCESSFUL:
+                elif requirement_result is not NO_OBJECTIONS:
                     continue
                 with OutputSuppressor():
                     new_address.execute()

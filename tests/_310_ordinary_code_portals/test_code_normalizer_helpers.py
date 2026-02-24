@@ -32,7 +32,7 @@ def test_is_pythagoras_decorator_with_name_node():
 def test_is_pythagoras_decorator_with_all_known_decorators():
     """Test all known Pythagoras decorator names."""
     known_decorators = ["ordinary", "logging", "safe",
-                        "autonomous", "protected", "pure"]
+                        "autonomous", "guarded", "pure"]
 
     for dec_name in known_decorators:
         source = f"@{dec_name}\ndef f(): pass"

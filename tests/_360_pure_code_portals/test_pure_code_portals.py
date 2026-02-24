@@ -22,7 +22,7 @@ def do_nothing(x: int) -> int:
     return x
 
 def always_OK(**kwargs):
-    return pth.VALIDATION_SUCCESSFUL
+    return pth.NO_OBJECTIONS
 
 
 def test_pure_portals_smoke_test(tmpdir):
@@ -95,6 +95,6 @@ def test_pure_portals_always_OK(tmpdir):
     # tmpdir = "YIYIYIYIYIYIYIYIYIYIYIYIYIYIYIYIY"
     with _PortalTester(PureCodePortal, tmpdir):
         global fibonacci,factorial,do_nothing
-        fibonacci_p = pure(pre_validators=[always_OK])(fibonacci)
+        fibonacci_p = pure(requirements=[always_OK])(fibonacci)
 
         assert fibonacci_p(n=4) == 3

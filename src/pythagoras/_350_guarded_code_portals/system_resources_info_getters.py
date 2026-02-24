@@ -1,7 +1,7 @@
 """Utilities for querying available system resources.
 
 Provides functions to check unused RAM, CPU cores, and NVIDIA GPU capacity.
-Used by pre-validators to ensure sufficient resources before execution.
+Used by requirements to ensure sufficient resources before execution.
 """
 import os
 import psutil

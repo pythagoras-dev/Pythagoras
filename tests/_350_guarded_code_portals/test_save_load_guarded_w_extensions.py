@@ -1,19 +1,19 @@
 import pytest
 
 from pythagoras._210_basic_portals.portal_tester import _PortalTester
-from pythagoras._350_protected_code_portals import *
+from pythagoras._350_guarded_code_portals import *
 
 def dummy_good_guard(packed_kwargs, fn_addr):
-    return pth.VALIDATION_SUCCESSFUL
+    return pth.NO_OBJECTIONS
 
 def dummy_bad_guard(packed_kwargs, fn_addr):
     return True
 
 def dummy_good_guard_2(packed_kwargs, fn_addr):
-    return pth.VALIDATION_SUCCESSFUL
+    return pth.NO_OBJECTIONS
 
 def dummy_good_post_guard(packed_kwargs, fn_addr, result):
-    return pth.VALIDATION_SUCCESSFUL
+    return pth.NO_OBJECTIONS
 
 def guard_returns_false(packed_kwargs, fn_addr):
     return False
@@ -28,9 +28,9 @@ def f(a, b):
     return a + b
 
 
-def test_load_save_protected_no_guards_no_validators(tmpdir):
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-        f_1 = ProtectedFn(f)
+def test_load_save_guarded_no_guards_no_extensions(tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+        f_1 = GuardedFn(f)
         f_address = ValueAddr(f_1)
         f_2 = f_address.get()
         assert f_2(a=1, b=2) == f(a=1, b=2) == 3
@@ -38,18 +38,18 @@ def test_load_save_protected_no_guards_no_validators(tmpdir):
         assert f_2.source_code == f_1.source_code
         f_address._invalidate_cache()
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
         f_3 = f_address.get()
         assert f_3(a=1, b=2) == f(a=1, b=2) == 3
 
 
-def test_load_save_protected_dummy_good_guard(tmpdir):
+def test_load_save_guarded_dummy_good_guard(tmpdir):
     for guards in [dummy_good_guard, [dummy_good_guard], [[[dummy_good_guard]]]
             , [dummy_good_guard, dummy_good_guard]]:
 
-        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-            f_1 = ProtectedFn(f, pre_validators= guards)
-            assert len(f_1.pre_validators) == 1
+        with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+            f_1 = GuardedFn(f, requirements= guards)
+            assert len(f_1.requirements) == 1
             f_address = ValueAddr(f_1)
             f_2 = f_address.get()
             assert f_2(a=1, b=2) == f(a=1, b=2) == 3
@@ -57,21 +57,21 @@ def test_load_save_protected_dummy_good_guard(tmpdir):
             assert f_2.source_code == f_1.source_code
             f_address._invalidate_cache()
 
-        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+        with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
             f_3 = f_address.get()
-            assert len(f_3.pre_validators) == 1
+            assert len(f_3.requirements) == 1
             assert f_3(a=1, b=2) == f(a=1, b=2) == 3
 
 
-def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
+def test_load_save_guarded_dummy_good_guard_autonomous(tmpdir):
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
 
         dummy_good_guard_autonomous = autonomous()(dummy_good_guard)
         guards = [dummy_good_guard_autonomous, dummy_good_guard_autonomous]
 
-        f_1 = ProtectedFn(f, pre_validators= guards)
-        assert len(f_1.pre_validators) == 1
+        f_1 = GuardedFn(f, requirements= guards)
+        assert len(f_1.requirements) == 1
         f_address = ValueAddr(f_1)
         f_2 = f_address.get()
         assert f_2(a=1, b=2) == f(a=1, b=2) == 3
@@ -79,17 +79,17 @@ def test_load_save_protected_dummy_good_guard_autonomous(tmpdir):
         assert f_2.source_code == f_1.source_code
         f_address._invalidate_cache()
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
         f_3 = f_address.get()
-        assert len(f_3.pre_validators) == 1
+        assert len(f_3.requirements) == 1
         assert f_3(a=1, b=2) == f(a=1, b=2) == 3
 
 
-def test_load_save_protected_dummy_bad_guard(tmpdir):
+def test_load_save_guarded_dummy_bad_guard(tmpdir):
     for guards in [dummy_bad_guard, [[dummy_good_guard], [dummy_bad_guard]]
         ,[dummy_bad_guard, dummy_good_guard]]:
-        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-            f_1 = ProtectedFn(f, pre_validators= guards)
+        with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+            f_1 = GuardedFn(f, requirements= guards)
             f_address = ValueAddr(f_1)
             f_2 = f_address.get()
             with pytest.raises(Exception):
@@ -100,19 +100,19 @@ def test_load_save_protected_dummy_bad_guard(tmpdir):
             assert f_2.source_code == f_1.source_code
             f_address._invalidate_cache()
 
-        with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+        with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
             f_3 = f_address.get()
             with pytest.raises(Exception):
                 f_3(a=1, b=2)
 
 
-def test_load_save_protected_dummy_bad_guard_autonomous(tmpdir):
+def test_load_save_guarded_dummy_bad_guard_autonomous(tmpdir):
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
         dummy_bad_guard_autonomous = autonomous()(dummy_bad_guard)
         guards = [dummy_bad_guard_autonomous, dummy_bad_guard_autonomous]
 
-        f_1 = ProtectedFn(f, pre_validators= guards)
+        f_1 = GuardedFn(f, requirements= guards)
         f_address = ValueAddr(f_1)
         f_2 = f_address.get()
         with pytest.raises(Exception):
@@ -123,62 +123,62 @@ def test_load_save_protected_dummy_bad_guard_autonomous(tmpdir):
         assert f_2.source_code == f_1.source_code
         f_address._invalidate_cache()
 
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
         f_3 = f_address.get()
         with pytest.raises(Exception):
             f_3(a=1, b=2)
 
 
-def test_validator_return_values_treated_as_failure(tmpdir):
+def test_extension_return_values_treated_as_failure(tmpdir):
     """
-    Test that truthy values other than VALIDATION_SUCCESSFUL are treated as
-    validation failure.
+    Test that truthy values other than NO_OBJECTIONS are treated as
+    requirement failure.
 
-    This is intentional design: validators must return VALIDATION_SUCCESSFUL
+    This is intentional design: extensions must return NO_OBJECTIONS
     (the sentinel singleton) to pass, or None to fail. Returning True, False,
     1, 0, strings, or any other value is treated as failure because the check
-    uses identity comparison (``is VALIDATION_SUCCESSFUL``), not truthiness.
+    uses identity comparison (``is NO_OBJECTIONS``), not truthiness.
 
     This test explicitly documents this behavior to prevent confusion, as many
-    developers naturally expect validators to return boolean True/False.
+    developers naturally expect extensions to return boolean True/False.
     """
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
         # Test that returning True is treated as failure
-        f_true = ProtectedFn(f, pre_validators=[guard_returns_false])
+        f_true = GuardedFn(f, requirements=[guard_returns_false])
         with pytest.raises(Exception):
             f_true(a=1, b=2)
 
         # Test that returning False is treated as failure
-        f_false = ProtectedFn(f, pre_validators=[guard_returns_false])
+        f_false = GuardedFn(f, requirements=[guard_returns_false])
         with pytest.raises(Exception):
             f_false(a=1, b=2)
 
         # Test that returning 1 (truthy) is treated as failure
-        f_one = ProtectedFn(f, pre_validators=[guard_returns_one])
+        f_one = GuardedFn(f, requirements=[guard_returns_one])
         with pytest.raises(Exception):
             f_one(a=1, b=2)
 
         # Test that returning a string is treated as failure
-        f_string = ProtectedFn(f, pre_validators=[guard_returns_string])
+        f_string = GuardedFn(f, requirements=[guard_returns_string])
         with pytest.raises(Exception):
             f_string(a=1, b=2)
 
-        # Confirm that VALIDATION_SUCCESSFUL works correctly
-        f_good = ProtectedFn(f, pre_validators=[dummy_good_guard])
+        # Confirm that NO_OBJECTIONS works correctly
+        f_good = GuardedFn(f, requirements=[dummy_good_guard])
         assert f_good(a=1, b=2) == 3
 
 
-def test_wrapping_protected_fn_with_single_pre_validator(tmpdir):
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-        base = ProtectedFn(f, pre_validators=[dummy_good_guard])
-        wrapped = ProtectedFn(base, pre_validators=dummy_good_guard_2)
+def test_wrapping_guarded_fn_with_single_requirement(tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+        base = GuardedFn(f, requirements=[dummy_good_guard])
+        wrapped = GuardedFn(base, requirements=dummy_good_guard_2)
         assert wrapped(a=1, b=2) == 3
-        assert len(wrapped.pre_validators) == 2
+        assert len(wrapped.requirements) == 2
 
 
-def test_wrapping_protected_fn_with_single_post_validator(tmpdir):
-    with _PortalTester(ProtectedCodePortal, root_dict=tmpdir):
-        base = ProtectedFn(f, post_validators=[dummy_good_post_guard])
-        wrapped = ProtectedFn(base, post_validators=dummy_good_post_guard)
+def test_wrapping_guarded_fn_with_single_result_check(tmpdir):
+    with _PortalTester(GuardedCodePortal, root_dict=tmpdir):
+        base = GuardedFn(f, result_checks=[dummy_good_post_guard])
+        wrapped = GuardedFn(base, result_checks=dummy_good_post_guard)
         assert wrapped(a=1, b=2) == 3
-        assert len(wrapped.post_validators) == 1
+        assert len(wrapped.result_checks) == 1

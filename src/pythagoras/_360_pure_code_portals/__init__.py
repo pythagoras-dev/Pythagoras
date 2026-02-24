@@ -17,9 +17,9 @@ Main Exports
 
 Utilities
 ---------
-- recursive_parameters: Build pre-validators for recursive pure functions.
+- recursive_parameters: Build requirements for recursive pure functions.
 """
 
 from .pure_core_classes import *
-from .recursion_pre_validator import *
+from .recursion_requirement import *
 from .pure_decorator import *

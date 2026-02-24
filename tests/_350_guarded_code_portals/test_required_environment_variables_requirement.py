@@ -4,7 +4,7 @@ import pytest
 from pythagoras import pure, required_environment_variables, _PortalTester, PureCodePortal
 
 
-# @pure(pre_validators=required_environment_variables("PYTHAGORAS_TEST_ENV_1", "PYTHAGORAS_TEST_ENV_2"))
+# @pure(requirements=required_environment_variables("PYTHAGORAS_TEST_ENV_1", "PYTHAGORAS_TEST_ENV_2"))
 # def function_requiring_two_env_vars():
 #     return "ok"
 
@@ -19,14 +19,14 @@ def test_required_environment_variables_all_set(tmpdir, monkeypatch):
     monkeypatch.setenv(env2, "bar")
 
     with _PortalTester(PureCodePortal, tmpdir):
-        @pure(pre_validators=required_environment_variables(env1, env2))
+        @pure(requirements=required_environment_variables(env1, env2))
         def function_requiring_two_env_vars():
             return "ok"
         assert function_requiring_two_env_vars() == "ok"
 
 
 def test_required_environment_variables_missing(tmpdir, monkeypatch):
-    """Pre-validator should prevent execution if a required env var is missing."""
+    """Requirement should prevent execution if a required env var is missing."""
 
     env1 = "PYTHAGORAS_TEST_ENV_1"
     env2 = "PYTHAGORAS_TEST_ENV_2"
@@ -36,7 +36,7 @@ def test_required_environment_variables_missing(tmpdir, monkeypatch):
     monkeypatch.delenv(env2, raising=False)
 
     with _PortalTester(PureCodePortal, tmpdir):
-        @pure(pre_validators=required_environment_variables(env1, env2))
+        @pure(requirements=required_environment_variables(env1, env2))
         def function_requiring_two_env_vars():
             return "ok"
         with pytest.raises(Exception):

@@ -90,9 +90,9 @@ if ready(future_result_address):
     result = get(future_result_address)
 ```
 
-Pre-conditions for executing a function:
+Requirements for executing a function:
 ```python
-@pure(pre_validators=[
+@pure(requirements=[
     unused_ram(Gb=5),
     installed_packages("scikit-learn","pandas"),
     unused_cpu(cores=10)])
@@ -104,7 +104,7 @@ def my_long_running_function(a:float, b:float) -> float:
 
 Recursion:
 ```python
-@pure(pre_validators=[recursive_parameters("n")])
+@pure(requirements=[recursive_parameters("n")])
 def factorial(n:int)->int:
   if n == 1:
     return 1
@@ -135,14 +135,14 @@ result = my_square_map(input_list=[1,2,3,4,5])
 
 Mutually recursive functions:
 ```python
-@pure(pre_validators=recursive_parameters("n"))
+@pure(requirements=recursive_parameters("n"))
 def is_even(n:int, is_odd ,is_even)->bool:
   if n in {0,2}:
     return True
   else:
     return is_odd(n=n-1, is_even=is_even, is_odd=is_odd)
 
-@pure(pre_validators=recursive_parameters("n"))
+@pure(requirements=recursive_parameters("n"))
 def is_odd(n:int, is_even, is_odd)->bool:
   if n in {0,2}:
     return False
@@ -182,11 +182,11 @@ assert is_odd(n=11)
   memoization works seamlessly across machines in a distributed system, enabling significant 
   performance improvements for computationally intensive workflows.
 
-* **Validator**: An autonomous function that checks conditions before or after executing 
-  a pure function. Pre-validators run before execution, post-validators run after. 
-  Validators can be passive (e.g., check available RAM) or active (e.g., install a missing 
-  library). They help ensure reliable distributed execution by validating requirements 
-  and system state. Multiple validators can be combined using standard decorator syntax.
+* **Extension**: An autonomous function that checks conditions or prepares the environment
+  around execution of a guarded or pure function. Requirements run before execution
+  (e.g., check available RAM, install a missing library). Result checks run after execution.
+  Extensions can be passive or active and help ensure reliable distributed execution.
+  Multiple extensions can be combined using standard decorator syntax.
 
 * **Value Address**: A globally unique, content-derived address for an **immutable value**. 
   It consists of a human-readable descriptor (based on type and shape/length) and a hash 
@@ -253,7 +253,7 @@ pip install pythagoras
 <!-- MIXINFORGE_STATS_START -->
 | Metric | Main code | Unit Tests | Total |
 |--------|-----------|------------|-------|
-| Lines Of Code (LOC) | 11181 | 15736 | 26917 |
+| Lines Of Code (LOC) | 11180 | 15725 | 26905 |
 | Source Lines Of Code (SLOC) | 4524 | 9785 | 14309 |
 | Classes | 53 | 48 | 101 |
 | Functions / Methods | 479 | 1286 | 1765 |

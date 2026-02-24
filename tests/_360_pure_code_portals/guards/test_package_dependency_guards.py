@@ -30,10 +30,10 @@ def test_real_package_installation_via_guard(tmpdir):
                 pth.install_package("nothing")
             import nothing
             assert nothing
-            return pth.VALIDATION_SUCCESSFUL
+            return pth.NO_OBJECTIONS
 
 
-        @pth.pure(pre_validators= [check_nothing])
+        @pth.pure(requirements= [check_nothing])
         def do_something():
             return 10
 
@@ -68,10 +68,10 @@ def test_fake_package_installation_via_guard(tmpdir):
                 pth.install_package("p1q9m2x8d3h8r56TTT")
             import p1q9m2x8d3h8r56TTT
             _ = p1q9m2x8d3h8r56TTT
-            return pth.VALIDATION_SUCCESSFUL
+            return pth.NO_OBJECTIONS
 
 
-        @pth.pure(pre_validators= [check_nonexisting])
+        @pth.pure(requirements= [check_nonexisting])
         def do_weird_thing():
             return 10
 

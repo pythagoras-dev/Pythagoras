@@ -16,7 +16,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ## 2. Portals
 
-- **Portal:** A persistent gateway connecting your local code to the distributed Pythagoras environment. It acts as a remote operating system for your Python functions. It manages resources, schedules execution, handles I/O (via storage), and enforces security policies. Just as a process lives in an OS, a Pythagoras function lives in a Portal, relying on it for all interactions with the outside world. Different portal types add capabilities progressively (basic → data → tunable → ordinary → logging → safe → autonomous → protected → pure → swarming).
+- **Portal:** A persistent gateway connecting your local code to the distributed Pythagoras environment. It acts as a remote operating system for your Python functions. It manages resources, schedules execution, handles I/O (via storage), and enforces security policies. Just as a process lives in an OS, a Pythagoras function lives in a Portal, relying on it for all interactions with the outside world. Different portal types add capabilities progressively (basic → data → tunable → ordinary → logging → safe → autonomous → guarded → pure → swarming).
 
 ### 2.1. Portal Classes
 
@@ -34,9 +34,9 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **AutonomousCodePortal:** Extends `SafeCodePortal` with self-contained execution support and autonomous primitives.
 
-- **ProtectedCodePortal:** Extends `AutonomousCodePortal` with validation and guards around function execution (pre/post validation hooks).
+- **GuardedCodePortal:** Extends `AutonomousCodePortal` with requirements and result checks around function execution (pre/post execution hooks).
 
-- **PureCodePortal:** Extends `ProtectedCodePortal` to support pure functions with deterministic caching keyed by code and arguments.
+- **PureCodePortal:** Extends `GuardedCodePortal` to support pure functions with deterministic caching keyed by code and arguments.
 
 - **SwarmingPortal:** Extends `PureCodePortal` to provide asynchronous, distributed execution ("swarming") across processes or machines.
 
@@ -59,12 +59,12 @@ This glossary defines the key terms used in the Pythagoras project and API.
   - `logging`: Adds execution logging and output capture (`LoggingCodePortal`).
   - `safe`: Safer execution defaults (`SafeCodePortal`).
   - `autonomous`: Enables autonomous scheduling (`AutonomousCodePortal`).
-  - `protected`: Adds validation hooks and guards (`ProtectedCodePortal`).
+  - `guarded`: Adds requirements and result checks (`GuardedCodePortal`).
   - `pure`: Declares a function as pure (deterministic, side-effect free) with persistent result caching (`PureCodePortal`).
 
   *Note: There is no `swarming` decorator. Swarming capabilities are provided by `SwarmingPortal` and the `.swarm()` method on pure functions.*
 
-- **Function Wrappers (OrdinaryFn / LoggingFn / SafeFn / AutonomousFn / ProtectedFn / PureFn):** The classes created by the corresponding decorators. `PureFn` is the most feature-rich and is the typical user-facing class for deterministic computation.
+- **Function Wrappers (OrdinaryFn / LoggingFn / SafeFn / AutonomousFn / GuardedFn / PureFn):** The classes created by the corresponding decorators. `PureFn` is the most feature-rich and is the typical user-facing class for deterministic computation.
 
 - **Call Signature:** An immutable description of a specific function call (function identity plus normalized/packed keyword arguments) used for caching, addressing, and logging.
 
@@ -76,9 +76,9 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Execution Results:** The persistent records storing outputs of function calls, typically under `execution_results` in `PureCodePortal`.
 
-- **Validation (Validators):** Functions and decorators used to enforce preconditions and postconditions around execution. Examples include:
-  - `pre_validators`: Checks before running a function (e.g., resource availability).
-  - `post_validators`: Checks after running a function.
+- **Extensions:** Functions used to enforce preconditions and postconditions around execution. Examples include:
+  - `requirements`: Checks before running a function (e.g., resource availability).
+  - `result_checks`: Checks after running a function.
   - `recursive_parameters`: A helper indicating which parameters are recursive in mutual recursion scenarios.
 
 ## 4. Data & Storage

@@ -1,6 +1,6 @@
 """Core classes for pure function execution and result caching.
 
-This module provides the infrastructure for pure functions: protected functions
+This module provides the infrastructure for pure functions: guarded functions
 with no side effects that always return the same result for identical arguments.
 
 Classes:
@@ -13,8 +13,8 @@ When a pure function is called multiple times with the same arguments, only the
 first invocation executes; subsequent calls return the cached result. Pythagoras
 tracks source code changes: when the implementation changes, execution occurs
 again on the next call, but previously cached results remain available for the
-old version. Only source code changes in the function and its pre/post validators
-are tracked, not dependencies or environment.
+old version. Only source code changes in the function and its requirements/result
+checks are tracked, not dependencies or environment.
 """
 
 from __future__ import annotations
@@ -32,7 +32,7 @@ from .._210_basic_portals.basic_portal_core_classes import (
 
 from .._220_data_portals import HashAddr, ValueAddr
 
-from .._350_protected_code_portals import *
+from .._350_guarded_code_portals import *
 from .._110_supporting_utilities import get_long_infoname
 from copy import copy
 from functools import cached_property
@@ -53,10 +53,10 @@ def get_noncurrent_pure_portals() -> list[PureCodePortal]:
 _CACHED_EXECUTION_RESULTS_TXT: Final[str] = "Cached execution results"
 _EXECUTION_QUEUE_SIZE_TXT: Final[str] = "Execution queue size"
 
-class PureCodePortal(ProtectedCodePortal):
+class PureCodePortal(GuardedCodePortal):
     """Portal managing execution and persistent caching for pure functions.
 
-    Extends ProtectedCodePortal with two persistent dictionaries for distributed
+    Extends GuardedCodePortal with two persistent dictionaries for distributed
     coordination:
     - execution_results: Append-only cache of HashAddr for function outputs
     - execution_requests: Mutable queue tracking pending execution requests
@@ -75,7 +75,7 @@ class PureCodePortal(ProtectedCodePortal):
             root_dict: Backing persistent dictionary or filesystem path.
             verbose_logging: Enable verbose logging, or KEEP_CURRENT to inherit.
         """
-        ProtectedCodePortal.__init__(self
+        GuardedCodePortal.__init__(self
             , root_dict=root_dict
             , verbose_logging=verbose_logging)
 
@@ -132,7 +132,7 @@ class PureCodePortal(ProtectedCodePortal):
         super()._clear()
 
 
-class PureFnCallSignature(ProtectedFnCallSignature):
+class PureFnCallSignature(GuardedFnCallSignature):
     """Signature identifying a specific call to a pure function.
 
     Combines the function identity with its argument values to create
@@ -163,7 +163,7 @@ class PureFnCallSignature(ProtectedFnCallSignature):
         return PureFnExecutionResultAddr(self.fn, self.packed_kwargs)
 
 
-class PureFn(ProtectedFn):
+class PureFn(GuardedFn):
     """Callable wrapper providing pure-function semantics with result caching.
 
     Executes within a PureCodePortal, persistently caches results indexed by
@@ -172,8 +172,8 @@ class PureFn(ProtectedFn):
     """
 
     def __init__(self, fn: Callable | str
-                 , pre_validators: list[AutonomousFn] | list[Callable] | None = None
-                 , post_validators: list[AutonomousFn] | list[Callable] | None = None
+                 , requirements: list[AutonomousFn] | list[Callable] | None = None
+                 , result_checks: list[AutonomousFn] | list[Callable] | None = None
                  , verbose_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , fixed_kwargs: dict | None = None
                  , portal: PureCodePortal | None |ReuseFlag = None):
@@ -181,8 +181,8 @@ class PureFn(ProtectedFn):
 
         Args:
             fn: Target callable to wrap.
-            pre_validators: Optional validators run before execution.
-            post_validators: Optional validators run after execution.
+            requirements: Optional requirements run before execution.
+            result_checks: Optional result checks run after execution.
             verbose_logging: Controls verbose logging behavior. Can be:
 
                 - True/False to explicitly enable/disable
@@ -202,8 +202,8 @@ class PureFn(ProtectedFn):
                          , portal = portal
                          , fixed_kwargs=fixed_kwargs
                          , verbose_logging = verbose_logging
-                         , pre_validators=pre_validators
-                         , post_validators=post_validators)
+                         , requirements=requirements
+                         , result_checks=result_checks)
 
 
     def get_address(self, **kwargs) -> PureFnExecutionResultAddr:
@@ -631,13 +631,13 @@ class PureFnExecutionResultAddr(HashAddr):
 
 
     @property
-    def can_be_executed(self) -> PureFnCallSignature | ValidationSuccessFlag | None:
+    def can_be_executed(self) -> PureFnCallSignature | NoObjectionsFlag | None:
         """Whether execution can proceed.
 
-        Checks pre-validators and returns execution readiness status.
+        Checks requirements and returns execution readiness status.
 
         Returns:
-            VALIDATION_SUCCESSFUL if ready; a dependent call signature if waiting
+            NO_OBJECTIONS if ready; a dependent call signature if waiting
             on another execution; None if execution is not possible.
         """
         with self.fn.portal:

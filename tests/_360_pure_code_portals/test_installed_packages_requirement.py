@@ -6,7 +6,7 @@ from mixinforge import uninstall_package
 import importlib
 
 
-@pure(pre_validators=installed_packages("polars"))
+@pure(requirements=installed_packages("polars"))
 def very_nothing_function_with_polars():
     print()
 

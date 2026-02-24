@@ -8,32 +8,32 @@ re-execution.
 Pythagoras tracks source code changes in pure functions. When the
 implementation changes, the function re-executes on the next call, but
 previously cached results remain available for the old version. Only
-source code changes for the function and its pre/post validators are tracked,
-not dependencies or environment.
+source code changes for the function and its requirements/result checks
+are tracked, not dependencies or environment.
 """
 
 from typing import Callable, Any
 
 from .._310_ordinary_code_portals import ReuseFlag
-from .._350_protected_code_portals import protected, ValidatorFn
+from .._350_guarded_code_portals import guarded, ExtensionFn
 from .._360_pure_code_portals.pure_core_classes import (
     PureCodePortal, PureFn)
 
 from persidict import KEEP_CURRENT, Joker
 
-class pure(protected):
+class pure(guarded):
     """Decorator marking functions as pure with persistent result caching.
 
     Pure functions are deterministic and side-effect-free. This decorator
     caches execution results persistently, avoids re-execution for identical
     calls, and tracks source code changes to invalidate stale cache entries.
 
-    Extends the protected decorator with pure-function semantics.
+    Extends the guarded decorator with pure-function semantics.
     """
 
     def __init__(self
-                 , pre_validators: list[ValidatorFn] | None = None
-                 , post_validators: list[ValidatorFn] | None = None
+                 , requirements: list[ExtensionFn] | None = None
+                 , result_checks: list[ExtensionFn] | None = None
                  , fixed_kwargs: dict[str, Any] | None = None
                  , verbose_logging: bool | Joker | ReuseFlag = KEEP_CURRENT
                  , portal: PureCodePortal | None | ReuseFlag = None
@@ -41,8 +41,8 @@ class pure(protected):
         """Initialize the pure decorator.
 
         Args:
-            pre_validators: Validators run before execution.
-            post_validators: Validators run after execution.
+            requirements: Requirements run before execution.
+            result_checks: Result checks run after execution.
             fixed_kwargs: Argument name-value pairs injected into every call.
             verbose_logging: Controls verbose logging behavior. Can be:
 
@@ -61,8 +61,8 @@ class pure(protected):
         super().__init__(portal=portal
                        , verbose_logging=verbose_logging
                        , fixed_kwargs=fixed_kwargs
-                       , pre_validators=pre_validators
-                       , post_validators=post_validators)
+                       , requirements=requirements
+                       , result_checks=result_checks)
 
 
     def __call__(self, fn:Callable|str) -> PureFn:
@@ -77,9 +77,8 @@ class pure(protected):
         self._restrict_to_single_thread()
         wrapper = PureFn(fn
                          , portal=self._portal
-                         , pre_validators=self._pre_validators
+                         , requirements=self._requirements
                          , fixed_kwargs=self._fixed_kwargs
-                         , post_validators=self._post_validators
+                         , result_checks=self._result_checks
                          , verbose_logging=self._verbose_logging)
         return wrapper
-

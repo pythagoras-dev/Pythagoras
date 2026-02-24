@@ -1,7 +1,7 @@
 from pythagoras import _PortalTester
 from pythagoras.core import *
 
-@pure(pre_validators=[recursive_parameters("n")])
+@pure(requirements=[recursive_parameters("n")])
 def factorial(n:int) -> int:
     # print(f"{n=}")
     if n in [0, 1]:

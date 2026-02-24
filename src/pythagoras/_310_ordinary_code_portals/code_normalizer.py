@@ -23,7 +23,7 @@ _pythagoras_decorator_names: set[str] = {
     , "logging"
     , "safe"
     , "autonomous"
-    , "protected"
+    , "guarded"
     , "pure"
 }
 

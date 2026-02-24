@@ -2,7 +2,7 @@ import pytest
 
 from pythagoras import pure, _PortalTester, PureCodePortal, unused_ram
 
-@pure(pre_validators = [unused_ram(Gb=1)] )
+@pure(requirements = [unused_ram(Gb=1)] )
 def very_easy_ram_testing_function():
     pass
 
@@ -11,7 +11,7 @@ def test_easy_ram_requirements(tmpdir):
         very_easy_ram_testing_function()
 
 
-@pure(pre_validators=[unused_ram(Gb=500)])
+@pure(requirements=[unused_ram(Gb=500)])
 def very_unrealistic_ram_needs():
     pass
 

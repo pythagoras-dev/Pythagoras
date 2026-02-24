@@ -1,8 +1,8 @@
-"""Pre-validators that help with recursive pure functions.
+"""Requirements that help with recursive pure functions.
 
 This module provides utilities to short-circuit or schedule execution for
-recursive calls, e.g., Fibonacci-like functions. The pre-validator returns
-either a success flag (skip execution), a call signature to be executed first,
+recursive calls, e.g., Fibonacci-like functions. The requirement returns
+either NO_OBJECTIONS (skip execution), a call signature to be executed first,
 or None to proceed as usual.
 """
 
@@ -11,21 +11,21 @@ from .._220_data_portals import *
 from .._320_logging_code_portals import *
 from .._330_safe_code_portals import *
 from .._340_autonomous_code_portals import *
-from .._350_protected_code_portals import *
+from .._350_guarded_code_portals import *
 from .pure_core_classes import *
 
 
-def _recursion_pre_validator(
+def _recursion_requirement(
         packed_kwargs:KwArgs
         , fn_addr:ValueAddr
         , param_name:str
-        )-> PureFnCallSignature | ValidationSuccessFlag | None:
-    """Pre-validator to aid recursion by ensuring prerequisites are ready.
+        )-> PureFnCallSignature | NoObjectionsFlag | None:
+    """Requirement to aid recursion by ensuring prerequisites are ready.
 
     For a non-negative integer parameter specified by param_name, this
-    validator checks whether smaller sub-problems have already been computed.
+    requirement checks whether smaller sub-problems have already been computed.
     It returns:
-    - VALIDATION_SUCCESSFUL if a base case is detected or all smaller results
+    - NO_OBJECTIONS if a base case is detected or all smaller results
       are already available; or
     - a PureFnCallSignature for the smallest missing sub-problem to compute
       first; or
@@ -37,8 +37,8 @@ def _recursion_pre_validator(
         param_name: Name of the recursive integer argument to inspect.
 
     Returns:
-        PureFnCallSignature | ValidationSuccessFlag | None: Directive for the
-        protected execution pipeline.
+        PureFnCallSignature | NoObjectionsFlag | None: Directive for the
+        guarded execution pipeline.
     """
     unpacked_kwargs = packed_kwargs.unpack()
     if param_name not in unpacked_kwargs:
@@ -50,18 +50,18 @@ def _recursion_pre_validator(
     if param_value < 0:
         raise ValueError(f"Parameter '{param_name}' must be non-negative, got {param_value}")
     if param_value in {0,1}:
-        return pth.VALIDATION_SUCCESSFUL
-    
+        return pth.NO_OBJECTIONS
+
     # Binary search to find the smallest n where result_addr.ready is not True
     left, right = 2, param_value - 1
-    result = pth.VALIDATION_SUCCESSFUL  # Default result if all are ready
-    
+    result = pth.NO_OBJECTIONS  # Default result if all are ready
+
     while left <= right:
         mid = (left + right) // 2
         unpacked_kwargs[param_name] = mid
         result_addr = pth.PureFnExecutionResultAddr(
             fn=fn, arguments=unpacked_kwargs)
-        
+
         if not result_addr.ready:
             # Found a value where result is not ready
             result = result_addr.call_signature
@@ -71,30 +71,30 @@ def _recursion_pre_validator(
             # Result is ready, search in the right half
             left = mid + 1
 
-    
+
     return result
 
 
 def recursive_parameters(
         *args
-        ) -> list[ComplexPreValidatorFn]:
-    """Build pre-validators for one or more recursive parameters.
+        ) -> list[ComplexRequirementFn]:
+    """Build requirements for one or more recursive parameters.
 
-    Each provided name produces a pre-validator function that uses
-    _recursion_pre_validator to ensure prerequisite sub-problems are ready.
+    Each provided name produces a requirement function that uses
+    _recursion_requirement to ensure prerequisite sub-problems are ready.
 
     Args:
         *args: One or more names of integer parameters that govern recursion.
 
     Returns:
-        list[ComplexPreValidatorFn]: A list of pre-validators to plug into the
-        pure/protected decorator configuration.
+        list[ComplexRequirementFn]: A list of requirements to plug into the
+        pure/guarded decorator configuration.
     """
     result = []
     for name in args:
         if not isinstance(name, str):
             raise TypeError(f"recursive parameter names must be strings, got {type(name).__name__}")
-        validator =  ComplexPreValidatorFn(
-            _recursion_pre_validator, fixed_kwargs=dict(param_name=name))
-        result.append(validator)
+        requirement = ComplexRequirementFn(
+            _recursion_requirement, fixed_kwargs=dict(param_name=name))
+        result.append(requirement)
     return result

@@ -16,7 +16,7 @@ Public API
         Decorator and helpers for pure functions. A pure function is assumed to
         be deterministic and side‑effect free; Pythagoras persistently caches
         its results by call signature and tracks source‑code changes. The
-        "recursive_parameters(...)" factory returns pre‑validators used to
+        "recursive_parameters(...)" factory returns requirements used to
         optimize recursive computations.
 
     autonomous
@@ -25,15 +25,15 @@ Public API
         except built‑ins), with autonomicity validated at decoration and at
         runtime.
 
-    Basic pre‑validators
-        Small, composable validators intended to be attached to pure functions,
+    Basic requirements
+        Small, composable requirements intended to be attached to pure functions,
         for example::
 
             - unused_cpu(cores: int)
             - unused_ram(Gb: int)
             - installed_packages(*names: str)
 
-        These factories return validator instances (SimplePreValidatorFn) that
+        These factories return requirement instances (SimpleRequirementFn) that
         a portal can execute to check whether it should run the user code.
 
     SwarmingPortal
@@ -45,7 +45,7 @@ Public API
         Factory for constructing a portal.
 
 Notes
-    - Star‑importing from this module will also bring the basic pre‑validators
+    - Star‑importing from this module will also bring the basic requirements
       into your namespace. Prefer explicit imports if you want a stricter
       namespace.
     - This namespace focuses on high‑impact primitives. For advanced or
@@ -54,7 +54,7 @@ Notes
 
 from .._220_data_portals import ready as ready, get as get
 from .._340_autonomous_code_portals import autonomous as autonomous
-from .._350_protected_code_portals.basic_pre_validators import *
+from .._350_guarded_code_portals.basic_requirements import *
 from .._360_pure_code_portals import pure as pure, recursive_parameters as recursive_parameters, PureFn as PureFn
 from .._410_swarming_portals import SwarmingPortal as SwarmingPortal
 from .._800_top_level_API import get_portal as get_portal

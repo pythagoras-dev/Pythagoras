@@ -2,7 +2,7 @@
 from pythagoras import _PortalTester, PureCodePortal
 from pythagoras.core import *
 
-@pure(pre_validators=[recursive_parameters("n")])
+@pure(requirements=[recursive_parameters("n")])
 def factorial(n:int) -> int:
     # print(f"{n=}")
     if n in [0, 1]:
@@ -11,7 +11,7 @@ def factorial(n:int) -> int:
         return n * factorial(n=n-1)
 
 
-def test_pure_factorial_w_recursion_prevalidator(tmpdir):
+def test_pure_factorial_w_recursion_requirement(tmpdir):
     # tmpdir = "TEST_PURE_FACTORIAL_LARGE"
     with _PortalTester(PureCodePortal
             , tmpdir):

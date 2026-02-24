@@ -28,7 +28,7 @@ from ._310_ordinary_code_portals import *
 from ._320_logging_code_portals import *
 from ._330_safe_code_portals import *
 from ._340_autonomous_code_portals import *
-from ._350_protected_code_portals import *
+from ._350_guarded_code_portals import *
 from ._360_pure_code_portals import *
 from ._410_swarming_portals import *
 from ._800_top_level_API import *
