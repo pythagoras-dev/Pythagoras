@@ -16,7 +16,7 @@ Portals solve three problems:
 
 ## Portal Class Hierarchy
 
-Each portal class extends the previous one with exactly one coherent concern. The hierarchy is strict — no class skips a level. Users interact only with `SwarmingPortal`; the intermediate classes exist to keep each layer small and focused for maintainers.
+Each portal class extends the previous one with exactly one concern. The hierarchy is strict — no class skips a level.
 
 | Portal Class | Module | What It Adds |
 |---|---|---|
@@ -35,7 +35,7 @@ Each portal class extends the previous one with exactly one coherent concern. Th
 
 ## Function Wrapper Hierarchy
 
-Each portal type from `OrdinaryCodePortal` onward has a corresponding function wrapper class. The wrapper hierarchy mirrors the portal hierarchy. Users interact with `PureFn` (via `@pure`) and `AutonomousFn` (via `@autonomous`, for custom extension functions); the intermediate wrappers are internal.
+Each portal type from `OrdinaryCodePortal` onward has a corresponding function wrapper class. The wrapper hierarchy mirrors the portal hierarchy.
 
 | Wrapper Class | Decorator | Portal Type | Key Feature |
 |---|---|---|---|
@@ -46,7 +46,7 @@ Each portal type from `OrdinaryCodePortal` onward has a corresponding function w
 | `GuardedFn` | `@guarded` | `GuardedCodePortal` | Runs `requirements` before and `result_checks` after execution |
 | `PureFn` | `@pure` | `PureCodePortal` | Deterministic result caching; provides `.swarm()`, `.run()`, `.get_address()`, `.fix_kwargs()` |
 
-There is no `SwarmingFn` — swarming is activated by calling `.swarm()` on a `PureFn` within a `SwarmingPortal` context. This keeps the function wrapper hierarchy focused on function-level concerns while swarming remains a portal-level capability.
+There is no `SwarmingFn` — see [Why no SwarmingFn](#why-no-swarmingfn) in Design Rationale.
 
 ---
 
@@ -82,14 +82,6 @@ Entering a portal pushes it onto the active stack. Exiting pops it. Portals can 
 ### Default Portal
 
 If no portal is active and a function requires one, Pythagoras creates a default `SwarmingPortal` at `~/.pythagoras/.default_portal`. This provides a zero-configuration starting point, though explicit portal creation is recommended for production use.
-
-### Portal States
-
-A portal instance can be in one of these states:
-
-- **Known**: Instantiated and registered, but not on the active stack.
-- **Active**: On the active stack (entered via `with` statement). May appear multiple times (re-entrant).
-- **Current**: The innermost portal on the active stack. This is the portal that functions use when no specific portal is specified.
 
 ---
 
@@ -236,7 +228,7 @@ Key architectural decisions and why they were made.
 
 ### Why a deep class hierarchy that users never see
 
-The 10-class portal chain decomposes a complex system into single-concern layers. Each class adds exactly one capability (storage, logging, autonomy validation, caching, swarming). Users see only `SwarmingPortal` and `@pure` — the internal layers exist to make the codebase navigable for contributors. A new contributor working on logging only needs to understand `LoggingCodePortal` and `LoggingFn`, not the entire system.
+Pythagoras is a complex system. The layered hierarchy manages cognitive load for contributors by encapsulating each concern in its own realm. When working on logging, a contributor can focus on `LoggingCodePortal` and `LoggingFn` without simultaneously holding the details of caching, autonomy validation, or swarming in their head — even though they still need to understand the full system. The layers are nested abstractions: each one builds on the previous, hiding the complexity below.
 
 ### Why context managers, not global singletons
 
@@ -252,8 +244,8 @@ Portals manage mutable persistent state (execution queues, result caches) and re
 
 ### Why WriteOnceDict for execution_results
 
-Results of pure functions are immutable by definition — same inputs always produce the same output. `WriteOnceDict` wrapping prevents accidental overwrites and enables `persidict`'s append-only caching optimization, which skips cache validation for keys that are already present.
+Results of pure functions are immutable — same inputs always produce the same output. `WriteOnceDict` prevents accidental overwrites and enables `persidict`'s append-only caching optimization (skip validation for keys already present). This is the FP principle of immutability applied to storage.
 
 ### Why no SwarmingFn
 
-Swarming is a deployment topology concern (how many workers, where they run), not a function-level concern (what the function computes). Keeping swarming at the portal level avoids a combinatorial explosion of wrapper types and keeps the function hierarchy focused on computation semantics. A `PureFn` decorated with `@pure` works identically whether called directly or via `.swarm()` — only the execution scheduling differs.
+Swarming is a deployment topology concern (how many workers, where they run), not a function-level concern (what the function computes). Keeping swarming at the portal level avoids a combinatorial explosion of wrapper types. A `PureFn` works identically whether called directly or via `.swarm()` — purity guarantees any execution strategy produces the same result.

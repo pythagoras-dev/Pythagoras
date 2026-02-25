@@ -4,9 +4,17 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ## 1. Core Concepts
 
-- **Pure Functions:** Functions that are deterministic (always produce the same output for the same input) and have no side effects. Pythagoras relies on pure functions to safely cache results and distribute execution across many compute nodes.
+- **Pure Functions:** Deterministic, side-effect-free, referentially transparent functions — a concept from functional programming. `@pure` is the programmer's declaration of this contract. See [Principle 1](design_principles.md#1-pure-functions-and-referential-transparency).
 
-- **Compute Once, Reuse Forever:** A core design principle where the result of every successful execution of a pure function is permanently stored. Future calls with the same inputs retrieve the stored result instantly, eliminating redundant computation.
+- **Referential Transparency:** A pure function call can be replaced by its cached result without changing program behavior. This is what makes memoization correct.
+
+- **Memoization:** Caching function results and returning the cached result for identical future calls. Safe only for pure functions. Pythagoras extends memoization to persistent, cross-machine storage.
+
+- **Immutability:** Once stored, values and execution results are never modified. Enforced by `WriteOnceDict` and content-addressable storage.
+
+- **Partial Application:** Fixing some arguments of a function to create a specialized version. Provided by `fix_kwargs()` on function wrappers — used in place of closures (forbidden by autonomy).
+
+- **Compute Once, Reuse Forever:** Every successful pure-function result is permanently stored; identical future calls return the cached result. See [Principle 1](design_principles.md#1-pure-functions-and-referential-transparency).
 
 - **Content-Addressable Storage (CAS):** A storage mechanism where data is retrieved based on its content (hash) rather than its location. Pythagoras uses CAS for code, arguments, and results.
 
@@ -16,7 +24,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 ## 2. Portals
 
-- **Portal:** A persistent gateway connecting your local code to the distributed Pythagoras environment. It acts as a remote operating system for your Python functions. It manages resources, schedules execution, handles I/O (via storage), and enforces security policies. Just as a process lives in an OS, a Pythagoras function lives in a Portal, relying on it for all interactions with the outside world. Different portal types add capabilities progressively (basic → data → tunable → ordinary → logging → safe → autonomous → guarded → pure → swarming).
+- **Portal:** The execution environment for Pythagoras functions — manages storage, scheduling, logging, and security. Users interact only with `SwarmingPortal`. See [`portal_architecture.md`](portal_architecture.md).
 
 ### 2.1. Portal Classes
 
@@ -48,7 +56,7 @@ This glossary defines the key terms used in the Pythagoras project and API.
 
 - **Current Portal:** The portal at the top of the active portals stack. It is the target for operations when no specific portal is provided.
 
-- **Default Portal:** A specific portal configuration (typically a `SwarmingPortal` at `~/.pythagoras/.default_portal`) that is automatically instantiated and used if no other portal is known or specified when a portal is needed.
+- **Default Portal:** A `SwarmingPortal` auto-created when no portal is active and a function requires one.
 
 ## 3. Functions & Execution
 

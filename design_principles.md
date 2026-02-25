@@ -1,24 +1,32 @@
 # Core Design Principles of Pythagoras
 
-Pythagoras is a planet-scale distributed computing framework for Python. It is built on a small set of explicit assumptions and trade-offs that enable massive parallelization, persistent memoization, and hardware-agnostic execution. Understanding these principles will help you use the framework effectively and contribute to its development.
+Pythagoras applies functional programming principles — specifically function purity — to planet-scale distributed computing in Python. Pure functions (deterministic, side-effect-free) are the ideal unit of computation: their results can be safely cached, reused, and distributed without coordination. Pythagoras extends classical in-process memoization to persistent, cross-machine result storage — **compute once, reuse forever**.
 
-## 1. Compute once, reuse forever
+## 1. Pure functions and referential transparency
 
-The central value proposition: the result of every successful execution of a pure function is permanently stored. Future calls with the same inputs retrieve the stored result instantly, eliminating redundant computation across process restarts, machines, and application instances. This trades storage for compute, making cheap storage replace expensive computation.
+The foundation of Pythagoras is the functional programming concept of **purity**. A pure function satisfies three properties:
+
+1. **Deterministic** — the same inputs always produce the same output.
+2. **Side-effect-free** — the function produces no observable effects beyond its return value.
+3. **Referentially transparent** — any call to the function can be replaced by its cached result without changing program behavior.
+
+Referential transparency is what makes memoization correct: if `f(x=5)` returned `25` once, it will return `25` forever, so the cached result can substitute for the call. Every successful pure-function execution is permanently stored; future calls with the same inputs return the stored result instantly.
+
+The `@pure` decorator is the programmer's declaration that a function satisfies this contract. Python cannot verify purity statically; purity is a semantic promise, not a machine-checked proof.
 
 ## 2. Content-addressable storage
 
-All values, function code, and execution results are addressed by their content hash (SHA-256, encoded in base-32). Addresses combine a human-readable descriptor with a deterministic hash, forming types like `ValueAddr` and `PureFnExecutionResultAddr`. Content addressing enables deduplication, immutable result caches, and transparent distributed access — any machine with access to the same storage backend can retrieve any result.
+All values, function code, and execution results are addressed by their content hash (SHA-256, encoded in base-32). Addresses combine a human-readable descriptor with a deterministic hash, forming types like `ValueAddr` and `PureFnExecutionResultAddr`. Content addressing enables deduplication, immutable result caches, and transparent distributed access — any machine with access to the same storage backend can retrieve any result. Content addressing works because pure functions operate on immutable inputs and produce immutable outputs — values with stable, deterministic hashes.
 
 ## 3. Portals as layered execution environments
 
-A portal is the "operating system" for Pythagoras functions. It manages persistent storage, execution context, logging, scheduling, and security policies. Functions are portal-aware objects that dynamically use the current portal from a context-managed stack, or can be permanently linked to a specific portal instance. Multiple applications can share one portal; one application can use multiple portals.
-
-Users interact with a single portal type: `SwarmingPortal`. Internally, `SwarmingPortal` is built from a strict hierarchy of 10 single-concern layers (`BasicPortal` → `DataPortal` → `TunablePortal` → `OrdinaryCodePortal` → `LoggingCodePortal` → `SafeCodePortal` → `AutonomousCodePortal` → `GuardedCodePortal` → `PureCodePortal` → `SwarmingPortal`). This layered architecture exists to reduce cognitive load on maintainers — each layer adds exactly one concern — not as a menu of user choices. The numbered module convention (`_110_`, `_210_`, …, `_410_`, `_800_`) enforces dependency ordering: higher-numbered modules depend only on lower-numbered ones, never in reverse. For the full architecture, see [`portal_architecture.md`](portal_architecture.md).
+A portal manages persistent storage, execution context, logging, and scheduling for Pythagoras functions. Users interact with a single portal type: `SwarmingPortal`. Internally, it is built from a hierarchy of 10 single-concern layers that exist to reduce cognitive load on maintainers, not as a menu of user choices. For the full hierarchy, lifecycle, and storage layout, see [`portal_architecture.md`](portal_architecture.md).
 
 ## 4. Autonomous functions for distribution
 
 Functions decorated with `@pure` (and custom extension functions decorated with `@autonomous`) must be self-contained: all imports inside the function body, no references to external globals, no closures, no `yield`. AST-based validation at decoration time and runtime checks during execution enforce these constraints. Autonomy ensures that a function can be serialized, transferred, and executed on any machine without external dependencies. For the full contract — what's allowed, what's forbidden, and how source normalization works — see [`autonomy_model.md`](autonomy_model.md).
+
+Autonomy and purity are **independent**: autonomy makes functions distributable; purity makes them memoizable. `@pure` requires both. See [`autonomy_model.md`](autonomy_model.md) for the full distinction and examples.
 
 ## 5. Keyword-only arguments for canonical addressing
 
@@ -33,7 +41,7 @@ The user-facing API is intentionally minimal:
 - Create a `SwarmingPortal` (or accept the default at `~/.pythagoras/.default_portal`) for distributed execution.
 - Call `.swarm()` for asynchronous execution; retrieve results via `ready()` / `get()`.
 
-Everything else — `@ordinary`, `@logging`, `@safe`, `@guarded`, `BasicPortal` through `PureCodePortal`, and wrapper classes `OrdinaryFn` through `GuardedFn` — is internal infrastructure. These intermediate layers decompose a complex system into testable, single-concern building blocks for maintainers; they are not part of the user API.
+Everything else is internal infrastructure — intermediate layers that decompose a complex system into testable, single-concern building blocks for maintainers. See [`portal_architecture.md`](portal_architecture.md) for the full list.
 
 ## 7. Source-code-aware caching
 
@@ -45,7 +53,7 @@ Pre-execution requirements (e.g., `unused_cpu`, `unused_ram`, `installed_package
 
 ## 9. Swarming: eventual-execution distributed computing
 
-The `.swarm()` method on `PureFn` enqueues a function call for asynchronous execution by any available worker process. Callers receive a `PureFnExecutionResultAddr` immediately — a "future" that can be polled via `ready()` and resolved via `get()`. Guarantees: at-least-once eventual execution. No guarantees: timing, worker assignment, or single execution. Results are idempotent because pure functions are deterministic.
+The `.swarm()` method on `PureFn` enqueues a function call for asynchronous execution by any available worker process. Callers receive a `PureFnExecutionResultAddr` immediately — a "future" that can be polled via `ready()` and resolved via `get()`. Guarantees: at-least-once eventual execution. No guarantees: timing, worker assignment, or single execution. Swarming is safe because of purity: duplicate executions are harmless (idempotent), and any worker produces the same result for the same inputs — referential transparency applied to distributed scheduling.
 
 ## 10. Storage-agnostic via persidict
 

@@ -6,7 +6,9 @@ Pythagoras requires that distributed functions be self-contained — carrying ev
 
 Distributed execution requires shipping code to remote workers. If a function references module-level imports, closure variables, or global state, those references break when the function is serialized and sent elsewhere. Pythagoras solves this by requiring that distributed functions be **autonomous**: all dependencies must be explicitly declared inside the function body, making the function a self-contained unit of computation.
 
-Autonomy also enables **deterministic caching**. Because an autonomous function's behavior is fully determined by its source code and arguments (no hidden state), Pythagoras can safely cache results keyed by the content hash of the normalized source and arguments.
+Autonomy and purity are **independent properties**: autonomy makes functions distributable (self-contained code can be shipped anywhere); purity makes them memoizable (deterministic results can be cached forever). An autonomous function that calls `random.random()` is autonomous but not pure. A function using `math.sqrt` via a module-level import is pure but not autonomous. `@pure` requires both: autonomy is enforced by AST analysis; purity is the programmer's semantic contract.
+
+Autonomy alone does not make caching safe — an autonomous but impure function could return different results for the same inputs. Caching requires both autonomy (so the function's code fully determines *what runs*) and purity (so the function's inputs fully determine *the result*).
 
 ---
 
