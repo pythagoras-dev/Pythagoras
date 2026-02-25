@@ -30,7 +30,8 @@ Decorator:
 
 Note:
     Sandboxing is not yet implemented. Integration with RestrictedPython
-    (https://pypi.org/project/RestrictedPython/) is planned.
+    (https://pypi.org/project/RestrictedPython/) or Anthropic Sandbox Runtime
+    (https://github.com/anthropic-experimental/sandbox-runtime) is planned.
 """
 
 from .safe_portal_core_classes import *
