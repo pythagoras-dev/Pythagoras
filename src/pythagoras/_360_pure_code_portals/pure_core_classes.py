@@ -33,6 +33,7 @@ from .._210_basic_portals.basic_portal_core_classes import (
 from .._220_data_portals import HashAddr, ValueAddr
 
 from .._350_guarded_code_portals import *
+from .._310_ordinary_code_portals.ordinary_portal_core_classes import _expand_grid
 from .._110_supporting_utilities import get_long_infoname
 from copy import copy
 from functools import cached_property
@@ -303,11 +304,11 @@ class PureFn(GuardedFn):
             return output_address.get()
 
 
-    def swarm_list(
+    def swarm_each(
             self
-            , list_of_kwargs:list[dict]
+            , list_of_kwargs:list[dict[str, Any]]
             ) -> list[PureFnExecutionResultAddr]:
-        """Queue background execution for multiple argument sets.
+        """Queue background execution for each set of keyword arguments.
 
         Args:
             list_of_kwargs: List of keyword-argument dicts, one per call.
@@ -333,11 +334,11 @@ class PureFn(GuardedFn):
         return list_to_return
 
 
-    def run_list(
+    def run_each(
             self
-            , list_of_kwargs:list[dict]
+            , list_of_kwargs:list[dict[str, Any]]
             ) -> list[PureFnExecutionResultAddr]:
-        """Execute multiple calls synchronously in shuffled order.
+        """Execute each set of keyword arguments synchronously in shuffled order.
 
         Args:
             list_of_kwargs: List of keyword-argument dicts, one per call.
@@ -346,7 +347,7 @@ class PureFn(GuardedFn):
             Result addresses in the same order as input.
         """
         with self.portal:
-            addrs = self.swarm_list(list_of_kwargs)
+            addrs = self.swarm_each(list_of_kwargs)
             addrs_workspace = copy(addrs)
             self.portal.entropy_infuser.shuffle(addrs_workspace)
             for an_addr in addrs_workspace:
@@ -354,24 +355,66 @@ class PureFn(GuardedFn):
         return addrs
 
 
-    # def swarm_grid(
-    #         self
-    #         , grid_of_kwargs:dict[str, list] # refactor
-    #         ) -> list[PureFnExecutionResultAddr]:
-    #     with self.portal:
-    #         param_list = list(ParameterGrid(grid_of_kwargs))
-    #         addrs = self.swarm_list(param_list)
-    #         return addrs
-    #
-    #
-    # def run_grid(
-    #         self
-    #         , grid_of_kwargs:dict[str, list] # refactor
-    #         ) -> list[PureFnExecutionResultAddr]:
-    #     with self.portal:
-    #         param_list = list(ParameterGrid(grid_of_kwargs))
-    #         addrs = self.run_list(param_list)
-    #         return addrs
+    def execute_each(self, list_of_kwargs: list[dict[str, Any]]) -> list[Any]:
+        """Execute the function for each set of keyword arguments.
+
+        Overrides OrdinaryFn.execute_each to leverage PureFn's caching and
+        shuffled execution order.
+
+        Args:
+            list_of_kwargs: List of keyword-argument dicts, one per call.
+
+        Returns:
+            List of results in the same order as input.
+        """
+        with self.portal:
+            addrs = self.run_each(list_of_kwargs)
+            return [a.get() for a in addrs]
+
+
+    def swarm_grid(
+            self
+            , grid_of_kwargs: dict[str, list[Any]]
+            ) -> list[PureFnExecutionResultAddr]:
+        """Queue background execution for each combination in a parameter grid.
+
+        Args:
+            grid_of_kwargs: Mapping of parameter names to lists of values.
+
+        Returns:
+            Result addresses in Cartesian product order.
+        """
+        with self.portal:
+            return self.swarm_each(_expand_grid(grid_of_kwargs))
+
+
+    def run_grid(
+            self
+            , grid_of_kwargs: dict[str, list[Any]]
+            ) -> list[PureFnExecutionResultAddr]:
+        """Execute each combination in a parameter grid synchronously.
+
+        Args:
+            grid_of_kwargs: Mapping of parameter names to lists of values.
+
+        Returns:
+            Result addresses in Cartesian product order.
+        """
+        with self.portal:
+            return self.run_each(_expand_grid(grid_of_kwargs))
+
+
+    def execute_grid(self, grid_of_kwargs: dict[str, list[Any]]) -> list[Any]:
+        """Execute the function for each combination in a parameter grid.
+
+        Args:
+            grid_of_kwargs: Mapping of parameter names to lists of values.
+
+        Returns:
+            List of results in Cartesian product order.
+        """
+        with self.portal:
+            return self.execute_each(_expand_grid(grid_of_kwargs))
 
 
     @property
