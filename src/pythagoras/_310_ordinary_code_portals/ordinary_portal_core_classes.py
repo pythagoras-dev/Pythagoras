@@ -9,6 +9,7 @@ from __future__ import annotations
 import ast
 from copy import deepcopy
 from functools import cached_property
+from itertools import product
 from typing import Callable, Any, TypeVar, Final
 
 import pandas as pd
@@ -17,6 +18,7 @@ from persidict import PersiDict
 from .function_error_exception import FunctionError
 from .reuse_flag import ReuseFlag, USE_FROM_OTHER
 from .._230_tunable_portals import TunablePortal, TunableObject
+from .._110_supporting_utilities import get_long_infoname
 from .code_normalizer import _get_normalized_fn_source_code_str_impl
 from .function_processing import get_function_name_from_source
 from .._110_supporting_utilities import get_hash_signature
@@ -55,6 +57,22 @@ def get_normalized_fn_source_code_str(
         return _get_normalized_fn_source_code_str_impl(
             a_func, drop_pth_decorators=True,
             skip_ordinarity_check=skip_ordinarity_check)
+
+
+def _expand_grid(grid_of_kwargs: dict[str, list[Any]]) -> list[dict[str, Any]]:
+    """Expand a parameter grid into a list of keyword-argument dicts.
+
+    Computes the Cartesian product of all parameter values.
+
+    Args:
+        grid_of_kwargs: Mapping of parameter names to lists of values.
+
+    Returns:
+        List of dicts, one per combination.
+    """
+    keys = list(grid_of_kwargs.keys())
+    values = list(grid_of_kwargs.values())
+    return [dict(zip(keys, combo)) for combo in product(*values)]
 
 
 _REGISTERED_FUNCTIONS_TXT: Final[str] = "Registered functions"
@@ -420,6 +438,42 @@ class OrdinaryFn(TunableObject):
             exec(self._compiled_code, names_dict)
             result = names_dict[self._result_var_name]
             return result
+
+
+    def execute_each(self, list_of_kwargs: list[dict[str, Any]]) -> list[Any]:
+        """Execute the function for each set of keyword arguments.
+
+        Args:
+            list_of_kwargs: List of keyword-argument dicts, one per call.
+
+        Returns:
+            List of results in the same order as input.
+        """
+        if not isinstance(list_of_kwargs, (list, tuple)):
+            raise TypeError(
+                f"list_of_kwargs must be a list or tuple, "
+                f"got {get_long_infoname(list_of_kwargs)}")
+        for kwargs in list_of_kwargs:
+            if not isinstance(kwargs, dict):
+                raise TypeError(
+                    f"Each item in list_of_kwargs must be a dict, "
+                    f"got {get_long_infoname(kwargs)}")
+        with self.portal:
+            return [self.execute(**kwargs) for kwargs in list_of_kwargs]
+
+
+    def execute_grid(self, grid_of_kwargs: dict[str, list[Any]]) -> list[Any]:
+        """Execute the function for each combination in a parameter grid.
+
+        Expands the Cartesian product of parameter values and executes for each.
+
+        Args:
+            grid_of_kwargs: Mapping of parameter names to lists of values.
+
+        Returns:
+            List of results, one per combination, in Cartesian product order.
+        """
+        return self.execute_each(_expand_grid(grid_of_kwargs))
 
 
     def __getstate__(self) -> dict[str, Any]:
